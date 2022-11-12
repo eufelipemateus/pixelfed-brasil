@@ -1,84 +1,127 @@
 @extends('site.help.partial.template', ['breadcrumb'=>__('helpcenter.gettingStarted')])
 
-@section('section')
 
+@section('section')
+<script type="application/ld+json">
+    {
+	"@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [{
+        "@type": "Question",
+        "name": "{{ __('helpcenter.howCreateAccountAask')}}",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "{!! __('helpcenter.howCreateAccountAnswer') !!}"
+        }
+      }, {
+        "@type": "Question",
+        "name":	"{{ __('helpcenter.howUpdateProfileAsk')}}",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "{!! __('helpcenter.howUpdateProfileAnswer') !!}"
+        }
+      }, {
+        "@type": "Question",
+        "name": "{{ __('helpcenter.howInactiveUserAsk')}}",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "{{ __('helpcenter.howInactiveUserAnswer')}}"
+        }
+      }, {
+        "@type": "Question",
+        "name": "{{ __('helpcenter.whyChantUserAsk') }}",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "{!! __('helpcenter.whyChantUserAnswer') !!}"
+        }
+      }, {
+        "@type": "Question",
+        "name": "{{ __('helpcenter.whyReceiveEmaillAsk')}}",
+        "acceptedAnswer": {
+        	"@type": "Answer",
+        	"text":"{{ __('helpcenter.whyReceiveEmaillAnswer')}}"
+		}
+    },
+	{
+        "@type": "Question",
+        "name": "{{ __('helpcenter.whyExistsEmailAsk')}}",
+        "acceptedAnswer": {
+        	"@type": "Answer",
+        	"text":"{{ __('helpcenter.whyExistsEmailAnswer')}}"
+		}
+    }
+	]
+}
+</script>
 <div class="title">
 	<h3 class="font-weight-bold">{{__('helpcenter.gettingStarted')}}</h3>
 </div>
 <hr>
-<p class="lead ">Welcome to Pixelfed!</p>
+<p class="lead ">{{ __('helpcenter.welcomePiexelfed') }}</p>
 <hr>
-<p>
-	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse1" role="button" aria-expanded="false" aria-controls="collapse1">
+<p  itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<a  itemprop="name"  class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse1" role="button" aria-expanded="false" aria-controls="collapse1">
 		<i class="fas fa-chevron-down mr-2"></i>
-		How do I create a Pixelfed account?
+		{{ __('helpcenter.howCreateAccountAask')}}
 	</a>
-	<div class="collapse" id="collapse1">
-		<div>
-			To create an account using a web browser:
-			<ol>
-				<li>Go to <a href="{{config('app.url')}}">{{config('app.url')}}</a>.</li>
-				<li>Click on the register link at the top of the page.</li>
-				<li>Enter your name, email address, username and password.</li>
-				@if(config_cache('pixelfed.enforce_email_verification') != true)
-				<li>Wait for an account verification email, it may take a few minutes.</li>
-				@endif
-			</ol>
+	<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse1">
+		<div itemprop="text">
+			{!! __('helpcenter.howCreateAccountAnswer') !!}
 		</div>
 	</div>
 </p>
-<p>
-	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse2" role="button" aria-expanded="false" aria-controls="collapse2">
+<p itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<a  itemprop="name"  class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse2" role="button" aria-expanded="false" aria-controls="collapse2">
 		<i class="fas fa-chevron-down mr-2"></i>
-		How to I update profile info like name, bio, email?
+		{{ __('helpcenter.howUpdateProfileAsk')}}
 	</a>
-	<div class="collapse" id="collapse2">
-		<div>
-			You can update your account by visiting the <a href="{{route('settings')}}">account settings</a> page.
+	<div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse2">
+		<div itemprop="text">
+			{!! __('helpcenter.howUpdateProfileAnswer') !!}
 		</div>
 	</div>
 </p>
-<p>
-	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse3" role="button" aria-expanded="false" aria-controls="collapse3">
+<p itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<a  itemprop="name" class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse3" role="button" aria-expanded="false" aria-controls="collapse3">
 		<i class="fas fa-chevron-down mr-2"></i>
-		What can I do if a username I want is taken but seems inactive?
+		{{ __('helpcenter.howInactiveUserAsk')}}
 	</a>
-	<div class="collapse" id="collapse3">
-		<div class="mt-2">
-			If your desired username is taken you can add underscores, dashes, or numbers to make it unique.
+	<div  itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse3">
+		<div itemprop="text" class="mt-2">
+			{{ __('helpcenter.howInactiveUserAnswer')}}
 		</div>
 	</div>
 </p>
-<p>
-	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse4" role="button" aria-expanded="false" aria-controls="collapse4">
+<p itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<a  itemprop="name" class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse4" role="button" aria-expanded="false" aria-controls="collapse4">
 		<i class="fas fa-chevron-down mr-2"></i>
-		Why can't I change my username?
+		{{ __('helpcenter.whyChantUserAsk') }}
 	</a>
-	<div class="collapse" id="collapse4">
-		<div class="mt-2">
-			Pixelfed is a federated application, changing your username is not supported in every <a href="https://en.wikipedia.org/wiki/ActivityPub">federated software</a> so we cannot allow username changes. Your best option is to create a new account with your desired username.
+	<div  itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse4">
+		<div itemprop="text" class="mt-2">
+			{!! __('helpcenter.whyChantUserAnswer') !!}
 		</div>
 	</div>
 </p>
-<p>
-	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse5" role="button" aria-expanded="false" aria-controls="collapse5">
+<p itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+	<a  itemprop="name" class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse5" role="button" aria-expanded="false" aria-controls="collapse5">
 		<i class="fas fa-chevron-down mr-2"></i>
-		I received an email that I created an account, but I never signed up for one.
+		{{ __('helpcenter.whyReceiveEmaillAsk')}}
 	</a>
-	<div class="collapse" id="collapse5">
-		<div class="mt-2">
-			Someone may have registered your email by mistake. If you would like your email to be removed from the account please contact an admin of this instance.
+	<div  itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse5">
+		<div itemprop="text" class="mt-2">
+			{{ __('helpcenter.whyReceiveEmaillAnswer')}}
 		</div>
 	</div>
 </p>
-<p>
+<p itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
 	<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse6" role="button" aria-expanded="false" aria-controls="collapse6">
 		<i class="fas fa-chevron-down mr-2"></i>
-		I can't create a new account because an account with this email already exists.
+		{{ __('helpcenter.whyExistsEmailAsk')}}
 	</a>
-	<div class="collapse" id="collapse6">
-		<div class="mt-2">
-			You might have registered before, or someone may have used your email by mistake. Please contact an admin of this instance.
+	<div  itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer" class="collapse" id="collapse6">
+		<div itemprop="text" class="mt-2">
+		{{ __('helpcenter.whyExistsEmailAnswer')}}
 		</div>
 	</div>
 </p>
