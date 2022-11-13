@@ -61,7 +61,7 @@
 							<span class="font-weight-bold h3 ml-2 pt-2">Pixelfed</span>
 						</div>
 						<div class="d-block d-md-none">
-							<p class="font-weight-bold mb-0 text-center">__('site.mainTitle')</p>
+							<p class="font-weight-bold mb-0 text-center">{{ __('site.mainTitle') }}</p>
 						</div>
 						<div class="card my-4 shadow-none border">
 							<div class="card-body px-lg-5">
