@@ -192,7 +192,7 @@ class Inbox
 		if(!isset($activity['to'])) {
 			return;
 		}
-		$to = $activity['to'];
+		$to = isset($activity['to']) ? $activity['to'] : [];
 		$cc = isset($activity['cc']) ? $activity['cc'] : [];
 
 		if($activity['type'] == 'Question') {
@@ -200,7 +200,9 @@ class Inbox
 			return;
 		}
 
-		if(count($to) == 1 &&
+		if( is_array($to) &&
+			is_array($cc) &&
+ 			count($to) == 1 &&
 			count($cc) == 0 &&
 			parse_url($to[0], PHP_URL_HOST) == config('pixelfed.domain.app')
 		) {
@@ -727,6 +729,9 @@ class Inbox
 		$profile = self::actorFirstOrCreate($actor);
 		$obj = $this->payload['object'];
 
+		if(!$profile) {
+			return;
+		}
 		// TODO: Some implementations do not inline the object, skip for now
 		if(!$obj || !is_array($obj) || !isset($obj['type'])) {
 			return;
@@ -786,7 +791,7 @@ class Inbox
 				Like::whereProfileId($profile->id)
 					->whereStatusId($status->id)
 					->forceDelete();
-				Notification::whereProfileId($status->profile->id)
+				Notification::whereProfileId($status->profile_id)
 					->whereActorId($profile->id)
 					->whereAction('like')
 					->whereItemId($status->id)

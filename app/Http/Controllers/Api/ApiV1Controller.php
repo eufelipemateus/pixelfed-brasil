@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use App\Util\ActivityPub\Helpers;
 use App\Util\Media\Filter;
 use Laravel\Passport\Passport;
-use Auth, Cache, DB, URL;
+use Auth, Cache, DB, Storage, URL;
 use App\{
 	Avatar,
 	Bookmark,
@@ -692,10 +692,10 @@ class ApiV1Controller extends Controller
 				(new FollowerController())->sendFollow($user->profile, $target);
 			}
 		} else {
-			$follower = new Follower();
-			$follower->profile_id = $user->profile_id;
-			$follower->following_id = $target->id;
-			$follower->save();
+			$follower = Follower::firstOrCreate([
+				'profile_id' => $user->profile_id,
+				'following_id' => $target->id
+			]);
 
 			if($remote == true && config('federation.activitypub.remoteFollow') == true) {
 				(new FollowerController())->sendFollow($user->profile, $target);
@@ -1375,7 +1375,7 @@ class ApiV1Controller extends Controller
 					'streaming_api' => 'wss://' . config('pixelfed.domain.app')
 				],
 				'stats' => $stats,
-				'thumbnail' => url('img/pixelfed-icon-color.png'),
+				'thumbnail' => config_cache('app.banner_image') ?? url(Storage::url('public/headers/default.jpg')),
 				'languages' => [config('app.locale')],
 				'registrations' => (bool) config_cache('pixelfed.open_registration'),
 				'approval_required' => false,
@@ -3023,7 +3023,7 @@ class ApiV1Controller extends Controller
 		}
 
 		if($sortBy == 'all' && !$request->has('cursor')) {
-			$ids = Cache::remember('status:replies:all:' . $id, 86400, function() use($id) {
+			$ids = Cache::remember('status:replies:all:' . $id, 3600, function() use($id) {
 				return DB::table('statuses')
 					->where('in_reply_to_id', $id)
 					->orderBy('id')
@@ -3058,8 +3058,15 @@ class ApiV1Controller extends Controller
 			$status['favourited'] = LikeService::liked($pid, $post->id);
 			return $status;
 		})
+		->map(function($post) {
+			if(isset($post['account']) && isset($post['account']['id'])) {
+				$account = AccountService::get($post['account']['id'], true);
+				$post['account'] = $account;
+			}
+			return $post;
+		})
 		->filter(function($post) {
-			return $post && isset($post['id']) && isset($post['account']);
+			return $post && isset($post['id']) && isset($post['account']) && isset($post['account']['id']);
 		})
 		->values();
 
