@@ -9,15 +9,18 @@ class Like extends Model
 {
     use SoftDeletes;
 
-    const MAX_PER_DAY = 200;
+    const MAX_PER_DAY = 500;
 
     /**
      * The attributes that should be mutated to dates.
      *
      * @var array
      */
-    protected $dates = ['deleted_at'];
-    protected $fillable = ['profile_id', 'status_id'];
+    protected $casts = [
+    	'deleted_at' => 'datetime'
+    ];
+
+    protected $fillable = ['profile_id', 'status_id', 'status_profile_id'];
 
     public function actor()
     {

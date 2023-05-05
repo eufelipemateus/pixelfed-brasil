@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use DB, Storage;
+use DB, Cache, Storage;
 use App\{
 	AccountInterstitial,
     Bookmark,
@@ -50,6 +50,9 @@ class StatusDelete implements ShouldQueue
 	 */
 	public $deleteWhenMissingModels = true;
 
+    public $timeout = 900;
+    public $tries = 2;
+
 	/**
 	 * Create a new job instance.
 	 *
@@ -71,11 +74,14 @@ class StatusDelete implements ShouldQueue
 		$profile = $this->status->profile;
 
 		StatusService::del($status->id, true);
-
-		if(in_array($status->type, ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])) {
-			$profile->status_count = $profile->status_count - 1;
-			$profile->save();
+		if($profile) {
+			if(in_array($status->type, ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])) {
+				$profile->status_count = $profile->status_count - 1;
+				$profile->save();
+			}
 		}
+
+		Cache::forget('pf:atom:user-feed:by-id:' . $status->profile_id);
 
 		if(config_cache('federation.activitypub.enabled') == true) {
 			return $this->fanoutDelete($status);
@@ -89,13 +95,14 @@ class StatusDelete implements ShouldQueue
         Media::whereStatusId($status->id)
         ->get()
         ->each(function($media) {
-            MediaDeletePipeline::dispatchNow($media);
+            MediaDeletePipeline::dispatch($media);
         });
 
 		if($status->in_reply_to_id) {
 			$parent = Status::findOrFail($status->in_reply_to_id);
 			--$parent->reply_count;
 			$parent->save();
+			StatusService::del($parent->id);
 		}
 
         Bookmark::whereStatusId($status->id)->delete();
@@ -131,15 +138,20 @@ class StatusDelete implements ShouldQueue
 			->where('item_id', $status->id)
 			->delete();
 
-		$status->forceDelete();
+		$status->delete();
 
 		return 1;
 	}
 
 	public function fanoutDelete($status)
 	{
-		$audience = $status->profile->getAudienceInbox();
 		$profile = $status->profile;
+
+		if(!$profile) {
+			return;
+		}
+
+		$audience = $status->profile->getAudienceInbox();
 
 		$fractal = new Fractal\Manager();
 		$fractal->setSerializer(new ArraySerializer());
@@ -154,13 +166,15 @@ class StatusDelete implements ShouldQueue
 			'timeout'  => config('federation.activitypub.delivery.timeout')
 		]);
 
-		$requests = function($audience) use ($client, $activity, $profile, $payload) {
+		$version = config('pixelfed.version');
+		$appUrl = config('app.url');
+		$userAgent = "(Pixelfed/{$version}; +{$appUrl})";
+
+		$requests = function($audience) use ($client, $activity, $profile, $payload, $userAgent) {
 			foreach($audience as $url) {
-				$version = config('pixelfed.version');
-				$appUrl = config('app.url');
 				$headers = HttpSignature::sign($profile, $url, $activity, [
 					'Content-Type'	=> 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-					'User-Agent'	=> "(Pixelfed/{$version}; +{$appUrl})",
+					'User-Agent'	=> $userAgent,
 				]);
 				yield function() use ($client, $url, $headers, $payload) {
 					return $client->postAsync($url, [

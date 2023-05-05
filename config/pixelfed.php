@@ -23,7 +23,7 @@ return [
 	| This value is the version of your Pixelfed instance.
 	|
 	*/
-	'version' => '0.11.4',
+	'version' => '0.11.6',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -259,6 +259,13 @@ return [
 
 	'bouncer' => [
 		'enabled' => env('PF_BOUNCER_ENABLED', false),
+
+		'cloud_ips' => [
+			'ban_logins' => env('PF_BOUNCER_BAN_CLOUD_LOGINS', false),
+			'ban_signups' => env('PF_BOUNCER_BAN_CLOUD_SIGNUPS', false),
+			'ban_api' => env('PF_BOUNCER_BAN_CLOUD_API', false),
+			'ban_api_strict_mode' => env('PF_BOUNCER_BAN_CLOUD_API_STRICT_MODE', false),
+		],
 	],
 
 	/*
@@ -276,4 +283,6 @@ return [
 	'media_fast_process' => env('PF_MEDIA_FAST_PROCESS', true),
 
 	'max_altext_length' => env('PF_MEDIA_MAX_ALTTEXT_LENGTH', 1000),
+
+	'allow_app_registration' => env('PF_ALLOW_APP_REGISTRATION', true),
 ];

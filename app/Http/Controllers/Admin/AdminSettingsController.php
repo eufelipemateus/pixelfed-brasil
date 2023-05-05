@@ -22,7 +22,7 @@ trait AdminSettingsController
 		$cloud_ready = !empty(config('filesystems.disks.' . $cloud_disk . '.key')) && !empty(config('filesystems.disks.' . $cloud_disk . '.secret'));
 		$types = explode(',', ConfigCacheService::get('pixelfed.media_types'));
 		$rules = ConfigCacheService::get('app.rules') ? json_decode(ConfigCacheService::get('app.rules'), true) : null;
-		$jpeg = in_array('image/jpg', $types) ? true : in_array('image/jpeg', $types);
+		$jpeg = in_array('image/jpg', $types) || in_array('image/jpeg', $types);
 		$png = in_array('image/png', $types);
 		$gif = in_array('image/gif', $types);
 		$mp4 = in_array('video/mp4', $types);
@@ -140,7 +140,9 @@ trait AdminSettingsController
 			'show_custom_css' => 'uikit.show_custom.css',
 			'show_custom_js' => 'uikit.show_custom.js',
 			'cloud_storage' => 'pixelfed.cloud_storage',
-			'account_autofollow' => 'account.autofollow'
+			'account_autofollow' => 'account.autofollow',
+			'show_directory' => 'landing.show_directory',
+			'show_explore_feed' => 'landing.show_explore_feed',
 		];
 
 		foreach ($bools as $key => $value) {
@@ -241,16 +243,20 @@ trait AdminSettingsController
 		];
 		switch (config('database.default')) {
 			case 'pgsql':
+			$exp = DB::raw('select version();');
+			$expQuery = $exp->getValue(DB::connection()->getQueryGrammar());
 			$sys['database'] = [
 				'name' => 'Postgres',
-				'version' => explode(' ', DB::select(DB::raw('select version();'))[0]->version)[1]
+				'version' => explode(' ', DB::select($expQuery)[0]->version)[1]
 			];
 			break;
 
 			case 'mysql':
+			$exp = DB::raw('select version()');
+			$expQuery = $exp->getValue(DB::connection()->getQueryGrammar());
 			$sys['database'] = [
 				'name' => 'MySQL',
-				'version' => DB::select( DB::raw("select version()") )[0]->{'version()'}
+				'version' => DB::select($expQuery)[0]->{'version()'}
 			];
 			break;
 

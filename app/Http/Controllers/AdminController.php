@@ -12,6 +12,7 @@ use App\{
 	Profile,
 	Report,
 	Status,
+	StatusHashtag,
 	Story,
 	User
 };
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Redis;
 use App\Http\Controllers\Admin\{
 	AdminDirectoryController,
 	AdminDiscoverController,
+	AdminHashtagsController,
 	AdminInstanceController,
 	AdminReportController,
 	// AdminGroupsController,
@@ -40,12 +42,13 @@ use App\Models\CustomEmoji;
 
 class AdminController extends Controller
 {
-	use AdminReportController, 
+	use AdminReportController,
 	AdminDirectoryController,
 	AdminDiscoverController,
+	AdminHashtagsController,
 	// AdminGroupsController,
-	AdminMediaController, 
-	AdminSettingsController, 
+	AdminMediaController,
+	AdminSettingsController,
 	AdminInstanceController,
 	// AdminStorageController,
 	AdminUserController;
@@ -201,12 +204,6 @@ class AdminController extends Controller
 		return view('admin.apps.home', compact('apps'));
 	}
 
-	public function hashtagsHome(Request $request)
-	{
-		$hashtags = Hashtag::orderByDesc('id')->paginate(10);
-		return view('admin.hashtags.home', compact('hashtags'));
-	}
-
 	public function messagesHome(Request $request)
 	{
 		$messages = Contact::orderByDesc('id')->paginate(10);
@@ -267,6 +264,10 @@ class AdminController extends Controller
 		]);
 		$changed = false;
 		$changedFields = [];
+		$slug = str_slug($request->input('title'));
+		if(Newsroom::whereSlug($slug)->exists()) {
+			$slug = $slug . '-' . str_random(4);
+		}
 		$news = Newsroom::findOrFail($id);
 		$fields = [
 			'title' => 'string',
@@ -284,7 +285,7 @@ class AdminController extends Controller
 				case 'string':
 				if($request->{$field} != $news->{$field}) {
 					if($field == 'title') {
-						$news->slug = str_slug($request->{$field});
+						$news->slug = $slug;
 					}
 					$news->{$field} = $request->{$field};
 					$changed = true;
@@ -330,6 +331,10 @@ class AdminController extends Controller
 		]);
 		$changed = false;
 		$changedFields = [];
+		$slug = str_slug($request->input('title'));
+		if(Newsroom::whereSlug($slug)->exists()) {
+			$slug = $slug . '-' . str_random(4);
+		}
 		$news = new Newsroom();
 		$fields = [
 			'title' => 'string',
@@ -347,7 +352,7 @@ class AdminController extends Controller
 				case 'string':
 				if($request->{$field} != $news->{$field}) {
 					if($field == 'title') {
-						$news->slug = str_slug($request->{$field});
+						$news->slug = $slug;
 					}
 					$news->{$field} = $request->{$field};
 					$changed = true;
@@ -459,7 +464,9 @@ class AdminController extends Controller
 					->where('shortcode', 'like', '%' . $request->input('q') . '%')
 					->orWhere('domain', 'like', '%' . $request->input('q') . '%');
 				if(!$request->has('dups')) {
-					$q = $q->groupBy('shortcode');
+					if(!$pg) {
+						$q = $q->groupBy('shortcode');
+					}
 				}
 				return $q;
 			}
@@ -518,7 +525,7 @@ class AdminController extends Controller
 					->whereShortcode($request->input('shortcode'));
 				})
 			],
-			'emoji' => 'required|file|mimetypes:jpg,png|max:' . (config('federation.custom_emoji.max_size') / 1000)
+			'emoji' => 'required|file|mimes:jpg,png|max:' . (config('federation.custom_emoji.max_size') / 1000)
 		]);
 
 		$emoji = new CustomEmoji;
@@ -527,7 +534,7 @@ class AdminController extends Controller
 		$emoji->save();
 
 		$fileName = $emoji->id . '.' . $request->emoji->extension();
-		$request->emoji->storeAs('public/emoji', $fileName);
+		$request->emoji->storePubliclyAs('public/emoji', $fileName);
 		$emoji->media_path = 'emoji/' . $fileName;
 		$emoji->save();
 		Cache::forget('pf:custom_emoji');

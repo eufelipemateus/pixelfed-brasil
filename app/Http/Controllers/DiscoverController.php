@@ -24,6 +24,7 @@ use App\Services\ReblogService;
 use App\Services\StatusHashtagService;
 use App\Services\SnowflakeService;
 use App\Services\StatusService;
+use App\Services\TrendingHashtagService;
 use App\Services\UserFilterService;
 
 class DiscoverController extends Controller
@@ -40,6 +41,7 @@ class DiscoverController extends Controller
 
 			$tag = Hashtag::whereName($hashtag)
 				->orWhere('slug', $hashtag)
+				->where('is_banned', '!=', true)
 				->firstOrFail();
 			$tagCount = StatusHashtagService::count($tag->id);
 			return view('discover.tags.show', compact('tag', 'tagCount'));
@@ -52,14 +54,22 @@ class DiscoverController extends Controller
 
 		$this->validate($request, [
 			'hashtag' => 'required|string|min:1|max:124',
-			'page' => 'nullable|integer|min:1|max:' . ($user ? 29 : 10)
+			'page' => 'nullable|integer|min:1|max:' . ($user ? 29 : 3)
 		]);
 
 		$page = $request->input('page') ?? '1';
 		$end = $page > 1 ? $page * 9 : 0;
 		$tag = $request->input('hashtag');
 
-		$hashtag = Hashtag::whereName($tag)->firstOrFail();
+		if(config('database.default') === 'pgsql') {
+			$hashtag = Hashtag::where('name', 'ilike', $tag)->firstOrFail();
+		} else {
+			$hashtag = Hashtag::whereName($tag)->firstOrFail();
+		}
+
+		if($hashtag->is_banned == true) {
+			return [];
+		}
 		if($user) {
 			$res['follows'] = HashtagService::isFollowing($user->profile_id, $hashtag->id);
 		}
@@ -181,23 +191,7 @@ class DiscoverController extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
-		$res = Cache::remember('api:discover:v1.1:trending:hashtags', 3600, function() {
-			return StatusHashtag::select('hashtag_id', \DB::raw('count(*) as total'))
-				->groupBy('hashtag_id')
-				->orderBy('total','desc')
-				->where('created_at', '>', now()->subDays(90))
-				->take(9)
-				->get()
-				->map(function($h) {
-					$hashtag = $h->hashtag;
-					return [
-						'id' => $hashtag->id,
-						'total' => $h->total,
-						'name' => '#'.$hashtag->name,
-						'url' => $hashtag->url()
-					];
-				});
-		});
+		$res = TrendingHashtagService::getTrending();
 		return $res;
 	}
 

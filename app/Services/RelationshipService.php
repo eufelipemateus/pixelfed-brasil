@@ -14,8 +14,8 @@ class RelationshipService
 
 	public static function get($aid, $tid)
 	{
-		$actor = AccountService::get($aid);
-		$target = AccountService::get($tid);
+		$actor = AccountService::get($aid, true);
+		$target = AccountService::get($tid, true);
 		if(!$actor || !$target) {
 			return self::defaultRelation($tid);
 		}
@@ -57,8 +57,8 @@ class RelationshipService
 
 	public static function refresh($aid, $tid)
 	{
-		Cache::forget('pf:services:follow:audience:' . $aid);
-		Cache::forget('pf:services:follow:audience:' . $tid);
+		Cache::forget('pf:services:follower:audience:' . $aid);
+		Cache::forget('pf:services:follower:audience:' . $tid);
 		self::delete($tid, $aid);
 		self::delete($aid, $tid);
 		self::get($tid, $aid);

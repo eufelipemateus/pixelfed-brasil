@@ -87,25 +87,19 @@ class SearchApiV2Service
 		$limit = $this->query->input('limit') ?? 20;
 		$offset = $this->query->input('offset') ?? 0;
 		$rawQuery = $initalQuery ? $initalQuery : $this->query->input('q');
-		$query = '%' . $rawQuery . '%';
-		if(Str::substrCount($rawQuery, '@') >= 1 && Str::contains($rawQuery, config('pixelfed.domain.app'))) {
-			$deliminatorCount = Str::substrCount($rawQuery, '@');
-			$query = explode('@', $rawQuery)[$deliminatorCount == 1 ? 0 : 1];
+		$query = $rawQuery . '%';
+		$webfingerQuery = $query;
+		if(Str::substrCount($rawQuery, '@') == 1 && substr($rawQuery, 0, 1) !== '@') {
+			$query = '@' . $query;
 		}
-		if(Str::substrCount($rawQuery, '@') == 1 && substr($rawQuery, 0, 1) == '@') {
-			$query = substr($rawQuery, 1) . '%';
+		if(substr($webfingerQuery, 0, 1) !== '@') {
+			$webfingerQuery = '@' . $webfingerQuery;
 		}
 		$banned = InstanceService::getBannedDomains();
-		$results = Profile::select('profiles.*', 'followers.profile_id', 'followers.created_at')
-			->whereNull('status')
-			->leftJoin('followers', function($join) use($user) {
-				return $join->on('profiles.id', '=', 'followers.following_id')
-					->where('followers.profile_id', $user->profile_id);
-			})
+		$results = Profile::select('username', 'id', 'followers_count', 'domain')
 			->where('username', 'like', $query)
-			->orderBy('domain')
+			->orWhere('webfinger', 'like', $webfingerQuery)
 			->orderByDesc('profiles.followers_count')
-			->orderByDesc('followers.created_at')
 			->offset($offset)
 			->limit($limit)
 			->get()
@@ -128,11 +122,18 @@ class SearchApiV2Service
 	protected function hashtags()
 	{
 		$mastodonMode = self::$mastodonMode;
+		$q = $this->query->input('q');
 		$limit = $this->query->input('limit') ?? 20;
 		$offset = $this->query->input('offset') ?? 0;
-		$query = '%' . $this->query->input('q') . '%';
-		return Hashtag::whereIsBanned(false)
-			->where('name', 'like', $query)
+		$query = Str::startsWith($q, '#') ? '%' . substr($q, 1) . '%' : '%' . $q . '%';
+		$operator = config('database.default') === 'pgsql' ? 'ilike' : 'like';
+		return Hashtag::where('name', $operator, $query)
+			->orWhere('slug', $operator, $query)
+			->where(function($q) {
+				return $q->where('can_search', true)
+						->orWhereNull('can_search');
+			})
+			->orderByDesc('cached_count')
 			->offset($offset)
 			->limit($limit)
 			->get()

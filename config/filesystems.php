@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('FILESYSTEM_DRIVER', 'local'),
+    'default' => env('DANGEROUSLY_SET_FILESYSTEM_DRIVER', 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,6 +46,16 @@ return [
         'local' => [
             'driver' => 'local',
             'root'   => storage_path('app'),
+            'permissions' => [
+                'file' => [
+                    'public' => 0644,
+                    'private' => 0600,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0700,
+                ],
+            ],
         ],
 
         'public' => [
@@ -80,8 +90,9 @@ return [
             'options' => [
                 'CacheControl' => 'max-age=31536000'
             ],
-            'root' => env('DO_SPACES_ROOT','/'),
+            'root' => env('DO_SPACES_ROOT',''),
             'throw' => true,
+            'url' => env('AWS_URL'),
         ],
 
         'backup' => [

@@ -26,7 +26,7 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
 		Route::get('bookmarks', 'Api\ApiV1Controller@bookmarks')->middleware($middleware);
 
 		Route::get('accounts/verify_credentials', 'Api\ApiV1Controller@verifyCredentials')->middleware($middleware);
-		Route::patch('accounts/update_credentials', 'Api\ApiV1Controller@accountUpdateCredentials')->middleware($middleware);
+		Route::match(['post', 'patch'], 'accounts/update_credentials', 'Api\ApiV1Controller@accountUpdateCredentials')->middleware($middleware);
 		Route::get('accounts/relationships', 'Api\ApiV1Controller@accountRelationshipsById')->middleware($middleware);
 		Route::get('accounts/search', 'Api\ApiV1Controller@accountSearch')->middleware($middleware);
 		Route::get('accounts/{id}/statuses', 'Api\ApiV1Controller@accountStatusesById')->middleware($middleware);
@@ -81,7 +81,7 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
 
 		Route::get('timelines/home', 'Api\ApiV1Controller@timelineHome')->middleware($middleware);
 		Route::get('timelines/public', 'Api\ApiV1Controller@timelinePublic')->middleware($middleware);
-		Route::get('timelines/tag/{hashtag}', 'Api\ApiV1Controller@timelineHashtag');
+		Route::get('timelines/tag/{hashtag}', 'Api\ApiV1Controller@timelineHashtag')->middleware($middleware);
 		Route::get('discover/posts', 'Api\ApiV1Controller@discoverPosts')->middleware($middleware);
 
 		Route::get('preferences', 'Api\ApiV1Controller@getPreferences')->middleware($middleware);
@@ -131,8 +131,23 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
 			Route::post('lookup', 'DirectMessageController@composeLookup')->middleware($middleware);
 		});
 
+		Route::group(['prefix' => 'archive'], function () use($middleware) {
+			Route::post('add/{id}', 'Api\ApiV1Dot1Controller@archive')->middleware($middleware);
+			Route::post('remove/{id}', 'Api\ApiV1Dot1Controller@unarchive')->middleware($middleware);
+			Route::get('list', 'Api\ApiV1Dot1Controller@archivedPosts')->middleware($middleware);
+		});
+
+		Route::group(['prefix' => 'places'], function () use($middleware) {
+			Route::get('posts/{id}/{slug}', 'Api\ApiV1Dot1Controller@placesById')->middleware($middleware);
+		});
+
 		Route::group(['prefix' => 'stories'], function () use($middleware) {
-			Route::get('recent', 'StoryController@recent')->middleware($middleware);
+			Route::get('carousel', 'Stories\StoryApiV1Controller@carousel')->middleware($middleware);
+			Route::post('add', 'Stories\StoryApiV1Controller@add')->middleware($middleware);
+			Route::post('publish', 'Stories\StoryApiV1Controller@publish')->middleware($middleware);
+			Route::post('seen', 'Stories\StoryApiV1Controller@viewed')->middleware($middleware);
+			Route::post('self-expire/{id}', 'Stories\StoryApiV1Controller@delete')->middleware($middleware);
+			Route::post('comment', 'Stories\StoryApiV1Controller@comment')->middleware($middleware);
 		});
 
 		Route::group(['prefix' => 'compose'], function () use($middleware) {
@@ -148,6 +163,17 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
 
 		Route::group(['prefix' => 'directory'], function () use($middleware) {
 			Route::get('listing', 'PixelfedDirectoryController@get');
+		});
+
+		Route::group(['prefix' => 'auth'], function () use($middleware) {
+			Route::get('iarpfc', 'Api\ApiV1Dot1Controller@inAppRegistrationPreFlightCheck');
+			Route::post('iar', 'Api\ApiV1Dot1Controller@inAppRegistration');
+			Route::post('iarc', 'Api\ApiV1Dot1Controller@inAppRegistrationConfirm');
+			Route::get('iarer', 'Api\ApiV1Dot1Controller@inAppRegistrationEmailRedirect');
+
+			Route::post('invite/admin/verify', 'AdminInviteController@apiVerifyCheck')->middleware('throttle:20,120');
+			Route::post('invite/admin/uc', 'AdminInviteController@apiUsernameCheck')->middleware('throttle:20,120');
+			Route::post('invite/admin/ec', 'AdminInviteController@apiEmailCheck')->middleware('throttle:10,1440');
 		});
 	});
 
@@ -167,5 +193,29 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
 		Route::get('config', 'LiveStreamController@getConfig');
 		Route::post('broadcast/publish', 'LiveStreamController@clientBroadcastPublish');
 		Route::post('broadcast/finish', 'LiveStreamController@clientBroadcastFinish');
+	});
+
+	Route::group(['prefix' => 'admin'], function() use($middleware) {
+		Route::post('moderate/post/{id}', 'Api\ApiV1Dot1Controller@moderatePost')->middleware($middleware);
+		Route::get('supported', 'Api\AdminApiController@supported')->middleware($middleware);
+		Route::get('stats', 'Api\AdminApiController@getStats')->middleware($middleware);
+
+		Route::get('autospam/list', 'Api\AdminApiController@autospam')->middleware($middleware);
+		Route::post('autospam/handle', 'Api\AdminApiController@autospamHandle')->middleware($middleware);
+		Route::get('mod-reports/list', 'Api\AdminApiController@modReports')->middleware($middleware);
+		Route::post('mod-reports/handle', 'Api\AdminApiController@modReportHandle')->middleware($middleware);
+		Route::get('config', 'Api\AdminApiController@getConfiguration')->middleware($middleware);
+		Route::post('config/update', 'Api\AdminApiController@updateConfiguration')->middleware($middleware);
+		Route::get('users/list', 'Api\AdminApiController@getUsers')->middleware($middleware);
+		Route::get('users/get', 'Api\AdminApiController@getUser')->middleware($middleware);
+		Route::post('users/action', 'Api\AdminApiController@userAdminAction')->middleware($middleware);
+		Route::get('instances/list', 'Api\AdminApiController@instances')->middleware($middleware);
+		Route::get('instances/get', 'Api\AdminApiController@getInstance')->middleware($middleware);
+		Route::post('instances/moderate', 'Api\AdminApiController@moderateInstance')->middleware($middleware);
+		Route::post('instances/refresh-stats', 'Api\AdminApiController@refreshInstanceStats')->middleware($middleware);
+	});
+
+	Route::group(['prefix' => 'landing/v1'], function() use($middleware) {
+		Route::get('directory', 'LandingController@getDirectoryApi');
 	});
 });

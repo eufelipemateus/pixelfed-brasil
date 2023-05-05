@@ -62,36 +62,6 @@ class PublicApiController extends Controller
         }
     }
 
-    protected function getLikes($status)
-    {
-        if(false == Auth::check()) {
-            return [];
-        } else {
-            $profile = Auth::user()->profile;
-            if($profile->status) {
-                return [];
-            }
-            $likes = $status->likedBy()->orderBy('created_at','desc')->paginate(10);
-            $collection = new Fractal\Resource\Collection($likes, new AccountTransformer());
-            return $this->fractal->createData($collection)->toArray();
-        }
-    }
-
-    protected function getShares($status)
-    {
-        if(false == Auth::check()) {
-            return [];
-        } else {
-            $profile = Auth::user()->profile;
-            if($profile->status) {
-                return [];
-            }
-            $shares = $status->sharedBy()->orderBy('created_at','desc')->paginate(10);
-            $collection = new Fractal\Resource\Collection($shares, new AccountTransformer());
-            return $this->fractal->createData($collection)->toArray();
-        }
-    }
-
     public function getStatus(Request $request, $id)
     {
 		abort_if(!$request->user(), 403);
@@ -216,41 +186,6 @@ class PublicApiController extends Controller
         return response()->json($res, 200, [], JSON_PRETTY_PRINT);
     }
 
-    public function statusLikes(Request $request, $username, $id)
-    {
-        abort_if(!$request->user(), 404);
-        $status = Status::findOrFail($id);
-        $this->scopeCheck($status->profile, $status);
-        $page = $request->input('page');
-        if($page && $page >= 3 && $request->user()->profile_id != $status->profile_id) {
-            return response()->json([
-                'data' => []
-            ]);
-        }
-        $likes = $this->getLikes($status);
-        return response()->json([
-            'data' => $likes
-        ]);
-    }
-
-    public function statusShares(Request $request, $username, $id)
-    {
-        abort_if(!$request->user(), 404);
-        $profile = Profile::whereUsername($username)->whereNull('status')->firstOrFail();
-        $status = Status::whereProfileId($profile->id)->findOrFail($id);
-        $this->scopeCheck($profile, $status);
-        $page = $request->input('page');
-        if($page && $page >= 3 && $request->user()->profile_id != $status->profile_id) {
-            return response()->json([
-                'data' => []
-            ]);
-        }
-        $shares = $this->getShares($status);
-        return response()->json([
-            'data' => $shares
-        ]);
-    }
-
     protected function scopeCheck(Profile $profile, Status $status)
     {
         if($profile->is_private == true && Auth::check() == false) {
@@ -307,6 +242,7 @@ class PublicApiController extends Controller
         $user = $request->user();
         $filtered = $user ? UserFilterService::filters($user->profile_id) : [];
 
+        $hideNsfw = config('instance.hide_nsfw_on_public_feeds');
         if(config('exp.cached_public_timeline') == false) {
             if($min || $max) {
                 $dir = $min ? '>' : '<';
@@ -322,6 +258,9 @@ class PublicApiController extends Controller
                           ->whereNull(['in_reply_to_id', 'reblog_of_id'])
                           ->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
                           ->whereLocal(true)
+                          ->when($hideNsfw, function($q, $hideNsfw) {
+                            return $q->where('is_nsfw', false);
+                          })
                           ->whereScope('public')
                           ->orderBy('id', 'desc')
                           ->limit($limit)
@@ -365,6 +304,9 @@ class PublicApiController extends Controller
                           ->whereNull(['in_reply_to_id', 'reblog_of_id'])
                           ->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
                           ->whereLocal(true)
+                          ->when($hideNsfw, function($q, $hideNsfw) {
+                            return $q->where('is_nsfw', false);
+                          })
                           ->whereScope('public')
                           ->orderBy('id', 'desc')
                           ->limit($limit)
@@ -447,47 +389,24 @@ class PublicApiController extends Controller
         $user = $request->user();
 
         $key = 'user:last_active_at:id:'.$user->id;
-        $ttl = now()->addMinutes(20);
-        Cache::remember($key, $ttl, function() use($user) {
+        if(Cache::get($key) == null) {
             $user->last_active_at = now();
             $user->save();
-            return;
-        });
+            Cache::put($key, true, 43200);
+        }
 
         $pid = $user->profile_id;
 
-        $following = Cache::remember('profile:following:'.$pid, now()->addMinutes(1440), function() use($pid) {
+        $following = Cache::remember('profile:following:'.$pid, 1209600, function() use($pid) {
             $following = Follower::whereProfileId($pid)->pluck('following_id');
             return $following->push($pid)->toArray();
         });
-
-        if($recentFeed == true) {
-            $key = 'profile:home-timeline-cursor:'.$user->id;
-            $ttl = now()->addMinutes(30);
-            $min = Cache::remember($key, $ttl, function() use($pid) {
-                $res = StatusView::whereProfileId($pid)->orderByDesc('status_id')->first();
-                return $res ? $res->status_id : null;
-            });
-        }
 
         $filtered = $user ? UserFilterService::filters($user->profile_id) : [];
         $types = ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'];
         // $types = ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album', 'text'];
 
         $textOnlyReplies = false;
-
-        if(config('exp.top')) {
-            $textOnlyPosts = (bool) Redis::zscore('pf:tl:top', $pid);
-            $textOnlyReplies = (bool) Redis::zscore('pf:tl:replies', $pid);
-
-            if($textOnlyPosts) {
-                array_push($types, 'text');
-            }
-        }
-
-        if(config('exp.polls') == true) {
-            array_push($types, 'poll');
-        }
 
         if($min || $max) {
             $dir = $min ? '>' : '<';
@@ -513,7 +432,7 @@ class PublicApiController extends Controller
                         'updated_at'
                       )
                       ->whereIn('type', $types)
-                      ->when($textOnlyReplies != true, function($q, $textOnlyReplies) {
+                      ->when(!$textOnlyReplies, function($q, $textOnlyReplies) {
                         return $q->whereNull('in_reply_to_id');
                       })
                       ->where('id', $dir, $id)
@@ -523,10 +442,14 @@ class PublicApiController extends Controller
                       ->limit($limit)
                       ->get()
                       ->map(function($s) use ($user) {
+                      	try {
                            $status = StatusService::get($s->id, false);
                            if(!$status) {
                            		return false;
                            }
+                       } catch(\Exception $e) {
+                       	 return false;
+                       }
                            $status['favourited'] = (bool) LikeService::liked($user->profile_id, $s->id);
                            $status['bookmarked'] = (bool) BookmarkService::get($user->profile_id, $s->id);
                            $status['reblogged'] = (bool) ReblogService::get($user->profile_id, $s->id);
@@ -568,10 +491,14 @@ class PublicApiController extends Controller
                       ->limit($limit)
                       ->get()
                       ->map(function($s) use ($user) {
-                           $status = StatusService::get($s->id, false);
-                           if(!$status) {
-                           		return false;
-                           }
+	                      	try {
+	                           $status = StatusService::get($s->id, false);
+	                           if(!$status) {
+	                           		return false;
+	                           }
+	                       } catch(\Exception $e) {
+	                       		return false;
+	                       }
                            $status['favourited'] = (bool) LikeService::liked($user->profile_id, $s->id);
                            $status['bookmarked'] = (bool) BookmarkService::get($user->profile_id, $s->id);
                            $status['reblogged'] = (bool) ReblogService::get($user->profile_id, $s->id);
@@ -608,6 +535,7 @@ class PublicApiController extends Controller
         $amin = SnowflakeService::byDate(now()->subDays(config('federation.network_timeline_days_falloff')));
 
         $filtered = $user ? UserFilterService::filters($user->profile_id) : [];
+        $hideNsfw = config('instance.hide_nsfw_on_public_feeds');
 
         if(config('instance.timeline.network.cached') == false) {
 	        if($min || $max) {
@@ -620,7 +548,10 @@ class PublicApiController extends Controller
 	                        'scope',
 	                        'created_at',
 	                      )
-	                      ->where('id', $dir, $id)
+                          ->where('id', $dir, $id)
+                          ->when($hideNsfw, function($q, $hideNsfw) {
+                            return $q->where('is_nsfw', false);
+                          })
 	                      ->whereNull(['in_reply_to_id', 'reblog_of_id'])
 	                      ->whereNotIn('profile_id', $filtered)
 	                      ->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
@@ -648,6 +579,9 @@ class PublicApiController extends Controller
 	                          )
 	                      	  ->whereNull(['in_reply_to_id', 'reblog_of_id'])
 	                          ->whereNotIn('profile_id', $filtered)
+                              ->when($hideNsfw, function($q, $hideNsfw) {
+                                return $q->where('is_nsfw', false);
+                              })
 	                          ->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
 	                          ->whereNotNull('uri')
 	                          ->whereScope('public')
@@ -728,86 +662,6 @@ class PublicApiController extends Controller
     {
         $res = AccountService::get($id);
         return response()->json($res);
-    }
-
-    public function accountFollowers(Request $request, $id)
-    {
-		abort_if(!$request->user(), 403);
-		$account = AccountService::get($id);
-		abort_if(!$account, 404);
-		$pid = $request->user()->profile_id;
-
-		if($pid != $account['id']) {
-			if($account['locked']) {
-				if(!FollowerService::follows($pid, $account['id'])) {
-					return [];
-				}
-			}
-
-			if(AccountService::hiddenFollowers($id)) {
-				return [];
-			}
-
-			if($request->has('page') && $request->page >= 5) {
-				return [];
-			}
-		}
-
-		$res = DB::table('followers')
-			->select('id', 'profile_id', 'following_id')
-			->whereFollowingId($account['id'])
-			->orderByDesc('id')
-			->simplePaginate(10)
-			->map(function($follower) {
-				return AccountService::get($follower->profile_id);
-			})
-			->filter(function($account) {
-				return $account && isset($account['id']);
-			})
-			->values()
-			->toArray();
-
-		return response()->json($res);
-    }
-
-    public function accountFollowing(Request $request, $id)
-    {
-		abort_if(!$request->user(), 403);
-		$account = AccountService::get($id);
-		abort_if(!$account, 404);
-		$pid = $request->user()->profile_id;
-
-		if($pid != $account['id']) {
-			if($account['locked']) {
-				if(!FollowerService::follows($pid, $account['id'])) {
-					return [];
-				}
-			}
-
-			if(AccountService::hiddenFollowing($id)) {
-				return [];
-			}
-
-			if($request->has('page') && $request->page >= 5) {
-				return [];
-			}
-		}
-
-		$res = DB::table('followers')
-			->select('id', 'profile_id', 'following_id')
-			->whereProfileId($account['id'])
-			->orderByDesc('id')
-			->simplePaginate(10)
-			->map(function($follower) {
-				return AccountService::get($follower->following_id);
-			})
-			->filter(function($account) {
-				return $account && isset($account['id']);
-			})
-			->values()
-			->toArray();
-
-		return response()->json($res);
     }
 
     public function accountStatuses(Request $request, $id)

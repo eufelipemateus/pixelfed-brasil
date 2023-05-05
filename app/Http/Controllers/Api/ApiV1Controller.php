@@ -9,6 +9,7 @@ use App\Util\ActivityPub\Helpers;
 use App\Util\Media\Filter;
 use Laravel\Passport\Passport;
 use Auth, Cache, DB, Storage, URL;
+use Illuminate\Support\Facades\Redis;
 use App\{
 	Avatar,
 	Bookmark,
@@ -42,16 +43,19 @@ use App\Transformer\Api\{
 use App\Http\Controllers\FollowerController;
 use League\Fractal\Serializer\ArraySerializer;
 use League\Fractal\Pagination\IlluminatePaginatorAdapter;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\StatusController;
 
 use App\Jobs\AvatarPipeline\AvatarOptimize;
 use App\Jobs\CommentPipeline\CommentPipeline;
 use App\Jobs\LikePipeline\LikePipeline;
+use App\Jobs\MediaPipeline\MediaDeletePipeline;
 use App\Jobs\SharePipeline\SharePipeline;
 use App\Jobs\SharePipeline\UndoSharePipeline;
 use App\Jobs\StatusPipeline\NewStatusPipeline;
 use App\Jobs\StatusPipeline\StatusDelete;
 use App\Jobs\FollowPipeline\FollowPipeline;
+use App\Jobs\FollowPipeline\UnfollowPipeline;
 use App\Jobs\ImageOptimizePipeline\ImageOptimize;
 use App\Jobs\VideoPipeline\{
 	VideoOptimize,
@@ -61,12 +65,15 @@ use App\Jobs\VideoPipeline\{
 
 use App\Services\{
 	AccountService,
+	BookmarkService,
+	BouncerService,
 	CollectionService,
 	FollowerService,
 	InstanceService,
 	LikeService,
 	NetworkTimelineService,
 	NotificationService,
+	MediaService,
 	MediaPathService,
     ProfileStatusService,
 	PublicTimelineService,
@@ -89,6 +96,9 @@ use App\Services\MarkerService;
 use App\Models\Conversation;
 use App\Jobs\FollowPipeline\FollowAcceptPipeline;
 use App\Jobs\FollowPipeline\FollowRejectPipeline;
+use Illuminate\Support\Facades\RateLimiter;
+use Purify;
+use Carbon\Carbon;
 
 class ApiV1Controller extends Controller
 {
@@ -121,6 +131,11 @@ class ApiV1Controller extends Controller
 		if(!$request->user()) {
 			return response('', 403);
 		}
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_signups')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$client = $request->user()->token()->client;
 		$res = [
 			'name' => $client->name,
@@ -139,6 +154,10 @@ class ApiV1Controller extends Controller
 			'client_name' 		=> 'required',
 			'redirect_uris' 	=> 'required'
 		]);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_signups')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$uris = implode(',', explode('\n', $request->redirect_uris));
 
@@ -182,6 +201,10 @@ class ApiV1Controller extends Controller
 		abort_if(!$user, 403);
 		abort_if($user->status != null, 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_signups')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($user->profile_id) : AccountService::getMastodon($user->profile_id);
 
 		$res['source'] = [
@@ -204,6 +227,10 @@ class ApiV1Controller extends Controller
 	 */
 	public function accountById(Request $request, $id)
 	{
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($id, true) : AccountService::getMastodon($id, true);
 		if(!$res) {
 			return response()->json(['error' => 'Record not found'], 404);
@@ -220,8 +247,12 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
-			'avatar'			=> 'sometimes|mimetypes:image/jpeg,image/png|min:10|max:' . config('pixelfed.max_avatar_size'),
+			'avatar'			=> 'sometimes|mimetypes:image/jpeg,image/png|max:' . config('pixelfed.max_avatar_size'),
 			'display_name'      => 'nullable|string|max:30',
 			'note'              => 'nullable|string|max:200',
 			'locked'            => 'nullable',
@@ -251,7 +282,7 @@ class ApiV1Controller extends Controller
 				$file = $request->file('avatar');
 				$path = "public/avatars/{$profile->id}";
 				$name = strtolower(str_random(6)). '.' . $file->guessExtension();
-				$request->file('avatar')->storeAs($path, $name);
+				$request->file('avatar')->storePubliclyAs($path, $name);
 				$av->media_path = "{$path}/{$name}";
 				$av->save();
 				Cache::forget("avatar:{$profile->id}");
@@ -457,9 +488,19 @@ class ApiV1Controller extends Controller
 	public function accountFollowersById(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$account = AccountService::get($id);
 		abort_if(!$account, 404);
 		$pid = $request->user()->profile_id;
+		$this->validate($request, [
+			'limit' => 'sometimes|integer|min:1|max:80'
+		]);
+		$limit = $request->input('limit', 10);
+		$napi = $request->has(self::PF_API_ENTITY_KEY);
 
 		if(intval($pid) !== intval($account['id'])) {
 			if($account['locked']) {
@@ -472,18 +513,56 @@ class ApiV1Controller extends Controller
 				return [];
 			}
 
-			if($request->has('page') && $request->page >= 5) {
-				return [];
+			if($request->has('page') && $request->user()->is_admin == false) {
+				$page = (int) $request->input('page');
+				if(($page * $limit) >= 100) {
+					return [];
+				}
 			}
 		}
+		if($request->has('page')) {
+			$res = DB::table('followers')
+				->select('id', 'profile_id', 'following_id')
+				->whereFollowingId($account['id'])
+				->orderByDesc('id')
+				->simplePaginate($limit)
+				->map(function($follower) use($napi) {
+					return $napi ? AccountService::get($follower->profile_id, true) : AccountService::getMastodon($follower->profile_id, true);
+				})
+				->filter(function($account) {
+					return $account && isset($account['id']);
+				})
+				->values()
+				->toArray();
 
-		$res = DB::table('followers')
+			return $this->json($res);
+		}
+
+		$paginator = DB::table('followers')
 			->select('id', 'profile_id', 'following_id')
 			->whereFollowingId($account['id'])
 			->orderByDesc('id')
-			->simplePaginate(10)
-			->map(function($follower) {
-				return AccountService::getMastodon($follower->profile_id);
+			->cursorPaginate($limit)
+			->withQueryString();
+
+		$link = null;
+
+		if($paginator->onFirstPage()) {
+			if($paginator->hasMorePages()) {
+				$link = '<'.$paginator->nextPageUrl().'>; rel="prev"';
+			}
+		} else {
+			if($paginator->previousPageUrl()) {
+				$link = '<'.$paginator->previousPageUrl().'>; rel="next"';
+			}
+
+			if($paginator->hasMorePages()) {
+				$link .= ($link ? ', ' : '') . '<'.$paginator->nextPageUrl().'>; rel="prev"';
+			}
+		}
+
+		$res = $paginator->map(function($follower) use($napi) {
+				return $napi ? AccountService::get($follower->profile_id, true) : AccountService::getMastodon($follower->profile_id, true);
 			})
 			->filter(function($account) {
 				return $account && isset($account['id']);
@@ -491,7 +570,8 @@ class ApiV1Controller extends Controller
 			->values()
 			->toArray();
 
-		return $this->json($res);
+		$headers = isset($link) ? ['Link' => $link] : [];
+		return $this->json($res, 200, $headers);
 	}
 
 	/**
@@ -504,9 +584,19 @@ class ApiV1Controller extends Controller
 	public function accountFollowingById(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$account = AccountService::get($id);
 		abort_if(!$account, 404);
 		$pid = $request->user()->profile_id;
+		$this->validate($request, [
+			'limit' => 'sometimes|integer|min:1|max:80'
+		]);
+		$limit = $request->input('limit', 10);
+		$napi = $request->has(self::PF_API_ENTITY_KEY);
 
 		if(intval($pid) !== intval($account['id'])) {
 			if($account['locked']) {
@@ -519,18 +609,56 @@ class ApiV1Controller extends Controller
 				return [];
 			}
 
-			if($request->has('page') && $request->page >= 5) {
-				return [];
+			if($request->has('page') && $request->user()->is_admin == false) {
+				$page = (int) $request->input('page');
+				if(($page * $limit) >= 100) {
+					return [];
+				}
 			}
 		}
 
-		$res = DB::table('followers')
+		if($request->has('page')) {
+			$res = DB::table('followers')
+				->select('id', 'profile_id', 'following_id')
+				->whereProfileId($account['id'])
+				->orderByDesc('id')
+				->simplePaginate($limit)
+				->map(function($follower) use($napi) {
+					return $napi ? AccountService::get($follower->following_id, true) : AccountService::getMastodon($follower->following_id, true);
+				})
+				->filter(function($account) {
+					return $account && isset($account['id']);
+				})
+				->values()
+				->toArray();
+			return $this->json($res);
+		}
+
+		$paginator = DB::table('followers')
 			->select('id', 'profile_id', 'following_id')
 			->whereProfileId($account['id'])
 			->orderByDesc('id')
-			->simplePaginate(10)
-			->map(function($follower) {
-				return AccountService::get($follower->following_id);
+			->cursorPaginate($limit)
+			->withQueryString();
+
+		$link = null;
+
+		if($paginator->onFirstPage()) {
+			if($paginator->hasMorePages()) {
+				$link = '<'.$paginator->nextPageUrl().'>; rel="prev"';
+			}
+		} else {
+			if($paginator->previousPageUrl()) {
+				$link = '<'.$paginator->previousPageUrl().'>; rel="next"';
+			}
+
+			if($paginator->hasMorePages()) {
+				$link .= ($link ? ', ' : '') . '<'.$paginator->nextPageUrl().'>; rel="prev"';
+			}
+		}
+
+		$res = $paginator->map(function($follower) use($napi) {
+				return $napi ? AccountService::get($follower->following_id, true) : AccountService::getMastodon($follower->following_id, true);
 			})
 			->filter(function($account) {
 				return $account && isset($account['id']);
@@ -538,7 +666,8 @@ class ApiV1Controller extends Controller
 			->values()
 			->toArray();
 
-		return $this->json($res);
+		$headers = isset($link) ? ['Link' => $link] : [];
+		return $this->json($res, 200, $headers);
 	}
 
 	/**
@@ -550,6 +679,10 @@ class ApiV1Controller extends Controller
 	 */
 	public function accountStatusesById(Request $request, $id)
 	{
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 
 		$this->validate($request, [
@@ -615,13 +748,20 @@ class ApiV1Controller extends Controller
 		->orderByDesc('id')
 		->get()
 		->map(function($s) use($user, $napi, $profile) {
-			$status = $napi ? StatusService::get($s->id, false) : StatusService::getMastodon($s->id, false);
+            try {
+                $status = $napi ? StatusService::get($s->id, false) : StatusService::getMastodon($s->id, false);
+            } catch (\Exception $e) {
+                return false;
+            }
+
 			if($profile) {
 				$status['account'] = $profile;
 			}
 
 			if($user && $status) {
 				$status['favourited'] = (bool) LikeService::liked($user->profile_id, $s->id);
+                $status['reblogged'] = (bool) ReblogService::get($user->profile_id, $s->id);
+                $status['bookmarked'] = (bool) BookmarkService::get($user->profile_id, $s->id);
 			}
 			return $status;
 		})
@@ -644,12 +784,15 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 
 		$target = Profile::where('id', '!=', $user->profile_id)
 			->whereNull('status')
 			->findOrFail($id);
-
 
 		$private = (bool) $target->is_private;
 		$remote = (bool) $target->domain;
@@ -674,13 +817,8 @@ class ApiV1Controller extends Controller
 		}
 
 		// Rate limits, max 7500 followers per account
-		if($user->profile->following()->count() >= Follower::MAX_FOLLOWING) {
+		if($user->profile->following_count && $user->profile->following_count >= Follower::MAX_FOLLOWING) {
 			abort(400, 'You cannot follow more than ' . Follower::MAX_FOLLOWING . ' accounts');
-		}
-
-		// Rate limits, follow 30 accounts per hour max
-		if($user->profile->following()->where('followers.created_at', '>', now()->subHour())->count() >= Follower::FOLLOW_PER_HOUR) {
-			abort(400, 'You can only follow ' . Follower::FOLLOW_PER_HOUR . ' users per hour');
 		}
 
 		if($private == true) {
@@ -700,7 +838,7 @@ class ApiV1Controller extends Controller
 			if($remote == true && config('federation.activitypub.remoteFollow') == true) {
 				(new FollowerController())->sendFollow($user->profile, $target);
 			}
-			FollowPipeline::dispatch($follower);
+			FollowPipeline::dispatch($follower)->onQueue('high');
 		}
 
 		RelationshipService::refresh($user->profile_id, $target->id);
@@ -734,6 +872,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 
 		$target = Profile::where('id', '!=', $user->profile_id)
@@ -761,22 +903,11 @@ class ApiV1Controller extends Controller
 			return $this->json($res);
 		}
 
-		// Rate limits, follow 30 accounts per hour max
-		if($user->profile->following()->where('followers.updated_at', '>', now()->subHour())->count() >= Follower::FOLLOW_PER_HOUR) {
-			abort(400, 'You can only follow or unfollow ' . Follower::FOLLOW_PER_HOUR . ' users per hour');
-		}
-
-		if($user->profile->following_count) {
-			$user->profile->decrement('following_count');
-		}
-
-		FollowRequest::whereFollowerId($user->profile_id)
-			->whereFollowingId($target->id)
-			->delete();
-
 		Follower::whereProfileId($user->profile_id)
 			->whereFollowingId($target->id)
 			->delete();
+
+		UnfollowPipeline::dispatch($user->profile_id, $target->id)->onQueue('high');
 
 		if($remote == true && config('federation.activitypub.remoteFollow') == true) {
 			(new FollowerController())->sendUndoFollow($user->profile, $target);
@@ -813,6 +944,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
 			'id'    => 'required|array|min:1|max:20',
 			'id.*'  => 'required|integer|min:1|max:' . PHP_INT_MAX
@@ -844,6 +979,10 @@ class ApiV1Controller extends Controller
 			'limit'     => 'nullable|integer|min:1|max:40',
 			'resolve'   => 'nullable'
 		]);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 		$query = $request->input('q');
@@ -884,6 +1023,10 @@ class ApiV1Controller extends Controller
 			'page'      => 'nullable|integer|min:1|max:10'
 		]);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$limit = $request->input('limit') ?? 40;
 
@@ -916,6 +1059,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$pid = $user->profile_id ?? $user->profile->id;
 
@@ -925,13 +1072,62 @@ class ApiV1Controller extends Controller
 
 		$profile = Profile::findOrFail($id);
 
-		if($profile->user->is_admin == true) {
+		if($profile->user && $profile->user->is_admin == true) {
 			abort(400, 'You cannot block an admin');
 		}
 
-		Follower::whereProfileId($profile->id)->whereFollowingId($pid)->delete();
-		Follower::whereProfileId($pid)->whereFollowingId($profile->id)->delete();
-		Notification::whereProfileId($pid)->whereActorId($profile->id)->delete();
+		$count = UserFilterService::blockCount($pid);
+		$maxLimit = intval(config('instance.user_filters.max_user_blocks'));
+		if($count == 0) {
+			$filterCount = UserFilter::whereUserId($pid)
+				->whereFilterType('block')
+				->get()
+				->map(function($rec) {
+					return AccountService::get($rec->filterable_id, true);
+				})
+				->filter(function($account) {
+					return $account && isset($account['id']);
+				})
+				->values()
+				->count();
+			abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT . $maxLimit . ' accounts');
+		} else {
+			abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT . $maxLimit . ' accounts');
+		}
+
+		$followed = Follower::whereProfileId($profile->id)->whereFollowingId($pid)->first();
+		if($followed) {
+			$followed->delete();
+			$profile->following_count = Follower::whereProfileId($profile->id)->count();
+			$profile->save();
+			$selfProfile = $user->profile;
+			$selfProfile->followers_count = Follower::whereFollowingId($pid)->count();
+			$selfProfile->save();
+			FollowerService::remove($profile->id, $pid);
+			AccountService::del($pid);
+			AccountService::del($profile->id);
+		}
+
+		$following = Follower::whereProfileId($pid)->whereFollowingId($profile->id)->first();
+		if($following) {
+			$following->delete();
+			$profile->followers_count = Follower::whereFollowingId($profile->id)->count();
+			$profile->save();
+			$selfProfile = $user->profile;
+			$selfProfile->following_count = Follower::whereProfileId($pid)->count();
+			$selfProfile->save();
+			FollowerService::remove($pid, $profile->pid);
+			AccountService::del($pid);
+			AccountService::del($profile->id);
+		}
+
+		Notification::whereProfileId($pid)
+			->whereActorId($profile->id)
+			->get()
+			->map(function($n) use($pid) {
+				NotificationService::del($pid, $n['id']);
+				$n->forceDelete();
+		});
 
 		$filter = UserFilter::firstOrCreate([
 			'user_id'         => $pid,
@@ -940,10 +1136,8 @@ class ApiV1Controller extends Controller
 			'filter_type'     => 'block',
 		]);
 
-		Cache::forget("user:filter:list:$pid");
-		Cache::forget("api:local:exp:rec:$pid");
+		UserFilterService::block($pid, $id);
 		RelationshipService::refresh($pid, $id);
-
 		$resource = new Fractal\Resource\Item($profile, new RelationshipTransformer());
 		$res = $this->fractal->createData($resource)->toArray();
 
@@ -961,6 +1155,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$pid = $user->profile_id ?? $user->profile->id;
 
@@ -970,15 +1168,17 @@ class ApiV1Controller extends Controller
 
 		$profile = Profile::findOrFail($id);
 
-		UserFilter::whereUserId($pid)
+		$filter = UserFilter::whereUserId($pid)
 			->whereFilterableId($profile->id)
 			->whereFilterableType('App\Profile')
 			->whereFilterType('block')
-			->delete();
+			->first();
 
-		Cache::forget("user:filter:list:$pid");
-		Cache::forget("api:local:exp:rec:$pid");
-		RelationshipService::refresh($pid, $id);
+		if($filter) {
+			$filter->delete();
+			UserFilterService::unblock($pid, $profile->id);
+			RelationshipService::refresh($pid, $id);
+		}
 
 		$resource = new Fractal\Resource\Item($profile, new RelationshipTransformer());
 		$res = $this->fractal->createData($resource)->toArray();
@@ -1038,6 +1238,10 @@ class ApiV1Controller extends Controller
 			'limit' => 'sometimes|integer|min:1|max:20'
 		]);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$maxId = $request->input('max_id');
 		$minId = $request->input('min_id');
@@ -1090,6 +1294,10 @@ class ApiV1Controller extends Controller
 	public function statusFavouriteById(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 
@@ -1150,6 +1358,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 
 		$status = Status::findOrFail($id);
@@ -1206,6 +1418,11 @@ class ApiV1Controller extends Controller
 		$this->validate($request, [
 			'limit' => 'sometimes|integer|min:1|max:100'
 		]);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 
 		$res = FollowRequest::whereFollowingId($user->profile->id)
@@ -1262,7 +1479,7 @@ class ApiV1Controller extends Controller
 		AccountService::del($profile->id);
 
 		if($follower->domain != null && $follower->private_key === null) {
-			FollowAcceptPipeline::dispatch($followRequest);
+			FollowAcceptPipeline::dispatch($followRequest)->onQueue('follow');
 		} else {
 			FollowPipeline::dispatch($follow);
 			$followRequest->delete();
@@ -1300,7 +1517,7 @@ class ApiV1Controller extends Controller
 		$follower = $followRequest->follower;
 
 		if($follower->domain != null && $follower->private_key === null) {
-			FollowRejectPipeline::dispatch($followRequest);
+			FollowRejectPipeline::dispatch($followRequest)->onQueue('follow');
 		} else {
 			$followRequest->delete();
 		}
@@ -1446,14 +1663,21 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
-		  'file.*'      => function() {
-			return [
-				'required',
+			'file.*' => [
+				'required_without:file',
 				'mimetypes:' . config_cache('pixelfed.media_types'),
 				'max:' . config_cache('pixelfed.max_photo_size'),
-			];
-		  },
+			],
+			'file' => [
+				'required_without:file.*',
+				'mimetypes:' . config_cache('pixelfed.media_types'),
+				'max:' . config_cache('pixelfed.max_photo_size'),
+			],
 		  'filter_name' => 'nullable|string|max:24',
 		  'filter_class' => 'nullable|alpha_dash|max:24',
 		  'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length')
@@ -1501,7 +1725,7 @@ class ApiV1Controller extends Controller
 		}
 
 		$storagePath = MediaPathService::get($user, 2);
-		$path = $photo->store($storagePath);
+		$path = $photo->storePublicly($storagePath);
 		$hash = \hash_file('sha256', $photo);
 		$license = null;
 		$mime = $photo->getMimeType();
@@ -1547,11 +1771,11 @@ class ApiV1Controller extends Controller
 		switch ($media->mime) {
 			case 'image/jpeg':
 			case 'image/png':
-				ImageOptimize::dispatch($media);
+				ImageOptimize::dispatch($media)->onQueue('mmo');
 				break;
 
 			case 'video/mp4':
-				VideoThumbnail::dispatch($media);
+				VideoThumbnail::dispatch($media)->onQueue('mmo');
 				$preview_url = '/storage/no-preview.png';
 				$url = '/storage/no-preview.png';
 				break;
@@ -1576,6 +1800,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
 		  'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length')
 		]);
@@ -1583,15 +1811,36 @@ class ApiV1Controller extends Controller
 		$user = $request->user();
 
 		$media = Media::whereUserId($user->id)
-			->whereNull('status_id')
+			->whereProfileId($user->profile_id)
 			->findOrFail($id);
 
-		$media->caption = $request->input('description');
-		$media->save();
+		$executed = RateLimiter::attempt(
+			'media:update:'.$user->id,
+			10,
+			function() use($media, $request) {
+				$caption = Purify::clean($request->input('description'));
 
+				if($caption != $media->caption) {
+					$media->caption = $caption;
+					$media->save();
+
+					if($media->status_id) {
+						MediaService::del($media->status_id);
+						StatusService::del($media->status_id);
+					}
+				}
+		});
+
+		if(!$executed) {
+			return response()->json([
+				'error' => 'Too many attempts. Try again in a few minutes.'
+			], 429);
+		};
+
+		$fractal = new Fractal\Manager();
+		$fractal->setSerializer(new ArraySerializer());
 		$resource = new Fractal\Resource\Item($media, new MediaTransformer());
-		$res = $this->fractal->createData($resource)->toArray();
-		return $this->json($res);
+		return $this->json($fractal->createData($resource)->toArray());
 	}
 
 	/**
@@ -1604,6 +1853,10 @@ class ApiV1Controller extends Controller
 	public function mediaGet(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 
@@ -1626,17 +1879,25 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
-		  'file.*'      => function() {
-			return [
-				'required',
+		  	'file.*' => [
+				'required_without:file',
 				'mimetypes:' . config_cache('pixelfed.media_types'),
 				'max:' . config_cache('pixelfed.max_photo_size'),
-			];
-		  },
+			],
+			'file' => [
+				'required_without:file.*',
+				'mimetypes:' . config_cache('pixelfed.media_types'),
+				'max:' . config_cache('pixelfed.max_photo_size'),
+			],
 		  'filter_name' => 'nullable|string|max:24',
 		  'filter_class' => 'nullable|alpha_dash|max:24',
-		  'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length')
+		  'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length'),
+		  'replace_id' => 'sometimes'
 		]);
 
 		$user = $request->user();
@@ -1681,7 +1942,7 @@ class ApiV1Controller extends Controller
 		}
 
 		$storagePath = MediaPathService::get($user, 2);
-		$path = $photo->store($storagePath);
+		$path = $photo->storePublicly($storagePath);
 		$hash = \hash_file('sha256', $photo);
 		$license = null;
 		$mime = $photo->getMimeType();
@@ -1697,6 +1958,21 @@ class ApiV1Controller extends Controller
 		}
 
 		abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
+		if($request->has('replace_id')) {
+			$rpid = $request->input('replace_id');
+			$removeMedia = Media::whereNull('status_id')
+				->whereUserId($user->id)
+				->whereProfileId($profile->id)
+				->where('created_at', '>', now()->subHours(2))
+				->find($rpid);
+			if($removeMedia) {
+				$dateTime = Carbon::now();
+				MediaDeletePipeline::dispatch($removeMedia)
+					->onQueue('mmo')
+					->delay($dateTime->addMinutes(15));
+			}
+		}
 
 		$media = new Media();
 		$media->status_id = null;
@@ -1717,11 +1993,11 @@ class ApiV1Controller extends Controller
 		switch ($media->mime) {
 			case 'image/jpeg':
 			case 'image/png':
-				ImageOptimize::dispatch($media);
+				ImageOptimize::dispatch($media)->onQueue('mmo');
 				break;
 
 			case 'video/mp4':
-				VideoThumbnail::dispatch($media);
+				VideoThumbnail::dispatch($media)->onQueue('mmo');
 				$preview_url = '/storage/no-preview.png';
 				$url = '/storage/no-preview.png';
 				break;
@@ -1780,6 +2056,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$pid = $user->profile_id;
 
@@ -1789,6 +2069,25 @@ class ApiV1Controller extends Controller
 
 		$account = Profile::findOrFail($id);
 
+		$count = UserFilterService::muteCount($pid);
+		$maxLimit = intval(config('instance.user_filters.max_user_mutes'));
+		if($count == 0) {
+			$filterCount = UserFilter::whereUserId($pid)
+				->whereFilterType('mute')
+				->get()
+				->map(function($rec) {
+					return AccountService::get($rec->filterable_id, true);
+				})
+				->filter(function($account) {
+					return $account && isset($account['id']);
+				})
+				->values()
+				->count();
+			abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT . $maxLimit . ' accounts');
+		} else {
+			abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT . $maxLimit . ' accounts');
+		}
+
 		$filter = UserFilter::firstOrCreate([
 			'user_id'         => $pid,
 			'filterable_id'   => $account->id,
@@ -1796,9 +2095,6 @@ class ApiV1Controller extends Controller
 			'filter_type'     => 'mute',
 		]);
 
-		Cache::forget("user:filter:list:$pid");
-		Cache::forget("feature:discover:posts:$pid");
-		Cache::forget("api:local:exp:rec:$pid");
 		RelationshipService::refresh($pid, $id);
 
 		$resource = new Fractal\Resource\Item($account, new RelationshipTransformer());
@@ -1817,6 +2113,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$pid = $user->profile_id;
 
@@ -1824,23 +2124,21 @@ class ApiV1Controller extends Controller
             return $this->json(['error' => 'You cannot unmute yourself'], 500);
         }
 
-		$account = Profile::findOrFail($id);
+		$profile = Profile::findOrFail($id);
 
 		$filter = UserFilter::whereUserId($pid)
-			->whereFilterableId($account->id)
+			->whereFilterableId($profile->id)
 			->whereFilterableType('App\Profile')
 			->whereFilterType('mute')
 			->first();
 
 		if($filter) {
 			$filter->delete();
-			Cache::forget("user:filter:list:$pid");
-			Cache::forget("feature:discover:posts:$pid");
-			Cache::forget("api:local:exp:rec:$pid");
+			UserFilterService::unmute($pid, $profile->id);
 			RelationshipService::refresh($pid, $id);
 		}
 
-		$resource = new Fractal\Resource\Item($account, new RelationshipTransformer());
+		$resource = new Fractal\Resource\Item($profile, new RelationshipTransformer());
 		$res = $this->fractal->createData($resource)->toArray();
 		return $this->json($res);
 	}
@@ -1854,6 +2152,10 @@ class ApiV1Controller extends Controller
 	public function accountNotifications(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$this->validate($request, [
 			'limit' => 'nullable|integer|min:1|max:100',
@@ -1928,11 +2230,15 @@ class ApiV1Controller extends Controller
 	public function timelineHome(Request $request)
 	{
 		$this->validate($request,[
-		  'page'        => 'nullable|integer|max:40',
-		  'min_id'      => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
-		  'max_id'      => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
-		  'limit'       => 'nullable|integer|max:100'
+		  'page'        => 'sometimes|integer|max:40',
+		  'min_id'      => 'sometimes|integer|min:0|max:' . PHP_INT_MAX,
+		  'max_id'      => 'sometimes|integer|min:0|max:' . PHP_INT_MAX,
+		  'limit'       => 'sometimes|integer|min:1|max:100'
 		]);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$napi = $request->has(self::PF_API_ENTITY_KEY);
 		$page = $request->input('page');
@@ -1941,7 +2247,7 @@ class ApiV1Controller extends Controller
 		$limit = $request->input('limit') ?? 20;
 		$pid = $request->user()->profile_id;
 
-		$following = Cache::remember('profile:following:'.$pid, now()->addMinutes(1440), function() use($pid) {
+		$following = Cache::remember('profile:following:'.$pid, 1209600, function() use($pid) {
 			$following = Follower::whereProfileId($pid)->pluck('following_id');
 			return $following->push($pid)->toArray();
 		});
@@ -1954,20 +2260,32 @@ class ApiV1Controller extends Controller
 				'profile_id',
 				'type',
 				'visibility',
-				'created_at'
+				'in_reply_to_id',
+				'reblog_of_id'
 			)
-			->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
 			->where('id', $dir, $id)
-			->whereIn('profile_id', $following)
+			->whereNull(['in_reply_to_id', 'reblog_of_id'])
+			->whereIntegerInRaw('profile_id', $following)
+			->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
 			->whereIn('visibility',['public', 'unlisted', 'private'])
-			->latest()
+			->orderByDesc('id')
 			->take(($limit * 2))
 			->get()
 			->map(function($s) use($pid, $napi) {
-				$status = $napi ? StatusService::get($s['id'], false) : StatusService::getMastodon($s['id'], false);
-				if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+				try {
+					$account = $napi ? AccountService::get($s['profile_id'], true) : AccountService::getMastodon($s['profile_id'], true);
+					if(!$account) {
+						return false;
+					}
+					$status = $napi ? StatusService::get($s['id'], false) : StatusService::getMastodon($s['id'], false);
+					if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+						return false;
+					}
+				} catch(\Exception $e) {
 					return false;
 				}
+
+				$status['account'] = $account;
 
 				if($pid) {
 					$status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
@@ -1986,19 +2304,31 @@ class ApiV1Controller extends Controller
 				'profile_id',
 				'type',
 				'visibility',
-				'created_at'
+				'in_reply_to_id',
+				'reblog_of_id',
 			)
+			->whereNull(['in_reply_to_id', 'reblog_of_id'])
+			->whereIntegerInRaw('profile_id', $following)
 			->whereIn('type', ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
-			->whereIn('profile_id', $following)
 			->whereIn('visibility',['public', 'unlisted', 'private'])
-			->latest()
+			->orderByDesc('id')
 			->take(($limit * 2))
 			->get()
 			->map(function($s) use($pid, $napi) {
-				$status = $napi ? StatusService::get($s['id'], false) : StatusService::getMastodon($s['id'], false);
-				if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+				try {
+					$account = $napi ? AccountService::get($s['profile_id'], true) : AccountService::getMastodon($s['profile_id'], true);
+					if(!$account) {
+						return false;
+					}
+					$status = $napi ? StatusService::get($s['id'], false) : StatusService::getMastodon($s['id'], false);
+					if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+						return false;
+					}
+				} catch(\Exception $e) {
 					return false;
 				}
+
+				$status['account'] = $account;
 
 				if($pid) {
 					$status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
@@ -2057,6 +2387,10 @@ class ApiV1Controller extends Controller
 		  'local'		=> 'sometimes'
 		]);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$napi = $request->has(self::PF_API_ENTITY_KEY);
 		$min = $request->input('min_id');
 		$max = $request->input('max_id');
@@ -2110,10 +2444,21 @@ class ApiV1Controller extends Controller
 			}
 		})
 		->map(function($k) use($user, $napi) {
-			$status = $napi ? StatusService::get($k) : StatusService::getMastodon($k);
-			if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+			try {
+				$status = $napi ? StatusService::get($k) : StatusService::getMastodon($k);
+				if(!$status || !isset($status['account']) || !isset($status['account']['id'])) {
+					return false;
+				}
+			} catch(\Exception $e) {
 				return false;
 			}
+
+			$account = $napi ? AccountService::get($status['account']['id'], true) : AccountService::getMastodon($status['account']['id'], true);
+			if(!$account) {
+				return false;
+			}
+
+			$status['account'] = $account;
 
 			if($user) {
 				$status['favourited'] = (bool) LikeService::liked($user->profile_id, $k);
@@ -2173,6 +2518,10 @@ class ApiV1Controller extends Controller
 			'scope' => 'nullable|in:inbox,sent,requests'
 		]);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$limit = $request->input('limit', 20);
 		$scope = $request->input('scope', 'inbox');
 		$pid = $request->user()->profile_id;
@@ -2218,7 +2567,7 @@ class ApiV1Controller extends Controller
 				return $res;
 			})
 			->filter(function($dm) {
-				return isset($dm['accounts']) && count($dm['accounts']);
+				return isset($dm['accounts']) && count($dm['accounts']) && !empty($dm['last_status']);
 			})
 			->unique(function($item, $key) {
 				return $item['accounts'][0]['id'];
@@ -2238,6 +2587,10 @@ class ApiV1Controller extends Controller
 	public function statusById(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 
@@ -2259,6 +2612,7 @@ class ApiV1Controller extends Controller
 
 		$res['favourited'] = LikeService::liked($user->profile_id, $res['id']);
 		$res['reblogged'] = ReblogService::get($user->profile_id, $res['id']);
+		$res['bookmarked'] = BookmarkService::get($user->profile_id, $res['id']);
 
 		return $this->json($res);
 	}
@@ -2273,6 +2627,10 @@ class ApiV1Controller extends Controller
 	public function statusContext(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api_strict_mode')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 		$pid = $user->profile_id;
@@ -2302,6 +2660,8 @@ class ApiV1Controller extends Controller
 		}
 
 		if($status['replies_count']) {
+			$filters = UserFilterService::filters($pid);
+
 			$descendants = DB::table('statuses')
 				->where('in_reply_to_id', $id)
 				->limit(20)
@@ -2309,8 +2669,8 @@ class ApiV1Controller extends Controller
 				->map(function($sid) {
 					return StatusService::getMastodon($sid, false);
 				})
-				->filter(function($post) {
-					return $post && isset($post['account']);
+				->filter(function($post) use($filters) {
+					return $post && isset($post['account'], $post['account']['id']) && !in_array($post['account']['id'], $filters);
 				})
 				->map(function($status) use($pid) {
 					$status['favourited'] = LikeService::liked($pid, $status['id']);
@@ -2354,51 +2714,88 @@ class ApiV1Controller extends Controller
 		abort_if(!$request->user(), 403);
 
 		$this->validate($request, [
-			'page'  => 'nullable|integer|min:1|max:40',
-			'limit' => 'nullable|integer|min:1|max:100'
+			'limit' => 'sometimes|integer|min:1|max:80'
 		]);
 
-		$limit = $request->input('limit') ?? 40;
-		$user = $request->user();
-		$status = Status::findOrFail($id);
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
-		if(intval($status->profile_id) !== intval($user->profile_id)) {
+		$limit = $request->input('limit', 10);
+		$user = $request->user();
+		$pid = $user->profile_id;
+		$status = Status::findOrFail($id);
+		$account = AccountService::get($status->profile_id, true);
+		abort_if(!$account, 404);
+		$author = intval($status->profile_id) === intval($pid) || $user->is_admin;
+		$napi = $request->has(self::PF_API_ENTITY_KEY);
+
+		abort_if(
+			!$status->type ||
+			!in_array($status->type, ['photo','photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
+			404,
+		);
+
+		if(!$author) {
 			if($status->scope == 'private') {
-				abort_if(!FollowerService::follows($user->profile_id, $status->profile_id), 403);
+				abort_if(!FollowerService::follows($pid, $status->profile_id), 403);
 			} else {
 				abort_if(!in_array($status->scope, ['public','unlisted']), 403);
 			}
+
+			if($request->has('cursor')) {
+				return $this->json([]);
+			}
 		}
 
-		$page = $request->input('page', 1);
-		$start = $page == 1 ? 0 : (($page * $limit) - $limit);
-		$end = $start + $limit - 1;
+		$res = Status::where('reblog_of_id', $status->id)
+		->orderByDesc('id')
+		->cursorPaginate($limit)
+		->withQueryString();
 
-		$ids = ReblogService::getPostReblogs($id, $start, $end);
-		if(empty($ids)) {
-			return [];
+		if(!$res) {
+			return $this->json([]);
 		}
 
-		$res = collect($ids)
-			->map(function($id) {
-				$status = StatusService::get($id);
-				if($status) {
-					return AccountService::get($status['account']['id']);
+		$headers = [];
+		if($author && $res->hasPages()) {
+			$links = '';
+			if($res->onFirstPage()) {
+				if($res->nextPageUrl()) {
+					$links = '<' . $res->nextPageUrl() .'>; rel="prev"';
 				}
-				return;
-			})
-			->filter(function($account) {
-				return $account && isset($account['id']);
-			})
-			->values();
+			} else {
+				if($res->previousPageUrl()) {
+					$links = '<' . $res->previousPageUrl() .'>; rel="next"';
+				}
 
-		$url = $request->url();
-		$page = $request->input('page', 1);
-		$next = $page < 40 ? $page + 1 : 40;
-		$prev = $page > 1 ? $page - 1 : 1;
-		$links = '<'.$url.'?page='.$next.'&limit='.$limit.'>; rel="next", <'.$url.'?page='.$prev.'&limit='.$limit.'>; rel="prev"';
+				if($res->nextPageUrl()) {
+					if(!empty($links)) {
+						$links .= ', ';
+					}
+					$links .= '<' . $res->nextPageUrl() .'>; rel="prev"';
+				}
+			}
 
-		return $this->json($res, 200, ['Link' => $links]);
+			$headers = ['Link' => $links];
+		}
+
+		$res = $res->map(function($status) use($pid, $napi) {
+			$account = $napi ? AccountService::get($status->profile_id, true) : AccountService::getMastodon($status->profile_id, true);
+			if(!$account) {
+				return false;
+			}
+			if($napi) {
+				$account['follows'] = $status->profile_id == $pid ? null : FollowerService::follows($pid, $status->profile_id);
+			}
+			return $account;
+		})
+		->filter(function($account) {
+			return $account && isset($account['id']);
+		})
+		->values();
+
+		return $this->json($res, 200, $headers);
 	}
 
 	/**
@@ -2413,58 +2810,90 @@ class ApiV1Controller extends Controller
 		abort_if(!$request->user(), 403);
 
 		$this->validate($request, [
-			'page'  => 'nullable|integer|min:1|max:40',
-			'limit' => 'nullable|integer|min:1|max:100'
+			'limit' => 'nullable|integer|min:1|max:80'
 		]);
 
-		$page = $request->input('page', 1);
-		$limit = $request->input('limit') ?? 40;
-		$user = $request->user();
-		$status = Status::findOrFail($id);
-		$offset = $page == 1 ? 0 : ($page * $limit - $limit);
-		if($offset > 100) {
-			if($user->profile_id != $status->profile_id) {
-				return [];
-			}
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
 		}
 
-		if(intval($status->profile_id) !== intval($user->profile_id)) {
+		$limit = $request->input('limit', 10);
+		$user = $request->user();
+		$pid = $user->profile_id;
+		$status = Status::findOrFail($id);
+		$account = AccountService::get($status->profile_id, true);
+		abort_if(!$account, 404);
+		$author = intval($status->profile_id) === intval($pid) || $user->is_admin;
+		$napi = $request->has(self::PF_API_ENTITY_KEY);
+
+		abort_if(
+			!$status->type ||
+			!in_array($status->type, ['photo','photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
+			404,
+		);
+
+		if(!$author) {
 			if($status->scope == 'private') {
-				abort_if(!$status->profile->followedBy($user->profile), 403);
+				abort_if(!FollowerService::follows($pid, $status->profile_id), 403);
 			} else {
 				abort_if(!in_array($status->scope, ['public','unlisted']), 403);
 			}
+
+			if($request->has('cursor')) {
+				return $this->json([]);
+			}
 		}
 
-		$res = DB::table('likes')
-			->select('likes.id', 'likes.profile_id', 'likes.status_id', 'followers.created_at')
-			->leftJoin('followers', function($join) use($user, $status) {
-				return $join->on('likes.profile_id', '=', 'followers.following_id')
-					->where('followers.profile_id', $user->profile_id)
-					->where('likes.status_id', $status->id);
-			})
-			->whereStatusId($status->id)
-			->orderByDesc('followers.created_at')
-			->offset($offset)
-			->limit($limit)
-			->get()
-			->map(function($like) {
-				$account = AccountService::getMastodon($like->profile_id, true);
-				$account['follows'] = isset($like->created_at);
-				return $account;
-			})
-			->filter(function($account) use($user) {
-				return $account && isset($account['id']);
-			})
-			->values();
+		$res = Like::where('status_id', $status->id)
+		->orderByDesc('id')
+		->cursorPaginate($limit)
+		->withQueryString();
 
-		$url = $request->url();
-		$page = $request->input('page', 1);
-		$next = $page < 40 ? $page + 1 : 40;
-		$prev = $page > 1 ? $page - 1 : 1;
-		$links = '<'.$url.'?page='.$next.'&limit='.$limit.'>; rel="next", <'.$url.'?page='.$prev.'&limit='.$limit.'>; rel="prev"';
+		if(!$res) {
+			return $this->json([]);
+		}
 
-		return $this->json($res, 200, ['Link' => $links]);
+		$headers = [];
+		if($author && $res->hasPages()) {
+			$links = '';
+
+			if($res->onFirstPage()) {
+				if($res->nextPageUrl()) {
+					$links = '<' . $res->nextPageUrl() .'>; rel="prev"';
+				}
+			} else {
+				if($res->previousPageUrl()) {
+					$links = '<' . $res->previousPageUrl() .'>; rel="next"';
+				}
+
+				if($res->nextPageUrl()) {
+					if(!empty($links)) {
+						$links .= ', ';
+					}
+					$links .= '<' . $res->nextPageUrl() .'>; rel="prev"';
+				}
+			}
+
+			$headers = ['Link' => $links];
+		}
+
+		$res = $res->map(function($like) use($pid, $napi) {
+			$account = $napi ? AccountService::get($like->profile_id, true) : AccountService::getMastodon($like->profile_id, true);
+			if(!$account) {
+				return false;
+			}
+
+			if($napi) {
+				$account['follows'] = $like->profile_id == $pid ? null : FollowerService::follows($pid, $like->profile_id);
+			}
+			return $account;
+		})
+		->filter(function($account) {
+			return $account && isset($account['id']);
+		})
+		->values();
+
+		return $this->json($res, 200, $headers);
 	}
 
 	/**
@@ -2476,6 +2905,10 @@ class ApiV1Controller extends Controller
 	public function statusCreate(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$this->validate($request, [
 			'status' => 'nullable|string',
@@ -2507,6 +2940,7 @@ class ApiV1Controller extends Controller
 
 		$ids = $request->input('media_ids');
 		$in_reply_to_id = $request->input('in_reply_to_id');
+
 		$user = $request->user();
 		$profile = $user->profile;
 
@@ -2576,9 +3010,10 @@ class ApiV1Controller extends Controller
 				$status->caption = $content;
 				$status->rendered = $rendered;
 				$status->profile_id = $user->profile_id;
-				$status->scope = 'draft';
 				$status->is_nsfw = $cw;
 				$status->cw_summary = $spoilerText;
+				$status->scope = 'draft';
+				$status->visibility = 'draft';
 				if($request->has('place_id')) {
 					$status->place_id = $request->input('place_id');
 				}
@@ -2595,6 +3030,7 @@ class ApiV1Controller extends Controller
 				if($m->profile_id !== $user->profile_id || $m->status_id) {
 					abort(403, 'Invalid media id');
 				}
+				$m->order = $k + 1;
 				$m->status_id = $status->id;
 				$m->save();
 				array_push($mimes, $m->mime);
@@ -2673,6 +3109,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$status = Status::whereProfileId($request->user()->profile->id)
 		->findOrFail($id);
 
@@ -2699,6 +3139,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$user = $request->user();
 		$status = Status::whereScope('public')->findOrFail($id);
 
@@ -2724,9 +3168,7 @@ class ApiV1Controller extends Controller
 			'visibility' => 'public'
 		]);
 
-		if($share->wasRecentlyCreated == true) {
-			SharePipeline::dispatch($share);
-		}
+		SharePipeline::dispatch($share)->onQueue('low');
 
 		StatusService::del($status->id);
 		ReblogService::add($user->profile_id, $status->id);
@@ -2746,6 +3188,10 @@ class ApiV1Controller extends Controller
 	public function statusUnshare(Request $request, $id)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$user = $request->user();
 		$status = Status::whereScope('public')->findOrFail($id);
@@ -2768,7 +3214,7 @@ class ApiV1Controller extends Controller
 			return $this->json($res);
 		}
 
-		UndoSharePipeline::dispatch($reblog);
+		UndoSharePipeline::dispatch($reblog)->onQueue('low');
 		ReblogService::del($user->profile_id, $status->id);
 
 		$res = StatusService::getMastodon($status->id);
@@ -2786,6 +3232,12 @@ class ApiV1Controller extends Controller
 	 */
 	public function timelineHashtag(Request $request, $hashtag)
 	{
+		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request,[
 		  'page'        => 'nullable|integer|max:40',
 		  'min_id'      => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
@@ -2793,12 +3245,22 @@ class ApiV1Controller extends Controller
 		  'limit'       => 'nullable|integer|max:100'
 		]);
 
-		$tag = Hashtag::whereName($hashtag)
-		  ->orWhere('slug', $hashtag)
-		  ->first();
+		if(config('database.default') === 'pgsql') {
+			$tag = Hashtag::where('name', 'ilike', $hashtag)
+				->orWhere('slug', 'ilike', $hashtag)
+				->first();
+		} else {
+			$tag = Hashtag::whereName($hashtag)
+			  ->orWhere('slug', $hashtag)
+			  ->first();
+		}
 
 		if(!$tag) {
 			return response()->json([]);
+		}
+
+		if($tag->is_banned == true) {
+			return $this->json([]);
 		}
 
 		$min = $request->input('min_id');
@@ -2844,6 +3306,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
 			'limit' => 'nullable|integer|min:1|max:40',
 			'max_id' => 'nullable|integer|min:0',
@@ -2851,6 +3317,7 @@ class ApiV1Controller extends Controller
 			'min_id' => 'nullable|integer|min:0'
 		]);
 
+		$pe = $request->has('_pe');
 		$pid = $request->user()->profile_id;
 		$limit = $request->input('limit') ?? 20;
 		$max_id = $request->input('max_id');
@@ -2860,24 +3327,43 @@ class ApiV1Controller extends Controller
 		$dir = $min_id ? '>' : '<';
 		$id = $min_id ?? $max_id;
 
-		if($id) {
-			$bookmarks = Bookmark::whereProfileId($pid)
-				->where('status_id', $dir, $id)
-				->limit($limit)
-				->pluck('status_id');
-		} else {
-			$bookmarks = Bookmark::whereProfileId($pid)
-				->latest()
-				->limit($limit)
-				->pluck('status_id');
-		}
+		$bookmarkQuery = Bookmark::whereProfileId($pid)
+            ->orderByDesc('id')
+            ->cursorPaginate($limit);
 
-		$res = [];
-		foreach($bookmarks as $id) {
-			$res[] = \App\Services\StatusService::getMastodon($id);
-		}
+        $bookmarks = $bookmarkQuery->map(function($bookmark) use($pid, $pe) {
+				$status = $pe ? StatusService::get($bookmark->status_id, false) : StatusService::getMastodon($bookmark->status_id, false);
 
-		return $this->json($res);
+				if($status) {
+					$status['bookmarked'] = true;
+					$status['favourited'] = LikeService::liked($pid, $status['id']);
+					$status['reblogged'] = ReblogService::get($pid, $status['id']);
+				}
+				return $status;
+			})
+			->filter()
+			->values()
+			->toArray();
+
+        $links = null;
+        $headers = [];
+
+        if($bookmarkQuery->nextCursor()) {
+            $links .= '<'.$bookmarkQuery->nextPageUrl().'&limit='.$limit.'>; rel="next"';
+        }
+
+        if($bookmarkQuery->previousCursor()) {
+            if($links != null) {
+                $links .= ', ';
+            }
+            $links .= '<'.$bookmarkQuery->previousPageUrl().'&limit='.$limit.'>; rel="prev"';
+        }
+
+        if($links) {
+            $headers = ['Link' => $links];
+        }
+
+		return $this->json($bookmarks, 200, $headers);
 	}
 
 	/**
@@ -2891,15 +3377,34 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
-		$status = Status::whereNull('uri')
-			->whereScope('public')
-			->findOrFail($id);
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
+		$status = Status::findOrFail($id);
+		$pid = $request->user()->profile_id;
+
+		abort_if($status->in_reply_to_id || $status->reblog_of_id, 404);
+		abort_if(!in_array($status->scope, ['public', 'unlisted', 'private']), 404);
+		abort_if(!in_array($status->type, ['photo','photo:album', 'video', 'video:album', 'photo:video:album']), 404);
+
+		if($status->scope == 'private') {
+			abort_if(
+				$pid !== $status->profile_id && !FollowerService::follows($pid, $status->profile_id),
+				404,
+				'Error: You cannot bookmark private posts from accounts you do not follow.'
+			);
+		}
 
 		Bookmark::firstOrCreate([
 			'status_id' => $status->id,
-			'profile_id' => $request->user()->profile_id
+			'profile_id' => $pid
 		]);
-		$res = StatusService::getMastodon($status->id);
+
+		BookmarkService::add($pid, $status->id);
+
+		$res = StatusService::getMastodon($status->id, false);
+		$res['bookmarked'] = true;
 
 		return $this->json($res);
 	}
@@ -2915,15 +3420,27 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
-		$status = Status::whereNull('uri')
-			->whereScope('public')
-			->findOrFail($id);
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
+		$status = Status::findOrFail($id);
+		$pid = $request->user()->profile_id;
+
+		abort_if($status->in_reply_to_id || $status->reblog_of_id, 404);
+		abort_if(!in_array($status->scope, ['public', 'unlisted', 'private']), 404);
+		abort_if(!in_array($status->type, ['photo','photo:album', 'video', 'video:album', 'photo:video:album']), 404);
 
 		$bookmark = Bookmark::whereStatusId($status->id)
-			->whereProfileId($request->user()->profile_id)
-			->firstOrFail();
-		$bookmark->delete();
-		$res = StatusService::getMastodon($status->id);
+			->whereProfileId($pid)
+			->first();
+
+		if($bookmark) {
+			BookmarkService::del($pid, $status->id);
+			$bookmark->delete();
+		}
+		$res = StatusService::getMastodon($status->id, false);
+		$res['bookmarked'] = false;
 
 		return $this->json($res);
 	}
@@ -2938,6 +3455,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$this->validate($request, [
 			'q' => 'required|string|min:1|max:100',
 			'account_id' => 'nullable|string',
@@ -2951,7 +3472,8 @@ class ApiV1Controller extends Controller
 			'following' => 'nullable'
 		]);
 
-		return $this->json(SearchApiV2Service::query($request, true));
+		$mastodonMode = !$request->has('_pe');
+		return $this->json(SearchApiV2Service::query($request, $mastodonMode));
 	}
 
 	/**
@@ -2963,6 +3485,10 @@ class ApiV1Controller extends Controller
 	public function discoverPosts(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$this->validate($request, [
 			'limit' => 'integer|min:1|max:40'
@@ -3000,6 +3526,10 @@ class ApiV1Controller extends Controller
 			'limit' => 'int|min:1|max:10',
 			'sort' => 'in:all,newest,popular'
 		]);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
 
 		$limit = $request->input('limit', 3);
 		$pid = $request->user()->profile_id;
@@ -3048,7 +3578,11 @@ class ApiV1Controller extends Controller
 				->cursorPaginate($limit);
 		}
 
-		$data = $ids->map(function($post) use($pid) {
+		$filters = UserFilterService::filters($pid);
+		$data = $ids->filter(function($post) use($filters) {
+			return !in_array($post->profile_id, $filters);
+		})
+		->map(function($post) use($pid) {
 			$status = StatusService::get($post->id, false);
 
 			if(!$status || !isset($status['id'])) {
@@ -3088,6 +3622,10 @@ class ApiV1Controller extends Controller
 	{
 		abort_if(!$request->user(), 403);
 
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$status = Status::findOrFail($id);
 		$pid = $request->user()->profile_id;
 		abort_if(!in_array($status->scope, ['public', 'unlisted', 'private']), 404);
@@ -3104,6 +3642,11 @@ class ApiV1Controller extends Controller
 	public function discoverAccountsPopular(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$pid = $request->user()->profile_id;
 
 		$ids = Cache::remember('api:v1.1:discover:accounts:popular', 86400, function() {
@@ -3151,6 +3694,11 @@ class ApiV1Controller extends Controller
 	public function getPreferences(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$pid = $request->user()->profile_id;
 		$account = AccountService::get($pid);
 
@@ -3198,6 +3746,11 @@ class ApiV1Controller extends Controller
 	public function getMarkers(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$type = $request->input('timeline');
 		if(is_array($type)) {
 			$type = $type[0];
@@ -3218,6 +3771,11 @@ class ApiV1Controller extends Controller
 	public function setMarkers(Request $request)
 	{
 		abort_if(!$request->user(), 403);
+
+		if(config('pixelfed.bouncer.cloud_ips.ban_api')) {
+			abort_if(BouncerService::checkIp($request->ip()), 404);
+		}
+
 		$pid = $request->user()->profile_id;
 		$home = $request->input('home.last_read_id');
 		$notifications = $request->input('notifications.last_read_id');

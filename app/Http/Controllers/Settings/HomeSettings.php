@@ -17,11 +17,11 @@ use Mail;
 use Purify;
 use App\Mail\PasswordChange;
 use Illuminate\Http\Request;
+use App\Services\AccountService;
 use App\Services\PronounService;
 
 trait HomeSettings
 {
-
 	public function home()
 	{
 		$id = Auth::user()->profile->id;
@@ -40,7 +40,7 @@ trait HomeSettings
 	public function homeUpdate(Request $request)
 	{
 		$this->validate($request, [
-			'name'    => 'required|string|max:'.config('pixelfed.max_name_length'),
+			'name'    => 'nullable|string|max:'.config('pixelfed.max_name_length'),
 			'bio'     => 'nullable|string|max:'.config('pixelfed.max_bio_length'),
 			'website' => 'nullable|url',
 			'language' => 'nullable|string|min:2|max:5',
@@ -99,10 +99,10 @@ trait HomeSettings
 		}
 
 		if ($changes === true) {
-			Cache::forget('user:account:id:'.$user->id);
 			$user->save();
 			$profile->save();
-
+			Cache::forget('user:account:id:'.$user->id);
+			AccountService::del($profile->id);
 			return redirect('/settings/home')->with('status', 'Profile successfully updated!');
 		}
 

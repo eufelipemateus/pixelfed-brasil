@@ -8,13 +8,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Services\AccountService;
 use App\Services\CustomEmojiService;
 use App\Services\StatusService;
 use App\Jobs\MentionPipeline\MentionPipeline;
 use App\Mention;
-use App\Services\AccountService;
 use App\Hashtag;
 use App\StatusHashtag;
+use App\Services\TrendingHashtagService;
+use App\Util\ActivityPub\Helpers;
 
 class StatusTagsPipeline implements ShouldQueue
 {
@@ -47,7 +49,7 @@ class StatusTagsPipeline implements ShouldQueue
 
 		// Emoji
 		$tags->filter(function($tag) {
-			return $tag && $tag['type'] == 'Emoji' && isset($tag['id'], $tag['icon'], $tag['name']);
+			return $tag && isset($tag['id'], $tag['icon'], $tag['name'], $tag['type']) && $tag['type'] == 'Emoji';
 		})
 		->map(function($tag) {
 			CustomEmojiService::import($tag['id'], $this->status->id);
@@ -61,11 +63,32 @@ class StatusTagsPipeline implements ShouldQueue
 			$name = substr($tag['name'], 0, 1) == '#' ?
 				substr($tag['name'], 1) : $tag['name'];
 
-			$hashtag = Hashtag::firstOrCreate([
-				'slug' => str_slug($name)
-			], [
-				'name' => $name
-			]);
+			$banned = TrendingHashtagService::getBannedHashtagNames();
+
+			if(count($banned)) {
+                if(in_array(strtolower($name), array_map('strtolower', $banned))) {
+                   	return;
+                }
+            }
+
+            if(config('database.default') === 'pgsql') {
+            	$hashtag = Hashtag::where('name', 'ilike', $name)
+            		->orWhere('slug', 'ilike', str_slug($name))
+            		->first();
+
+            	if(!$hashtag) {
+            		$hashtag = new Hashtag;
+            		$hashtag->name = $name;
+            		$hashtag->slug = str_slug($name);
+            		$hashtag->save();
+            	}
+            } else {
+				$hashtag = Hashtag::firstOrCreate([
+					'slug' => str_slug($name)
+				], [
+					'name' => $name
+				]);
+            }
 
 			StatusHashtag::firstOrCreate([
 				'status_id' => $status->id,
@@ -80,17 +103,24 @@ class StatusTagsPipeline implements ShouldQueue
 			return $tag &&
 				$tag['type'] == 'Mention' &&
 				isset($tag['href']) &&
-				substr($tag['href'], 0, 8) === 'https://' &&
-				parse_url($tag['href'], PHP_URL_HOST) == config('pixelfed.domain.app');
+				substr($tag['href'], 0, 8) === 'https://';
 		})
 		->map(function($tag) use($status) {
-			$parts = explode('/', $status['href']);
-			if(!$parts) {
-				return;
-			}
-			$pid = AccountService::usernameToId(end($parts));
-			if(!$pid) {
-				return;
+			if(Helpers::validateLocalUrl($tag['href'])) {
+				$parts = explode('/', $tag['href']);
+				if(!$parts) {
+					return;
+				}
+				$pid = AccountService::usernameToId(end($parts));
+				if(!$pid) {
+					return;
+				}
+			} else {
+				$acct = Helpers::profileFetch($tag['href']);
+				if(!$acct) {
+					return;
+				}
+				$pid = $acct->id;
 			}
 			$mention = new Mention;
 			$mention->status_id = $status->id;

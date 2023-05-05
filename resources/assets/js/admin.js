@@ -20,3 +20,18 @@ Chart.defaults.global.defaultFontFamily = "-apple-system,BlinkMacSystemFont,Sego
 Array.from(document.querySelectorAll('.pagination .page-link'))
 .filter(el => el.textContent === '« Previous' || el.textContent === 'Next »')
 .forEach(el => el.textContent = (el.textContent === 'Next »' ? '›' :'‹'));
+
+Vue.component(
+    'admin-directory',
+    require('./../components/admin/AdminDirectory.vue').default
+);
+
+Vue.component(
+    'instances-component',
+    require('./../components/admin/AdminInstances.vue').default
+);
+
+Vue.component(
+    'hashtag-component',
+    require('./../components/admin/AdminHashtags.vue').default
+);

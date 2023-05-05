@@ -137,9 +137,8 @@ class StatusService
 
 	public static function del($id, $purge = false)
 	{
-		$status = self::get($id);
-
 		if($purge) {
+			$status = self::get($id);
 			if($status && isset($status['account']) && isset($status['account']['id'])) {
 				Cache::forget('profile:embed:' . $status['account']['id']);
 			}
@@ -149,6 +148,7 @@ class StatusService
 			Cache::forget('status:thumb:nsfw1' . $id);
 			Cache::forget('pf:services:sh:id:' . $id);
 			PublicTimelineService::rem($id);
+			NetworkTimelineService::rem($id);
 		}
 
 		Cache::forget(self::key($id, false));

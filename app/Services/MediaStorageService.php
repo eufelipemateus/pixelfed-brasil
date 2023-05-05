@@ -12,6 +12,7 @@ use App\Media;
 use App\Profile;
 use App\User;
 use GuzzleHttp\Client;
+use App\Services\AccountService;
 use App\Http\Controllers\AvatarController;
 use GuzzleHttp\Exception\RequestException;
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
@@ -105,6 +106,8 @@ class MediaStorageService {
 		$media->save();
 		if($media->status_id) {
 			Cache::forget('status:transformer:media:attachments:' . $media->status_id);
+			MediaService::del($media->status_id);
+			StatusService::del($media->status_id, false);
 		}
 	}
 
@@ -173,7 +176,7 @@ class MediaStorageService {
 		$file = $disk->putFileAs($base, new File($tmpName), $path, 'public');
 		$permalink = $disk->url($file);
 
-		$media->media_path = $base . $path;
+		$media->media_path = $file;
 		$media->cdn_url = $permalink;
 		$media->original_sha256 = $hash;
 		$media->replicated_at = now();
@@ -202,6 +205,7 @@ class MediaStorageService {
 		}
 
 		$mimes = [
+			'application/octet-stream',
 			'image/jpeg',
 			'image/png',
 		];
@@ -226,13 +230,9 @@ class MediaStorageService {
 			return;
 		}
 
-		if($avatar->size && $head['length'] == $avatar->size) {
-			return;
-		}
-
 		$base = ($local ? 'public/cache/' : 'cache/') . 'avatars/' . $avatar->profile_id;
 		$ext = $head['mime'] == 'image/jpeg' ? 'jpg' : 'png';
-		$path = Str::random(20) . '_avatar.' . $ext;
+		$path = 'avatar_' . strtolower(Str::random(random_int(3,6))) . '.' . $ext;
 		$tmpBase = storage_path('app/remcache/');
 		$tmpPath = 'avatar_' . $avatar->profile_id . '-' . $path;
 		$tmpName = $tmpBase . $tmpPath;
@@ -241,6 +241,15 @@ class MediaStorageService {
 			return;
 		}
 		file_put_contents($tmpName, $data);
+
+		$mimeCheck = Storage::mimeType('remcache/' . $tmpPath);
+
+		if(!$mimeCheck || !in_array($mimeCheck, ['image/png', 'image/jpeg'])) {
+			$avatar->last_fetched_at = now();
+			$avatar->save();
+			unlink($tmpName);
+			return;
+		}
 
 		$disk = Storage::disk($driver);
 		$file = $disk->putFileAs($base, new File($tmpName), $path, 'public');
@@ -255,6 +264,7 @@ class MediaStorageService {
 		$avatar->save();
 
 		Cache::forget('avatar:' . $avatar->profile_id);
+		Cache::forget(AccountService::CACHE_KEY . $avatar->profile_id);
 
 		unlink($tmpName);
 	}
@@ -264,6 +274,6 @@ class MediaStorageService {
 		if(!$confirm) {
 			return;
 		}
-		MediaDeletePipeline::dispatch($media);
+		MediaDeletePipeline::dispatch($media)->onQueue('mmo');
 	}
 }

@@ -19,10 +19,10 @@ class Profile extends Model
 	 */
 	public $incrementing = false;
 
-	protected $dates = [
-		'deleted_at',
-		'last_fetched_at',
-		'last_status_at'
+	protected $casts = [
+		'deleted_at' => 'datetime',
+		'last_fetched_at' => 'datetime',
+		'last_status_at' => 'datetime'
 	];
 	protected $hidden = ['private_key'];
 	protected $visible = ['id', 'user_id', 'username', 'name'];
@@ -160,6 +160,10 @@ class Profile extends Model
 		$url = Cache::remember('avatar:'.$this->id, 1209600, function () {
 			$avatar = $this->avatar;
 
+			if(!$avatar) {
+				return url('/storage/avatars/default.jpg');
+			}
+
 			if($avatar->cdn_url) {
 				if(substr($avatar->cdn_url, 0, 8) === 'https://') {
 					return $avatar->cdn_url;
@@ -170,13 +174,25 @@ class Profile extends Model
 
 			$path = $avatar->media_path;
 
+			if(!$path) {
+				return url('/storage/avatars/default.jpg');
+			}
+
+			if($path === 'public/avatars/default.jpg') {
+				return url('/storage/avatars/default.jpg');
+			}
+
 			if(substr($path, 0, 6) !== 'public') {
 				return url('/storage/avatars/default.jpg');
 			}
 
+			if(config('filesystems.default') !== 'local') {
+				return Storage::url($path);
+			}
+
 			$path = "{$path}?v={$avatar->change_count}";
 
-			return config('app.url') . Storage::url($path);
+			return url(Storage::url($path));
 		});
 
 		return $url;
