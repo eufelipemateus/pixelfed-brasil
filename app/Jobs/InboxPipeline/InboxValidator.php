@@ -70,58 +70,6 @@ class InboxValidator implements ShouldQueue
             return;
         }
 
-        if( $payload['type'] === 'Delete' &&
-            ( ( is_string($payload['object']) &&
-                $payload['object'] === $payload['actor'] ) ||
-            ( is_array($payload['object']) &&
-              isset($payload['object']['id'], $payload['object']['type']) &&
-              $payload['object']['type'] === 'Person' &&
-              $payload['actor'] === $payload['object']['id']
-            ))
-        ) {
-            $actor = $payload['actor'];
-            $hash = strlen($actor) <= 48 ? 
-                'b:' . base64_encode($actor) :
-                'h:' . hash('sha256', $actor);
-
-            $lockKey = 'ap:inbox:actor-delete-exists:lock:' . $hash;
-            Cache::lock($lockKey, 10)->block(5, function () use(
-                $headers,
-                $payload,
-                $actor,
-                $hash,
-                $profile
-            ) {
-                $key = 'ap:inbox:actor-delete-exists:' . $hash;
-                $actorDelete = Cache::remember($key, now()->addMinutes(15), function() use($actor) {
-                    return Profile::whereRemoteUrl($actor)
-                        ->whereNotNull('domain')
-                        ->exists();
-                });
-                if($actorDelete) {
-                    if($this->verifySignature($headers, $profile, $payload) == true) {
-                        Cache::set($key, false);
-                        $profile = Profile::whereNotNull('domain')
-                            ->whereNull('status')
-                            ->whereRemoteUrl($actor)
-                            ->first();
-                        if($profile) {
-                            DeleteRemoteProfilePipeline::dispatchNow($profile);
-                        }
-                        return;
-                    } else {
-                        // Signature verification failed, exit.
-                        return;
-                    }
-                } else {
-                    // Remote user doesn't exist, exit early.
-                    return;
-                }
-            });
-
-            return;
-        }
-
         if($profile->status != null) {
             return;
         }
@@ -228,7 +176,7 @@ class InboxValidator implements ShouldQueue
         if(Helpers::validateUrl($actor->remote_url) == false) {
             return;
         }
-        $res = Zttp::timeout(5)->withHeaders([
+        $res = Zttp::timeout(60)->withHeaders([
           'Accept'     => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
           'User-Agent' => 'PixelfedBot v0.1 - https://pixelfed.org',
         ])->get($actor->remote_url);

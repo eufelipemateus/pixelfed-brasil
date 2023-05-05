@@ -236,16 +236,19 @@ class MediaStorageService {
 		$tmpBase = storage_path('app/remcache/');
 		$tmpPath = 'avatar_' . $avatar->profile_id . '-' . $path;
 		$tmpName = $tmpBase . $tmpPath;
-		$data = file_get_contents($url, false, null, 0, $head['length']);
+		$data = @file_get_contents($url, false, null, 0, $head['length']);
+		if(!$data) {
+			return;
+		}
 		file_put_contents($tmpName, $data);
 
 		$disk = Storage::disk($driver);
 		$file = $disk->putFileAs($base, new File($tmpName), $path, 'public');
 		$permalink = $disk->url($file);
 
-		$avatar->media_path = $base . $path;
+		$avatar->media_path = $base . '/' . $path;
 		$avatar->is_remote = true;
-		$avatar->cdn_url = $permalink;
+		$avatar->cdn_url = $local ? config('app.url') . $permalink : $permalink;
 		$avatar->size = $head['length'];
 		$avatar->change_count = $avatar->change_count + 1;
 		$avatar->last_fetched_at = now();

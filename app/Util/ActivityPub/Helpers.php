@@ -419,9 +419,8 @@ class Helpers {
 			$cw = true;
 		}
 
-		$statusLockKey = 'helpers:status-lock:' . hash('sha256', $res['id']);
-		$status = Cache::lock($statusLockKey)
-			->get(function () use(
+		if($res['type'] === 'Question') {
+			$status = self::storePoll(
 				$profile,
 				$res,
 				$url,
@@ -430,24 +429,11 @@ class Helpers {
 				$cw,
 				$scope,
 				$id
-		) {
-
-			if($res['type'] === 'Question') {
-				$status = self::storePoll(
-					$profile,
-					$res,
-					$url,
-					$ts,
-					$reply_to,
-					$cw,
-					$scope,
-					$id
-				);
-				return $status;
-			}
-
-			return self::storeStatus($url, $profile, $res);
-		});
+			);
+			return $status;
+		} else {
+            $status = self::storeStatus($url, $profile, $res);
+        }
 
 		return $status;
 	}
@@ -756,10 +742,10 @@ class Helpers {
 				[
 					'domain' => strtolower($domain),
 					'username' => Purify::clean($webfinger),
-					'webfinger' => Purify::clean($webfinger),
-					'key_id' => $res['publicKey']['id'],
 				],
 				[
+					'webfinger' => Purify::clean($webfinger),
+					'key_id' => $res['publicKey']['id'],
 					'remote_url' => $res['id'],
 					'name' => isset($res['name']) ? Purify::clean($res['name']) : 'user',
 					'bio' => isset($res['summary']) ? Purify::clean($res['summary']) : null,

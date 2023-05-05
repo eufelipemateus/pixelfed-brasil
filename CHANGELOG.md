@@ -2,6 +2,33 @@
 
 ## [Unreleased](https://github.com/pixelfed/pixelfed/compare/v0.11.4...dev)
 
+### New Features
+- Portfolios ([#3705](https://github.com/pixelfed/pixelfed/pull/3705))
+- Server Directory ([#3762](https://github.com/pixelfed/pixelfed/pull/3762))
+- Manually verify email address (php artisan user:verifyemail) ([682f5f0f](https://github.com/pixelfed/pixelfed/commit/682f5f0f))
+
+### Updates
+- Update ApiV1Controller, include self likes in favourited_by endpoint ([58b331d2](https://github.com/pixelfed/pixelfed/commit/58b331d2))
+- Update PublicApiController, remove expensive and unused relationships ([2ecc3144](https://github.com/pixelfed/pixelfed/commit/2ecc3144))
+- Update status deletion, fix database lock issues and side effects ([04e8c96a](https://github.com/pixelfed/pixelfed/commit/04e8c96a))
+- Fix remote profile avatar urls when storing locally ([b0422d4f](https://github.com/pixelfed/pixelfed/commit/b0422d4f))
+- Enable network timeline caching by default ([c990ac2a](https://github.com/pixelfed/pixelfed/commit/c990ac2a))
+- Redirect /home to / ([97032997](https://github.com/pixelfed/pixelfed/commit/97032997))
+- Fix 2FA backup code bug ([a231b3c5](https://github.com/pixelfed/pixelfed/commit/a231b3c5))
+- Update federation config, enable remote follows by default ([59702d40](https://github.com/pixelfed/pixelfed/commit/59702d40))
+- Update ApiV1Controller, fix followAccountById with firstOrCreate() ([1d52ad0b](https://github.com/pixelfed/pixelfed/commit/1d52ad0b))
+- Update AccountService, fix delete status ([8b7121f9](https://github.com/pixelfed/pixelfed/commit/8b7121f9))
+- Update ap helpers, fix duplicate entry bug ([85cfa1ba](https://github.com/pixelfed/pixelfed/commit/85cfa1ba))
+- Update Inbox, fix handleUndoActivity ([d660e46b](https://github.com/pixelfed/pixelfed/commit/d660e46b))
+- Update HomeSettings controller, bail earlier when attempting to update email that already exists ([399bf5f8](https://github.com/pixelfed/pixelfed/commit/399bf5f8))
+- Update ProfileController, cache actor object and atom feed ([8665eab1](https://github.com/pixelfed/pixelfed/commit/8665eab1))
+- Update NotificationTransformer, fix mediaTag and modLog types ([b6c06c4b](https://github.com/pixelfed/pixelfed/commit/b6c06c4b))
+- Update landing view, add `app.name` and `app.short_description` for better customizability ([bda9d16b](https://github.com/pixelfed/pixelfed/commit/bda9d16b))
+- Update Profile, fix avatarUrl paths. Fixes #3559 #3634 ([989e4249](https://github.com/pixelfed/pixelfed/commit/989e4249))
+- Update InboxPipeline, bump request timeout from 5s to 60s ([bb120019](https://github.com/pixelfed/pixelfed/commit/bb120019))
+- Update web routes, fix missing hom route ([a9f4ddfc](https://github.com/pixelfed/pixelfed/commit/a9f4ddfc))
+-  ([](https://github.com/pixelfed/pixelfed/commit/))
+
 ## [v0.11.4 (2022-10-04)](https://github.com/pixelfed/pixelfed/compare/v0.11.3...v0.11.4)
 
 ### New Features
@@ -94,7 +121,6 @@
 - Update CollectionController, limit max title and description length ([6e76cf4b](https://github.com/pixelfed/pixelfed/commit/6e76cf4b))
 - Update collection components, fix title/description padding/overflow bug and add title/description limit and input counter ([6e4272a8](https://github.com/pixelfed/pixelfed/commit/6e4272a8))
 - Update Media model, fix thumbnail cdn paths ([9888af12](https://github.com/pixelfed/pixelfed/commit/9888af12))
--  ([](https://github.com/pixelfed/pixelfed/commit/))
 
 ## [v0.11.3 (2022-05-09)](https://github.com/pixelfed/pixelfed/compare/v0.11.2...v0.11.3)
 
