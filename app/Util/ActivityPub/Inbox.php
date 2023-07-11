@@ -28,6 +28,8 @@ use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Jobs\DeletePipeline\DeleteRemoteStatusPipeline;
 use App\Jobs\StoryPipeline\StoryExpire;
 use App\Jobs\StoryPipeline\StoryFetch;
+use App\Jobs\StatusPipeline\StatusRemoteUpdatePipeline;
+use App\Jobs\ProfilePipeline\HandleUpdateActivity;
 
 use App\Util\ActivityPub\Validator\Accept as AcceptValidator;
 use App\Util\ActivityPub\Validator\Add as AddValidator;
@@ -35,6 +37,7 @@ use App\Util\ActivityPub\Validator\Announce as AnnounceValidator;
 use App\Util\ActivityPub\Validator\Follow as FollowValidator;
 use App\Util\ActivityPub\Validator\Like as LikeValidator;
 use App\Util\ActivityPub\Validator\UndoFollow as UndoFollowValidator;
+use App\Util\ActivityPub\Validator\UpdatePersonValidator;
 
 use App\Services\PollService;
 use App\Services\FollowerService;
@@ -128,9 +131,9 @@ class Inbox
 				$this->handleFlagActivity();
 				break;
 
-			// case 'Update':
-			// 	(new UpdateActivity($this->payload, $this->profile))->handle();
-			// 	break;
+			case 'Update':
+				$this->handleUpdateActivity();
+				break;
 
 			default:
 				// TODO: decide how to handle invalid verbs.
@@ -483,8 +486,6 @@ class Inbox
 			$notification->profile_id = $profile->id;
 			$notification->actor_id = $actor->id;
 			$notification->action = 'dm';
-			$notification->message = $dm->toText();
-			$notification->rendered = $dm->toHtml();
 			$notification->item_id = $dm->id;
 			$notification->item_type = "App\DirectMessage";
 			$notification->save();
@@ -594,9 +595,6 @@ class Inbox
 				'action' => 'share',
 				'item_id' => $parent->id,
 				'item_type' => 'App\Status',
-			], [
-				'message' => $status->replyToText(),
-				'rendered' => $status->replyToHtml(),
 			]
 		);
 
@@ -703,7 +701,7 @@ class Inbox
 							return;
 						}
 						$status = Status::whereProfileId($profile->id)
-							->whereUri($id)
+							->whereObjectUrl($id)
 							->first();
 						if(!$status) {
 							return;
@@ -1023,8 +1021,6 @@ class Inbox
 		$n->item_id = $dm->id;
 		$n->item_type = 'App\DirectMessage';
 		$n->action = 'story:react';
-		$n->message = "{$actorProfile->username} reacted to your story";
-		$n->rendered = "{$actorProfile->username} reacted to your story";
 		$n->save();
 
 		return;
@@ -1134,8 +1130,6 @@ class Inbox
 		$n->item_id = $dm->id;
 		$n->item_type = 'App\DirectMessage';
 		$n->action = 'story:comment';
-		$n->message = "{$actorProfile->username} commented on story";
-		$n->rendered = "{$actorProfile->username} commented on story";
 		$n->save();
 
 		return;
@@ -1215,5 +1209,28 @@ class Inbox
 		$report->save();
 
 		return;
+	}
+
+	public function handleUpdateActivity()
+	{
+		$activity = $this->payload['object'];
+
+		if(!isset($activity['type'], $activity['id'])) {
+			return;
+		}
+
+		if(!Helpers::validateUrl($activity['id'])) {
+			return;
+		}
+
+		if($activity['type'] === 'Note') {
+			if(Status::whereObjectUrl($activity['id'])->exists()) {
+				StatusRemoteUpdatePipeline::dispatch($activity);
+			}
+		} else if ($activity['type'] === 'Person') {
+			if(UpdatePersonValidator::validate($this->payload)) {
+				HandleUpdateActivity::dispatch($this->payload)->onQueue('low');
+			}
+		}
 	}
 }
