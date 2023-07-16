@@ -60,7 +60,7 @@ return [
 	],
 
 	'polls' => [
-		'enabled' => false
+		'enabled' => env('INSTANCE_POLLS', false),
 	],
 
 	'stories' => [
