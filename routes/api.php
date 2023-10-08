@@ -17,6 +17,7 @@ Route::get('.well-known/nodeinfo', 'FederationController@nodeinfoWellKnown')->na
 Route::get('.well-known/host-meta', 'FederationController@hostMeta')->name('well-known.hostMeta');
 Route::redirect('.well-known/change-password', '/settings/password');
 Route::get('api/nodeinfo/2.0.json', 'FederationController@nodeinfo');
+Route::get('api/service/health-check', 'HealthCheckController@get');
 
 Route::group(['prefix' => 'api'], function() use($middleware) {
 
@@ -303,6 +304,8 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
                 Route::get('posts/{id}/{slug}', 'Api\ApiV1Dot1Controller@placesById')->middleware($middleware);
             });
 
+            Route::get('web/settings', 'Api\ApiV1Dot1Controller@getWebSettings')->middleware($middleware);
+            Route::post('web/settings', 'Api\ApiV1Dot1Controller@setWebSettings')->middleware($middleware);
             Route::get('app/settings', 'UserAppSettingsController@get')->middleware($middleware);
             Route::post('app/settings', 'UserAppSettingsController@store')->middleware($middleware);
 
@@ -313,6 +316,7 @@ Route::group(['prefix' => 'api'], function() use($middleware) {
                 Route::post('seen', 'Stories\StoryApiV1Controller@viewed')->middleware($middleware);
                 Route::post('self-expire/{id}', 'Stories\StoryApiV1Controller@delete')->middleware($middleware);
                 Route::post('comment', 'Stories\StoryApiV1Controller@comment')->middleware($middleware);
+                Route::get('viewers', 'Stories\StoryApiV1Controller@viewers')->middleware($middleware);
             });
         });
     });

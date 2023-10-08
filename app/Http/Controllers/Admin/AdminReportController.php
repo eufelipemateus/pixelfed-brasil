@@ -27,8 +27,8 @@ use App\Services\StoryService;
 use App\Services\ModLogService;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
-use App\Jobs\DeletePipeline\DeleteRemoteStatusPipeline;
 use App\Jobs\StatusPipeline\StatusDelete;
+use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Http\Resources\AdminReport;
 use App\Http\Resources\AdminSpamReport;
 use App\Services\NotificationService;
@@ -643,7 +643,7 @@ trait AdminReportController
 				$q->whereNull('admin_seen') :
 				$q->whereNotNull('admin_seen');
 			})
-			->groupBy(['object_id', 'object_type'])
+			->groupBy(['id', 'object_id', 'object_type'])
 			->cursorPaginate(6)
 			->withQueryString()
 		);
@@ -1049,7 +1049,7 @@ trait AdminReportController
     				StatusDelete::dispatch($status)->onQueue('high');
     			} else {
     				NetworkTimelineService::del($status->id);
-    				DeleteRemoteStatusPipeline::dispatch($status)->onQueue('high');
+    				RemoteStatusDelete::dispatch($status)->onQueue('high');
     			}
 
     			Report::whereObjectId($report->object_id)

@@ -8,6 +8,30 @@
         </div>
 
         <div v-else>
+            <transition name="fade">
+                <div v-if="showReblogBanner && getScope() === 'home'" class="card bg-g-amin card-body shadow-sm mb-3" style="border-radius: 15px;">
+                    <div class="d-flex justify-content-around align-items-center">
+                        <div class="flex-grow-1 ft-std">
+                            <h2 class="font-weight-bold text-white mb-0">Introducing Reblogs in feeds</h2>
+                            <hr />
+                            <p class="lead text-white mb-0">
+                                See reblogs from accounts you follow in your home feed!
+                            </p>
+                            <p class="text-white small mb-1" style="opacity:0.6">
+                                You can disable reblogs in feeds on the Timeline Settings page.
+                            </p>
+                            <hr />
+                            <div class="d-flex">
+                                <button class="btn btn-light rounded-pill font-weight-bold btn-block mr-2" @click.prevent="enableReblogs()">
+                                    <template v-if="!enablingReblogs">Show reblogs in home feed</template>
+                                    <b-spinner small v-else />
+                                </button>
+                                <button class="btn btn-outline-light rounded-pill font-weight-bold px-5" @click.prevent="hideReblogs()">Hide</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
             <status
                 v-for="(status, index) in feed"
                 :key="'pf_feed:' + status.id + ':idx:' + index + ':fui:' + forceUpdateIdx"
@@ -140,6 +164,7 @@
 
         data() {
             return {
+                settings: [],
                 isLoaded: false,
                 feed: [],
                 ids: [],
@@ -159,7 +184,9 @@
                 reportedStatusId: 0,
                 showSharesModal: false,
                 sharesModalPost: {},
-                forceUpdateIdx: 0
+                forceUpdateIdx: 0,
+                showReblogBanner: false,
+                enablingReblogs: false
             }
         },
 
@@ -174,7 +201,7 @@
                     return;
                 };
             }
-            this.fetchTimeline();
+            this.fetchSettings();
         },
 
         methods: {
@@ -194,13 +221,48 @@
                 }
             },
 
-            fetchTimeline(scrollToTop = false) {
-                let url = `/api/pixelfed/v1/timelines/${this.getScope()}`;
-                axios.get(url, {
-                    params: {
-                        max_id: this.max_id,
-                        limit: 6
+            fetchSettings() {
+                axios.get('/api/pixelfed/v1/web/settings')
+                .then(res => {
+                    this.settings = res.data;
+
+                    if(!res.data) {
+                        this.showReblogBanner = true;
+                    } else {
+                        if(res.data.hasOwnProperty('hide_reblog_banner')) {
+                        } else if(res.data.hasOwnProperty('enable_reblogs')) {
+                            if(!res.data.enable_reblogs) {
+                                this.showReblogBanner = true;
+                            }
+                        } else {
+                            this.showReblogBanner = true;
+                        }
                     }
+                })
+                .finally(() => {
+                    this.fetchTimeline();
+                })
+            },
+
+            fetchTimeline(scrollToTop = false) {
+                let url, params;
+                if(this.getScope() === 'home' && this.settings && this.settings.hasOwnProperty('enable_reblogs') && this.settings.enable_reblogs) {
+                    url = `/api/v1/timelines/home`;
+                    params = {
+                        '_pe': 1,
+                        max_id: this.max_id,
+                        limit: 6,
+                        include_reblogs: true,
+                    }
+                } else {
+                    url = `/api/pixelfed/v1/timelines/${this.getScope()}`;
+                    params = {
+                        max_id: this.max_id,
+                        limit: 6,
+                    }
+                }
+                axios.get(url, {
+                    params: params
                 }).then(res => {
                     let ids = res.data.map(p => {
                         if(p && p.hasOwnProperty('relationship')) {
@@ -242,12 +304,24 @@
 
                 this.isFetchingMore = true;
 
-                let url = `/api/pixelfed/v1/timelines/${this.getScope()}`;
-                axios.get(url, {
-                    params: {
+                let url, params;
+                if(this.getScope() === 'home' && this.settings && this.settings.hasOwnProperty('enable_reblogs') && this.settings.enable_reblogs) {
+                    url = `/api/v1/timelines/home`;
+                    params = {
+                        '_pe': 1,
                         max_id: this.max_id,
-                        limit: 6
+                        limit: 6,
+                        include_reblogs: true,
                     }
+                } else {
+                    url = `/api/pixelfed/v1/timelines/${this.getScope()}`;
+                    params = {
+                        max_id: this.max_id,
+                        limit: 6,
+                    }
+                }
+                axios.get(url, {
+                    params: params
                 }).then(res => {
                     if(!res.data.length) {
                         this.endFeedReached = true;
@@ -287,17 +361,30 @@
 
             likeStatus(index) {
                 let status = this.feed[index];
-                let state = status.favourited;
-                let count = status.favourites_count;
-                this.feed[index].favourites_count = count + 1;
-                this.feed[index].favourited = !status.favourited;
+                if(status.reblog) {
+                    status = status.reblog;
+                    let state = status.favourited;
+                    let count = status.favourites_count;
+                    this.feed[index].reblog.favourites_count = count + 1;
+                    this.feed[index].reblog.favourited = !status.favourited;
+                } else {
+                    let state = status.favourited;
+                    let count = status.favourites_count;
+                    this.feed[index].favourites_count = count + 1;
+                    this.feed[index].favourited = !status.favourited;
+                }
 
                 axios.post('/api/v1/statuses/' + status.id + '/favourite')
                 .then(res => {
                     //
                 }).catch(err => {
-                    this.feed[index].favourites_count = count;
-                    this.feed[index].favourited = false;
+                    if(status.reblog) {
+                        this.feed[index].reblog.favourites_count = count;
+                        this.feed[index].reblog.favourited = false;
+                    } else {
+                        this.feed[index].favourites_count = count;
+                        this.feed[index].favourited = false;
+                    }
 
                     let el = document.createElement('p');
                     el.classList.add('text-left');
@@ -339,17 +426,30 @@
 
             unlikeStatus(index) {
                 let status = this.feed[index];
-                let state = status.favourited;
-                let count = status.favourites_count;
-                this.feed[index].favourites_count = count - 1;
-                this.feed[index].favourited = !status.favourited;
+                if(status.reblog) {
+                    status = status.reblog;
+                    let state = status.favourited;
+                    let count = status.favourites_count;
+                    this.feed[index].reblog.favourites_count = count - 1;
+                    this.feed[index].reblog.favourited = !status.favourited;
+                } else {
+                    let state = status.favourited;
+                    let count = status.favourites_count;
+                    this.feed[index].favourites_count = count - 1;
+                    this.feed[index].favourited = !status.favourited;
+                }
 
                 axios.post('/api/v1/statuses/' + status.id + '/unfavourite')
                 .then(res => {
                     //
                 }).catch(err => {
-                    this.feed[index].favourites_count = count;
-                    this.feed[index].favourited = false;
+                    if(status.reblog && status.pf_type == 'share') {
+                        this.feed[index].reblog.favourites_count = count;
+                        this.feed[index].reblog.favourited = false;
+                    } else {
+                        this.feed[index].favourites_count = count;
+                        this.feed[index].favourited = false;
+                    }
                 })
             },
 
@@ -371,7 +471,8 @@
 
             openLikesModal(idx) {
                 this.postIndex = idx;
-                this.likesModalPost = this.feed[this.postIndex];
+                let post = this.feed[this.postIndex];
+                this.likesModalPost = post.reblog ? post.reblog : post;
                 this.showLikesModal = true;
                 this.$nextTick(() => {
                     this.$refs.likesModal.open();
@@ -380,7 +481,8 @@
 
             openSharesModal(idx) {
                 this.postIndex = idx;
-                this.sharesModalPost = this.feed[this.postIndex];
+                let post = this.feed[this.postIndex];
+                this.sharesModalPost = post.reblog ? post.reblog : post;
                 this.showSharesModal = true;
                 this.$nextTick(() => {
                     this.$refs.sharesModal.open();
@@ -418,19 +520,32 @@
             },
 
             counterChange(index, type) {
+                let post = this.feed[index];
                 switch(type) {
                     case 'comment-increment':
-                        this.feed[index].reply_count = this.feed[index].reply_count + 1;
+                        if(post.reblog != null) {
+                            this.feed[index].reblog.reply_count = this.feed[index].reblog.reply_count + 1;
+                        } else {
+                            this.feed[index].reply_count = this.feed[index].reply_count + 1;
+                        }
                     break;
 
                     case 'comment-decrement':
-                        this.feed[index].reply_count = this.feed[index].reply_count - 1;
+                        if(post.reblog != null) {
+                            this.feed[index].reblog.reply_count = this.feed[index].reblog.reply_count - 1;
+                        } else {
+                            this.feed[index].reply_count = this.feed[index].reply_count - 1;
+                        }
                     break;
                 }
             },
 
             openCommentLikesModal(post) {
-                this.likesModalPost = post;
+                if(post.reblog != null) {
+                    this.likesModalPost = post.reblog;
+                } else {
+                    this.likesModalPost = post;
+                }
                 this.showLikesModal = true;
                 this.$nextTick(() => {
                     this.$refs.likesModal.open();
@@ -439,33 +554,59 @@
 
             shareStatus(index) {
                 let status = this.feed[index];
-                let state = status.reblogged;
-                let count = status.reblogs_count;
-                this.feed[index].reblogs_count = count + 1;
-                this.feed[index].reblogged = !status.reblogged;
+                if(status.reblog) {
+                    status = status.reblog;
+                    let state = status.reblogged;
+                    let count = status.reblogs_count;
+                    this.feed[index].reblog.reblogs_count = count + 1;
+                    this.feed[index].reblog.reblogged = !status.reblogged;
+                } else {
+                    let state = status.reblogged;
+                    let count = status.reblogs_count;
+                    this.feed[index].reblogs_count = count + 1;
+                    this.feed[index].reblogged = !status.reblogged;
+                }
 
                 axios.post('/api/v1/statuses/' + status.id + '/reblog')
                 .then(res => {
                     //
                 }).catch(err => {
-                    this.feed[index].reblogs_count = count;
-                    this.feed[index].reblogged = false;
+                    if(status.reblog) {
+                        this.feed[index].reblog.reblogs_count = count;
+                        this.feed[index].reblog.reblogged = false;
+                    } else {
+                        this.feed[index].reblogs_count = count;
+                        this.feed[index].reblogged = false;
+                    }
                 })
             },
 
             unshareStatus(index) {
                 let status = this.feed[index];
-                let state = status.reblogged;
-                let count = status.reblogs_count;
-                this.feed[index].reblogs_count = count - 1;
-                this.feed[index].reblogged = !status.reblogged;
+                if(status.reblog) {
+                    status = status.reblog;
+                    let state = status.reblogged;
+                    let count = status.reblogs_count;
+                    this.feed[index].reblog.reblogs_count = count - 1;
+                    this.feed[index].reblog.reblogged = !status.reblogged;
+                } else {
+                    let state = status.reblogged;
+                    let count = status.reblogs_count;
+                    this.feed[index].reblogs_count = count - 1;
+                    this.feed[index].reblogged = !status.reblogged;
+                }
 
                 axios.post('/api/v1/statuses/' + status.id + '/unreblog')
                 .then(res => {
                     //
                 }).catch(err => {
-                    this.feed[index].reblogs_count = count;
-                    this.feed[index].reblogged = false;
+                    if(status.reblog) {
+                        this.feed[index].reblog.reblogs_count = count;
+                        this.feed[index].reblog.reblogged = false;
+                    } else {
+                        this.feed[index].reblogs_count = count;
+                        this.feed[index].reblogged = false;
+                    }
                 })
             },
 
@@ -480,11 +621,19 @@
             handleBookmark(index) {
                 let p = this.feed[index];
 
+                if(p.reblog) {
+                    p = p.reblog;
+                }
+
                 axios.post('/i/bookmark', {
                     item: p.id
                 })
                 .then(res => {
-                    this.feed[index].bookmarked = !p.bookmarked;
+                    if(this.feed[index].reblog) {
+                        this.feed[index].reblog.bookmarked = !p.bookmarked;
+                    } else {
+                        this.feed[index].bookmarked = !p.bookmarked;
+                    }
                 })
                 .catch(err => {
                     // this.feed[index].bookmarked = false;
@@ -497,31 +646,51 @@
             },
 
             follow(index) {
-                // this.feed[index].relationship.following = true;
-
-                axios.post('/api/v1/accounts/' + this.feed[index].account.id + '/follow')
-                .then(res => {
-                    this.$store.commit('updateRelationship', [res.data]);
-                    this.updateProfile({ following_count: this.profile.following_count + 1 });
-                    this.feed[index].account.followers_count = this.feed[index].account.followers_count + 1;
-                }).catch(err => {
-                    swal('Oops!', 'An error occured when attempting to follow this account.', 'error');
-                    this.feed[index].relationship.following = false;
-                });
+                if(this.feed[index].reblog) {
+                    axios.post('/api/v1/accounts/' + this.feed[index].reblog.account.id + '/follow')
+                    .then(res => {
+                        this.$store.commit('updateRelationship', [res.data]);
+                        this.updateProfile({ following_count: this.profile.following_count + 1 });
+                        this.feed[index].reblog.account.followers_count = this.feed[index].reblog.account.followers_count + 1;
+                    }).catch(err => {
+                        swal('Oops!', 'An error occured when attempting to follow this account.', 'error');
+                        this.feed[index].reblog.relationship.following = false;
+                    });
+                } else {
+                    axios.post('/api/v1/accounts/' + this.feed[index].account.id + '/follow')
+                    .then(res => {
+                        this.$store.commit('updateRelationship', [res.data]);
+                        this.updateProfile({ following_count: this.profile.following_count + 1 });
+                        this.feed[index].account.followers_count = this.feed[index].account.followers_count + 1;
+                    }).catch(err => {
+                        swal('Oops!', 'An error occured when attempting to follow this account.', 'error');
+                        this.feed[index].relationship.following = false;
+                    });
+                }
             },
 
             unfollow(index) {
-                // this.feed[index].relationship.following = false;
-
-                axios.post('/api/v1/accounts/' + this.feed[index].account.id + '/unfollow')
-                .then(res => {
-                    this.$store.commit('updateRelationship', [res.data]);
-                    this.updateProfile({ following_count: this.profile.following_count - 1 });
-                    this.feed[index].account.followers_count = this.feed[index].account.followers_count - 1;
-                }).catch(err => {
-                    swal('Oops!', 'An error occured when attempting to unfollow this account.', 'error');
-                    this.feed[index].relationship.following = true;
-                });
+                if(this.feed[index].reblog) {
+                    axios.post('/api/v1/accounts/' + this.feed[index].reblog.account.id + '/unfollow')
+                    .then(res => {
+                        this.$store.commit('updateRelationship', [res.data]);
+                        this.updateProfile({ following_count: this.profile.following_count - 1 });
+                        this.feed[index].reblog.account.followers_count = this.feed[index].reblog.account.followers_count - 1;
+                    }).catch(err => {
+                        swal('Oops!', 'An error occured when attempting to unfollow this account.', 'error');
+                        this.feed[index].reblog.relationship.following = true;
+                    });
+                } else {
+                    axios.post('/api/v1/accounts/' + this.feed[index].account.id + '/unfollow')
+                    .then(res => {
+                        this.$store.commit('updateRelationship', [res.data]);
+                        this.updateProfile({ following_count: this.profile.following_count - 1 });
+                        this.feed[index].account.followers_count = this.feed[index].account.followers_count - 1;
+                    }).catch(err => {
+                        swal('Oops!', 'An error occured when attempting to unfollow this account.', 'error');
+                        this.feed[index].relationship.following = true;
+                    });
+                }
             },
 
             updateProfile(delta) {
@@ -568,7 +737,31 @@
                 this.$nextTick(() => {
                     this.forceUpdateIdx++;
                 });
-            }
+            },
+
+            enableReblogs() {
+                this.enablingReblogs = true;
+
+                axios.post('/api/pixelfed/v1/web/settings', {
+                    field: 'enable_reblogs',
+                    value: true
+                })
+                .then(res => {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                })
+            },
+
+            hideReblogs() {
+                this.showReblogBanner = false;
+                axios.post('/api/pixelfed/v1/web/settings', {
+                    field: 'hide_reblog_banner',
+                    value: true
+                })
+                .then(res => {
+                })
+            },
         },
 
         watch: {

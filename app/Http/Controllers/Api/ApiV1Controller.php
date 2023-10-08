@@ -1621,7 +1621,7 @@ class ApiV1Controller extends Controller
 		$limitReached = Cache::remember($limitKey, $limitTtl, function() use($user) {
 			$dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
 
-			return $dailyLimit >= 250;
+			return $dailyLimit >= 1250;
 		});
 		abort_if($limitReached == true, 429);
 
@@ -1826,7 +1826,7 @@ class ApiV1Controller extends Controller
 		$limitReached = Cache::remember($limitKey, $limitTtl, function() use($user) {
 			$dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
 
-			return $dailyLimit >= 250;
+			return $dailyLimit >= 1250;
 		});
 		abort_if($limitReached == true, 429);
 
@@ -2193,12 +2193,22 @@ class ApiV1Controller extends Controller
 				if($pid) {
 					$status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
 					$status['reblogged'] = (bool) ReblogService::get($pid, $status['id']);
+                    $status['bookmarked'] = (bool) BookmarkService::get($pid, $status['id']);
 				}
 				return $status;
 			})
 			->filter(function($status) {
 				return $status && isset($status['account']);
 			})
+            ->map(function($status) use($pid) {
+                if(!empty($status['reblog'])) {
+                    $status['reblog']['favourited'] = (bool) LikeService::liked($pid, $status['reblog']['id']);
+                    $status['reblog']['reblogged'] = (bool) ReblogService::get($pid, $status['reblog']['id']);
+                    $status['bookmarked'] = (bool) BookmarkService::get($pid, $status['id']);
+                }
+
+                return $status;
+            })
 			->take($limit)
 			->values();
 		} else {
@@ -2236,12 +2246,22 @@ class ApiV1Controller extends Controller
 				if($pid) {
 					$status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
 					$status['reblogged'] = (bool) ReblogService::get($pid, $status['id']);
+                    $status['bookmarked'] = (bool) BookmarkService::get($pid, $status['id']);
 				}
 				return $status;
 			})
 			->filter(function($status) {
 				return $status && isset($status['account']);
 			})
+            ->map(function($status) use($pid) {
+                if(!empty($status['reblog'])) {
+                    $status['reblog']['favourited'] = (bool) LikeService::liked($pid, $status['reblog']['id']);
+                    $status['reblog']['reblogged'] = (bool) ReblogService::get($pid, $status['reblog']['id']);
+                    $status['bookmarked'] = (bool) BookmarkService::get($pid, $status['id']);
+                }
+
+                return $status;
+            })
 			->take($limit)
 			->values();
 		}
@@ -2362,6 +2382,7 @@ class ApiV1Controller extends Controller
 			if($user) {
 				$status['favourited'] = (bool) LikeService::liked($user->profile_id, $k);
 				$status['reblogged'] = (bool) ReblogService::get($user->profile_id, $status['id']);
+                $status['bookmarked'] = (bool) BookmarkService::get($user->profile_id, $status['id']);
 			}
 			return $status;
 		})
@@ -2838,7 +2859,7 @@ class ApiV1Controller extends Controller
 				->where('created_at', '>', now()->subDays(1))
 				->count();
 
-			return $dailyLimit >= 100;
+			return $dailyLimit >= 1000;
 		});
 
 		abort_if($limitReached == true, 429);
@@ -3599,8 +3620,8 @@ class ApiV1Controller extends Controller
 		abort_if(!$request->user(), 403);
 
 		$pid = $request->user()->profile_id;
-		$home = $request->input('home.last_read_id');
-		$notifications = $request->input('notifications.last_read_id');
+		$home = $request->input('home[last_read_id]');
+		$notifications = $request->input('notifications[last_read_id]');
 
 		if($home) {
 			return $this->json(MarkerService::set($pid, 'home', $home));

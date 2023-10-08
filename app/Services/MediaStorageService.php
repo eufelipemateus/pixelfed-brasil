@@ -16,6 +16,7 @@ use App\Services\AccountService;
 use App\Http\Controllers\AvatarController;
 use GuzzleHttp\Exception\RequestException;
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
+use Illuminate\Support\Arr;
 
 class MediaStorageService {
 
@@ -42,27 +43,16 @@ class MediaStorageService {
 			return false;
 		}
 
-		$h = $r->getHeaders();
+        $h = Arr::mapWithKeys($r->getHeaders(), function($item, $key) {
+            return [strtolower($key) => last($item)];
+        });
 
-		if (isset($h['content-length']) && isset($h['content-type'])) {
-			if(empty($h['content-length']) || empty($h['content-type'])) {
-				return false;
-			}
-			$len = is_array($h['content-length']) ? $h['content-length'][0] : $h['content-length'];
-			$mime = is_array($h['content-type']) ? $h['content-type'][0] : $h['content-type'];
-		} else {
-			if (isset($h['Content-Length'], $h['Content-Type']) == false) {
-				return false;
-			}
+        if(!isset($h['content-length'], $h['content-type'])) {
+            return false;
+        }
 
-			if(empty($h['Content-Length']) || empty($h['Content-Type']) ) {
-				return false;
-			}
-
-			$len = is_array($h['Content-Length']) ? $h['Content-Length'][0] : $h['Content-Length'];
-			$mime = is_array($h['Content-Type']) ? $h['Content-Type'][0] : $h['Content-Type'];
-		}
-
+        $len = (int) $h['content-length'];
+        $mime = $h['content-type'];
 
 		if($len < 10 || $len > ((config_cache('pixelfed.max_photo_size') * 1000))) {
 			return false;
@@ -96,12 +86,11 @@ class MediaStorageService {
 		$thumbname = array_pop($pt);
 		$storagePath = implode('/', $p);
 
-		$disk = Storage::disk(config('filesystems.cloud'));
-		$file = $disk->putFileAs($storagePath, new File($path), $name, 'public');
-		$url = $disk->url($file);
-		$thumbFile = $disk->putFileAs($storagePath, new File($thumb), $thumbname, 'public');
-		$thumbUrl = $disk->url($thumbFile);
-		$media->thumbnail_url = $thumbUrl;
+		$url = ResilientMediaStorageService::store($storagePath, $path, $name);
+		if($thumb) {
+			$thumbUrl = ResilientMediaStorageService::store($storagePath, $thumb, $thumbname);
+			$media->thumbnail_url = $thumbUrl;
+		}
 		$media->cdn_url = $url;
 		$media->optimized_url = $url;
 		$media->replicated_at = now();

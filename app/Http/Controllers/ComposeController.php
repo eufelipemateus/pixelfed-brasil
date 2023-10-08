@@ -98,7 +98,7 @@ class ComposeController extends Controller
 		$limitReached = Cache::remember($limitKey, $limitTtl, function() use($user) {
 			$dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
 
-			return $dailyLimit >= 250;
+			return $dailyLimit >= 1250;
 		});
 
 		abort_if($limitReached == true, 429);
@@ -190,7 +190,7 @@ class ComposeController extends Controller
 		$limitReached = Cache::remember($limitKey, $limitTtl, function() use($user) {
 			$dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
 
-			return $dailyLimit >= 500;
+			return $dailyLimit >= 1500;
 		});
 
 		abort_if($limitReached == true, 429);
@@ -415,7 +415,7 @@ class ComposeController extends Controller
 		$results = Profile::select('id','domain','username')
 			->whereNotIn('id', $blocked)
 			->where('username','like','%'.$q.'%')
-			->groupBy('domain')
+			->groupBy('id', 'domain')
 			->limit(15)
 			->get()
 			->map(function($profile) {
@@ -499,7 +499,7 @@ class ComposeController extends Controller
 				->where('created_at', '>', now()->subDays(1))
 				->count();
 
-			return $dailyLimit >= 100;
+			return $dailyLimit >= 1000;
 		});
 
 		abort_if($limitReached == true, 429);

@@ -96,6 +96,13 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->group(functio
 
 	Route::get('autospam/home', 'AdminController@autospamHome')->name('admin.autospam');
 
+    Route::redirect('asf/', 'asf/home');
+    Route::get('asf/home', 'AdminShadowFilterController@home');
+    Route::get('asf/create', 'AdminShadowFilterController@create');
+    Route::get('asf/edit/{id}', 'AdminShadowFilterController@edit');
+    Route::post('asf/edit/{id}', 'AdminShadowFilterController@storeEdit');
+    Route::post('asf/create', 'AdminShadowFilterController@store');
+
 	Route::prefix('api')->group(function() {
 		Route::get('stats', 'AdminController@getStats');
 		Route::get('accounts', 'AdminController@getAccounts');
@@ -174,6 +181,25 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
 	Route::get('web/explore', 'LandingController@exploreRedirect');
 
 	Auth::routes();
+    Route::get('auth/raw/mastodon/start', 'RemoteAuthController@startRedirect');
+    Route::post('auth/raw/mastodon/config', 'RemoteAuthController@getConfig');
+    Route::post('auth/raw/mastodon/domains', 'RemoteAuthController@getAuthDomains');
+    Route::post('auth/raw/mastodon/start', 'RemoteAuthController@start');
+    Route::post('auth/raw/mastodon/redirect', 'RemoteAuthController@redirect');
+    Route::get('auth/raw/mastodon/preflight', 'RemoteAuthController@preflight');
+    Route::get('auth/mastodon/callback', 'RemoteAuthController@handleCallback');
+    Route::get('auth/mastodon/getting-started', 'RemoteAuthController@onboarding');
+    Route::post('auth/raw/mastodon/s/check', 'RemoteAuthController@sessionCheck');
+    Route::post('auth/raw/mastodon/s/prefill', 'RemoteAuthController@sessionGetMastodonData');
+    Route::post('auth/raw/mastodon/s/username-check', 'RemoteAuthController@sessionValidateUsername');
+    Route::post('auth/raw/mastodon/s/email-check', 'RemoteAuthController@sessionValidateEmail');
+    Route::post('auth/raw/mastodon/s/following', 'RemoteAuthController@sessionGetMastodonFollowers');
+    Route::post('auth/raw/mastodon/s/submit', 'RemoteAuthController@handleSubmit');
+    Route::post('auth/raw/mastodon/s/store-bio', 'RemoteAuthController@storeBio');
+    Route::post('auth/raw/mastodon/s/store-avatar', 'RemoteAuthController@storeAvatar');
+    Route::post('auth/raw/mastodon/s/account-to-id', 'RemoteAuthController@accountToId');
+    Route::post('auth/raw/mastodon/s/finish-up', 'RemoteAuthController@finishUp');
+    Route::post('auth/raw/mastodon/s/login', 'RemoteAuthController@handleLogin');
 
 	Route::get('discover', 'DiscoverController@home')->name('discover');
 
@@ -530,7 +556,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
 		Route::get('invites', 'UserInviteController@show')->name('settings.invites');
 		// Route::get('sponsor', 'SettingsController@sponsor')->name('settings.sponsor');
 		// Route::post('sponsor', 'SettingsController@sponsorStore');
-		Route::prefix('import')->group(function() {
+        Route::group(['prefix' => 'import', 'middleware' => 'dangerzone'], function() {
 		  Route::get('/', 'SettingsController@dataImport')->name('settings.import');
 		  Route::prefix('instagram')->group(function() {
 			Route::get('/', 'ImportController@instagram')->name('settings.import.ig');
@@ -545,6 +571,12 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
 		Route::post('timeline', 'SettingsController@updateTimelineSettings');
 		Route::get('media', 'SettingsController@mediaSettings')->name('settings.media');
 		Route::post('media', 'SettingsController@updateMediaSettings');
+
+        Route::group(['prefix' => 'account/aliases', 'middleware' => 'dangerzone'], function() {
+            Route::get('manage', 'ProfileAliasController@index');
+            Route::post('manage', 'ProfileAliasController@store');
+            Route::post('manage/delete', 'ProfileAliasController@delete');
+        });
 	});
 
 	Route::group(['prefix' => 'site'], function () {

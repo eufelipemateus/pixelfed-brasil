@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
 use App\Jobs\LikePipeline\LikePipeline;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
-use App\Jobs\DeletePipeline\DeleteRemoteStatusPipeline;
+use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Jobs\StoryPipeline\StoryExpire;
 use App\Jobs\StoryPipeline\StoryFetch;
 use App\Jobs\StatusPipeline\StatusRemoteUpdatePipeline;
@@ -281,7 +281,8 @@ class Inbox
 		}
 
 		if($actor->followers_count == 0) {
-			if(FollowerService::followerCount($actor->id, true) == 0) {
+            if(config('federation.activitypub.ingest.store_notes_without_followers')) {
+            } else if(FollowerService::followerCount($actor->id, true) == 0) {
 				return;
 			}
 		}
@@ -706,7 +707,7 @@ class Inbox
 						if(!$status) {
 							return;
 						}
-						DeleteRemoteStatusPipeline::dispatch($status)->onQueue('high');
+						RemoteStatusDelete::dispatch($status)->onQueue('high');
 						return;
 					break;
 
