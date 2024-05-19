@@ -36,7 +36,9 @@ return [
     'registerTitle'    =>   'Register a new account',
 
     'sendReset'        =>   'Send Password Reset Link',
-    'backLogin'        =>   'Back to Login'
+    'backLogin'        =>   'Back to Login',
+
+    'signInMastodon'  => 'Sign-in with Mastodon'
 
 
 ];
