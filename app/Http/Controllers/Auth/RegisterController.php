@@ -60,7 +60,7 @@ class RegisterController extends Controller
 	 *
 	 * @return \Illuminate\Contracts\Validation\Validator
 	 */
-	protected function validator(array $data)
+	public function validator(array $data)
 	{
 		if(config('database.default') == 'pgsql') {
 			$data['username'] = strtolower($data['username']);
@@ -137,7 +137,7 @@ class RegisterController extends Controller
 			'password' => 'required|string|min:'.config('pixelfed.min_password_length').'|confirmed',
 		];
 
-		if(config('captcha.enabled') || config('captcha.active.register')) {
+		if((bool) config_cache('captcha.enabled') && (bool) config_cache('captcha.active.register')) {
 			$rules['h-captcha-response'] = 'required|captcha';
 		}
 
@@ -151,7 +151,7 @@ class RegisterController extends Controller
 	 *
 	 * @return \App\User
 	 */
-	protected function create(array $data)
+	public function create(array $data)
 	{
 		if(config('database.default') == 'pgsql') {
 			$data['username'] = strtolower($data['username']);
@@ -174,7 +174,7 @@ class RegisterController extends Controller
 	 */
 	public function showRegistrationForm()
 	{
-		if(config_cache('pixelfed.open_registration')) {
+		if((bool) config_cache('pixelfed.open_registration')) {
 			if(config('pixelfed.bouncer.cloud_ips.ban_signups')) {
 				abort_if(BouncerService::checkIp(request()->ip()), 404);
 			}
@@ -191,7 +191,11 @@ class RegisterController extends Controller
 				return view('auth.register');
 			}
 		} else {
-			abort(404);
+			if((bool) config_cache('instance.curated_registration.enabled') && config('instance.curated_registration.state.fallback_on_closed_reg')) {
+				return redirect('/auth/sign_up');
+			} else {
+				abort(404);
+			}
 		}
 	}
 

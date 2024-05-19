@@ -71,20 +71,21 @@ class LoginController extends Controller
             $this->username() => 'required|email',
             'password'        => 'required|string|min:6',
         ];
+        $messages = [];
 
         if(
-        	config('captcha.enabled') ||
-        	config('captcha.active.login') ||
+        	(bool) config_cache('captcha.enabled') &&
+        	(bool) config_cache('captcha.active.login') ||
         	(
-				config('captcha.triggers.login.enabled') &&
+				(bool) config_cache('captcha.triggers.login.enabled') &&
 				request()->session()->has('login_attempts') &&
 				request()->session()->get('login_attempts') >= config('captcha.triggers.login.attempts')
 			)
         ) {
             $rules['h-captcha-response'] = 'required|filled|captcha|min:5';
+            $messages['h-captcha-response.required'] = 'The captcha must be filled';
         }
-        
-        $this->validate($request, $rules);
+        $request->validate($rules, $messages);
     }
 
     /**

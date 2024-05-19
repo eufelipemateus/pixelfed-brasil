@@ -21,7 +21,12 @@ jobs:
     steps:
       - checkout
 
-      - run: sudo apt update && sudo apt install zlib1g-dev libsqlite3-dev
+      - run:
+          name: "Create Environment file and generate app key"
+          command: |
+            mv .env.testing .env
+
+      - run: sudo apt install zlib1g-dev libsqlite3-dev
 
       # Download and cache dependencies
 
@@ -36,18 +41,17 @@ jobs:
       - run: composer install -n --prefer-dist
 
       - save_cache:
-          key: composer-v2-{{ checksum "composer.lock" }}
+          key: v2-dependencies-{{ checksum "composer.json" }}
           paths:
             - vendor
 
-      - run: cp .env.testing .env
       - run: php artisan config:cache
       - run: php artisan route:clear
       - run: php artisan storage:link
       - run: php artisan key:generate
 
       # run tests with phpunit or codecept
-      - run: ./vendor/bin/phpunit
+      - run: php artisan test
       - store_test_results:
           path: tests/_output
       - store_artifacts:
