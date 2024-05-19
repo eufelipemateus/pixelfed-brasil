@@ -23,7 +23,10 @@
                     	<div class="d-flex align-items-center font-weight-bold" style="gap:1rem;">
                     		<i class="far fa-exclamation-triangle fa-2x" style="opacity:70%"></i>
 
-                        	{{ session('status') ?? $errors->first('email') }}
+                        <div class="form-group row">
+                            <div class="col-md-12">
+                                <input id="email" type="email" class="form-control" name="email" placeholder="{{ __('auth.emailAddress') }}" value="{{ old('email') }}" required>
+                            </div>
                         </div>
                     </div>
                 @endif

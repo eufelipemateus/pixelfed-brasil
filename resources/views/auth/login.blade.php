@@ -7,7 +7,7 @@
             <div class="card shadow-none border">
                 <div class="card-header bg-transparent p-3">
                     <h4 class="font-weight-bold mb-0 text-center">
-                        Account Login
+                    {{ __('auth.login') }}
                     </h4>
                 </div>
 
@@ -25,7 +25,7 @@
                         <div class="form-group row mb-0">
 
                             <div class="col-md-12">
-                                <label for="email" class="small font-weight-bold text-muted mb-0">Email Address</label>
+                                <label for="email" class="small font-weight-bold text-muted mb-0">{{ __("auth.emailAddress") }}</label>
                                 <input id="email" type="email" class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }}" name="email" value="{{ old('email') }}" placeholder="{{__('Email')}}" required autofocus>
 
                                 @if ($errors->has('email'))
@@ -45,7 +45,7 @@
                         <div class="form-group row mb-0">
 
                             <div class="col-md-12">
-                                <label for="password" class="small font-weight-bold text-muted mb-0">Password</label>
+                                <label for="password" class="small font-weight-bold text-muted mb-0">{{__('auth.password')}}</label>
                                 <input id="password" type="password" class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" name="password" placeholder="{{__('Password')}}" required>
 
                                 @if ($errors->has('password'))
@@ -68,7 +68,7 @@
                                     <label>
                                         <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
                                         <span class="font-weight-bold ml-1 text-muted">
-                                            {{ __('Remember Me') }}
+                                            {{ __('auth.remember') }}
                                         </span>
                                     </label>
                                 </div>
@@ -89,9 +89,14 @@
 	                        </div>
                         @endif
 
-                        <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold rounded-pill">
-                            {{ __('Login') }}
-                        </button>
+                        <div class="form-group row mb-4">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary btn-block btn-lg font-weight-bold">
+                                    {{ __('auth.login') }}
+                                </button>
+
+                            </div>
+                        </div>
 
                     </form>
                     @if(
@@ -104,7 +109,7 @@
                         <div class="form-group row mb-0">
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn-primary btn-sm btn-block rounded-pill font-weight-bold" style="background: linear-gradient(#6364FF, #563ACC);">
-                                    Sign-in with Mastodon
+                                    {{ __('auth.signInMastodon') }}
                                 </button>
                             </div>
                         </div>
@@ -116,6 +121,11 @@
 
                     <p class="text-center font-weight-bold mb-0">
                         <a href="/register">Register</a>
+                        <span class="px-1">·</span>
+                        @endif
+                        <a href="{{ route('password.request') }}">
+                            {{ __('auth.forgot') }}
+                        </a>
                     </p>
                     @endif
                 </div>
