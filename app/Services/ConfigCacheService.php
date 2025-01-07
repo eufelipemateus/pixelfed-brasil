@@ -9,6 +9,7 @@ use Illuminate\Database\QueryException;
 class ConfigCacheService
 {
     const CACHE_KEY = 'config_cache:_v0-key:';
+
     const PROTECTED_KEYS = [
         'filesystems.disks.s3.key',
         'filesystems.disks.s3.secret',
@@ -45,6 +46,7 @@ class ConfigCacheService
                     'pixelfed.oauth_enabled',
                     'pixelfed.import.instagram.enabled',
                     'pixelfed.bouncer.enabled',
+                    'federation.activitypub.authorized_fetch',
 
                     'pixelfed.enforce_email_verification',
                     'pixelfed.max_account_size',
@@ -133,6 +135,8 @@ class ConfigCacheService
                     'filesystems.disks.spaces.url',
                     'filesystems.disks.spaces.endpoint',
                     'filesystems.disks.spaces.use_path_style_endpoint',
+
+                    'instance.stats.total_local_posts',
                     // 'system.user_mode'
                 ];
 
@@ -146,7 +150,7 @@ class ConfigCacheService
 
                 $protect = false;
                 $protected = null;
-                if(in_array($key, self::PROTECTED_KEYS)) {
+                if (in_array($key, self::PROTECTED_KEYS)) {
                     $protect = true;
                 }
 
@@ -154,7 +158,7 @@ class ConfigCacheService
                 $c = ConfigCacheModel::where('k', $key)->first();
 
                 if ($c) {
-                    if($protect) {
+                    if ($protect) {
                         return decrypt($c->v) ?? config($key);
                     } else {
                         return $c->v ?? config($key);
@@ -165,7 +169,7 @@ class ConfigCacheService
                     return;
                 }
 
-                if($protect && $v) {
+                if ($protect && $v) {
                     $protected = encrypt($v);
                 }
 
@@ -176,7 +180,7 @@ class ConfigCacheService
 
                 return $v;
             });
-        } catch (Exception | QueryException $e) {
+        } catch (Exception|QueryException $e) {
             return config($key);
         }
     }
@@ -187,7 +191,7 @@ class ConfigCacheService
 
         $protect = false;
         $protected = null;
-        if(in_array($key, self::PROTECTED_KEYS)) {
+        if (in_array($key, self::PROTECTED_KEYS)) {
             $protect = true;
             $protected = encrypt($val);
         }

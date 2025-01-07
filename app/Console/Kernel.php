@@ -19,7 +19,6 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param \Illuminate\Console\Scheduling\Schedule $schedule
      *
      * @return void
      */
@@ -32,6 +31,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('gc:failedjobs')->dailyAt(3)->onOneServer();
         $schedule->command('gc:passwordreset')->dailyAt('09:41')->onOneServer();
         $schedule->command('gc:sessions')->twiceDaily(13, 23)->onOneServer();
+        $schedule->command('app:weekly-instance-scan')->weeklyOn(2, '4:20')->onOneServer();
 
         if ((bool) config_cache('pixelfed.cloud_storage') && (bool) config_cache('media.delete_local_after_cloud')) {
             $schedule->command('media:s3gc')->hourlyAt(15);
@@ -51,6 +51,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:notification-epoch-update')->weeklyOn(1, '2:21')->onOneServer();
         $schedule->command('app:hashtag-cached-count-update')->hourlyAt(25)->onOneServer();
         $schedule->command('app:account-post-count-stat-update')->everySixHours(25)->onOneServer();
+        $schedule->command('app:instance-update-total-local-posts')->twiceDailyAt(1, 13, 45)->onOneServer();
     }
 
     /**
@@ -60,7 +61,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
     }

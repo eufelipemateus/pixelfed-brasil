@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\ConfigCache;
 use App\Services\AccountService;
+use App\Services\InstanceService;
 use App\Services\StatusService;
+use App\User;
+use Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Cache;
 use Storage;
-use App\Status;
-use App\User;
 
 class PixelfedDirectoryController extends Controller
 {
@@ -90,7 +90,8 @@ class PixelfedDirectoryController extends Controller
 
         $oauthEnabled = ConfigCache::whereK('pixelfed.oauth_enabled')->first();
         if ($oauthEnabled) {
-            $keys = file_exists(storage_path('oauth-public.key')) && file_exists(storage_path('oauth-private.key'));
+            $keys = (file_exists(storage_path('oauth-public.key')) || config_cache('passport.public_key')) &&
+                (file_exists(storage_path('oauth-private.key')) || config_cache('passport.private_key'));
             $res['oauth_enabled'] = (bool) $oauthEnabled && $keys;
         }
 
@@ -140,10 +141,8 @@ class PixelfedDirectoryController extends Controller
             'stories' => (bool) config_cache('instance.stories.enabled'),
         ];
 
-        $statusesCount = Cache::remember('api:nodeinfo:statuses', 21600, function() {
-            return Status::whereLocal(true)->count();
-        });
-        $usersCount = Cache::remember('api:nodeinfo:users', 43200, function() {
+        $statusesCount = InstanceService::totalLocalStatuses();
+        $usersCount = Cache::remember('api:nodeinfo:users', 43200, function () {
             return User::count();
         });
         $res['stats'] = [

@@ -174,7 +174,7 @@ class AdminCuratedRegisterController extends Controller
     public function apiMessageSendStore(Request $request, $id)
     {
         $this->validate($request, [
-            'message' => 'required|string|min:5|max:1000',
+            'message' => 'required|string|min:5|max:3000',
         ]);
         $record = CuratedRegister::findOrFail($id);
         abort_if($record->email_verified_at === null, 400, 'Cannot message an unverified email');
@@ -240,6 +240,11 @@ class AdminCuratedRegisterController extends Controller
         $record->is_closed = true;
         $record->action_taken_at = now();
         $record->save();
+
+        if (User::withTrashed()->whereEmail($record->email)->exists()) {
+            return [200];
+        }
+
         $user = User::create([
             'name' => $record->username,
             'username' => $record->username,
