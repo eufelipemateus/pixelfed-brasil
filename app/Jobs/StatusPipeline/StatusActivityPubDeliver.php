@@ -3,6 +3,7 @@
 namespace App\Jobs\StatusPipeline;
 
 use Cache, Log;
+use App\Profile;
 use App\Status;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -52,11 +53,35 @@ class StatusActivityPubDeliver implements ShouldQueue
 		$status = $this->status;
 		$profile = $status->profile;
 
+		// ignore group posts
+        // if($status->group_id != null) {
+        //     return;
+        // }
+
 		if($status->local == false || $status->url || $status->uri) {
 			return;
 		}
 
 		$audience = $status->profile->getAudienceInbox();
+
+		$parentInbox = [];
+
+		$mentions = $status->mentions
+			->filter(function($f) { return $f->domain !== null;})
+			->values()
+			->map(function($m) { return $m->sharedInbox ?? $m->inbox_url; })
+			->toArray();
+
+		if($status->in_reply_to_profile_id) {
+			$parent = Profile::find($status->in_reply_to_profile_id);
+			if($parent && $parent->domain !== null) {
+				$parentInbox = [
+					$parent->sharedInbox ?? $parent->inbox_url
+				];
+			}
+		}
+
+		$audience = array_values(array_unique(array_merge($audience, $mentions, $parentInbox)));
 
 		if(empty($audience) || !in_array($status->scope, ['public', 'unlisted', 'private'])) {
 			// Return on profiles with no remote followers
@@ -85,13 +110,15 @@ class StatusActivityPubDeliver implements ShouldQueue
 			'timeout'  => config('federation.activitypub.delivery.timeout')
 		]);
 
-		$requests = function($audience) use ($client, $activity, $profile, $payload) {
+		$version = config('pixelfed.version');
+		$appUrl = config('app.url');
+		$userAgent = "(Pixelfed/{$version}; +{$appUrl})";
+
+		$requests = function($audience) use ($client, $activity, $profile, $payload, $userAgent) {
 			foreach($audience as $url) {
-				$version = config('pixelfed.version');
-				$appUrl = config('app.url');
 				$headers = HttpSignature::sign($profile, $url, $activity, [
 					'Content-Type'	=> 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-					'User-Agent'	=> "(Pixelfed/{$version}; +{$appUrl})",
+					'User-Agent'	=> $userAgent,
 				]);
 				yield function() use ($client, $url, $headers, $payload) {
 					return $client->postAsync($url, [

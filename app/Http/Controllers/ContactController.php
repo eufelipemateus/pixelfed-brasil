@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Auth;
 use App\Contact;
 use App\Jobs\ContactPipeline\ContactPipeline;
+use App\Rules\MaxMultiLine;
 
 class ContactController extends Controller
 {
@@ -21,7 +22,7 @@ class ContactController extends Controller
 		abort_if(!Auth::check(), 403);
 
 		$this->validate($request, [
-			'message' => 'required|string|min:5|max:500',
+			'message' => ['required', 'string', 'min:5', new MaxMultiLine('500')],
 			'request_response' => 'string|max:3'
 		]);
 
@@ -45,8 +46,19 @@ class ContactController extends Controller
 		$contact->response = '';
 		$contact->save();
 
-		ContactPipeline::dispatchNow($contact);
+		ContactPipeline::dispatch($contact);
 
 		return redirect()->back()->with('status', 'Success - Your message has been sent to admins.');
 	}
+
+    public function showAdminResponse(Request $request, $id)
+    {
+        abort_if(!$request->user(), 404);
+        $uid = $request->user()->id;
+        $contact = Contact::whereUserId($uid)
+            ->whereNotNull('response')
+            ->whereNotNull('responded_at')
+            ->findOrFail($id);
+        return view('site.contact.admin-response', compact('contact'));
+    }
 }

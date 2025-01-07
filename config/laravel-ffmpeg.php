@@ -3,8 +3,7 @@
 return [
     'ffmpeg' => [
         'binaries' => env('FFMPEG_BINARIES', 'ffmpeg'),
-
-        'threads' => 12,   // set to false to disable the default 'threads' filter
+        'threads' => env('FFMPEG_THREADS', false),
     ],
 
     'ffprobe' => [
@@ -13,9 +12,11 @@ return [
 
     'timeout' => 3600,
 
-    'enable_logging' => env('FFMPEG_LOG', false),
-
-    'set_command_and_error_output_on_exception' => false,
+    'log_channel' => env('FFMPEG_LOG_CHANNEL', false),   // set to false to completely disable logging
 
     'temporary_files_root' => env('FFMPEG_TEMPORARY_FILES_ROOT', sys_get_temp_dir()),
+
+    'temporary_files_encrypted_hls' => env('FFMPEG_TEMPORARY_ENCRYPTED_HLS', env('FFMPEG_TEMPORARY_FILES_ROOT', sys_get_temp_dir())),
+
+    'min_hls_version' => env('FFMPEG_MIN_HLS_VERSION', '4.3.0'),
 ];

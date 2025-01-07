@@ -14,9 +14,11 @@ class CustomEmoji extends Model
 	const SCAN_RE = "/(?<=[^[:alnum:]:]|\n|^):([a-zA-Z0-9_]{2,}):(?=[^[:alnum:]:]|$)/x";
 	const CACHE_KEY = "pf:custom_emoji:";
 
+	protected $guarded = [];
+
 	public static function scan($text, $activitypub = false)
 	{
-		if(config('federation.custom_emoji.enabled') == false) {
+		if((bool) config_cache('federation.custom_emoji.enabled') == false) {
 			return [];
 		}
 

@@ -6,12 +6,14 @@ use App\Models\CustomEmoji;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Client\RequestException;
 
 class CustomEmojiService
 {
 	public static function get($shortcode)
 	{
-		if(config('federation.custom_emoji.enabled') == false) {
+		if((bool) config_cache('federation.custom_emoji.enabled') == false) {
 			return;
 		}
 
@@ -20,7 +22,7 @@ class CustomEmojiService
 
 	public static function import($url, $id = false)
 	{
-		if(config('federation.custom_emoji.enabled') == false) {
+		if((bool) config_cache('federation.custom_emoji.enabled') == false) {
 			return;
 		}
 
@@ -33,7 +35,13 @@ class CustomEmojiService
 			return;
 		}
 
-		$res = Http::acceptJson()->get($url);
+		try {
+			$res = Http::acceptJson()->get($url);
+		} catch (RequestException $e) {
+			return;
+		} catch (\Exception $e) {
+			return;
+		}
 
 		if($res->successful()) {
 			$json = $res->json();
@@ -57,16 +65,23 @@ class CustomEmojiService
 				return;
 			}
 
-			$emoji = new CustomEmoji;
-			$emoji->shortcode = $json['name'];
-			$emoji->uri = $json['id'];
-			$emoji->domain = parse_url($json['id'], PHP_URL_HOST);
-			$emoji->image_remote_url = $json['icon']['url'];
-			$emoji->save();
+			$emoji = CustomEmoji::firstOrCreate([
+				'shortcode' => $json['name'],
+				'domain' => parse_url($json['id'], PHP_URL_HOST)
+			], [
+				'uri' => $json['id'],
+				'image_remote_url' => $json['icon']['url']
+			]);
+
+			if($emoji->wasRecentlyCreated == false) {
+				if(Storage::exists('public/' . $emoji->media_path)) {
+					Storage::delete('public/' . $emoji->media_path);
+				}
+			}
 
 			$ext = '.' . last(explode('/', $json['icon']['mediaType']));
 			$dest = storage_path('app/public/emoji/') . $emoji->id . $ext;
-			copy($emoji->image_remote_url, $dest);
+			copy($json['icon']['url'], $dest);
 			$emoji->media_path = 'emoji/' . $emoji->id . $ext;
 			$emoji->save();
 
@@ -84,7 +99,13 @@ class CustomEmojiService
 
 	public static function headCheck($url)
 	{
-		$res = Http::head($url);
+		try {
+			$res = Http::head($url);
+		} catch (RequestException $e) {
+			return false;
+		} catch (\Exception $e) {
+			return false;
+		}
 
 		if(!$res->successful()) {
 			return false;
@@ -112,6 +133,7 @@ class CustomEmojiService
 			return CustomEmoji::when(!$pgsql, function($q, $pgsql) {
 					return $q->groupBy('shortcode');
 				})
+                ->whereNull('uri')
 				->get()
 				->map(function($emojo) {
 					$url = url('storage/' . $emojo->media_path);

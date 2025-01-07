@@ -5,16 +5,18 @@ namespace App\Transformer\Api;
 use App\Status;
 use League\Fractal;
 use Cache;
+use App\Services\AccountService;
 use App\Services\HashidService;
 use App\Services\LikeService;
 use App\Services\MediaService;
 use App\Services\MediaTagService;
+use App\Services\StatusService;
 use App\Services\StatusHashtagService;
 use App\Services\StatusLabelService;
 use App\Services\StatusMentionService;
-use App\Services\ProfileService;
 use App\Services\PollService;
 use App\Models\CustomEmoji;
+use App\Util\Lexer\Autolink;
 
 class StatusStatelessTransformer extends Fractal\TransformerAbstract
 {
@@ -22,6 +24,9 @@ class StatusStatelessTransformer extends Fractal\TransformerAbstract
 	{
 		$taggedPeople = MediaTagService::get($status->id);
 		$poll = $status->type === 'poll' ? PollService::get($status->id) : null;
+        $rendered = config('exp.autolink') ?
+            ( $status->caption ? Autolink::create()->autolink($status->caption) : '' ) :
+            ( $status->rendered ?? $status->caption );
 
 		return [
 			'_v'                        => 1,
@@ -32,8 +37,8 @@ class StatusStatelessTransformer extends Fractal\TransformerAbstract
 			'url'                       => $status->url(),
 			'in_reply_to_id'            => $status->in_reply_to_id ? (string) $status->in_reply_to_id : null,
 			'in_reply_to_account_id'    => $status->in_reply_to_profile_id ? (string) $status->in_reply_to_profile_id : null,
-			'reblog'                    => null,
-			'content'                   => $status->rendered ?? $status->caption,
+			'reblog'                    => $status->reblog_of_id ? StatusService::get($status->reblog_of_id, false) : null,
+			'content'                   => $rendered,
 			'content_text'              => $status->caption,
 			'created_at'                => str_replace('+00:00', 'Z', $status->created_at->format(DATE_RFC3339_EXTENDED)),
 			'emojis'                    => CustomEmoji::scan($status->caption),
@@ -63,9 +68,10 @@ class StatusStatelessTransformer extends Fractal\TransformerAbstract
 			'label'                     => StatusLabelService::get($status),
 			'liked_by'                  => LikeService::likedBy($status),
 			'media_attachments'			=> MediaService::get($status->id),
-			'account'					=> ProfileService::get($status->profile_id),
+			'account'					=> AccountService::get($status->profile_id, true),
 			'tags'						=> StatusHashtagService::statusTags($status->id),
-			'poll'						=> $poll
+			'poll'						=> $poll,
+			'edited_at'					=> $status->edited_at ? str_replace('+00:00', 'Z', $status->edited_at->format(DATE_RFC3339_EXTENDED)) : null,
 		];
 	}
 }

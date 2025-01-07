@@ -35,7 +35,10 @@ return [
     'registerTitle'    =>   'Cadastrar uma nova conta',
 
     'sendReset'        =>   'Enviar Link de Recuperação de Senha',
-    'backLogin'        =>   'Back to Login'
+    'backLogin'        =>   'Back to Login',
+
+    'signInMastodon'  => 'Entrar com Mastodon'
+
 
 
 ];

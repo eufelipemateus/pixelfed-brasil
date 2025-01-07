@@ -2,57 +2,55 @@
 
 namespace Tests\Unit\Lexer;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Status;
 use App\Util\Lexer\Autolink;
 use App\Util\Lexer\Extractor;
-use App\Status;
+use Tests\TestCase;
 
 class StatusLexerTest extends TestCase
 {
     public $status;
     public $entities;
-	public $autolink;
+    public $autolink;
 
     public function setUp(): void
     {
         parent::setUp();
-    	$this->status = "@pixelfed hi, really like the website! #píxelfed";
-    	$this->entities = Extractor::create()->extract($this->status);
-    	$this->autolink = Autolink::create()->autolink($this->status);
+        $this->status = '@pixelfed hi, really like the website! #píxelfed';
+        $this->entities = Extractor::create()->extract($this->status);
+        $this->autolink = Autolink::create()->autolink($this->status);
     }
 
     public function testLexerExtractor()
     {
         $expected = [
-            "hashtags" => [
-                 "píxelfed",
-             ],
-             "urls" => [],
-             "mentions" => [
-                 "pixelfed",
-             ],
-             "replyto" => "pixelfed",
-             "hashtags_with_indices" => [
-                 [
-                   "hashtag" => "píxelfed",
-                   "indices" => [
-                         39,
-                         48,
-                     ],
-                 ],
-             ],
-             "urls_with_indices" => [],
-             "mentions_with_indices" => [
-                 [
-                   "screen_name" => "pixelfed",
-                   "indices" => [
-                         0,
-                         9,
+            'hashtags' => [
+                'píxelfed',
+            ],
+            'urls' => [],
+            'mentions' => [
+                'pixelfed',
+            ],
+            'replyto' => 'pixelfed',
+            'hashtags_with_indices' => [
+                [
+                    'hashtag' => 'píxelfed',
+                    'indices' => [
+                        39,
+                        48,
                     ],
-                 ]
-             ]
+                ],
+            ],
+            'urls_with_indices' => [],
+            'mentions_with_indices' => [
+                [
+                    'screen_name' => 'pixelfed',
+                    'indices' => [
+                        0,
+                        9,
+                    ],
+                ]
+            ]
         ];
 
         $this->assertEquals($this->entities, $expected);
@@ -64,40 +62,40 @@ class StatusLexerTest extends TestCase
         $this->assertEquals($this->autolink, $expected);
     }
 
-    /** @test **/
+    /** @test * */
     public function remoteMention()
     {
         $expected = [
-            "hashtags" => [
-                "dansup",
+            'hashtags' => [
+                'dansup',
             ],
-            "urls" => [],
-            "mentions" => [
-                "@dansup@mstdn.io",
-                "test",
+            'urls' => [],
+            'mentions' => [
+                '@dansup@mstdn.io',
+                'test',
             ],
-            "replyto" => null,
-            "hashtags_with_indices" => [
+            'replyto' => null,
+            'hashtags_with_indices' => [
                 [
-                    "hashtag" => "dansup",
-                    "indices" => [
+                    'hashtag' => 'dansup',
+                    'indices' => [
                         0,
                         7,
                     ],
                 ],
             ],
-            "urls_with_indices" => [],
-            "mentions_with_indices" => [
+            'urls_with_indices' => [],
+            'mentions_with_indices' => [
                 [
-                    "screen_name" => "@dansup@mstdn.io",
-                    "indices" => [
+                    'screen_name' => '@dansup@mstdn.io',
+                    'indices' => [
                         8,
                         24,
                     ],
                 ],
                 [
-                    "screen_name" => "test",
-                    "indices" => [
+                    'screen_name' => 'test',
+                    'indices' => [
                         25,
                         30,
                     ],
@@ -108,34 +106,34 @@ class StatusLexerTest extends TestCase
         $this->assertEquals($actual, $expected);
     }
 
-    /** @test **/
+    /** @test * */
     public function mentionLimit()
     {
-        $text = '@test1 @test @test2 @test3 @test4 @test5 test post';
+        $text = '@test1 @test @test2 @test3 @test4 @test5 @test6 @test7 @test8 @test9 @test10 @test11 @test12 @test13 @test14 @test15 @test16 @test17 @test18 @test19 test post';
 
         $entities = Extractor::create()->extract($text);
         $count = count($entities['mentions']);
-        $this->assertEquals($count, Status::MAX_MENTIONS);
+        $this->assertEquals(Status::MAX_MENTIONS, $count);
     }
 
-    /** @test **/
+    /** @test * */
     public function hashtagLimit()
     {
-        $text = '#hashtag0 #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5 #hashtag6 #hashtag7 #hashtag8 #hashtag9 #hashtag10 #hashtag11 #hashtag12 #hashtag13 #hashtag14 #hashtag15 #hashtag16 #hashtag17 #hashtag18 #hashtag19 #hashtag20 #hashtag21 #hashtag22 #hashtag23 #hashtag24 #hashtag25 #hashtag26 #hashtag27 #hashtag28 #hashtag29 #hashtag30 #hashtag31';
+        $text = '#hashtag0 #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5 #hashtag6 #hashtag7 #hashtag8 #hashtag9 #hashtag10 #hashtag11 #hashtag12 #hashtag13 #hashtag14 #hashtag15 #hashtag16 #hashtag17 #hashtag18 #hashtag19 #hashtag20 #hashtag21 #hashtag22 #hashtag23 #hashtag24 #hashtag25 #hashtag26 #hashtag27 #hashtag28 #hashtag29 #hashtag30 #hashtag31 #hashtag0 #hashtag1 #hashtag2 #hashtag3 #hashtag4 #hashtag5 #hashtag6 #hashtag7 #hashtag8 #hashtag9 #hashtag10 #hashtag11 #hashtag12 #hashtag13 #hashtag14 #hashtag15 #hashtag16 #hashtag17 #hashtag18 #hashtag19 #hashtag20 #hashtag21 #hashtag22 #hashtag23 #hashtag24 #hashtag25 #hashtag26 #hashtag27 #hashtag28 #hashtag29 #hashtag30 #hashtag31';
 
         $entities = Extractor::create()->extract($text);
         $count = count($entities['hashtags']);
-        $this->assertEquals($count, Status::MAX_HASHTAGS);
+        $this->assertEquals(Status::MAX_HASHTAGS, $count);
     }
 
 
-    /** @test **/
+    /** @test * */
     public function linkLimit()
     {
-        $text = 'https://example.org https://example.net https://example.com';
+        $text = 'https://example.org https://example.net https://example.com https://example.com https://example.net';
 
         $entities = Extractor::create()->extract($text);
         $count = count($entities['urls']);
-        $this->assertEquals($count, Status::MAX_LINKS);
+        $this->assertEquals(Status::MAX_LINKS, $count);
     }
 }

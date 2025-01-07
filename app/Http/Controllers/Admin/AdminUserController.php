@@ -11,6 +11,7 @@ use App\Mail\AdminMessage;
 use Illuminate\Support\Facades\Mail;
 use App\Services\ModLogService;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
+use App\Services\AccountService;
 
 trait AdminUserController
 {
@@ -25,7 +26,7 @@ trait AdminUserController
 			'next' => $offset + 1,
 			'query' => $search ? '&a=search&q=' . $search : null
 		];
-		$users = User::select('id', 'username', 'status', 'profile_id')
+		$users = User::select('id', 'username', 'status', 'profile_id', 'is_admin')
 			->orderBy($col, $dir)
 			->when($search, function($q, $search) {
 				return $q->where('username', 'like', "%{$search}%");
@@ -34,7 +35,11 @@ trait AdminUserController
 				return $q->offset(($offset * 10));
 			})
 			->limit(10)
-			->get();
+			->get()
+			->map(function($u) {
+				$u['account'] = AccountService::get($u->profile_id, true);
+				return $u;
+			});
 
 		return view('admin.users.home', compact('users', 'pagination'));
 	}
@@ -222,7 +227,7 @@ trait AdminUserController
 			->save();
 
 		Cache::forget('profiles:private');
-		DeleteAccountPipeline::dispatch($user)->onQueue('high');
+		DeleteAccountPipeline::dispatch($user);
 
 		$msg = "Successfully deleted {$user->username}!";
 		$request->session()->flash('status', $msg);

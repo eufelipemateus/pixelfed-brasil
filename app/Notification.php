@@ -14,9 +14,11 @@ class Notification extends Model
      *
      * @var array
      */
-    protected $dates = ['deleted_at'];
+    protected $casts = [
+    	'deleted_at' => 'datetime'
+    ];
 
-    protected $fillable = ['*'];
+    protected $guarded = [];
 
     public function actor()
     {

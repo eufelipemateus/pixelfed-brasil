@@ -14,13 +14,13 @@ class Avatar extends Model
      *
      * @var array
      */
-    protected $dates = [
-        'deleted_at',
-        'last_fetched_at',
-        'last_processed_at'
+    protected $casts = [
+        'deleted_at' => 'datetime',
+        'last_fetched_at' => 'datetime',
+        'last_processed_at' => 'datetime'
     ];
     
-    protected $fillable = ['profile_id'];
+    protected $guarded = [];
 
     protected $visible = [
         'id',

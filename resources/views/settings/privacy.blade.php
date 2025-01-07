@@ -8,8 +8,9 @@
   <hr>
   <div class="form-group pb-1">
     <p>
-      <a class="btn btn-outline-secondary py-0 font-weight-bold" href="{{route('settings.privacy.muted-users')}}">Muted Users</a>
-      <a class="btn btn-outline-secondary py-0 font-weight-bold" href="{{route('settings.privacy.blocked-users')}}">Blocked Users</a>
+      <a class="btn btn-link py-0 font-weight-bold" href="{{route('settings.privacy.muted-users')}}">{{ __('profile.mutedAccounts') }}</a>
+      <a class="btn btn-link py-0 font-weight-bold" href="{{route('settings.privacy.blocked-users')}}">{{ __('profile.blockedAccounts') }}</a>
+      <a class="btn btn-link py-0 font-weight-bold" href="{{route('settings.privacy.domain-blocks')}}">{{ __('profile.blockedDomains') }}</a>
     </p>
   </div>
   <form method="post">
@@ -24,22 +25,32 @@
       </label>
       <p class="text-muted small help-text">When your account is private, only people you approve can see your photos and videos on pixelfed. Your existing followers won't be affected.</p>
     </div>
+
     <div class="form-check pb-3">
       <input class="form-check-input" type="checkbox" name="crawlable" id="crawlable" {{!$settings->crawlable ? 'checked=""':''}} {{$settings->is_private ? 'disabled=""':''}}>
       <label class="form-check-label font-weight-bold" for="crawlable">
-        {{__('Opt-out of search engine indexing')}}
+        {{__('Disable Search Engine indexing')}}
       </label>
-      <p class="text-muted small help-text">When your account is visible to search engines, your information can be crawled and stored by search engines.</p>
+      <p class="text-muted small help-text">When your account is visible to search engines, your information can be crawled and stored by search engines. {!! $settings->is_private ? '<strong>Not available when your account is private</strong>' : ''!!}</p>
+    </div>
+
+    <div class="form-check pb-3">
+      <input class="form-check-input" type="checkbox" name="indexable" id="indexable" {{$profile->indexable ? 'checked=""':''}} {{$settings->is_private ? 'disabled=""':''}}>
+      <label class="form-check-label font-weight-bold" for="indexable">
+        {{__('Include public posts in search results')}}
+      </label>
+        <p class="text-muted small help-text">Your public posts may appear in search results on Pixelfed and Mastodon. People who have interacted with your posts may be able to search them regardless. {!! $settings->is_private ? '<strong>Not available when your account is private</strong>' : ''!!}</p>
     </div>
 
 
-    {{-- <div class="form-check pb-3">
-      <input class="form-check-input" type="checkbox" name="show_discover" id="show_discover" {{$settings->is_private ? 'disabled=""':''}} {{$settings->show_discover ? 'checked=""':''}}>
-      <label class="form-check-label font-weight-bold" for="show_discover">
-        {{__('Visible on discover')}}
+    <div class="form-check pb-3">
+      <input class="form-check-input" type="checkbox" name="is_suggestable" id="is_suggestable" {{$settings->is_private ? 'disabled=""':''}} {{auth()->user()->profile->is_suggestable ? 'checked=""':''}}>
+      <label class="form-check-label font-weight-bold" for="is_suggestable">
+        {{__('Show on Directory')}}
       </label>
-      <p class="text-muted small help-text">When this option is enabled, your profile and posts are used for discover recommendations. Only public profiles and posts are used.</p>
-    </div> --}}
+      <p class="text-muted small help-text">When this option is enabled, your profile is included in the Directory. Only public profiles are eligible. {!! $settings->is_private ? '<strong>Not available when your account is private</strong>' : ''!!}</p>
+    </div>
+
     <div class="form-check pb-3">
       <input class="form-check-input" type="checkbox" id="public_dm" {{$settings->public_dm ? 'checked=""':''}} name="public_dm">
       <label class="form-check-label font-weight-bold" for="public_dm">
@@ -85,6 +96,32 @@
       </label>
       <p class="text-muted small help-text">Display following count on profile</p>
     </div>
+
+    <div class="form-check pb-3">
+      <input class="form-check-input" type="checkbox" name="disable_embeds" id="disable_embeds" {{$settings->disable_embeds ? 'checked=""':''}}>
+      <label class="form-check-label font-weight-bold" for="disable_embeds">
+        {{__('Disable Embeds')}}
+      </label>
+      <p class="text-muted small help-text">Disable post and profile embeds</p>
+    </div>
+
+    @if(!$settings->is_private)
+    <div class="form-check pb-3">
+      <input class="form-check-input" type="checkbox" name="show_atom" id="show_atom" {{$settings->show_atom ? 'checked=""':''}}>
+      <label class="form-check-label font-weight-bold" for="show_atom">
+        {{__('Enable Atom Feed')}}
+      </label>
+      <p class="text-muted small help-text mb-0">Enable your profile atom feed. Only public profiles are eligible.</p>
+      @if($settings->show_atom)
+      <p class="small">
+         <a href="{{$profile->permalink('.atom')}}" class="text-success font-weight-bold small" target="_blank">
+            {{ $profile->permalink('.atom') }}
+            <i class="far fa-external-link ml-1 text-muted" style="opacity: 0.5"></i>
+         </a>
+      </p>
+      @endif
+    </div>
+    @endif
 
     <div class="form-group row mt-5 pt-5">
       <div class="col-12 text-right">

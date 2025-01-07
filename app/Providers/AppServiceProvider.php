@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Observers\{
 	AvatarObserver,
+	FollowerObserver,
+	HashtagFollowObserver,
 	LikeObserver,
 	NotificationObserver,
 	ModLogObserver,
@@ -15,6 +17,8 @@ use App\Observers\{
 };
 use App\{
 	Avatar,
+	Follower,
+	HashtagFollow,
 	Like,
 	Notification,
 	ModLog,
@@ -29,6 +33,8 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Database\Eloquent\Model;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,10 +45,15 @@ class AppServiceProvider extends ServiceProvider
 	 */
 	public function boot()
 	{
-		URL::forceScheme('https');
+		if(config('instance.force_https_urls', true)) {
+			URL::forceScheme('https');
+		}
+
 		Schema::defaultStringLength(191);
 		Paginator::useBootstrap();
 		Avatar::observe(AvatarObserver::class);
+		Follower::observe(FollowerObserver::class);
+		HashtagFollow::observe(HashtagFollowObserver::class);
 		Like::observe(LikeObserver::class);
 		Notification::observe(NotificationObserver::class);
 		ModLog::observe(ModLogObserver::class);
@@ -54,6 +65,9 @@ class AppServiceProvider extends ServiceProvider
 		Horizon::auth(function ($request) {
 			return Auth::check() && $request->user()->is_admin;
 		});
+		Validator::includeUnvalidatedArrayKeys();
+
+		// Model::preventLazyLoading(true);
 	}
 
 	/**

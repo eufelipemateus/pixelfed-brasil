@@ -3,63 +3,109 @@
 namespace App\Jobs\MediaPipeline;
 
 use App\Media;
+use App\Services\Media\MediaHlsService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
-class MediaDeletePipeline implements ShouldQueue
+class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	protected $media;
+    protected $media;
 
-	public function __construct(Media $media)
-	{
-		$this->media = $media;
-	}
+    public $timeout = 300;
 
-	public function handle()
-	{
-		$media = $this->media;
-		$path = $media->media_path;
-		$thumb = $media->thumbnail_path;
+    public $tries = 3;
 
-		if(!$path) {
-			return 1;
-		}
+    public $maxExceptions = 1;
 
-		$e = explode('/', $path);
-		array_pop($e);
-		$i = implode('/', $e);
+    public $failOnTimeout = true;
 
-		if(config_cache('pixelfed.cloud_storage') == true) {
-			$disk = Storage::disk(config('filesystems.cloud'));
-			$disk->delete($path);
-			$disk->delete($thumb);
+    public $deleteWhenMissingModels = true;
 
-			if(count($e) > 4 && count($disk->files($i)) == 0) {
-				$disk->deleteDirectory($i);
-			}
-		}
+    /**
+     * The number of seconds after which the job's unique lock will be released.
+     *
+     * @var int
+     */
+    public $uniqueFor = 3600;
 
-		$disk = Storage::disk(config('filesystems.local'));
-		if($disk->exists($path)) {
-			$disk->delete($path);
-		}
-		if($disk->exists($thumb)) {
-			$disk->delete($thumb);
-		}
-		if(count($e) > 4 && count($disk->files($i)) == 0) {
-			$disk->deleteDirectory($i);
-		}
+    /**
+     * Get the unique ID for the job.
+     */
+    public function uniqueId(): string
+    {
+        return 'media:purge-job:id-'.$this->media->id;
+    }
 
-		$media->forceDelete();
+    /**
+     * Get the middleware the job should pass through.
+     *
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping("media:purge-job:id-{$this->media->id}"))->shared()->dontRelease()];
+    }
 
-		return;
-	}
+    public function __construct(Media $media)
+    {
+        $this->media = $media;
+    }
 
+    public function handle()
+    {
+        $media = $this->media;
+        $path = $media->media_path;
+        $thumb = $media->thumbnail_path;
+
+        if (! $path) {
+            return 1;
+        }
+
+        $e = explode('/', $path);
+        array_pop($e);
+        $i = implode('/', $e);
+
+        if ((bool) config_cache('pixelfed.cloud_storage') == true) {
+            $disk = Storage::disk(config('filesystems.cloud'));
+
+            if ($path && $disk->exists($path)) {
+                $disk->delete($path);
+            }
+
+            if ($thumb && $disk->exists($thumb)) {
+                $disk->delete($thumb);
+            }
+        }
+
+        $disk = Storage::disk(config('filesystems.local'));
+
+        if ($path && $disk->exists($path)) {
+            $disk->delete($path);
+        }
+
+        if ($thumb && $disk->exists($thumb)) {
+            $disk->delete($thumb);
+        }
+
+        if ($media->hls_path != null) {
+            $files = MediaHlsService::allFiles($media);
+            if ($files && count($files)) {
+                foreach ($files as $file) {
+                    $disk->delete($file);
+                }
+            }
+        }
+
+        $media->delete();
+
+        return 1;
+    }
 }

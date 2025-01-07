@@ -2,9 +2,15 @@
 
 namespace App\Jobs\SharePipeline;
 
-use Cache, Log;
-use Illuminate\Support\Facades\Redis;
-use App\{Status, Notification};
+use App\Jobs\HomeFeedPipeline\FeedRemovePipeline;
+use App\Notification;
+use App\Services\ReblogService;
+use App\Services\StatusService;
+use App\Status;
+use App\Transformer\ActivityPub\Verb\UndoAnnounce;
+use App\Util\ActivityPub\HttpSignature;
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,115 +18,125 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Transformer\ActivityPub\Verb\UndoAnnounce;
-use GuzzleHttp\{Pool, Client, Promise};
-use App\Util\ActivityPub\HttpSignature;
-use App\Services\ReblogService;
-use App\Services\StatusService;
 
 class UndoSharePipeline implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-	protected $status;
-	public $deleteWhenMissingModels = true;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	public function __construct(Status $status)
-	{
-		$this->status = $status;
-	}
+    protected $status;
 
-	public function handle()
-	{
-		$status = $this->status;
-		$actor = $status->profile;
-		$parent = $status->parent();
-		$target = $status->parent()->profile;
+    public $deleteWhenMissingModels = true;
 
-		ReblogService::removePostReblog($parent->id, $status->id);
+    public function __construct(Status $status)
+    {
+        $this->status = $status;
+    }
 
-		if ($status->uri !== null) {
-			return;
-		}
+    public function handle()
+    {
+        $status = $this->status;
+        $actor = $status->profile;
+        $parent = Status::find($status->reblog_of_id);
 
-		if($target->domain === null) {
-			Notification::whereProfileId($target->id)
-			->whereActorId($status->profile_id)
-			->whereAction('share')
-			->whereItemId($status->reblog_of_id)
-			->whereItemType('App\Status')
-			->delete();
-		}
+        FeedRemovePipeline::dispatch($status->id, $status->profile_id)->onQueue('feed');
 
-		$this->remoteAnnounceDeliver();
+        if ($parent) {
+            $target = $parent->profile_id;
+            ReblogService::removePostReblog($parent->profile_id, $status->id);
 
-		if($parent->reblogs_count > 0) {
-			$parent->reblogs_count = $parent->reblogs_count - 1;
-			$parent->save();
-			StatusService::del($parent->id);
-		}
+            if ($parent->reblogs_count > 0) {
+                $parent->reblogs_count = $parent->reblogs_count - 1;
+                $parent->save();
+                StatusService::del($parent->id);
+            }
 
-		$status->forceDelete();
+            $notification = Notification::whereProfileId($target)
+                ->whereActorId($status->profile_id)
+                ->whereAction('share')
+                ->whereItemId($status->reblog_of_id)
+                ->whereItemType('App\Status')
+                ->first();
 
-		return 1;
-	}
+            if ($notification) {
+                $notification->forceDelete();
+            }
+        }
 
-	public function remoteAnnounceDeliver()
-	{
-		if(config_cache('federation.activitypub.enabled') == false) {
-			return 1;
-		}
+        if ($status->uri != null) {
+            return;
+        }
 
-		$status = $this->status;
-		$profile = $status->profile;
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+            return $status->delete();
+        } else {
+            return $this->remoteAnnounceDeliver();
+        }
+    }
 
-		$fractal = new Fractal\Manager();
-		$fractal->setSerializer(new ArraySerializer());
-		$resource = new Fractal\Resource\Item($status, new UndoAnnounce());
-		$activity = $fractal->createData($resource)->toArray();
+    public function remoteAnnounceDeliver()
+    {
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+            $status->delete();
 
-		$audience = $status->profile->getAudienceInbox();
+            return 1;
+        }
 
-		if(empty($audience) || $status->scope != 'public') {
-			return 1;
-		}
+        $status = $this->status;
+        $profile = $status->profile;
 
-		$payload = json_encode($activity);
+        $fractal = new Fractal\Manager();
+        $fractal->setSerializer(new ArraySerializer());
+        $resource = new Fractal\Resource\Item($status, new UndoAnnounce());
+        $activity = $fractal->createData($resource)->toArray();
 
-		$client = new Client([
-			'timeout'  => config('federation.activitypub.delivery.timeout')
-		]);
+        $audience = $status->profile->getAudienceInbox();
 
-		$requests = function($audience) use ($client, $activity, $profile, $payload) {
-			foreach($audience as $url) {
-				$version = config('pixelfed.version');
-				$appUrl = config('app.url');
-				$headers = HttpSignature::sign($profile, $url, $activity, [
-					'Content-Type'	=> 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-					'User-Agent'	=> "(Pixelfed/{$version}; +{$appUrl})",
-				]);
-				yield function() use ($client, $url, $headers, $payload) {
-					return $client->postAsync($url, [
-						'curl' => [
-							CURLOPT_HTTPHEADER => $headers,
-							CURLOPT_POSTFIELDS => $payload,
-							CURLOPT_HEADER => true
-						]
-					]);
-				};
-			}
-		};
+        if (empty($audience) || $status->scope != 'public') {
+            return 1;
+        }
 
-		$pool = new Pool($client, $requests($audience), [
-			'concurrency' => config('federation.activitypub.delivery.concurrency'),
-			'fulfilled' => function ($response, $index) {
-			},
-			'rejected' => function ($reason, $index) {
-			}
-		]);
+        $payload = json_encode($activity);
 
-		$promise = $pool->promise();
+        $client = new Client([
+            'timeout' => config('federation.activitypub.delivery.timeout'),
+        ]);
 
-		$promise->wait();
+        $version = config('pixelfed.version');
+        $appUrl = config('app.url');
+        $userAgent = "(Pixelfed/{$version}; +{$appUrl})";
 
-	}
+        $requests = function ($audience) use ($client, $activity, $profile, $payload, $userAgent) {
+            foreach ($audience as $url) {
+                $headers = HttpSignature::sign($profile, $url, $activity, [
+                    'Content-Type' => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+                    'User-Agent' => $userAgent,
+                ]);
+                yield function () use ($client, $url, $headers, $payload) {
+                    return $client->postAsync($url, [
+                        'curl' => [
+                            CURLOPT_HTTPHEADER => $headers,
+                            CURLOPT_POSTFIELDS => $payload,
+                            CURLOPT_HEADER => true,
+                        ],
+                    ]);
+                };
+            }
+        };
+
+        $pool = new Pool($client, $requests($audience), [
+            'concurrency' => config('federation.activitypub.delivery.concurrency'),
+            'fulfilled' => function ($response, $index) {
+            },
+            'rejected' => function ($reason, $index) {
+            },
+        ]);
+
+        $promise = $pool->promise();
+
+        $promise->wait();
+
+        $status->delete();
+
+        return 1;
+    }
 }
