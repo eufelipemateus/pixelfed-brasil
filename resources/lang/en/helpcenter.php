@@ -115,4 +115,103 @@ return [
 					'<li class=\'lead  mb-4\'>Any public posts that contain a hashtag may be included in search results or discover pages.</li>'.
 					'<li class=\'lead \'>You can search hashtags by typing in a hashtag into the search bar.</li>'.
 					'</ul>'
+
+,
+    'sharingMediaTitle' => 'Sharing Photos & Videos',
+    'howCreatePostAask' => 'How do I create a post?',
+    'howCreatePostAnswer' => '<div>
+				To create a post using a desktop web browser:
+				<ol>
+					<li>Go to <a href="'.config('app.url').'">'.config('app.url').'</a>.</li>
+					<li>Click on the <i class="fas fa-camera-retro text-primary"></i> link at the top of the page.</li>
+					<li>Upload your photo(s) or video(s), add an optional caption and set other options.</li>
+					<li>Click on the <span class="font-weight-bold">Create Post</span> button.</li>
+				</ol>
+			</div>
+			<div class="pt-3">
+				To create a post using a mobile web browser:
+				<ol>
+					<li>Go to <a href="'.config('app.url').'">'.config('app.url').'</a>.</li>
+					<li>Click on the <i class="far fa-plus-square fa-lg"></i> button at the bottom of the page.</li>
+					<li>Upload your photo(s) or video(s), add an optional caption and set other options.</li>
+					<li>Click on the <span class="font-weight-bold">Create Post</span> button.</li>
+				</ol>
+			</div>',
+    'howAddMultiplePhotosAsk' => 'How do I share a post with multiple photos or videos?',
+    'howAddMultiplePhotosAnswer' => 'During the compose process, you can select multiple files at a single time, or add each photo/video individually.',
+    'howCaptionBeforeSharePhotoAsk' => 'How do I add a caption before sharing my photos or videos on Pixelfed?',
+    'howCaptionBeforeSharePhotoAnswer' => '<div>
+				During the compose process, you will see the <span class="font-weight-bold">Caption</span> input. Captions are optional and limited to <span class="font-weight-bold">'.config_cache('pixelfed.max_caption_length').'</span> characters.
+			</div>',
+
+    'howAddFilterAsk' => 'How do I add a filter to my photos?',
+    'howAddFilterAnswer' => '<div>
+				<p class="text-center">
+					<span class="alert alert-warning py-2 font-weight-bold">This is an experimental feature, filters are not federated yet!</span>
+				</p>
+				To add a filter to media during the compose post process:
+				<ol>
+					<li>
+						Click the <span class="btn btn-sm btn-outline-primary py-0">Options <i class="fas fa-chevron-down fa-sm"></i></span> button if media preview is not displayed.
+					</li>
+					<li>Select a filter from the <span class="font-weight-bold small text-muted">Select Filter</span> dropdown.</li>
+				</ol>
+			</div>',
+
+    'howAddDescriptionPhotoAsk' => 'How do I add a description to each photo or video for the visually impaired?',
+    'howAddDescriptionPhotoAnswer' => '<div>
+				<p class="text-center">
+					<span class="alert alert-warning py-2 font-weight-bold">This is an experimental feature!</span>
+				</p>
+				<p>
+					You need to use the experimental compose UI found <a href="/i/compose">here</a>.
+				</p>
+				<ol>
+					<li>Add media by clicking the <span class="btn btn-outline-secondary btn-sm py-0">Add Photo/Video</span> button.</li>
+					<li>Set a image description by clicking the <span class="btn btn-outline-secondary btn-sm py-0">Media Description</span> button.</li>
+				</ol>
+				<p class="small text-muted"><i class="fas fa-info-circle mr-1"></i> Image descriptions are federated to instances where supported.</p>
+			</div>',
+
+    'howMediaTypesCanUploadAsk' => 'What types of photos or videos can I upload?',
+    'howMediaTypesCanUploadAnswer' => 'You can upload the following media types:',
+    'howDisablecommentsAsk' => 'How can I disable comments/replies on my post?',
+    'howDisablecommentsAnswer' => '<div>
+				To enable or disable comments/replies using a desktop or mobile browser:
+				<ul>
+					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> button</li>
+					<li>Click on <span class="small font-weight-bold cursor-pointer">Enable Comments</span> or <span class="small font-weight-bold cursor-pointer">Disable Comments</span></li>
+				</ul>
+			</div>',
+    'howManyTagMentionAsk' => 'How many people can I tag or mention in my comments or posts?',
+    'howManyTagMentionAnswer' => 'You can tag or mention up to 5 profiles per comment or post.',
+    'whatArchiveMeanAsk'=> 'What does archive mean?',
+    'whatArchiveMeanAnswer' => '<div>
+				You can archive your posts which prevents anyone from interacting or viewing it.
+				<br />
+				<strong class="text-danger">Archived posts cannot be deleted or otherwise interacted with. You may not recieve interactions (comments, likes, shares) from other servers while a post is archived.</strong>
+				<br />
+			</div>',
+
+    'howArchivePostAsk' => 'How can I archive my posts?',
+    'howArchivePostAnswer' => '<div>
+				To archive your posts:
+				<ul>
+					<li>Navigate to the post</li>
+					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> or <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i> button</li>
+					<li>Click on <span class="small font-weight-bold cursor-pointer">Archive</span></li>
+				</ul>
+			</div>',
+    'howUnarchivePostAsk'=>'How do I unarchive my posts?',
+    'howUnarchivePostAnswer' => '<div>
+				To unarchive your posts:
+				<ul>
+					<li>Navigate to your profile</li>
+					<li>Click on the <strong>ARCHIVES</strong> tab</li>
+					<li>Scroll to the post you want to unarchive</li>
+					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> or <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i> button</li>
+					<li>Click on <span class="small font-weight-bold cursor-pointer">Unarchive</span></li>
+				</ul>
+			</div>',
+
 ];

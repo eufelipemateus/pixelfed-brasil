@@ -107,6 +107,104 @@ return [
 					'<li class=\'lead  mb-4\'>Você não pode adicionar espaços ou pontuação em uma hashtag, ou ela não funcionará corretamente.</li>'.
 					'<li class=\'lead  mb-4\'>Quaisquer postagens públicas que contenham uma hashtag podem ser incluídas nos resultados de pesquisa ou nas páginas de descoberta.</li>'.
 					'<li class=\'lead \'>Você pode pesquisar hashtags digitando uma hashtag na barra de pesquisa.</li>'.
-					'</ul>'
+					'</ul>',
+   'sharingMediaTitle' => 'Compartilhando Fotos & Vídeos',
+   'howCreatePostAask' => 'Como criar um post?',
+   'howCreatePostAnswer' => '<div>
+            Para criar uma postagem usando um navegador web no computador:
+            <ol>
+                <li>Acesse <a href="'.config('app.url').'">'.config('app.url').'</a>.</li>
+                <li>Clique no link <i class="fas fa-camera-retro text-primary"></i> no topo da página.</li>
+                <li>Envie sua(s) foto(s) ou vídeo(s), adicione uma legenda opcional e configure outras opções.</li>
+                <li>Clique no botão <span class="font-weight-bold">Criar Postagem</span>.</li>
+            </ol>
+        </div>
+        <div class="pt-3">
+            Para criar uma postagem usando um navegador web no celular:
+            <ol>
+                <li>Acesse <a href="'.config('app.url').'">'.config('app.url').'</a>.</li>
+                <li>Clique no botão <i class="far fa-plus-square fa-lg"></i> na parte inferior da página.</li>
+                <li>Envie sua(s) foto(s) ou vídeo(s), adicione uma legenda opcional e configure outras opções.</li>
+                <li>Clique no botão <span class="font-weight-bold">Criar Postagem</span>.</li>
+            </ol>
+        </div>',
+            'howAddMultiplePhotosAsk' =>'Como adicionar várias fotos a uma postagem?',
+            'howAddMultiplePhotosAnswer' => 'Durante o processo de composição, você pode selecionar vários arquivos de uma só vez ou adicionar cada foto/vídeo individualmente.',
+            'howCaptionBeforeSharePhotoAsk' => 'Como adiciono uma legenda antes de compartilhar minhas fotos ou vídeos no Pixelfed?',
+            'howCaptionBeforeSharePhotoAnswer' => '<div>
+            Durante o processo de composição, você verá o campo <span class="font-weight-bold">Legenda</span>. As legendas são opcionais e limitadas a <span class="font-weight-bold">'.config_cache('pixelfed.max_caption_length').'</span> caracteres.
+        </div>',
+            'howAddFilterAsk' => 'Como adiciono um filtro às minhas fotos?',
+            'howAddFilterAnswer' => '<div>
+            <p class="text-center">
+                <span class="alert alert-warning py-2 font-weight-bold">Este é um recurso experimental, filtros ainda não são federados!</span>
+            </p>
+            Para adicionar um filtro à mídia durante o processo de composição de uma postagem:
+            <ol>
+                <li>
+                    Clique no botão <span class="btn btn-sm btn-outline-primary py-0">Opções <i class="fas fa-chevron-down fa-sm"></i></span> se a pré-visualização da mídia não estiver exibida.
+                </li>
+                <li>Selecione um filtro no menu suspenso <span class="font-weight-bold small text-muted">Selecionar Filtro</span>.</li>
+            </ol>
+        </div>
+    ',
+    'howAddDescriptionPhotoAsk' => 'Como adiciono uma descrição a cada foto ou vídeo para deficientes visuais?',
+    'howAddDescriptionPhotoAnswer' => '<div>
+        <p class="text-center">
+            <span class="alert alert-warning py-2 font-weight-bold">Este é um recurso experimental!</span>
+        </p>
+        <p>
+            Você precisa usar a interface de composição experimental encontrada <a href="/i/compose">aqui</a>.
+        </p>
+        <ol>
+            <li>Adicione mídia clicando no botão <span class="btn btn-outline-secondary btn-sm py-0">Adicionar Foto/Vídeo</span>.</li>
+            <li>Defina uma descrição da imagem clicando no botão <span class="btn btn-outline-secondary btn-sm py-0">Descrição da Mídia</span>.</li>
+        </ol>
+        <p class="small text-muted"><i class="fas fa-info-circle mr-1"></i> As descrições das imagens são federadas para instâncias onde são suportadas.</p>
+    </div>
+    ',
+    'howMediaTypesCanUploadAsk' => 'Que tipos de fotos ou vídeos posso enviar?',
+    'howMediaTypesCanUploadAnswer' => 'Você pode carregar os seguintes tipos de mídia:',
+    'howDisablecommentsAsk' =>'Como posso desabilitar comentários/respostas na minha postagem?',
+    'howDisablecommentsAnswer' => '<div>
+        Para ativar ou desativar comentários/respostas usando um navegador no computador ou no celular:
+        <ul>
+            <li>Abra o menu e clique no botão <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i></li>
+            <li>Clique em <span class="small font-weight-bold cursor-pointer">Ativar Comentários</span> ou <span class="small font-weight-bold cursor-pointer">Desativar Comentários</span></li>
+        </ul>
+    </div>
+    ',
+    'howManyTagMentionAsk'=> 'Quantas pessoas posso marcar ou mencionar em meus comentários ou postagens?',
+    'howManyTagMentionAnswer' => 'Você pode marcar ou mencionar até 5 perfis por comentário ou postagem.',
+    'whatArchiveMeanAsk' => 'O que significa arquivar posts?',
+    'whatArchiveMeanAnswer' => '<div>
+            Você pode arquivar suas postagens, o que impede qualquer pessoa de interagir ou visualizá-las.
+            <br />
+            <strong class="text-danger">Postagens arquivadas não podem ser excluídas ou ter qualquer outro tipo de interação. Você não receberá interações (comentários, curtidas, compartilhamentos) de outros servidores enquanto a postagem estiver arquivada.</strong>
+            <br />
+        </div>
+        ',
 
+    'howArchivePostAsk' => 'Como arquivar meus posts?',
+    'howArchivePostAnswer' => '<div>
+        Para arquivar suas postagens:
+        <ul>
+            <li>Navegue até a postagem</li>
+            <li>Abra o menu e clique no botão <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> ou <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i></li>
+            <li>Clique em <span class="small font-weight-bold cursor-pointer">Arquivar</span></li>
+        </ul>
+    </div>
+    ',
+    'howUnarchivePostAsk' => 'Como desarquivar meus posts?',
+    'howUnarchivePostAnswer' => '<div>
+    Para desarquivar suas postagens:
+    <ul>
+        <li>Navegue até o seu perfil</li>
+        <li>Clique na aba <strong>ARQUIVOS</strong></li>
+        <li>Role até a postagem que deseja desarquivar</li>
+        <li>Abra o menu e clique no botão <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> ou <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i></li>
+        <li>Clique em <span class="small font-weight-bold cursor-pointer">Desarquivar</span></li>
+    </ul>
+</div>
+'
 ];
