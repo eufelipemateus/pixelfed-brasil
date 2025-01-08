@@ -15,11 +15,11 @@ return [
     'discoverTitle'     => 'Descubra',
     'discoverSubTitle'  => 'Explore categorias, hashtags e tópicos',
     'filterTitle'       => 'Photo Filters',
-    'filterSubTitle'    => 'Add a special touch to your photos',
+    'filterSubTitle'    => 'AAdicione um toque especial à sua fotos',
     'filterTitle'       => 'Filtros',
     'filterSubTitle'    => 'Adicione um toque especial em suas fotos.',
     'storiesTitle'      => 'Stories',
-    'storiesSubTitle'   => 'Share moments with your followers that disappear after 24 hours',
+    'storiesSubTitle'   => 'Compartilhe com seus seguidores momentos que desaparecem após 24 horas',
 
     'countPeople'       => 'pessoas compartilhando',
     'countPosts'        => 'fotos e videos em',
