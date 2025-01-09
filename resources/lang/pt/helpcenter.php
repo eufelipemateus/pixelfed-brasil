@@ -226,6 +226,29 @@ return [
                 <li class="lead mb-4">Para tornar suas postagens mais visíveis, adicione hashtags às suas postagens.</li>
                 <li class="lead mb-4">Qualquer postagem pública que contenha uma hashtag pode ser incluída nas páginas de descobrir.</li>
             </ul>
-        </div>'
+        </div>',
+
+    'dmSubTitle'=> 'Envie e receba mensagens diretas de outros perfis.',
+    'howUseDirectMessagesAsk'=> 'Como usar o Pixelfed Direct?',
+    'howUseDirectMessagesAnswer'=> '<div>
+            <p>O Pixelfed Direct permite que você envie mensagens para outra conta. Você pode enviar as seguintes coisas como mensagem no Pixelfed Direct:</p>
+            <ul>
+                <li>Fotos ou vídeos que você tira ou carrega da sua biblioteca</li>
+                <li>Postagens que você vê no feed</li>
+                <li>Perfis</li>
+                <li>Texto</li>
+                <li>Hashtags</li>
+                <li>Localizações</li>
+            </ul>
+            <p>Para ver as mensagens que você enviou com o Pixelfed Direct, toque em <i class="far fa-comment-dots"></i> no canto superior direito do feed. A partir daí, você pode gerenciar as mensagens enviadas e recebidas.</p>
+            <p>Fotos ou vídeos enviados pelo Pixelfed Direct não podem ser compartilhados no Pixelfed para outros sites como Mastodon ou Twitter e não aparecerão nas páginas de hashtags e localizações.</p>
+        </div>',
+
+    'howUnsedDirectMessageAsk' => 'Como faço para cancelar o envio de uma mensagem que enviei usando o Pixelfed Direct?',
+    'howUnsedDirectMessageAnswer' => 'Você pode clicar na mensagem e selecionar a opção <strong>Excluir</strong>.',
+    'canSendDirectMessageAsk' => 'Posso usar o Pixelfed Direct para enviar mensagens para pessoas que não estou seguindo?',
+    'canSendDirectMessageAnswer' => 'Você pode enviar uma mensagem para alguém que não segue, embora ela possa ser enviada para a caixa de entrada filtrada dessa pessoa e não ser facilmente vista.',
+    'howReportDirectMessageAsk' => 'Como faço para denunciar conteúdo que recebi em uma mensagem do Pixelfed Direct?',
+    'howReportDirectMessageAnswer' => 'Você pode clicar na mensagem e, em seguida, selecionar a opção <strong>Denunciar</strong> e seguir as instruções na página de Denúncia.',
 
 ];

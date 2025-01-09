@@ -237,6 +237,41 @@ return [
       </ul>
     </div>',
 
+    'dmSubTitle'=> 'Send and recieve direct messages from other profiles.',
+    'howUseDirectMessagesAsk' => 'How do I use Pixelfed Direct?',
+    'howUseDirectMessagesAnswer' => ' <div>
+        <p>Pixelfed Direct lets you send messages to another account. You can send the following things as a message on Pixelfed Direct:</p>
+        <ul>
+            <li>
+            Photos or videos you take or upload from your library
+            </li>
+            <li>
+            Posts you see in feed
+            </li>
+            <li>
+            Profiles
+            </li>
+            <li>
+            Text
+            </li>
+            <li>
+            Hashtags
+            </li>
+            <li>
+            Locations
+            </li>
+        </ul>
+        <p>To see messages you\'ve sent with Pixelfed Direct, tap <i class="far fa-comment-dots"></i> in the top right of feed. From there, you can manage the messages you\'ve sent and received.</p>
+        <p>Photos or videos sent with Pixelfed Direct can\'t be shared through Pixelfed to other sites like Mastodon or Twitter, and won\'t appear on hashtag and location pages.</p>
+        </div>',
+
+    'howUnsedDirectMessageAsk' => 'How do I unsend a message I\'ve sent using Pixelfed Direct?',
+    'howUnsedDirectMessageAnswer' => 'You can click the message and select the <strong>Delete</strong> option.',
+    'canSendDirectMessageAsk' => 'Can I use Pixelfed Direct to send messages to people I’m not following?',
+    'canSendDirectMessageAnswer' => 'You can send a message to someone you are not following though it may be sent to their filtered inbox and not easily seen.',
+    'howReportDirectMessageAsk' => 'How do I report content that I\'ve recieved in a Pixelfed Direct message?',
+    'howReportDirectMessageAnswer' => ' You can click the message and then select the <strong>Report</strong> option and follow the instructions on the Report page.',
+
 
 
 ];
