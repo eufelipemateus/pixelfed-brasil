@@ -282,4 +282,15 @@ return [
 				<li class="lead mb-4">You can create <span class="font-weight-bold">Unlisted</span> posts that don\'t appear in public timelines.</li>
 			</ul>',
 
+    'safetyTipsSubTitle' =>'We are committed to building a fun, easy to use photo sharing platform that is safe and secure for everyone.',
+    'safetyTipsKnowRules' => 'Know the rules',
+    'safetyTipsKnowRulesContent' => 'To keep yourself safe, it is important to know the <a href="'.route('site.terms').'">terms of service</a> rules.',
+    'safetyTipsAage' => 'Know the age guideline',
+    'safetyTipsAageContent' => 'Please keep in mind that Pixelfed is meant for people over the age of 16 or 13 depending on where you live',
+    'safetyTipsRport'=> 'Report problematic content',
+    'safetyTipsRportContent' => 'You can report content that you think is in violation of our policies.',
+    'safetyTipsVisility' => 'Understanding content visibility',
+    'safetyTipsVisilityContent' => 'You can limit the visibility of your content to specific people, followers, public and more.',
+    'safetyTipsPostsPrivacy' => 'Make your account or posts private',
+    'safetyTipsPostsPrivacyContent' => 'You can make your account private and vet new follow requests to control who your posts are shared with.',
 ];

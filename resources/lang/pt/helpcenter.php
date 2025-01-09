@@ -261,5 +261,17 @@ return [
         <li class="lead mb-4">Você pode criar postagens <span class="font-weight-bold">Não Listadas</span> que não aparecem nas linhas do tempo públicas.</li>
         </ul>',
 
+    'safetyTipsSubTitle' =>'Estamos comprometidos em construir uma plataforma de compartilhamento de fotos divertida e fácil de usar, segura e protegida para todos.',
+    'safetyTipsKnowRules' => 'Conheça as regras',
+    'safetyTipsKnowRulesContent' => 'Para se manter seguro, é importante conhecer as regras dos <a href="'.route('site.terms').'">termos de serviço</a>.',
+    'safetyTipsAage' => 'Conheça a diretriz etária',
+    'safetyTipsAageContent' => 'Você deve ter pelo menos 16 anos de idade para usar o Pixelfed. Se você é menor de 18 anos, você deve ter permissão dos pais ou responsável legal.',
+    'safetyTipsRport' => 'Denunciar conteúdo problemático',
+    'safetyTipsRportContent' => 'Você pode denunciar conteúdos que acredita violarem nossas políticas.',
+    'safetyTipsVisility' => 'Entendendo a visibilidade do conteúdo',
+    'safetyTipsVisilityContent' => 'Você pode limitar a visibilidade do seu conteúdo para pessoas específicas, seguidores, público e mais.',
+    'safetyTipsPostsPrivacy' => 'Torne sua conta ou postagens privadas',
+    'safetyTipsPostsPrivacyContent' => 'Você pode tornar sua conta privada e verificar novas solicitações de seguidores para controlar com quem suas postagens são compartilhadas.',
+
 
 ];
