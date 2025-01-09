@@ -38,9 +38,9 @@
 			</a>
 			<h1 class="display-4 font-weight-bold py-3">{{ config_cache('about.title') ?? 'Photo Sharing. For Everyone' }}</h1>
 			<div class="col-lg-6 mx-auto py-3">
-			  <p class="mb-4 font-weight-light text-left" style="font-size: 26px; line-height: 40px;">
-				{!! config_cache('app.description') ?? config_cache('app.short_description') ?? 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.'!!}
-			  </p>
+				<p class="mb-4 font-weight-light text-left" style="font-size: 26px; line-height: 40px;">
+					{!! config_cache('app.description') ?? config_cache('app.short_description') ?? 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.'!!}
+				</p>
 			</div>
 		</div>
 
@@ -103,7 +103,7 @@
 		<div id="rules" class="container">
 			<div class="row mb-4">
 				<div class="col">
-					<h1 class="display-4 font-weight-bold mb-0 text-center">Rules</h1>
+					<h1 class="display-4 font-weight-bold mb-0 text-center">{{  __('about.rules') }}  </h1>
 				</div>
 			</div>
 			<div class="row justify-content-center">
@@ -126,10 +126,10 @@
 			<div class="row">
 				<div class="col-12 col-md-8 offset-md-2">
 					<div class="mt-5">
-						<p class="text-center display-4 font-weight-bold">Feature Packed.</p>
+						<p class="text-center display-4 font-weight-bold">{{ __('about.featureTitle') }}</p>
 					</div>
 					<div class="my-2">
-						<p class="h3 font-weight-light text-muted text-center">The best for the brightest 📸</p>
+						<p class="h3 font-weight-light text-muted text-center">{{__('about.featureSubtitle')}}</p>
 					</div>
 				</div>
 			</div>
@@ -137,8 +137,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Albums</h1>
-					<p class="h4 font-weight-light">Share posts with up to {{config_cache('pixelfed.max_album_length')}} photos</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.albumTitle')}}</h1>
+					<p class="h4 font-weight-light">{{ __('about.albumSubTitle')}}</p>
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/1.jpeg" alt="" width="720">
@@ -152,8 +152,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/2.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Comments</h1>
-					<p class="h4 font-weight-light text-justify">Comment on a post, or send a reply</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.commentTitle')}}</h1>
+					<p class="h4 font-weight-light text-justify">{{ __('about.commentSubTitle') }}</p>
 				</div>
 			</div>
 		</div>
@@ -161,8 +161,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Collections</h1>
-					<p class="h4 font-weight-light text-justify">Organize and share collections of multiple posts</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.collectionTitle')}}</h1>
+					<p class="h4 font-weight-light text-justify">{{ __('about.collectionSubTitle')}}</p>
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/3.jpeg" alt="" width="720">
@@ -176,8 +176,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/4.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Discover</h1>
-					<p class="h4 font-weight-light text-justify">Explore categories, hashtags and topics</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.discoverTitle') }}</h1>
+					<p class="h4 font-weight-light text-justify">{{ __('about.discoverSubTitle')}}</p>
 				</div>
 			</div>
 		</div>
@@ -185,8 +185,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Photo Filters</h1>
-					<p class="h4 font-weight-light text-justify">Add a special touch to your photos</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.filterTitle')}}</h1>
+					<p class="h4 font-weight-light text-justify">{{ __('about.filterSubTitle')}}</p>
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/5.jpeg" alt="" width="720">
@@ -200,8 +200,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/6.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-					<h1 class="display-4 font-weight-bold lh-1">Stories</h1>
-					<p class="h4 font-weight-light text-justify">Share moments with your followers that disappear after 24 hours</p>
+					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.storiesTitle')}}</h1>
+					<p class="h4 font-weight-light text-justify">{{ __('about.storiesSubTitle')}}</p>
 				</div>
 			</div>
 		</div>
@@ -214,15 +214,14 @@
 				<div class="col">
 					<p class="display-3 font-weight-bold">
 						<span class="text-primary">{{$user_count}}</span>
-						people have shared
+						{{ __('about.countPeople')}}
 						<span class="text-primary">{{$post_count}}</span>
-						photos and videos on {{config_cache('app.name')}}!
+						{{ __('about.countPosts')}} {{config_cache('app.name')}}!
 					</p>
 					@if(config_cache('pixelfed.open_registration'))
 					<div class="section-spacer"></div>
 					<p class="display-4 font-weight-bold mb-0">
-						<a class="text-primary" href="/register">Sign up today</a>
-						and join our community of photographers from around the world.
+						{!! __('about.singupToday') !!}
 					</p>
 					@endif
 				</div>
