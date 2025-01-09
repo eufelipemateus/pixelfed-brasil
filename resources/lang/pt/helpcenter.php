@@ -273,5 +273,77 @@ return [
     'safetyTipsPostsPrivacy' => 'Torne sua conta ou postagens privadas',
     'safetyTipsPostsPrivacyContent' => 'Você pode tornar sua conta privada e verificar novas solicitações de seguidores para controlar com quem suas postagens são compartilhadas.',
 
+    'profieleTitle' => 'Seu Perfil',
+    'profileEdit' => 'Editar',
+    'profileEditBioAsk' => 'Como edito minha biografia, nome, e-mail ou senha?',
+    'profileEditBioAnswer' => '<div>
+        Para editar sua conta usando um navegador web:
+        <ol class="">
+        <li>Vá para <a href="'.route('settings').'">'.route('settings').'</a>.</li>
+        <li>Você deve ver os campos <span class="font-weight-bold">Nome</span>, <span class="font-weight-bold">Website</span> e <span class="font-weight-bold">Bio</span>.</li>
+        <li>Altere os campos desejados e clique no botão <span class="font-weight-bold">Enviar</span>.</li>
+        </ol>
+    </div>',
+    'profileEditUpdateUsernameAsk' => 'Por que não consigo alterar meu nome de usuário?',
+    'profileEditUpdateUsernameAnswer' => '<div>
+        Pixelfed é um aplicativo federado, alterar seu nome de usuário não é suportado em todos os <a href="https://en.wikipedia.org/wiki/Federated_architecture">softwares federados</a>, portanto, não podemos permitir alterações de nome de usuário. Sua melhor opção é criar uma nova conta com o nome de usuário desejado.
+        </div>',
+    'profilePrivacyTitle' => 'Privacidade',
+    'profilePrivacyAsk' => 'Como faço para definir minhas fotos e vídeos como privados para que apenas seguidores aprovados possam vê-los?',
+    'profilePrivacyAnswer' => '<div>
+        Para alterar a visibilidade da sua conta:
+            <ol class="">
+            <li>Vá para <a href="'.route('settings.privacy').'">'.route('settings.privacy').'</a>.</li>
+            <li>Marque a caixa de seleção <span class="font-weight-bold">Conta Privada</span>.</li>
+            <li>O modal de confirmação aparecerá e perguntará se você deseja manter os seguidores existentes e desativar novas solicitações de seguidores.</li>
+            <li>Clique no botão <span class="font-weight-bold">Enviar</span>.</li>
+            </ol>
+        </div>',
+    'profileSecurityTitle' => 'Segurança',
+    'profileSecurityHowSecureAsk' => 'Como posso proteger minha conta?',
+    'profileSecurityHowSecureAnswer' => '<div>
+        Aqui estão algumas recomendações para manter sua conta segura:
+        <ul class="">
+        <li>Escolha uma senha forte, não a reutilize em outros sites</li>
+        <li>Nunca compartilhe sua senha</li>
+        <li>Lembre-se de sair em computadores ou dispositivos públicos</li>
+        <li>Verifique periodicamente seu <a href="'.route('settings.security').'">Registro de Conta</a> para qualquer atividade suspeita</li>
+        <li><a href="'.route('settings.security.2fa.setup').'">Configurar Autenticação de Dois Fatores</a></li>
+        </ul>
+    </div>',
+    'profileSecurityHowAddSecurityAsk' => 'Como posso adicionar proteção adicional à minha conta?',
+    'profileSecurityHowAddSecurityAnswer' => '<div>
+        Você pode adicionar uma camada adicional de segurança à sua conta ativando a <span class="font-weight-bold">Autenticação de Dois Fatores</span>. Para mais informações, verifique suas <a href="'.route('settings.security').'">configurações de segurança</a>.
+        </div>',
+    'profileSecurityHowReportUnauthorizedAsk' => 'Como faço para relatar o uso não autorizado da minha conta?',
+    'profileSecurityHowReportUnauthorizedAnswer' => 'Por favor, entre em contato com os administradores desta instância.',
+    'profileMigrarionTitle' => 'Migração',
+    'profileMigrarionHowMigrateAsk' => 'Como posso migrar minha conta?',
+    'profileMigrarionHowMigrateAnswer' => '<div>
+        Para migrar sua conta com sucesso, sua conta antiga deve estar em um servidor Pixelfed ou Mastodon, ou em um que suporte a <a href="https://docs.joinmastodon.org/spec/activitypub/#Move">extensão de Migração de Conta do Mastodon</a>.
+        <hr>
+        <p>Navegue até a página de <a href="/settings/account/aliases/manage">Gerenciamento de Apelidos de Conta</a> nas Configurações para começar.</p>
+        </div>',
+    'profileMigrationHowLongAsk' => 'Quanto tempo leva a migração?',
+    'profileMigrationHowLongAnswer' => 'Pode levar algumas horas para processar as importações de migração de postagens, por favor, entre em contato com os administradores se demorar mais de 24 horas.',
+    'profileMigrationWhyPostNotAsk' => 'Por que minhas postagens não foram migradas?',
+    'profileMigrationWhyPostNotAnswer' => '<div>
+        As migrações de postagens são oficialmente suportadas em servidores Pixelfed que executam a versão v0.11.9+ e superior, e quando habilitadas pelos administradores do servidor.
+        <hr>
+        Pode levar algumas horas para processar as importações de migração de postagens, por favor, entre em contato com os administradores se demorar mais de 24 horas.
+        </div>',
+    'profileDeleteTitle' => 'Excluir Sua Conta',
+    'profileDeleteTemporaryAsk' => 'Como desativo temporariamente minha conta?',
+    'profileDeleteTemporaryAnswer' => '<div>
+            <p>Se você desativar temporariamente sua conta, seu perfil, fotos, comentários e curtidas serão ocultados até que você a reative fazendo login novamente. Para desativar temporariamente sua conta:</p>
+            <ol class="">
+            <li>Faça login em <a href="'.config('app.url').'">'.config('pixelfed.domain.app').'</a></li>
+            <li>Toque ou clique no menu <i class="far fa-user text-dark"></i> e selecione <span class="font-weight-bold text-dark"><i class="fas fa-cog pr-1"></i> Configurações</span></li>
+            <li>Navegue até as <a href="'.route('settings.security').'">Configurações de Segurança</a></li>
+            <li>Confirme a senha da sua conta.</li>
+            <li>Role para baixo até a seção Zona de Perigo e clique no botão <span class="btn btn-sm btn-outline-danger py-1 font-weight-bold">Desativar</span>.</li>
+            <li>Siga as instruções na próxima página.</li>
+            </ol>
+        </div>',
 
 ];
