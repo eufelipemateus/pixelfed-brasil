@@ -197,14 +197,35 @@ return [
     ',
     'howUnarchivePostAsk' => 'Como desarquivar meus posts?',
     'howUnarchivePostAnswer' => '<div>
-    Para desarquivar suas postagens:
-    <ul>
-        <li>Navegue até o seu perfil</li>
-        <li>Clique na aba <strong>ARQUIVOS</strong></li>
-        <li>Role até a postagem que deseja desarquivar</li>
-        <li>Abra o menu e clique no botão <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> ou <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i></li>
-        <li>Clique em <span class="small font-weight-bold cursor-pointer">Desarquivar</span></li>
-    </ul>
-</div>
-'
+        Para desarquivar suas postagens:
+        <ul>
+            <li>Navegue até o seu perfil</li>
+            <li>Clique na aba <strong>ARQUIVOS</strong></li>
+            <li>Role até a postagem que deseja desarquivar</li>
+            <li>Abra o menu e clique no botão <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> ou <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i></li>
+            <li>Clique em <span class="small font-weight-bold cursor-pointer">Desarquivar</span></li>
+        </ul>
+    </div>
+    ',
+    'discorverTitle' => 'Descobrir',
+    'discoversubTitle' => 'Descubra novas postagens, pessoas e tópicos.',
+    'howUseDiscover' => '<p class="font-weight-bold h5 pb-3">Como usar o Descobrir</p>
+        <ul>
+            <li class="mb-3">Clique no ícone <i class="far fa-compass fa-sm"></i>.</li>
+            <li class="mb-3">Veja as postagens mais recentes.</li>
+        </ul>',
+    'discoverCategories' => '<p class="font-weight-bold h5 pb-3">Categorias do Descobrir <span class="badge badge-success">NOVO</span></p>
+        <p>As Categorias do Descobrir são um recurso novo que pode não ser suportado em todas as instâncias do Pixelfed.</p>
+        <ul>
+            <li class="mb-3">Clique no ícone <i class="far fa-compass fa-sm"></i>.</li>
+            <li class="mb-3">Na página Descobrir, você verá uma lista de cartões de Categoria que levam a cada Categoria do Descobrir.</li>
+        </ul>',
+    'discoverTips' => '<div class="card-header text-light font-weight-bold h4 p-4 bg-primary">Dicas do Descobrir</div>
+        <div class="card-body bg-white p-3">
+            <ul class="pt-3">
+                <li class="lead mb-4">Para tornar suas postagens mais visíveis, adicione hashtags às suas postagens.</li>
+                <li class="lead mb-4">Qualquer postagem pública que contenha uma hashtag pode ser incluída nas páginas de descobrir.</li>
+            </ul>
+        </div>'
+
 ];
