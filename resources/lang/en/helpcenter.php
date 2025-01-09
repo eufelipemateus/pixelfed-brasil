@@ -272,6 +272,14 @@ return [
     'howReportDirectMessageAsk' => 'How do I report content that I\'ve recieved in a Pixelfed Direct message?',
     'howReportDirectMessageAnswer' => ' You can click the message and then select the <strong>Report</strong> option and follow the instructions on the Report page.',
 
-
+    'timelineSubTitle' => 'Timelines are chronological feeds of posts.',
+    'timelineHome' => 'Timeline with content from accounts you follow',
+    'timelinePublic' => 'Timeline with content from other users on this server',
+    'timelineNetwork' => 'Timeline with unmoderated content from other servers',
+    'timelineTips' => 'Timeline Tips',
+    'timelineTipsContent' => '<ul class="pt-3">
+				<li class="lead mb-4">You can mute or block accounts to prevent them from appearing in home and public timelines.</li>
+				<li class="lead mb-4">You can create <span class="font-weight-bold">Unlisted</span> posts that don\'t appear in public timelines.</li>
+			</ul>',
 
 ];

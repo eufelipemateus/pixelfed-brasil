@@ -251,4 +251,15 @@ return [
     'howReportDirectMessageAsk' => 'Como faço para denunciar conteúdo que recebi em uma mensagem do Pixelfed Direct?',
     'howReportDirectMessageAnswer' => 'Você pode clicar na mensagem e, em seguida, selecionar a opção <strong>Denunciar</strong> e seguir as instruções na página de Denúncia.',
 
+    'timelineSubTitle' => 'Linhas do tempo são feeds cronológicos de postagens.',
+    'timelineHome' => 'Linha do tempo com conteúdo de contas que você segue',
+    'timelinePublic' => 'Linha do tempo com conteúdo de outros usuários neste servidor',
+    'timelineNetwork' => 'Linha do tempo com conteúdo não moderado de outros servidores',
+    'timelineTips' => 'Dicas de linha do tempo',
+    'timelineTipsContent' =>  '<ul class="pt-3">
+        <li class="lead mb-4">Você pode silenciar ou bloquear contas para impedir que elas apareçam na linha do tempo inicial e nas linhas do tempo públicas.</li>
+        <li class="lead mb-4">Você pode criar postagens <span class="font-weight-bold">Não Listadas</span> que não aparecem nas linhas do tempo públicas.</li>
+        </ul>',
+
+
 ];
