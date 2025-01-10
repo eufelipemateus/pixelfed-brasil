@@ -4,6 +4,7 @@
 <a href="https://circleci.com/gh/pixelfed/pixelfed"><img src="https://circleci.com/gh/pixelfed/pixelfed.svg?style=svg" alt="Build Status"></a>
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/v/stable.svg" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/license.svg" alt="License"></a>
+<a title="Crowdin" target="_blank" href="https://crowdin.com/project/pixelfed"><img src="https://badges.crowdin.net/pixelfed/localized.svg"></a>
 </p>
 
 ## Introduction

@@ -12,5 +12,5 @@
 @endsection
 
 @push('meta')
-<meta property="og:description" content="Fediverse is a portmanteau of “federation” and “universe”. It is a common, informal name for a federation of social network servers, specializing in different types of media.">
+<meta property="og:description" content="Fediverse {{__('site.is_a_portmanteau_of_federation_and_universe_etc')}}">
 @endpush
