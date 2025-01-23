@@ -8,7 +8,7 @@ return [
      *
      */
     'instagram' => [
-        'enabled' => env('PF_IMPORT_FROM_INSTAGRAM', true),
+        'enabled' => env('PF_IMPORT_FROM_INSTAGRAM', false),
 
         'limits' => [
             // Limit max number of posts allowed to import
