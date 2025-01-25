@@ -21,15 +21,15 @@
 							<!-- <a class="list-group-item text-center lead text-decoration-none text-dark" href="#">Camera</a> -->
 							<a class="list-group-item bg-transparent lead text-decoration-none text-light font-weight-bold border-light" href="#" @click.prevent="upload()">
 								<i class="fas fa-plus-square mr-2"></i>
-								Add to Story
+								{{ $t('story.add') }}
 							</a>
 							<a v-if="stories.length" class="list-group-item bg-transparent lead text-decoration-none text-lighter font-weight-bold border-muted" href="#" @click.prevent="edit()">
 								<i class="far fa-clone mr-2"></i>
-								My Story
+								{{ $t('story.myStory') }}
 							</a>
 							<a v-if="stories.length" class="list-group-item bg-transparent lead text-decoration-none text-lighter font-weight-bold border-muted" href="#" @click.prevent="viewMyStory()">
 								<i class="fas fa-history mr-2"></i>
-								View My Story
+								{{ $t('story.viewMyStory') }}
 							</a>
 							<!-- <a v-if="stories.length" class="list-group-item bg-transparent lead text-decoration-none text-lighter font-weight-bold border-muted" href="#" @click.prevent="edit()">
 								<i class="fas fa-network-wired mr-1"></i>
@@ -49,7 +49,7 @@
 							</a> -->
 							<a class="list-group-item bg-transparent lead text-decoration-none text-lighter font-weight-bold border-muted" href="/">
 								<i class="fas fa-arrow-left mr-2"></i>
-								Go back
+								{{ $t('story.goBack') }}
 							</a>
 							<!-- <a class="list-group-item text-center lead text-decoration-none text-dark" href="#">Options</a> -->
 						</div>
@@ -70,7 +70,7 @@
 			<div v-if="page == 'crop'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center" style="height: 90vh;">
 				<div class="text-center py-3 d-flex justify-content-between align-items-center">
 					<div>
-						<button class="btn btn-outline-lighter btn-sm py-1 px-md-3" @click="deleteCurrentStory()"><i class="pr-2 fas fa-chevron-left fa-sm"></i> Delete</button>
+						<button class="btn btn-outline-lighter btn-sm py-1 px-md-3" @click="deleteCurrentStory()"><i class="pr-2 fas fa-chevron-left fa-sm"></i>{{  $t("story.delete") }}</button>
 					</div>
 					<div class="">
 						<p class="text-muted font-weight-light mb-1">
@@ -79,7 +79,7 @@
 						<p class="text-muted font-weight-bold mb-0">STORIES</p>
 					</div>
 					<div>
-						<button class="btn btn-primary btn-sm py-1 px-md-3" @click="performCrop()">Crop <i class="pl-2 fas fa-chevron-right fa-sm"></i></button>
+						<button class="btn btn-primary btn-sm py-1 px-md-3" @click="performCrop()">{{  $t("story.crop") }} <i class="pl-2 fas fa-chevron-right fa-sm"></i></button>
 					</div>
 				</div>
 				<div class="flex-fill">
@@ -103,40 +103,40 @@
 			<!-- ERROR -->
 			<div v-if="page == 'error'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center align-items-center" style="height: 90vh;">
 				<p class="h3 mb-0 text-light">Oops!</p>
-				<p class="text-muted lead">An error occurred, please try again later.</p>
+				<p class="text-muted lead">{{ $t("story.error")}}</p>
 				<p class="text-muted mb-0">
-					<a class="btn btn-outline-secondary py-0 px-5 font-weight-bold" href="/">Go back</a>
+					<a class="btn btn-outline-secondary py-0 px-5 font-weight-bold" href="/">{{ $t("story.goBack")}}</a>
 				</p>
 			</div>
 
 			<!-- UPLOADING -->
 			<div v-if="page == 'uploading'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center align-items-center" style="height: 90vh;">
 				<p v-if="uploadProgress != 100" class="display-4 mb-0 text-muted">Uploading {{uploadProgress}}%</p>
-				<p v-else class="display-4 mb-0 text-muted">Processing ...</p>
+				<p v-else class="display-4 mb-0 text-muted">{{ $t("story.processing")}} ...</p>
 			</div>
 
 			<!-- CROPPING -->
 			<div v-if="page == 'cropping'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center align-items-center" style="height: 90vh;">
-				<p class="display-4 mb-0 text-muted">Cropping ...</p>
+				<p class="display-4 mb-0 text-muted">{{ $t("story.cropping")}} ...</p>
 			</div>
 
 			<!-- PREVIEW -->
 			<div v-if="page == 'preview'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center align-items-center" style="height: 90vh;">
 				<div>
 					<div class="form-group">
-						<label for="durationSlider" class="text-light lead font-weight-bold">Story Duration</label>
+						<label for="durationSlider" class="text-light lead font-weight-bold">{{ $t("story.storyDuration")}}n</label>
 						<input type="range" class="custom-range" min="3" max="10" id="durationSlider" v-model="duration">
 						<p class="help-text text-center">
-							<span class="text-light">{{duration}} seconds</span>
+							<span class="text-light">{{duration}} {{ $t("story.seconds")}}</span>
 						</p>
 					</div>
 					<hr class="my-3">
 					<a class="btn btn-primary btn-block px-5 font-weight-bold my-3" href="#" @click.prevent="shareStoryToFollowers()">
-						Share Story with followers
+						{{ $t("story.shareWithFollowers")}}
 					</a>
 
 					<a class="btn btn-outline-muted btn-block px-5 font-weight-bold" href="/" @click.prevent="deleteCurrentStory()">
-						Cancel
+						{{ $t("story.cancel")}}
 					</a>
 				</div>
 				<!-- <a class="btn btn-outline-secondary btn-block px-5 font-weight-bold" href="#">
@@ -153,7 +153,7 @@
 					<p class="text-muted font-weight-bold mb-0">STORIES</p>
 				</div>
 				<div class="flex-fill py-4">
-					<p class="lead font-weight-bold text-lighter">My Stories</p>
+					<p class="lead font-weight-bold text-lighter">{{ $t("story.myStory") }}</p>
 					<div class="card w-100 shadow-none bg-transparent" style="max-height: 50vh; overflow-y: scroll">
 						<div class="list-group">
 							<div v-for="(story, index) in stories" class="list-group-item bg-transparent text-center border-muted text-lighter" href="#">
@@ -174,7 +174,7 @@
 									</div>
 								</div>
 								<div v-if="story.showViewers && story.viewers.length" class="m-2 text-left">
-									<p class="font-weight-bold mb-2">Viewed By</p>
+									<p class="font-weight-bold mb-2">{{ $t("story.viewdBy") }}</p>
 									<div v-for="viewer in story.viewers" class="d-flex">
 										<img src="/storage/avatars/default.png" width="24" height="24" class="rounded-circle mr-2">
 										<p class="mb-0 font-weight-bold">viewer.username</p>
@@ -185,7 +185,7 @@
 					</div>
 				</div>
 				<div class="flex-fill text-center">
-					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold" href="/i/stories/new" @click.prevent="goBack()">Go back</a>
+					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold" href="/i/stories/new" @click.prevent="goBack()">{{ $t("story.goBack") }}</a>
 				</div>
 			</div>
 		</div>
@@ -225,6 +225,9 @@
 			VueCropper,
 			VueTimeago
 		},
+        created() {
+            console.log(this.$t ? 'i18n is available' : 'i18n is not available');
+        },
 
 		props: ['profile-id'],
 		data() {
@@ -264,7 +267,7 @@
 		mounted() {
 			$('body').addClass('bg-black');
 			this.mediaWatcher();
-			axios.get('/api/stories/v0/fetch/' + this.profileId)
+			axios.get('/api/web/stories/v1/profile/' + this.profileId)
 			.then(res => {
 				this.stories = res.data.map(s => {
 					s.showViewers = false;
@@ -321,7 +324,7 @@
 					};
 
 					io.value = null;
-					axios.post('/api/stories/v0/add', form, xhrConfig)
+					axios.post('/api/web/stories/v1/add', form, xhrConfig)
 					.then(function(e) {
 						self.uploadProgress = 100;
 						self.uploading = false;
@@ -361,7 +364,7 @@
 					return;
 				}
 
-				axios.delete('/api/stories/v0/delete/' + story.id)
+				axios.delete('/api/web/stories/v1/delete/' + story.id)
 				.then(res => {
 					this.stories.splice(index, 1);
 					if(this.stories.length == 0) {
@@ -381,7 +384,7 @@
 			performCrop() {
 				this.page = 'cropping';
 				let data = this.$refs.croppa.getData();
-				axios.post('/api/stories/v0/crop', {
+				axios.post('/api/web/stories/v1/crop', {
 					media_id: this.mediaId,
 					width: data.width,
 					height: data.height,
@@ -401,9 +404,11 @@
 			},
 
 			shareStoryToFollowers() {
-				axios.post('/api/stories/v0/publish', {
+				axios.post('/api/web/stories/v1/publish', {
 					media_id: this.mediaId,
-					duration: this.duration
+					duration: this.duration,
+                    can_reply: 1,
+                    can_react: 1,
 				}).then(res => {
 					window.location.href = '/i/my/story?id=' + this.mediaId;
 				})
