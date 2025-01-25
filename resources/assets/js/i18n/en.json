@@ -53,7 +53,8 @@
         "language": "Language",
         "privacy": "Privacy",
         "terms": "Terms",
-        "backToPreviousDesign": "Go back to previous design"
+        "backToPreviousDesign": "Go back to previous design",
+        "createStory": "Create Story"
     },
     "directMessages": {
         "inbox": "Inbox",
@@ -145,7 +146,20 @@
         "unarchivePostConfirm": "Are you sure you want to unarchive this post?"
     },
     "story": {
-        "add": "Add Story"
+        "add": "Add Story",
+        "myStory": "My Story",
+        "viewMyStory": "View My Story",
+        "goBack": "Go Back",
+        "delete": "Delete",
+        "crop": "Crop",
+        "error": "An error occurred, please try again later.",
+        "cropping": "Cropping",
+        "storyDuration": "Story Duration",
+        "seconds": "seconds",
+        "processing": "Processing",
+        "shareWithFollowers": "Share with followers",
+        "cancel": "Cancel",
+        "viewdBy": "Viewed by"
     },
     "timeline": {
         "peopleYouMayKnow": "People you may know",
