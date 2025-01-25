@@ -27,7 +27,7 @@ class Nodeinfo
                     'nodeName' => config_cache('app.name'),
                     'software' => [
                         'homepage' => 'https://pixelfed.org',
-                        'repo' => 'https://github.com/pixelfed/pixelfed',
+                        'repo' => 'https://github.com/eufelipemateus/pixelfed',
                     ],
                     'config' => $features,
                 ],
