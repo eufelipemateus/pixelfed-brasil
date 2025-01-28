@@ -91,7 +91,11 @@ class AvatarOptimize implements ShouldQueue
             return;
         }
         if (is_file($current)) {
-            @unlink($current);
+            if ((bool) config_cache('pixelfed.cloud_storage')) {
+                Storage::disk(config('filesystems.cloud'))->delete($current);
+            } else {
+                @unlink($current);
+            }
         }
     }
 
