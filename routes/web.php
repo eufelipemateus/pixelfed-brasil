@@ -52,6 +52,9 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
     Route::get('discover/places/{id}/{slug}', 'PlaceController@show');
     Route::get('discover/location/country/{country}', 'PlaceController@directoryCities');
 
+    Route::get('/i/app-email-verify', 'AppRegisterController@index');
+    Route::post('/i/app-email-verify', 'AppRegisterController@store')->middleware('throttle:app-signup');
+
     Route::group(['prefix' => 'i'], function () {
         Route::redirect('/', '/');
         Route::get('compose', 'StatusController@compose')->name('compose');
@@ -137,10 +140,6 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('web/{q}', 'SpaController@index')->where('q', '.*');
         Route::get('web', 'SpaController@index');
     });
-
-    Route::get('/i/app-email-verify', 'AppRegisterController@index');
-    Route::post('/i/app-email-verify', 'AppRegisterController@store')->middleware('throttle:app-signup');
-
 
     Route::group(['prefix' => 'account'], function () {
         Route::redirect('/', '/');

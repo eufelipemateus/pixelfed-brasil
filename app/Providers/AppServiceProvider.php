@@ -2,34 +2,36 @@
 
 namespace App\Providers;
 
-use App\Observers\{
-	AvatarObserver,
-	FollowerObserver,
-	HashtagFollowObserver,
-	LikeObserver,
-	NotificationObserver,
-	ModLogObserver,
-	ProfileObserver,
-    StatusHashtagObserver,
-    StatusObserver,
-	UserObserver,
-	UserFilterObserver,
-};
-use App\{
-	Avatar,
-	Follower,
-	HashtagFollow,
-	Like,
-	Notification,
-	ModLog,
-	Profile,
-	StatusHashtag,
-    Status,
-	User,
-	UserFilter
-};
-use Auth, Horizon, URL;
-use Illuminate\Support\Facades\Blade;
+use App\Avatar;
+use App\Follower;
+use App\HashtagFollow;
+use App\Like;
+use App\ModLog;
+use App\Notification;
+use App\Observers\AvatarObserver;
+use App\Observers\FollowerObserver;
+use App\Observers\HashtagFollowObserver;
+use App\Observers\LikeObserver;
+use App\Observers\ModLogObserver;
+use App\Observers\NotificationObserver;
+use App\Observers\ProfileObserver;
+use App\Observers\StatusHashtagObserver;
+use App\Observers\StatusObserver;
+use App\Observers\UserFilterObserver;
+use App\Observers\UserObserver;
+use App\Profile;
+use App\Services\AccountService;
+use App\Status;
+use App\StatusHashtag;
+use App\User;
+use App\UserFilter;
+use Auth;
+use Horizon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
@@ -70,13 +72,34 @@ class AppServiceProvider extends ServiceProvider
 		// Model::preventLazyLoading(true);
 	}
 
-	/**
-	 * Register any application services.
-	 *
-	 * @return void
-	 */
-	public function register()
-	{
-		//
-	}
+        Pulse::user(function ($user) {
+            $acct = AccountService::get($user->profile_id, true);
+
+            return $acct ? [
+                'name' => $acct['username'],
+                'extra' => $user->email,
+                'avatar' => $acct['avatar'],
+            ] : [
+                'name' => $user->username,
+                'extra' => 'DELETED',
+                'avatar' => '/storage/avatars/default.jpg',
+            ];
+        });
+
+        RateLimiter::for('app-signup', function (Request $request) {
+            return Limit::perDay(10)->by($request->ip());
+        });
+
+        // Model::preventLazyLoading(true);
+    }
+
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
 }
