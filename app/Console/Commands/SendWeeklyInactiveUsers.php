@@ -27,6 +27,6 @@ class SendWeeklyInactiveUsers extends Command
     public function handle()
     {
         //
-        SendWeeklyInactiveUserJob::dispatch();//->onQueue('low');
+        SendWeeklyInactiveUserJob::dispatch()->onQueue('low');
     }
 }
