@@ -78,6 +78,10 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             return;
         }
         $base = $media->media_path;
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'video');
+        file_put_contents($tempFile, file_get_contents($base));
+
         $path = explode('/', $base);
         $name = last($path);
         try {
@@ -86,7 +90,7 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             $i = count($path) - 1;
             $path[$i] = $t;
             $save = implode('/', $path);
-            $video = FFMpeg::open($base)
+            $video = FFMpeg::open($tempFile)
             ->getFrameFromSeconds(1)
             ->export()
             ->toDisk('local')
@@ -104,8 +108,11 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             if(config('media.hls.enabled')) {
                 VideoHlsPipeline::dispatch($media)->onQueue('mmo');
             }
+
         } catch (Exception $e) {
-            
+
+        } finally {
+           @unlink($tempFile);
         }
 
         if($media->status_id) {

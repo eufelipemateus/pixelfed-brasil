@@ -78,7 +78,7 @@ class MediaStorageService
                 (new self())->remoteToCloud($media);
             }
         } else {
-            (new self())->localToCloud($media);
+           // (new self())->localToCloud($media);
         }
     }
 
