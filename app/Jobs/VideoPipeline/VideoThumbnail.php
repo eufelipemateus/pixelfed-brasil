@@ -74,29 +74,29 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
     public function handle()
     {
         $media = $this->media;
-        if($media->mime != 'video/mp4') {
+        if ($media->mime != 'video/mp4') {
             return;
         }
+        $url = $media->remote_media? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
         $base = $media->media_path;
-
-        $tempFile = tempnam(sys_get_temp_dir(), 'video');
-        file_put_contents($tempFile, file_get_contents($base));
 
         $path = explode('/', $base);
         $name = last($path);
         try {
             $t = explode('.', $name);
-            $t = $t[0].'_thumb.jpeg';
+            $t = $t[0].'_thumb.jpg';
             $i = count($path) - 1;
             $path[$i] = $t;
             $save = implode('/', $path);
-            $video = FFMpeg::open($tempFile)
-            ->getFrameFromSeconds(1)
-            ->export()
-            ->toDisk('local')
-            ->save($save);
+
+            $video = FFMpeg::openUrl($url)
+                ->getFrameFromSeconds(1)
+                ->export()
+                ->toDisk(config('filesystems.cloud'))
+                ->save($save);
 
             $media->thumbnail_path = $save;
+            $media->thumbnail_url = Storage::disk(config('filesystems.cloud'))->url($save);
             $media->save();
 
             $blurhash = Blurhash::generate($media);
