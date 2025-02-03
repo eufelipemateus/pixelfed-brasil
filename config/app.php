@@ -58,7 +58,7 @@ return [
      * Do not edit your timezone or things will break!
      */
 
-    'timezone' => 'UTC',
+    'timezone' => 'America/Sao_Paulo',
 
     /*
     |--------------------------------------------------------------------------
