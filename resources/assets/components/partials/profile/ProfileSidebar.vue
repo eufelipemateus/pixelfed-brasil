@@ -302,7 +302,7 @@
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">
-				<a href="https://pixelfed.org" class="font-weight-bold">Powered by Pixelfed</a>
+				Mantido por <a href="https://felipemateus.com" class="font-weight-bold">Felipe Mateus</a>
 			</div>
 		</div>
 

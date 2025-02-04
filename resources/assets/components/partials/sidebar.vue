@@ -258,7 +258,7 @@
 			<a href="/site/help" class="font-weight-bold">{{ $t('navmenu.help') }}</a>
 			<a href="/site/privacy" class="font-weight-bold">{{ $t('navmenu.privacy') }}</a>
 			<a href="/site/terms" class="font-weight-bold">{{ $t('navmenu.terms') }}</a>
-			<a href="https://pixelfed.org" class="font-weight-bold powered-by">Powered by Pixelfed</a>
+			<a href="https://felipemateus.com" class="font-weight-bold powered-by">Felipe Mateus</a>
 		</div>
 
 		<!-- <b-modal
