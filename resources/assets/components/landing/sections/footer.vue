@@ -6,8 +6,6 @@
 			<a href="/site/terms">Terms</a>
 			<div class="spacer">·</div>
 			<a href="/site/privacy">Privacy</a>
-			<div class="spacer">·</div>
-			<a href="https://pixelfed.org/mobile-apps" target="_blank">Mobile Apps</a>
 		</div>
 
 		<div class="footer-component-attribution">
