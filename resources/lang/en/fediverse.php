@@ -7,6 +7,5 @@ return [
     <p class="small text-muted">Some of the better known fediverse projects include:</p>
     <ul class="lead pl-4">
       <l i><a href="https://joinmastodon.org" rel="nofollow noopener">Mastodon</a> – A federated microblogging alternative.</li>
-    </ul>';
-
+    </ul>'
 ];
