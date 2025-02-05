@@ -100,6 +100,8 @@ jobs:
             echo "DO_SPACES_REGION=${{secrets.DO_SPACES_REGION}}" >> .env
             echo "DO_SPACES_BUCKET=${{secrets.DO_SPACES_BUCKET}}" >> .env
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
+            echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
+
 
 
       - name: Generate WebPush VAPID keys
