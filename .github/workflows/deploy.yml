@@ -55,7 +55,7 @@ jobs:
             echo "SESSION_DOMAIN=pixelfed.com.br" >> .env
             echo "TRUST_PROXIES=*" >> .env
             echo "OPEN_REGISTRATION=false" >> .env
-            echo "PF_ALLOW_APP_REGISTRATION=false" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
             echo "ENFORCE_EMAIL_VERIFICATION=true" >> .env
             echo "PF_MAX_USERS=2000" >> .env
             echo "OAUTH_ENABLED=true" >> .env
