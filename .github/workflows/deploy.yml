@@ -27,6 +27,7 @@ jobs:
       - name: Generate .env
         run: |
             touch .env
+            echo "APP_NAME=\"Pixelfed Brasil\"" >> .env
             echo "APP_ENV=production" >> .env
             echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
             echo "APP_DEBUG=false" >> .env
