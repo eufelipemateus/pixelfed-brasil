@@ -152,7 +152,12 @@ return [
         'gc' => [
             'enabled' => env('INSTANCE_NOTIFY_AUTO_GC', false),
             'delete_after_days' => env('INSTANCE_NOTIFY_AUTO_GC_DEL_AFTER_DAYS', 365)
-        ]
+        ],
+        'nag' => [
+            'enabled' => (bool) env('INSTANCE_NOTIFY_APP_GATEWAY', true),
+            'api_key' => env('PIXELFED_PUSHGATEWAY_KEY', false),
+            'endpoint' => 'push.pixelfed.net',
+        ],
     ],
 
     'curated_registration' => [
