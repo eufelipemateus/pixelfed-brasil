@@ -5,11 +5,13 @@ on:
     push:
       branches:
         - main
+        - dev
 
 jobs:
   release:
     name: Release Pixelfed Docker Image
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'DEV' }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -27,14 +29,15 @@ jobs:
       - name: Generate .env
         run: |
             touch .env
-            echo "APP_ENV=production" >> .env
+            echo "APP_NAME=\"${{vars.APP_NAME}}\"" >> .env
+            echo "APP_ENV=${{ github.ref == 'refs/heads/main' && 'production' || 'DEV' }}" >> .env
             echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
             echo "APP_DEBUG=false" >> .env
             echo "DB_CONNECTION=pgsql" >> .env
             echo "DB_HOST=127.0.0.1" >> .env
             echo "DB_PORT=5432" >> .env
-            echo "DB_DATABASE=${{secrets.DB_DATABASE}}" >> .env
-            echo "DB_USERNAME=${{secrets.DB_USERNAME}}" >> .env
+            echo "DB_DATABASE=\"${{secrets.DB_DATABASE}}\"" >> .env
+            echo "DB_USERNAME=\"${{secrets.DB_USERNAME}}\"" >> .env
             echo "DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"" >> .env
             echo "REDIS_HOST=127.0.0.1" >> .env
             echo "REDIS_PORT=6379" >> .env
@@ -49,15 +52,15 @@ jobs:
             echo "MAIL_FROM_NAME=\"Pixelfed\"" >> .env
             echo "APP_LOCALE=pt" >> .env
             echo "APP_FALLBACK_LOCALE=pt" >> .env
-            echo "APP_URL=https://pixelfed.com.br" >> .env
-            echo "APP_DOMAIN=pixelfed.com.br" >> .env
-            echo "ADMIN_DOMAIN=pixelfed.com.br"  >> .env
-            echo "SESSION_DOMAIN=pixelfed.com.br" >> .env
+            echo "APP_URL=https://${{vars.DOMAIN}}" >> .env
+            echo "APP_DOMAIN=${{vars.DOMAIN}}" >> .env
+            echo "ADMIN_DOMAIN=${{vars.DOMAIN}}"  >> .env
+            echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
             echo "TRUST_PROXIES=*" >> .env
             echo "OPEN_REGISTRATION=false" >> .env
             echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
             echo "ENFORCE_EMAIL_VERIFICATION=true" >> .env
-            echo "PF_MAX_USERS=2000" >> .env
+            echo "PF_MAX_USERS=5000" >> .env
             echo "OAUTH_ENABLED=true" >> .env
             echo "INSTANCE_PUBLIC_HASHTAGS=false"  >> .env
             echo "INSTANCE_DISCOVER_PUBLIC=true" >> .env
@@ -93,7 +96,7 @@ jobs:
             echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
             echo "PF_ENABLE_CLOUD=true" >> .env
             echo "FILESYSTEM_CLOUD=spaces" >> .env
-            echo "PORTFOLIO_DOMAIN=portifolio.pixelfed.com.br" >> .env
+            echo "PORTFOLIO_DOMAIN=portifolio.${{vars.DOMAIN}}" >> .env
             echo "PORTFOLIO_PATH=" >> .env
             echo "DO_SPACES_KEY=${{secrets.DO_SPACES_KEY}}" >> .env
             echo "DO_SPACES_SECRET=${{secrets.DO_SPACES_SECRET}}" >> .env
