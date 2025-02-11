@@ -120,8 +120,6 @@ jobs:
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
 
-
-
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid
 
