@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0035325cb0240e92fc378e49f76447bd",
+    "content-hash": "5f08e8730e6536a6054906c34d12e8e7",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1351,6 +1351,82 @@
                 "source": "https://github.com/ezyang/htmlpurifier/tree/v4.18.0"
             },
             "time": "2024-11-01T03:51:45+00:00"
+        },
+        {
+            "name": "felipemateus/laravel-analytics",
+            "version": "dev-pixelfed-brasil-feature",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/eufelipemateus/laravel-analytics.git",
+                "reference": "4229a647384d50c418a8de877d3e96833726047c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/4229a647384d50c418a8de877d3e96833726047c",
+                "reference": "4229a647384d50c418a8de877d3e96833726047c",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": "^3.0",
+                "ext-intl": "*",
+                "illuminate/collections": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/database": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/http": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0",
+                "illuminate/view": "^8.0|^9.0|^10.0|^11.0",
+                "jaybizzle/crawler-detect": "^1.2",
+                "jenssegers/agent": "^2.6",
+                "mobiledetect/mobiledetectlib": "^2.7.6",
+                "php": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "6.0|^9.0",
+                "phpunit/phpunit": "^9.5|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AndreasElia\\Analytics\\AnalyticsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AndreasElia\\Analytics\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andreas Elia",
+                    "email": "contact@andreaselia.co.uk"
+                },
+                {
+                    "name": "Tom Irons",
+                    "email": "tom@irons.pw"
+                }
+            ],
+            "description": "Analytics for the Laravel framework.",
+            "keywords": [
+                "analytics",
+                "laravel",
+                "middleware",
+                "package"
+            ],
+            "support": {
+                "source": "https://github.com/eufelipemateus/laravel-analytics/tree/pixelfed-brasil-feature"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/andreaselia",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-02-04T00:16:07+00:00"
         },
         {
             "name": "fgrosse/phpasn1",
@@ -12590,7 +12666,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "felipemateus/laravel-analytics": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -12604,5 +12682,5 @@
         "ext-openssl": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.2.0"
 }

@@ -53,6 +53,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:account-post-count-stat-update')->everySixHours(25)->onOneServer();
         $schedule->command('app:instance-update-total-local-posts')->twiceDailyAt(1, 13, 45)->onOneServer();
         $schedule->command('app:send-weekly-inactive-users')->weeklyOn(0, '10:00')->onOneServer();
+        $schedule->command('app:update-pages-view-statitics')->everyTenMinutes();
 
         if (app()->environment('production')) {
             $schedule->command('app:send-weekly-popular-posts')->weeklyOn(1, '08:00')->onOneServer();
