@@ -78,12 +78,8 @@
         "language": "Idioma",
         "privacy": "Privacidade",
         "terms": "Termos",
-<<<<<<< HEAD
-        "backToPreviousDesign": "Voltar ao design antigo"
-=======
         "backToPreviousDesign": "Voltar ao design antigo",
         "createStory": "Criar Story"
->>>>>>> dev
     },
     "directMessages": {
         "inbox": "Caixa de Entrada",
@@ -175,9 +171,6 @@
         "unarchivePostConfirm": "Tem a certeza que pretende desarquivar este post?"
     },
     "story": {
-<<<<<<< HEAD
-        "add": "Adicionar Storie"
-=======
         "add": "Adicionar Story",
         "subtitle": "Compartilhe fotos e v\u00eddeos com seus seguidores por 24 horas",
         "llimit": "Você atingiu o limite de novas stories",
@@ -216,7 +209,6 @@
         "copyrightInfringement": "Violação de direitos autorais",
         "impersonation": "Roubo de identidade",
         "scamOrFraud": "Golpe ou fraude"
->>>>>>> dev
     },
     "timeline": {
         "peopleYouMayKnow": "Pessoas que talvez conhe\u00e7a",
