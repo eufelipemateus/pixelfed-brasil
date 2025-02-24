@@ -30,7 +30,32 @@
     },
     "site": {
         "terms": "Termos de Uso",
-        "privacy": "Pol\u00edtica de Privacidade"
+        "privacy": "Pol\u00edtica de Privacidade",
+        "about": "Sobre",
+        "directory": "Diret\u00f3rio",
+        "explore": "Explorar",
+        "softwareDescription": "Rede social descentralizada de partilha de fotos mantida por <a href=\"https://pixelfed.org\" target=\"_blank\">Pixelfed</a>",
+        "posts": "Publica\u00e7\u00f5es",
+        "activeUsers": "Usu\u00e1rios ativos",
+        "totalUsers": "Total de usu\u00e1rios",
+        "managedBy": "Administrado por",
+        "contact": "Contato",
+        "serverRules": "Regras do servidor",
+        "supportedFeatures": "Funcionalidades Suportadas",
+        "sharePhotos": "Você pode compartilhar até {{ albumLimit }} fotos*",
+        "shareVideo": "ou 1 vídeo*",
+        "maxCaptionLength": "de cada vez com um comprimento máximo de legenda de {{ maxCaptionLength }} caracteres.",
+        "maxFileSize": "* - O tamanho máximo do arquivo é {{ maxPhotoSize }}",
+        "login": "Entrar",
+        "signup": "Registar",
+        "federation": "Federação",
+        "mobileAppSuport": "Suporte para aplicativos móveis",
+        "discoverAccounts": "Descubra contas e pessoas",
+        "noData": "Nada para mostrar ainda! Volte mais tarde.",
+        "exploreTrending": "Explore publicações em tendência",
+        "followers": "Seguidores",
+        "following": "SWeguindo",
+        "viewPost": "Ver publicação"
     },
     "navmenu": {
         "search": "Pesquisa",
@@ -53,7 +78,12 @@
         "language": "Idioma",
         "privacy": "Privacidade",
         "terms": "Termos",
+<<<<<<< HEAD
         "backToPreviousDesign": "Voltar ao design antigo"
+=======
+        "backToPreviousDesign": "Voltar ao design antigo",
+        "createStory": "Criar Story"
+>>>>>>> dev
     },
     "directMessages": {
         "inbox": "Caixa de Entrada",
@@ -145,7 +175,48 @@
         "unarchivePostConfirm": "Tem a certeza que pretende desarquivar este post?"
     },
     "story": {
+<<<<<<< HEAD
         "add": "Adicionar Storie"
+=======
+        "add": "Adicionar Story",
+        "subtitle": "Compartilhe fotos e v\u00eddeos com seus seguidores por 24 horas",
+        "llimit": "Você atingiu o limite de novas stories",
+        "myStory": "Meus Stories",
+        "viewMyStory": "Ver o meus Stories",
+        "goBack": "Voltar",
+        "delete": "Eliminar",
+        "crop": "Cortar",
+        "zoom": "Mova e aperte para ampliar",
+        "error": "Ocorreu um erro, por favor tente novamente mais tarde.",
+        "cropping": "Cortando",
+        "next": "Próximo",
+        "storyDuration": "Dura\u00e7\u00e3o da Story",
+        "seconds": "segundos",
+        "processing": "Processando",
+        "allowReply": "Permitir respostas",
+        "allowReact": "Permitir reações",
+        "shareWithFollowers": "Comartilhar com seguidores",
+        "cancel": "Cancelar",
+        "viewedBy": "Visualizado por",
+        "reactionSenr": "Reação enviada",
+        "replySent": "Resposta enviada",
+        "viewWarning": " poderá ver que você visualizou a story.",
+        "viewStory": "Ver Story",
+        "expiresIn": "Expira em",
+        "viewers": "Visualizadores",
+        "report": "Denunciar",
+        "close": "Fechar",
+        "noViewers": "Ainda sem visualizadores",
+        "loadMore": "Carregar mais",
+        "spam": "Spam",
+        "sensitive": "Conteúdo sensível",
+        "abusive": "Abusivo ou prejudicial",
+        "other":"Outro",
+        "underageAccount": "Conta de menor de idade",
+        "copyrightInfringement": "Violação de direitos autorais",
+        "impersonation": "Roubo de identidade",
+        "scamOrFraud": "Golpe ou fraude"
+>>>>>>> dev
     },
     "timeline": {
         "peopleYouMayKnow": "Pessoas que talvez conhe\u00e7a",

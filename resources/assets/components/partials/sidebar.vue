@@ -39,7 +39,7 @@
 			</button>
 			<div class="dropdown-menu dropdown-menu-right">
 				<a class="dropdown-item font-weight-bold" href="/i/collections/create">Create Collection</a>
-				<a v-if="hasStories" class="dropdown-item font-weight-bold" href="/i/stories/new">Create Story</a>
+				<a v-if="hasStories" class="dropdown-item font-weight-bold" href="/i/stories/new">{{ $t("navmenu.createStory")}}</a>
 				<div class="dropdown-divider"></div>
 				<a class="dropdown-item font-weight-bold" href="/settings/home">Account Settings</a>
 			</div>
@@ -258,7 +258,7 @@
 			<a href="/site/help" class="font-weight-bold">{{ $t('navmenu.help') }}</a>
 			<a href="/site/privacy" class="font-weight-bold">{{ $t('navmenu.privacy') }}</a>
 			<a href="/site/terms" class="font-weight-bold">{{ $t('navmenu.terms') }}</a>
-			<a href="https://pixelfed.org" class="font-weight-bold powered-by">Powered by Pixelfed</a>
+			<a href="https://felipemateus.com" class="font-weight-bold powered-by">Felipe Mateus</a>
 		</div>
 
 		<!-- <b-modal

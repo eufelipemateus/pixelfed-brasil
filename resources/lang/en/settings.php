@@ -18,13 +18,13 @@ return [
     'export' =>                 'Export',
     'labs' =>                   'Labs',
     'parental_controls' =>      'Parental Controls',
-  
+
     'submit' =>                 'Submit',
     'error' =>                  'Error',
     'cancel' =>                 'Cancel',
     'save' =>                   'Save',
     'download' =>               'Download',
-    
+
     'home.account_settings' =>                                          'Account Settings',
     'home.change_profile_photo' =>                                      'Change Profile Photo',
     'home.select_a_profile_photo' =>                                    'Select a profile photo',
@@ -50,21 +50,21 @@ return [
     'home.storage_used' =>                                              'Storage Used',
     'home.are_you_sure_you_want_to_delete_your_profile_photo' =>        'Are you sure you want to delete your profile photo?',
     'home.an_error_occured_please_try_again_later' =>                   'An error occured, please try again later',
-    
+
     'accessibility.reduce_motion' =>                                    'Reduce Motion',
     'accessibility.prevent_animation_effects' =>                        'Prevent animation effects.',
     'accessibility.high_contrast_mode' =>                               'High Contrast Mode',
     'accessibility.high_contrast_mode_for_the_visually_impaired' =>     'High contrast mode for the visually impaired.',
     'accessibility.disable_video_autoplay' =>                           'Disable video autoplay',
     'accessibility.prevent_videos_from_autoplaying' =>                  'Prevent videos from autoplaying.',
-    
+
     'email.email_settings' =>                                           'Email Settings',
     'email.email_address' =>                                            'Email Address',
     'email.verified' =>                                                 'Verified',
     'email.unverified' =>                                               'Unverified',
     'email.you_need_to' =>                                              'You need to',
     'email.verify_your_email' =>                                        'verify your email',
-    
+
     'media.default_license' =>                                          'Default License',
     'media.set_a_default_license_for_new_posts' =>                      'Set a default license for new posts.',
     'media.sync_licenses' =>                                            'Sync Licenses',
@@ -73,7 +73,7 @@ return [
     'media.require_media_descriptions' =>                               'Require Media Descriptions',
     'media.briefly_describe_your_media_to_improve_etc' =>               'Briefly describe your media to improve accessibility for vision impaired people.',
     'media.not_available_for_mobile_or_3rd_party_apps_etc' =>           'Not available for mobile or 3rd party apps at this time.',
-    
+
     'password.update_password' =>                                       'Update Password',
     'password.current' =>                                               'Current',
     'password.your_current_password' =>                                 'Your current password',
@@ -81,7 +81,7 @@ return [
     'password.enter_new_password_here' =>                               'Enter new password here',
     'password.confirm' =>                                               'Confirm',
     'password.confirm_new_password' =>                                  'Confirm new password',
-    
+
     'privacy.privacy_settings' =>                                       'Privacy Settings',
     'privacy.private_account' =>                                        'Private Account',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'When your account is private, only people you approve can see your photos and videos on pixelfed. Your existing followers won\'t be affected.',
@@ -123,7 +123,7 @@ return [
     'privacy.allow_new_follow_requests' =>                              'Allow new follow requests',
     'privacy.block_notifications_from_accounts_i_dont_follow' =>        'Block notifications from accounts I don\'t follow',
     'privacy.an_error_occured_please_try_again' =>                      'An error occured. Please try again.',
-  
+
     'relationships' =>                                                          'Relationships',
     'relationships.followers' =>                                                'Followers',
     'relationships.following' =>                                                'Following',
@@ -142,7 +142,7 @@ return [
     'relationships.you_have_successfully_unfollowed_that_user' =>               'You have successfully unfollowed that user',
     'relationships.an_error_occured_when_attempting_to_unfollow_this_user' =>   'An error occured when attempting to unfollow this user',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'You have successfully unfollowed that hashtag',
-    
+
     'security.two_factor_authentication' =>                                     'Two-factor authentication',
     'security.enabled' =>                                                       'Enabled',
     'security.danger_zone' =>                                                   'Danger Zone',
@@ -173,23 +173,54 @@ return [
     'security.see_reblogs_from_accounts_you_follow_in_your_home_etc' =>         'See reblogs from accounts you follow in your home feed. (Home timeline only)',
     'security.photo_reblogs_only' =>                                            'Photo reblogs only',
     'security.only_see_reblogs_of_photos_or_photo_albums_home_etc' =>           'Only see reblogs of photos or photo albums. (Home timeline only)',
-    
+
     // incomplete
-    // the oauth panel is loaded from elsewhere 
+    // the oauth panel is loaded from elsewhere
     'developers.oauth_has_not_been_enabled_on_this_instance' =>                 'OAuth has not been enabled on this instance.',
-    
+
     // incomplete
     // import/ig.blade.php seems not in use anymore
     'import.import_from_instagram' =>                                           'Import from Instagram',
-    
+
     'export.data_export' =>                                                     'Data Export',
     'export.we_generate_data_exports_once_per_hour_and_they_may_etc' =>         'We generate data exports once per hour, and they may not contain the latest data if you\'ve requested them recently.',
     'export.statuses' =>                                                        'Statuses',
     'export.mute_block_lists' =>                                                'Mute/Block List',
-    
+
     // incomplete
     // some language outside the blades (in app/Http/Controllers/Settings/LabsSettings.php)
     'labs' =>                                                                   'Labs',
     'labs.experimental_features' =>                                             'Experimental features',
     'labs.use_dark_mode_theme' =>                                               'Use dark mode theme.',
+
+'remove.permanent.title' => 'Delete Your Account',
+'remove.permanent.body' => '<p>Hi <span class="font-weight-bold">'.Auth::user()->username.'</span>,</p>
+
+  	<p>We\'re sorry to hear you\'d like to delete your account.</p>
+
+  	<p class="pb-1">If you\'re just looking to take a break, you can always <a href="'.route('settings.remove.temporary').'">temporarily disable</a> your account instead.</p>
+
+    <p class="">When you press the button below, your photos, comments, likes, friendships and all other data will be removed permanently and will not be recoverable. If you decide to create another Pixelfed account in the future, you cannot sign up with the same username again on this instance.</p>
+
+    <div class="alert alert-danger my-5">
+      <span class="font-weight-bold">Warning:</span> Some remote servers may contain your public data (statuses, avatars, etc) and will not be deleted until federation support is launched.
+    </div>',
+
+'remove.permanent.confirm_check' => 'I confirm that this action is not reversible, and will result in the permanent deletion of my account.',
+'remove.permanent.confirm_button' => 'Permanently delete my account',
+
+'remove.temporary.title' => 'Temporarily Disable Your Account',
+'remove.temporary.body' => '<p>Hi <span class="font-weight-bold">'.Auth::user()->username.'</span>,</p>
+
+  	<p>You can disable your account instead of deleting it. This means your account will be hidden until you reactivate it by logging back in.</p>
+
+  	<p class="pb-1">You can only disable your account once a week.</p>
+
+  	<p class="font-weight-bold">Keeping Your Data Safe</p>
+  	<p class="pb-3">Nothing is more important to us than the safety and security of this community. People put their trust in us by sharing moments of their lives on Pixelfed. So we will never make any compromises when it comes to safeguarding your data.</p>
+
+  	<p class="pb-2">When you press the button below, your photos, comments and likes will be hidden until you reactivate your account by logging back in.</p>
+',
+
+'remove.temporary.button' => 'Temporarily Disable Account',
 ];
