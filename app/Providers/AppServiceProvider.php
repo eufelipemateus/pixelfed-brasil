@@ -33,61 +33,69 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\ServiceProvider;
+use Laravel\Pulse\Facades\Pulse;
+use Illuminate\Http\Request;
+use URL;
 
 class AppServiceProvider extends ServiceProvider
 {
-	/**
-	 * Bootstrap any application services.
-	 *
-	 * @return void
-	 */
-	public function boot()
-	{
-		if(config('instance.force_https_urls', true)) {
-			URL::forceScheme('https');
-		}
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        if (config('instance.force_https_urls', true)) {
+            URL::forceScheme('https');
+        }
 
-		Schema::defaultStringLength(191);
-		Paginator::useBootstrap();
-		Avatar::observe(AvatarObserver::class);
-		Follower::observe(FollowerObserver::class);
-		HashtagFollow::observe(HashtagFollowObserver::class);
-		Like::observe(LikeObserver::class);
-		Notification::observe(NotificationObserver::class);
-		ModLog::observe(ModLogObserver::class);
-		Profile::observe(ProfileObserver::class);
-		StatusHashtag::observe(StatusHashtagObserver::class);
-		User::observe(UserObserver::class);
+        Schema::defaultStringLength(191);
+        Paginator::useBootstrap();
+        Avatar::observe(AvatarObserver::class);
+        Follower::observe(FollowerObserver::class);
+        HashtagFollow::observe(HashtagFollowObserver::class);
+        Like::observe(LikeObserver::class);
+        Notification::observe(NotificationObserver::class);
+        ModLog::observe(ModLogObserver::class);
+        Profile::observe(ProfileObserver::class);
+        StatusHashtag::observe(StatusHashtagObserver::class);
+        User::observe(UserObserver::class);
         Status::observe(StatusObserver::class);
-		UserFilter::observe(UserFilterObserver::class);
-		Horizon::auth(function ($request) {
-			return Auth::check() && $request->user()->is_admin;
-		});
-		Validator::includeUnvalidatedArrayKeys();
-
-		// Model::preventLazyLoading(true);
-	}
-
-        Pulse::user(function ($user) {
-            $acct = AccountService::get($user->profile_id, true);
-
-            return $acct ? [
-                'name' => $acct['username'],
-                'extra' => $user->email,
-                'avatar' => $acct['avatar'],
-            ] : [
-                'name' => $user->username,
-                'extra' => 'DELETED',
-                'avatar' => '/storage/avatars/default.jpg',
-            ];
+        UserFilter::observe(UserFilterObserver::class);
+        Horizon::auth(function ($request) {
+            return Auth::check() && $request->user()->is_admin;
         });
+        Validator::includeUnvalidatedArrayKeys();
+
+        Gate::define('viewPulse', function (User $user) {
+            return $user->is_admin === 1;
+        });
+
+        if (config('pulse.enabled', false)) {
+            Pulse::user(function ($user) {
+                $acct = AccountService::get($user->profile_id, true);
+
+                return $acct ? [
+                    'name' => $acct['username'],
+                    'extra' => $user->email,
+                    'avatar' => $acct['avatar'],
+                ] : [
+                    'name' => $user->username,
+                    'extra' => 'DELETED',
+                    'avatar' => '/storage/avatars/default.jpg',
+                ];
+            });
+        }
 
         RateLimiter::for('app-signup', function (Request $request) {
             return Limit::perDay(10)->by($request->ip());
+        });
+
+        RateLimiter::for('app-code-verify', function (Request $request) {
+            return Limit::perHour(10)->by($request->ip());
         });
 
         // Model::preventLazyLoading(true);
