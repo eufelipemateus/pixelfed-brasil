@@ -119,6 +119,7 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
+            echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
 
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid
