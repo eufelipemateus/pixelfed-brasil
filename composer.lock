@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d8553e44c91e345f5fbc81d31121f694",
+    "content-hash": "87bfb25271f60e22283625341a91568b",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1412,12 +1412,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/eufelipemateus/laravel-analytics.git",
-                "reference": "3d560bd742e719a6ca25f592e12691c52194c829"
+                "reference": "8215e860741a2e8d62731148e82315485d33ba63"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/3d560bd742e719a6ca25f592e12691c52194c829",
-                "reference": "3d560bd742e719a6ca25f592e12691c52194c829",
+                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/8215e860741a2e8d62731148e82315485d33ba63",
+                "reference": "8215e860741a2e8d62731148e82315485d33ba63",
                 "shasum": ""
             },
             "require": {
@@ -1484,7 +1484,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-27T19:14:08+00:00"
+            "time": "2025-02-27T19:28:34+00:00"
         },
         {
             "name": "fgrosse/phpasn1",
@@ -12952,9 +12952,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "felipemateus/laravel-analytics": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -12967,6 +12965,6 @@
         "ext-mbstring": "*",
         "ext-openssl": "*"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
 }
