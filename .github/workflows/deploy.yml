@@ -97,6 +97,8 @@ jobs:
 
             echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
 
+            echo "APP_REGISTER=true" >> .env
+
             echo "PAGE_503_HEADER=\"Em Manutenção\"" >> .env
             echo "PAGE_503_BODY=\"Estamos em manutenção, voltaremos em algumas horas.\"" >> .env
             echo "PAGE_404_HEADER=\"Desculpe, esta página não está disponível.\"" >> .env
