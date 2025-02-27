@@ -275,10 +275,10 @@
 										</li>
 
 										<li class="nav-item">
-											<router-link class="nav-link" to="/settings/home">
-												<span class="icon text-lighter"><i class="fa-cog"></i></span>
+											<a class="nav-link" href="/settings/home">
+												<span class="icon text-lighter"><i class="far fa-cog"></i></span>
 												{{ $t('navmenu.settings') }}
-											</router-link>
+											</a>
 										</li>
 
 										<!-- <li class="nav-item">
