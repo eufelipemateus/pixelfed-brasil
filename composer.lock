@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3bb2ed96bc8ff080f3415b9bcf6ac307",
+    "content-hash": "d8553e44c91e345f5fbc81d31121f694",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1408,16 +1408,16 @@
         },
         {
             "name": "felipemateus/laravel-analytics",
-            "version": "dev-pixelfed-brasil-feature",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/eufelipemateus/laravel-analytics.git",
-                "reference": "4229a647384d50c418a8de877d3e96833726047c"
+                "reference": "3d560bd742e719a6ca25f592e12691c52194c829"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/4229a647384d50c418a8de877d3e96833726047c",
-                "reference": "4229a647384d50c418a8de877d3e96833726047c",
+                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/3d560bd742e719a6ca25f592e12691c52194c829",
+                "reference": "3d560bd742e719a6ca25f592e12691c52194c829",
                 "shasum": ""
             },
             "require": {
@@ -1462,6 +1462,10 @@
                 {
                     "name": "Tom Irons",
                     "email": "tom@irons.pw"
+                },
+                {
+                    "name": "Felipe Mateus",
+                    "email": "contato@felipemateus.com"
                 }
             ],
             "description": "Analytics for the Laravel framework.",
@@ -1472,7 +1476,7 @@
                 "package"
             ],
             "support": {
-                "source": "https://github.com/eufelipemateus/laravel-analytics/tree/pixelfed-brasil-feature"
+                "source": "https://github.com/eufelipemateus/laravel-analytics/tree/1.0.0"
             },
             "funding": [
                 {
@@ -1480,7 +1484,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-04T00:16:07+00:00"
+            "time": "2025-02-27T19:14:08+00:00"
         },
         {
             "name": "fgrosse/phpasn1",
