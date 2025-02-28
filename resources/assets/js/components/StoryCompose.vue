@@ -27,11 +27,7 @@
 						<p
 							v-if="stories.length >= 20"
 							class="font-weight-bold text-muted text-center">
-<<<<<<< HEAD
-							You have reached the limit for new stories
-=======
 							{{ $t('story.limit')}}
->>>>>>> dev
 						</p>
 
 						<button
@@ -39,11 +35,7 @@
 							class="btn btn-outline-light btn-lg font-weight-bold btn-block rounded-pill my-3"
 							@click="viewMyStory"
 							:disabled="stories.length == 0">
-<<<<<<< HEAD
-							<span>My Story</span>
-=======
 							<span>{{ $t("story.myStory") }}</span>
->>>>>>> dev
 							<sup v-if="stories.length" class="ml-2 px-2 text-light bg-danger rounded-pill" style="font-size: 12px;padding-top:2px;padding-bottom:3px;">{{ stories.length }}</sup>
 						</button>
 
@@ -81,32 +73,19 @@
 							type="button"
 							class="btn btn-outline-muted rounded-pill font-weight-bold px-4"
 							@click="deleteCurrentStory()">
-<<<<<<< HEAD
-							Cancel
-						</button>
-
-						<div class="text-center">
-							<h4 class="font-weight-light text-light mb-n1">Crop</h4>
-							<span class="small text-light">Pan around and pinch to zoom</span>
-=======
 							{{ $t('story.cancel')}}
 						</button>
 
 						<div class="text-center">
 							<h4 class="font-weight-light text-light mb-n1">{{ $t('story.crop')}}</h4>
 							<span class="small text-light">{{  $t("story.zoom") }}</span>
->>>>>>> dev
 						</div>
 
 						<button
 							type="button"
 							class="btn btn-outline-light rounded-pill font-weight-bold px-4"
 							@click="performCrop()">
-<<<<<<< HEAD
-							Next
-=======
 							{{ $t('story.next')}}
->>>>>>> dev
 						</button>
 					</div>
 				</div>
@@ -119,15 +98,9 @@
 				</div>
 				<div class="flex-fill text-center">
 					<p class="h3 mb-0 text-light">Oops!</p>
-<<<<<<< HEAD
-					<p class="text-muted lead">An error occurred, please try again later.</p>
-					<p class="text-muted mb-0">
-						<a class="btn btn-outline-muted py-0 px-5 rounded-pill font-weight-bold" href="/">Go back</a>
-=======
 					<p class="text-muted lead">{{ $t('story.error') }}</p>
 					<p class="text-muted mb-0">
 						<a class="btn btn-outline-muted py-0 px-5 rounded-pill font-weight-bold" href="/">{{ $t('story.goBack') }}</a>
->>>>>>> dev
 					</p>
 				</div>
 			</div>
@@ -154,30 +127,18 @@
 						<label for="durationSlider" class="text-light lead font-weight-bold">Options</label>
 						<div class="custom-control custom-checkbox mb-2">
 							<input type="checkbox" class="custom-control-input" id="optionReplies" v-model="canReply">
-<<<<<<< HEAD
-							<label class="custom-control-label text-light font-weight-lighter" for="optionReplies">Allow replies</label>
-						</div>
-						<div class="custom-control custom-checkbox mb-2">
-							<input type="checkbox" class="custom-control-input" id="formReactions" v-model="canReact">
-							<label class="custom-control-label text-light font-weight-lighter" for="formReactions">Allow reactions</label>
-=======
 							<label class="custom-control-label text-light font-weight-lighter" for="optionReplies">{{ $t('story.allowReply') }}</label>
 						</div>
 						<div class="custom-control custom-checkbox mb-2">
 							<input type="checkbox" class="custom-control-input" id="formReactions" v-model="canReact">
 							<label class="custom-control-label text-light font-weight-lighter" for="formReactions">{{ $t("story.allowReact") }}</label>
->>>>>>> dev
 						</div>
 					</div>
 					<div v-if="!canPostPoll" class="form-group">
 						<video ref="previewVideo" v-if="mediaType == 'video'" class="mb-4 w-100" style="max-height:200px;object-fit:contain;">
 							<source :src="mediaUrl" type="video/mp4">
 						</video>
-<<<<<<< HEAD
-						<label for="durationSlider" class="text-light lead font-weight-bold">Story Duration</label>
-=======
 						<label for="durationSlider" class="text-light lead font-weight-bold">{{$t("story.storyDuration") }}</label>
->>>>>>> dev
 						<input type="range" class="custom-range" min="3" :max="max_duration" step="1" id="durationSlider" v-model="duration">
 						<p class="help-text text-center">
 							<span class="text-light">{{duration}} {{ $t("story.seconds")}}</span>
@@ -187,11 +148,7 @@
 				<div class="flex-fill w-100 px-md-5">
 					<div class="d-flex">
 						<a class="btn btn-outline-muted btn-block font-weight-bold my-3 mr-3 rounded-pill" href="/" @click.prevent="deleteCurrentStory()">
-<<<<<<< HEAD
-							Cancel
-=======
 							{{$t("story.cancel")}}
->>>>>>> dev
 						</a>
 
 						<a class="btn btn-primary btn-block font-weight-bold my-3 rounded-pill" href="#" @click.prevent="shareStoryToFollowers()">

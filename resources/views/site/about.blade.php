@@ -36,18 +36,12 @@
 			<a href="/">
 				<img class="d-block mx-auto mb-4" src="/img/pixelfed-icon-color.svg" alt="" width="72" height="57">
 			</a>
-			
+
 			<h1 class="display-4 font-weight-bold py-3">{{ config_cache('about.title') ?? __('site.photo_sharing_for_everyone') }}</h1>
 			<div class="col-lg-6 mx-auto py-3">
-<<<<<<< HEAD
 			  <p class="mb-4 font-weight-light text-left" style="font-size: 26px; line-height: 40px;">
 				{!! config_cache('app.description') ?? config_cache('app.short_description') ?? __('site.pixelfed_is_an_image_sharing_platform_etc') !!}
 			  </p>
-=======
-				<p class="mb-4 font-weight-light text-left" style="font-size: 26px; line-height: 40px;">
-					{!! config_cache('app.description') ?? config_cache('app.short_description') ?? 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.'!!}
-				</p>
->>>>>>> dev
 			</div>
 		</div>
 
@@ -133,17 +127,10 @@
 			<div class="row">
 				<div class="col-12 col-md-8 offset-md-2">
 					<div class="mt-5">
-<<<<<<< HEAD
 						<p class="text-center display-4 font-weight-bold">{{__('site.feature_packed')}}</p>
 					</div>
 					<div class="my-2">
 						<p class="h3 font-weight-light text-muted text-center">{{__('site.the_best_for_the_brightest')}}</p>
-=======
-						<p class="text-center display-4 font-weight-bold">{{ __('about.featureTitle') }}</p>
-					</div>
-					<div class="my-2">
-						<p class="h3 font-weight-light text-muted text-center">{{__('about.featureSubtitle')}}</p>
->>>>>>> dev
 					</div>
 				</div>
 			</div>
@@ -151,13 +138,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.albums')}}</h1>
 					<p class="h4 font-weight-light">{{__('site.share_posts_with_up_to')}} {{config_cache('pixelfed.max_album_length')}} {{__('site.photos')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.albumTitle')}}</h1>
-					<p class="h4 font-weight-light">{{ __('about.albumSubTitle')}}</p>
->>>>>>> dev
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/1.jpeg" alt="" width="720">
@@ -171,13 +153,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/2.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.comments')}}</h1>
 					<p class="h4 font-weight-light text-justify">{{__('site.comment_on_a_post_or_send_a_reply')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.commentTitle')}}</h1>
-					<p class="h4 font-weight-light text-justify">{{ __('about.commentSubTitle') }}</p>
->>>>>>> dev
 				</div>
 			</div>
 		</div>
@@ -185,13 +162,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.collections')}}</h1>
 					<p class="h4 font-weight-light text-justify">{{__('site.organize_and_share_collections_of_multiple_posts')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.collectionTitle')}}</h1>
-					<p class="h4 font-weight-light text-justify">{{ __('about.collectionSubTitle')}}</p>
->>>>>>> dev
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/3.jpeg" alt="" width="720">
@@ -205,13 +177,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/4.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.discover')}}</h1>
 					<p class="h4 font-weight-light text-justify">{{__('site.explore_categories_hashtags_and_topics')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.discoverTitle') }}</h1>
-					<p class="h4 font-weight-light text-justify">{{ __('about.discoverSubTitle')}}</p>
->>>>>>> dev
 				</div>
 			</div>
 		</div>
@@ -219,13 +186,8 @@
 		<div class="container my-5">
 			<div class="row p-4 pb-0 pt-lg-5 align-items-center rounded-3">
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.photo_filters')}}</h1>
 					<p class="h4 font-weight-light text-justify">{{__('site.add_a_special_touch_to_your_photos')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.filterTitle')}}</h1>
-					<p class="h4 font-weight-light text-justify">{{ __('about.filterSubTitle')}}</p>
->>>>>>> dev
 				</div>
 				<div class="col-lg-6 overflow-hidden">
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/5.jpeg" alt="" width="720">
@@ -239,13 +201,8 @@
 					<img class="rounded-lg img-fluid filter-inkwell" src="/_landing/6.jpeg" alt="" width="720">
 				</div>
 				<div class="col-lg-6 p-3 p-lg-5 pt-lg-3">
-<<<<<<< HEAD
 					<h1 class="display-4 font-weight-bold lh-1">{{__('site.stories')}}</h1>
 					<p class="h4 font-weight-light text-justify">{{__('site.share_moments_with_your_followers_that_disappear_etc')}}</p>
-=======
-					<h1 class="display-4 font-weight-bold lh-1">{{ __('about.storiesTitle')}}</h1>
-					<p class="h4 font-weight-light text-justify">{{ __('about.storiesSubTitle')}}</p>
->>>>>>> dev
 				</div>
 			</div>
 		</div>
@@ -258,25 +215,15 @@
 				<div class="col">
 					<p class="display-3 font-weight-bold">
 						<span class="text-primary">{{$user_count}}</span>
-<<<<<<< HEAD
 						{{__('site.people_have_shared')}}
 						<span class="text-primary">{{$post_count}}</span>
 						{{__('site.photos_and_videos_on')}} {{config_cache('app.name')}}!
-=======
-						{{ __('about.countPeople')}}
-						<span class="text-primary">{{$post_count}}</span>
-						{{ __('about.countPosts')}} {{config_cache('app.name')}}!
->>>>>>> dev
 					</p>
 					@if(config_cache('pixelfed.open_registration'))
 					<div class="section-spacer"></div>
 					<p class="display-4 font-weight-bold mb-0">
-<<<<<<< HEAD
 						<a class="text-primary" href="/register">{{__('site.sign_up_today')}}</a>
 						{{__('site.and_join_our_community_of_photographers_from_etc')}}
-=======
-						{!! __('about.singupToday') !!}
->>>>>>> dev
 					</p>
 					@endif
 				</div>

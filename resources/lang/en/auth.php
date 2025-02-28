@@ -13,11 +13,9 @@ return [
     |
     */
 
-<<<<<<< HEAD
     'failed'   => 'These credentials do not match our records.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
     'verifyYourEmailAddress' => ' - Verify Your Email Address',
-=======
     'loginTitle'       =>   'Account Login',
     'failed'           =>   'These credentials do not match our records.',
     'throttle'         =>   'Too many login attempts. Please try again in :seconds seconds.',
@@ -46,5 +44,4 @@ return [
     'signInMastodon'  => 'Sign-in with Mastodon'
 
 
->>>>>>> dev
 ];
