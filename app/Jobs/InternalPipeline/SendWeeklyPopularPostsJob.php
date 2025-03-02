@@ -75,6 +75,22 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             ->whereNull('deleted_at')
             ->whereNotNull('last_active_at')
             ->whereNotNull("email_verified_at")
+            ->where('is_admin', true)
+            ->chunk(
+                1000,
+                function ($users) use ($popularPosts) {
+                    foreach ($users as $user) {
+                        info('Sending popular posts email to ' . $user->username);
+                        Mail::to($user->email)
+                            ->queue((new WeeklyPopularPostsMail($popularPosts, $user))->onQueue('low'));
+                    }
+                }
+            );
+
+        User::whereNull('status')
+            ->whereNull('deleted_at')
+            ->whereNotNull('last_active_at')
+            ->whereNotNull("email_verified_at")
             ->where('last_active_at', '<', now()->subDays(30))
             ->chunk(
                 1000,
