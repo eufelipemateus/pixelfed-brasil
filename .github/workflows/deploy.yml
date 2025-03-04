@@ -90,12 +90,16 @@ jobs:
             echo "AP_OUTBOX=true" >> .env
             echo "AP_SHAREDINBOX=true" >> .env
             echo "INSTANCE_DISCOVER_BEAGLE_API=true" >> .env
+            echo "INSTANCE_LANDING_SHOW_EXPLORE=false" >> .env
+            echo "INSTANCE_LANDING_SHOW_DIRECTORY=false" >> .env
 
             echo "PF_LOGIN_WITH_MASTODON_ENABLED=true" >> .env
             echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
             echo "PF_LOGIN_WITH_MASTODON_DOMAINS=mastodon.com.br,masto.donte.com.br,mastodon.social,mastodon.online,mstdn.social,mas.to" >> .env
 
             echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
+
+            echo "APP_REGISTER=true" >> .env
 
             echo "PAGE_503_HEADER=\"Em Manutenção\"" >> .env
             echo "PAGE_503_BODY=\"Estamos em manutenção, voltaremos em algumas horas.\"" >> .env

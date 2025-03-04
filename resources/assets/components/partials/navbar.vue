@@ -274,6 +274,13 @@
 											</a>
 										</li>
 
+										<li class="nav-item">
+											<a class="nav-link" href="/settings/home">
+												<span class="icon text-lighter"><i class="far fa-cog"></i></span>
+												{{ $t('navmenu.settings') }}
+											</a>
+										</li>
+
 										<!-- <li class="nav-item">
 											<router-link class="nav-link d-flex justify-content-between align-items-center" to="/i/web/notifications">
 												<span>

@@ -13,16 +13,6 @@
                         <h2 class="text-center">Join Pixelfed</h2>
                         <p class="lead text-center mb-4">Enter Your Email</p>
 
-                        @if ($errors->any())
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-
                         <form method="POST">
                             @csrf
 
@@ -32,6 +22,7 @@
                                        class="form-control @error('email') is-invalid @enderror"
                                        id="email"
                                        name="email"
+                                       placeholder="Enter your email address here"
                                        required
                                        autocomplete="email">
                                 @error('email')
@@ -39,14 +30,22 @@
                                 @enderror
                             </div>
 
+                            @if((bool) config_cache('captcha.enabled') && (bool) config_cache('captcha.active.register'))
                             <div class="form-group text-center">
                                 {!! Captcha::display() !!}
                             </div>
+                            @endif
 
                             <button type="submit" class="btn btn-primary btn-block">
                                 Send Verification Code
                             </button>
                         </form>
+
+                        @if ($errors->any())
+                        <div class="mt-4">
+                            <p class="text-center">If you need to resend the email verification, click <a href="/i/app-email-resend">here</a>.</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -250,6 +250,55 @@
 					<span class="sr-only">Loading...</span>
 				</div>
 			</div>
+
+			<div v-else-if="page == 'createPoll'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center" style="height: 90vh;">
+				<div class="text-center pt-3">
+					<img class="mb-2" src="/img/pixelfed-icon-color.svg" width="70" height="70">
+					<p class="lead text-lighter font-weight-light mb-0">Stories</p>
+				</div>
+				<div class="flex-fill mt-3">
+					<div class="align-items-center">
+						<div class="form-group mb-5">
+							<label class="font-weight-bold text-lighter">Poll Question</label>
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Ask a poll question here..." v-model="pollQuestion" />
+						</div>
+						<label class="font-weight-bold text-lighter">Poll Answers</label>
+						<div v-for="(option, index) in pollOptions" class="form-group mb-4">
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Add a poll answer here..." v-model="pollOptions[index]" />
+						</div>
+						<div v-if="pollOptions.length < 4" class="mb-3">
+							<button
+								class="btn btn-block font-weight-bold rounded-pill shadow"
+								:class="[ (pollQuestion && pollQuestion.length) > 6 && (pollOptions.length == 0 || pollOptions.length && pollOptions[pollOptions.length - 1].length > 3) ? 'btn-muted' : 'btn-outline-muted' ]"
+								:disabled="!pollQuestion || pollQuestion.length < 6"
+								@click="addOptionInput">
+								Add poll option
+							</button>
+						</div>
+						<!-- <div v-for="(option, index) in pollOptions" class="form-group mb-4 d-flex align-items-center" style="max-width:400px;position: relative;">
+							<span class="font-weight-bold mr-2" style="position: absolute;left: 10px;">{{ index + 1 }}.</span>
+							<input v-if="pollOptions[index].length < 50" type="text" class="form-control rounded-pill" placeholder="Add a poll option, press enter to save" v-model="pollOptions[index]" style="padding-left: 30px;padding-right: 90px;">
+							<textarea v-else class="form-control" v-model="pollOptions[index]" placeholder="Add a poll option, press enter to save" rows="3" style="padding-left: 30px;padding-right:90px;"></textarea>
+							<button class="btn btn-danger btn-sm rounded-pill font-weight-bold" style="position: absolute;right: 5px;" @click="deletePollOption(index)">
+								<i class="fas fa-trash"></i> Delete
+							</button>
+						</div> -->
+					</div>
+				</div>
+				<div class="flex-fill text-center">
+					<a v-if="canPostPoll" class="btn btn-outline-light btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="pollPreview">Next</a>
+					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="goBack()">Go back</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div v-else class="row">
+		<div class="col-12 col-md-6 offset-md-3 bg-dark rounded-lg px-0" style="height: 90vh;">
+			<div class="w-100 h-100 d-flex justify-content-center align-items-center">
+				<div class="spinner-border text-lighter" role="status">
+					<span class="sr-only">Loading...</span>
+				</div>
+			</div>
 		</div>
 	</div>
 
