@@ -6,9 +6,9 @@ return [
 		'comment' => 'Comentar',
 		'commented' => 'Comentado',
 		'comments' => 'Comentários',
-		'like' => 'Gosto',
-		'liked' => 'Gostei',
-		'likes' => 'Gostos',
+		'like' => 'Curtir',
+		'liked' => 'Curtiu',
+		'likes' => 'Curtidas',
 		'share' => 'Compartilhar',
 		'shared' => 'Compartilhado',
 		'shares' => 'Compartilhamentos',
@@ -17,17 +17,17 @@ return [
 
 		'cancel' => 'Cancelar',
 		'copyLink' => 'Copiar link',
-		'delete' => 'Eliminar',
+		'delete' => 'Excluir',
 		'error' => 'Erro',
-		'errorMsg' => 'Algo correu mal. Tenta novamente mais tarde.',
+		'errorMsg' => 'Algo deu errado. Tente novamente mais tarde.',
 		'oops' => 'Oops!',
 		'other' => 'Outro',
 		'readMore' => 'Ler mais',
 		'success' => 'Sucesso',
 		'proceed' => 'Continuar',
-		'next' => 'Seguinte',
+		'next' => 'Próximo',
 		'close' => 'Fechar',
-		'clickHere' => 'clica aqui',
+		'clickHere' => 'Clique aqui',
 
 		'sensitive' => 'Sensível',
 		'sensitiveContent' => 'Conteúdo sensível',
@@ -35,32 +35,32 @@ return [
 	],
 
 	'site' => [
-		'terms' => 'Termos de Utilização',
+		'terms' => 'Termos de Uso',
 		'privacy' => 'Política de Privacidade',
 	],
 
 	'navmenu' => [
 		'search' => 'Pesquisar',
-		'admin' => 'Painel de administração',
+		'admin' => 'Painel de Administração',
 
 		// Timelines
 		'homeFeed' => 'Início',
-		'localFeed' => 'Feed local',
-		'globalFeed' => 'Feed global',
+		'localFeed' => 'Feed Local',
+		'globalFeed' => 'Feed Global',
 
 		// Core features
 		'discover' => 'Descobrir',
-		'directMessages' => 'Mensagens diretas',
+		'directMessages' => 'Mensagens Diretas',
 		'notifications' => 'Notificações',
 		'groups' => 'Grupos',
 		'stories' => 'Stories',
 
 		// Self links
 		'profile' => 'Perfil',
-		'drive' => 'Disco',
-		'settings' => 'Definições',
-		'compose' => 'Criar novo',
-		'logout' => 'Terminar sessão',
+		'drive' => 'Armazenamento',
+		'settings' => 'Configurações',
+		'compose' => 'Criar nova publicação',
+		'logout' => 'Sair',
 
 		// Nav footer
 		'about' => 'Sobre',
@@ -74,42 +74,42 @@ return [
 	],
 
 	'directMessages' => [
-		'inbox' => 'Caixa de entrada',
+		'inbox' => 'Caixa de Entrada',
 		'sent' => 'Enviadas',
-		'requests' => 'Pedidos'
+		'requests' => 'Solicitações'
 	],
 
 	'notifications' => [
-		'liked' => 'gostou do seu',
+		'liked' => 'curtiu seu',
 		'commented' => 'comentou no seu',
 		'reacted' => 'reagiu ao seu',
-		'shared' => 'partilhou o teu',
-		'tagged' => 'etiquetou-te numa publicação',
+		'shared' => 'compartilhou seu',
+		'tagged' => 'marcou você em uma publicação',
 
 		'updatedA' => 'atualizou uma',
 		'sentA' => 'enviou uma',
 
-		'followed' => 'seguiu-te',
-		'mentioned' => 'mencionou-te',
-		'you' => 'tu',
+		'followed' => 'começou a seguir você',
+		'mentioned' => 'mencionou você',
+		'you' => 'você',
 
-		'yourApplication' => 'O teu pedido de adesão',
-		'applicationApproved' => 'foi aprovado!',
-		'applicationRejected' => 'foi rejeitado. Podes voltar a candidatar-te dentro de 6 meses.',
+		'yourApplication' => 'Sua solicitação de adesão',
+		'applicationApproved' => 'foi aprovada!',
+		'applicationRejected' => 'foi rejeitada. Você pode tentar novamente em 6 meses.',
 
-		'dm' => 'md',
-		'groupPost' => 'publicação de grupo',
-		'modlog' => 'histórico de moderação',
+		'dm' => 'mensagem direta',
+		'groupPost' => 'publicação em grupo',
+		'modlog' => 'registro de moderação',
 		'post' => 'publicação',
-		'story' => 'estória',
+		'story' => 'story',
 		'noneFound' => 'Nenhuma notificação encontrada',
 	],
 
 	'post' => [
-		'shareToFollowers' => 'Partilhar com os seguidores',
-		'shareToOther' => 'Partilhar com outros',
-		'noLikes' => 'Ainda sem gostos',
-		'uploading' => 'A enviar',
+		'shareToFollowers' => 'Compartilhar com seguidores',
+		'shareToOther' => 'Compartilhar com outros',
+		'noLikes' => 'Ainda sem curtidas',
+		'uploading' => 'Enviando',
 	],
 
 	'profile' => [
@@ -121,11 +121,11 @@ return [
 		'follow' => 'Seguir',
 		'unfollow' => 'Deixar de seguir',
 		'editProfile' => 'Editar perfil',
-		'followRequested' => 'Pedido para seguir enviado',
-		'joined' => 'Juntou-se',
+		'followRequested' => 'Solicitação de seguir enviada',
+		'joined' => 'Entrou em',
 
-		'emptyCollections' => 'Não conseguimos encontrar nenhuma coleção',
-		'emptyPosts' => 'Não conseguimos encontrar nenhuma publicação',
+		'emptyCollections' => 'Nenhuma coleção encontrada',
+		'emptyPosts' => 'Nenhuma publicação encontrada',
 	],
 
 	'menu' => [
@@ -134,75 +134,75 @@ return [
 		'moderationTools' => 'Ferramentas de moderação',
 		'report' => 'Denunciar',
 		'archive' => 'Arquivar',
-		'unarchive' => 'Retirar do arquivo',
+		'unarchive' => 'Desarquivar',
 		'embed' => 'Incorporar',
 
-		'selectOneOption' => 'Seleciona uma das seguintes opções',
-		'unlistFromTimelines' => 'Remover das cronologias',
+		'selectOneOption' => 'Selecione uma opção',
+		'unlistFromTimelines' => 'Remover das timelines',
 		'addCW' => 'Adicionar aviso de conteúdo',
 		'removeCW' => 'Remover aviso de conteúdo',
 		'markAsSpammer' => 'Marcar como spammer',
-		'markAsSpammerText' => 'Remover das cronologias e adicionar um aviso de conteúdo às publicações existentes e futuras',
+		'markAsSpammerText' => 'Remover das timelines e adicionar aviso de conteúdo às publicações existentes e futuras',
 		'spam' => 'Spam',
 		'sensitive' => 'Conteúdo sensível',
 		'abusive' => 'Abusivo ou prejudicial',
 		'underageAccount' => 'Conta de menor de idade',
-		'copyrightInfringement' => 'Violação de direitos de autor',
-		'impersonation' => 'Roubo de identidade',
-		'scamOrFraud' => 'Esquema ou fraude',
+		'copyrightInfringement' => 'Violação de direitos autorais',
+		'impersonation' => 'Falsa identidade',
+		'scamOrFraud' => 'Golpe ou fraude',
 		'confirmReport' => 'Confirmar denúncia',
-		'confirmReportText' => 'Tens a certeza que desejas denunciar esta mensagem?',
+		'confirmReportText' => 'Tem certeza de que deseja denunciar esta mensagem?',
 		'reportSent' => 'Denúncia enviada!',
-		'reportSentText' => 'Recebemos com sucesso a tua denúncia.',
-		'reportSentError' => 'Ocorreu um erro ao denunciar este conteúdo.',
+		'reportSentText' => 'Recebemos sua denúncia com sucesso.',
+		'reportSentError' => 'Erro ao enviar a denúncia.',
 
-		'modAddCWConfirm' => 'Tens a certeza que pretendes adicionar um aviso de conteúdo à publicação?',
-		'modCWSuccess' => 'Adicionaste com sucesso um aviso de conteúdo',
-		'modRemoveCWConfirm' => 'Tens a certeza que pretendes remover o aviso de conteúdo desta publicação?',
-		'modRemoveCWSuccess' => 'Removeste com sucesso o aviso de conteúdo',
-		'modUnlistConfirm' => 'Tem a certeza que pretende deslistar este post?',
-		'modUnlistSuccess' => 'Deslistou com sucesso este post',
-		'modMarkAsSpammerConfirm' => 'Tem a certeza que deseja marcar este utilizador como spammer? Todos os posts existentes e futuros serão deslistados da timeline e o alerta de conteúdo será aplicado.',
-		'modMarkAsSpammerSuccess' => 'Marcou com sucesso esta conta como spammer',
+		'modAddCWConfirm' => 'Tem certeza de que deseja adicionar um aviso de conteúdo?',
+		'modCWSuccess' => 'Aviso de conteúdo adicionado com sucesso',
+		'modRemoveCWConfirm' => 'Tem certeza de que deseja remover o aviso de conteúdo?',
+		'modRemoveCWSuccess' => 'Aviso de conteúdo removido com sucesso',
+		'modUnlistConfirm' => 'Tem certeza de que deseja remover esta publicação da timeline?',
+		'modUnlistSuccess' => 'Publicação removida da timeline com sucesso',
+		'modMarkAsSpammerConfirm' => 'Tem certeza de que deseja marcar este usuário como spammer? Todos os posts existentes e futuros serão removidos da timeline e receberão aviso de conteúdo.',
+		'modMarkAsSpammerSuccess' => 'Usuário marcado como spammer com sucesso',
 
 		'toFollowers' => 'para Seguidores',
 
-		'showCaption' => 'Mostar legenda',
-		'showLikes' => 'Mostrar gostos',
+		'showCaption' => 'Mostrar legenda',
+		'showLikes' => 'Mostrar curtidas',
 		'compactMode' => 'Modo compacto',
-		'embedConfirmText' => 'Ao utilizar este conteúdo, concordas com:',
+		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-		'deletePostConfirm' => 'Tens a certeza que pretendes eliminar esta publicação?',
-		'archivePostConfirm' => 'Tens a certeza que pretendes arquivar esta publicação?',
-		'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
+		'deletePostConfirm' => 'Tem certeza de que deseja excluir esta publicação?',
+		'archivePostConfirm' => 'Tem certeza de que deseja arquivar esta publicação?',
+		'unarchivePostConfirm' => 'Tem certeza de que deseja desarquivar esta publicação?',
 	],
 
 	'story' => [
-		'add' => 'Adicionar Storie'
+		'add' => 'Adicionar Story'
 	],
 
 	'timeline' => [
-		'peopleYouMayKnow' => 'Pessoas que talvez conheças',
+		'peopleYouMayKnow' => 'Pessoas que você pode conhecer',
 
 		'onboarding' => [
 			'welcome' => 'Bem-vindo',
-			'thisIsYourHomeFeed' => 'Este é a tua cronologia inicial pessoal, com publicações em ordem cronológica das contas que segue.',
-			'letUsHelpYouFind' => 'Deixa-nos ajudar-te a encontrar algumas pessoas interessantes para seguires',
-			'refreshFeed' => 'Atualizar a minha cronologia',
+			'thisIsYourHomeFeed' => 'Esta é sua timeline inicial com publicações em ordem cronológica das contas que você segue.',
+			'letUsHelpYouFind' => 'Vamos te ajudar a encontrar algumas pessoas interessantes para seguir',
+			'refreshFeed' => 'Atualizar minha timeline',
 		],
 	],
 
 	'hashtags' => [
-		'emptyFeed' => 'Não conseguimos encontrar publicações com essa hashtag'
+		'emptyFeed' => 'Nenhuma publicação encontrada com esta hashtag'
 	],
 
 	'report' => [
 		'report' => 'Denunciar',
-		'selectReason' => 'Seleciona um motivo',
+		'selectReason' => 'Selecione um motivo',
 		'reported' => 'Denunciado',
-		'sendingReport' => 'A enviar denúncia',
-		'thanksMsg' => 'Obrigado pela denúncia, as pessoas como tu ajudam a manter a nossa comunidade segura!',
-		'contactAdminMsg' => 'Se quiseres entrar em contacto com um administrador sobre esta publicação ou denúncia',
+		'sendingReport' => 'Enviando denúncia',
+		'thanksMsg' => 'Obrigado por ajudar a manter nossa comunidade segura!',
+		'contactAdminMsg' => 'Se precisar falar com um administrador sobre esta publicação ou denúncia',
 	],
 
 ];
