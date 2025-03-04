@@ -20,7 +20,7 @@
 </div>
 
 <p class="ottext">
-    Este código expirará em 60 minutos. Se você não solicitou esta verificação, ignore este e-mail.
+    Este código expirará em 4 horas. Se você não solicitou esta verificação, ignore este e-mail.
 </p>
 
 <div class="otfooter">

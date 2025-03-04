@@ -137,7 +137,10 @@ class ApiV1Controller extends Controller
             'redirect_uris' => 'required',
         ]);
 
-        $uris = implode(',', explode('\n', $request->redirect_uris));
+        $uris = collect(explode("\n", $request->redirect_uris))
+            ->map('urldecode')
+            ->filter()
+            ->join(',');
 
         $client = Passport::client()->forceFill([
             'user_id' => null,
@@ -1426,6 +1429,8 @@ class ApiV1Controller extends Controller
 
         $status['favourited'] = true;
         $status['favourites_count'] = $status['favourites_count'] + 1;
+        $status['bookmarked'] = BookmarkService::get($user->profile_id, $status['id']);
+        $status['reblogged'] = ReblogService::get($user->profile_id, $status['id']);
 
         return $this->json($status);
     }
@@ -1484,6 +1489,8 @@ class ApiV1Controller extends Controller
 
         $status['favourited'] = false;
         $status['favourites_count'] = isset($ogStatus) ? $ogStatus->likes_count : $status['favourites_count'] - 1;
+        $status['bookmarked'] = BookmarkService::get($user->profile_id, $status['id']);
+        $status['reblogged'] = ReblogService::get($user->profile_id, $status['id']);
 
         return $this->json($status);
     }
@@ -1713,6 +1720,7 @@ class ApiV1Controller extends Controller
                 'approval_required' => (bool) config_cache('instance.curated_registration.enabled'),
                 'contact_account' => $contact,
                 'rules' => $rules,
+                'mobile_registration' => (bool) config_cache('pixelfed.open_registration') && config('auth.in_app_registration'),
                 'configuration' => [
                     'media_attachments' => [
                         'image_matrix_limit' => 16777216,
@@ -1878,7 +1886,7 @@ class ApiV1Controller extends Controller
         $media->original_sha256 = $hash;
         $media->size = $photo->getSize();
         $media->mime = $mime;
-        $media->caption = $request->input('description') ?? "";
+        $media->caption = $request->input('description') ?? '';
         $media->filter_class = $filterClass;
         $media->filter_name = $filterName;
         if ($license) {
@@ -2106,7 +2114,7 @@ class ApiV1Controller extends Controller
         $media->original_sha256 = $hash;
         $media->size = $photo->getSize();
         $media->mime = $mime;
-        $media->caption = $request->input('description') ?? "";
+        $media->caption = $request->input('description') ?? '';
         $media->filter_class = $filterClass;
         $media->filter_name = $filterName;
         if ($license) {
@@ -3002,34 +3010,46 @@ class ApiV1Controller extends Controller
         $limit = $request->input('limit', 20);
         $scope = $request->input('scope', 'inbox');
         $user = $request->user();
+
         if ($user->has_roles && ! UserRoleService::can('can-direct-message', $user->id)) {
             return [];
         }
+
         $pid = $user->profile_id;
 
         if (config('database.default') == 'pgsql') {
-            $dms = DirectMessage::when($scope === 'inbox', function ($q, $scope) use ($pid) {
-                return $q->whereIsHidden(false)->where('to_id', $pid)->orWhere('from_id', $pid);
+            $dms = DirectMessage::when($scope === 'inbox', function ($q) use ($pid) {
+                return $q->whereIsHidden(false)
+                    ->where(function ($query) use ($pid) {
+                        $query->where('to_id', $pid)
+                            ->orWhere('from_id', $pid);
+                    });
             })
-                ->when($scope === 'sent', function ($q, $scope) use ($pid) {
-                    return $q->whereFromId($pid)->groupBy(['to_id', 'id']);
+                ->when($scope === 'sent', function ($q) use ($pid) {
+                    return $q->whereFromId($pid)
+                        ->groupBy(['to_id', 'id']);
                 })
-                ->when($scope === 'requests', function ($q, $scope) use ($pid) {
-                    return $q->whereToId($pid)->whereIsHidden(true);
+                ->when($scope === 'requests', function ($q) use ($pid) {
+                    return $q->whereToId($pid)
+                        ->whereIsHidden(true);
                 });
         } else {
-            $dms = Conversation::when($scope === 'inbox', function ($q, $scope) use ($pid) {
+            $dms = Conversation::when($scope === 'inbox', function ($q) use ($pid) {
                 return $q->whereIsHidden(false)
-                    ->where('to_id', $pid)
-                    ->orWhere('from_id', $pid)
+                    ->where(function ($query) use ($pid) {
+                        $query->where('to_id', $pid)
+                            ->orWhere('from_id', $pid);
+                    })
                     ->orderByDesc('status_id')
                     ->groupBy(['to_id', 'from_id']);
             })
-                ->when($scope === 'sent', function ($q, $scope) use ($pid) {
-                    return $q->whereFromId($pid)->groupBy('to_id');
+                ->when($scope === 'sent', function ($q) use ($pid) {
+                    return $q->whereFromId($pid)
+                        ->groupBy('to_id');
                 })
-                ->when($scope === 'requests', function ($q, $scope) use ($pid) {
-                    return $q->whereToId($pid)->whereIsHidden(true);
+                ->when($scope === 'requests', function ($q) use ($pid) {
+                    return $q->whereToId($pid)
+                        ->whereIsHidden(true);
                 });
         }
 
@@ -3037,7 +3057,8 @@ class ApiV1Controller extends Controller
             ->simplePaginate($limit)
             ->map(function ($dm) use ($pid) {
                 $from = $pid == $dm->to_id ? $dm->from_id : $dm->to_id;
-                $res = [
+
+                return [
                     'id' => $dm->id,
                     'unread' => false,
                     'accounts' => [
@@ -3045,17 +3066,16 @@ class ApiV1Controller extends Controller
                     ],
                     'last_status' => StatusService::getDirectMessage($dm->status_id),
                 ];
-
-                return $res;
             })
             ->filter(function ($dm) {
-                if (! $dm || empty($dm['last_status']) || ! isset($dm['accounts']) || ! count($dm['accounts']) || ! isset($dm['accounts'][0]) || ! isset($dm['accounts'][0]['id'])) {
-                    return false;
-                }
-
-                return true;
+                return $dm
+                    && ! empty($dm['last_status'])
+                    && isset($dm['accounts'])
+                    && count($dm['accounts'])
+                    && isset($dm['accounts'][0])
+                    && isset($dm['accounts'][0]['id']);
             })
-            ->unique(function ($item, $key) {
+            ->unique(function ($item) {
                 return $item['accounts'][0]['id'];
             })
             ->values();
@@ -3490,8 +3510,8 @@ class ApiV1Controller extends Controller
             return [];
         }
 
-        $content = strip_tags($request->input('status'));
-        $rendered = Autolink::create()->autolink($content);
+        $defaultCaption = '';
+        $content = $request->filled('status') ? strip_tags($request->input('status')) : $defaultCaption;
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
 
@@ -3505,7 +3525,7 @@ class ApiV1Controller extends Controller
 
             $status = new Status;
             $status->caption = $content;
-            $status->rendered = $rendered;
+            $status->rendered = $defaultCaption;
             $status->scope = $visibility;
             $status->visibility = $visibility;
             $status->profile_id = $user->profile_id;
@@ -3530,7 +3550,7 @@ class ApiV1Controller extends Controller
             if (! $in_reply_to_id) {
                 $status = new Status;
                 $status->caption = $content;
-                $status->rendered = $rendered;
+                $status->rendered = $defaultCaption;
                 $status->profile_id = $user->profile_id;
                 $status->is_nsfw = $cw;
                 $status->cw_summary = $spoilerText;
@@ -3683,7 +3703,10 @@ class ApiV1Controller extends Controller
             }
         }
 
+        $defaultCaption = config_cache('database.default') === 'mysql' ? null : '';
         $share = Status::firstOrCreate([
+            'caption' => $defaultCaption,
+            'rendered' => $defaultCaption,
             'profile_id' => $user->profile_id,
             'reblog_of_id' => $status->id,
             'type' => 'share',
@@ -3698,6 +3721,8 @@ class ApiV1Controller extends Controller
         ReblogService::add($user->profile_id, $status->id);
         $res = StatusService::getMastodon($status->id);
         $res['reblogged'] = true;
+        $res['favourited'] = LikeService::liked($user->profile_id, $status->id);
+        $res['bookmarked'] = BookmarkService::get($user->profile_id, $status->id);
 
         return $this->json($res);
     }
@@ -3744,6 +3769,8 @@ class ApiV1Controller extends Controller
 
         $res = StatusService::getMastodon($status->id);
         $res['reblogged'] = false;
+        $res['favourited'] = LikeService::liked($user->profile_id, $status->id);
+        $res['bookmarked'] = BookmarkService::get($user->profile_id, $status->id);
 
         return $this->json($res);
     }
@@ -3951,6 +3978,7 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $status = Status::findOrFail($id);
+        $user = $request->user();
         $pid = $request->user()->profile_id;
         $account = AccountService::get($status->profile_id);
         abort_if(isset($account['moved'], $account['moved']['id']), 422, 'Cannot bookmark a post from an account that has migrated');
@@ -3994,6 +4022,7 @@ class ApiV1Controller extends Controller
 
         $status = Status::findOrFail($id);
         $pid = $request->user()->profile_id;
+        $user = $request->user();
 
         abort_if($user->has_roles && ! UserRoleService::can('can-bookmark', $user->id), 403, 'Invalid permissions for this action');
         abort_if($status->in_reply_to_id || $status->reblog_of_id, 404);
