@@ -1239,7 +1239,7 @@ class Helpers
      */
     public static function getOrCreateInstance(string $domain): Instance
     {
-        $instance = Instance::updateOrCreate(['domain' => $domain]);
+        $instance = Instance::updateOrCreate(['domain' => $domain, 'unlisted' => config("pixelfed.hide_remote_instance") ]);
 
         if ($instance->wasRecentlyCreated) {
             \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)
