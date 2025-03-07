@@ -35,7 +35,7 @@ return [
 	],
 
 	'site' => [
-		'terms' => 'Termos de Uso',
+		'terms' => 'Termos de Utilização',
 		'privacy' => 'Política de Privacidade',
 	],
 
@@ -76,7 +76,7 @@ return [
 	'directMessages' => [
 		'inbox' => 'Caixa de Entrada',
 		'sent' => 'Enviadas',
-		'requests' => 'Solicitações'
+		'requests' => 'Pedidos'
 	],
 
 	'notifications' => [
@@ -167,8 +167,8 @@ return [
 
 		'toFollowers' => 'para Seguidores',
 
-		'showCaption' => 'Mostrar legenda',
-		'showLikes' => 'Mostrar curtidas',
+		'showCaption' => 'Mostar legenda',
+		'showLikes' => 'Mostrar gostos',
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
@@ -178,7 +178,7 @@ return [
 	],
 
 	'story' => [
-		'add' => 'Adicionar Story'
+		'add' => 'Adicionar Storie'
 	],
 
 	'timeline' => [

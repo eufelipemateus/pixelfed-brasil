@@ -69,7 +69,7 @@
         "groups": "Grupos",
         "stories": "Stories",
         "profile": "Perfil",
-        "drive": "Disco",
+        "drive": "Amarzenamento",
         "settings": "Configura\u00e7\u00f5es",
         "compose": "Criar novo",
         "logout": "Terminar Sess\u00e3o",
@@ -126,10 +126,10 @@
         "reject": "Rejeitar"
     },
     "post": {
-        "shareToFollowers": "Compartilhar com os seguidores",
-        "shareToOther": "Compartilhar com outros",
-        "noLikes": "Ainda sem curtidas",
-        "uploading": "Enviando"
+        "shareToFollowers": "Partilhar com os seguidores",
+        "shareToOther": "Partilhar com outros",
+        "noLikes": "Ainda sem gostos",
+        "uploading": "A enviar"
     },
     "profile": {
         "posts": "Publica\u00e7\u00f5es",
@@ -181,7 +181,7 @@
         "sensitive": "Conte\u00fado Sens\u00edvel",
         "abusive": "Abusivo ou prejudicial",
         "underageAccount": "Conta de menor de idade",
-        "copyrightInfringement": "Viola\u00e7\u00e3o de direitos autorais",
+        "copyrightInfringement": "Viola\u00e7\u00e3o de direitos de autor",
         "impersonation": "Roubo de identidade",
         "scamOrFraud": "Golpe ou fraude",
         "confirmReport": "Confirmar den\u00fancia",
