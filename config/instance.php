@@ -19,7 +19,7 @@ return [
 			'is_public' => env('INSTANCE_PUBLIC_HASHTAGS', false)
 		],
 
-        "beagle_api" => env('INSTANCE_DISCOVER_BEAGLE_API', false),
+        "beagle_api" => env('INSTANCE_DISCOVER_BEAGLE_API', true),
 	],
 
 	'email' => env('INSTANCE_CONTACT_EMAIL'),
