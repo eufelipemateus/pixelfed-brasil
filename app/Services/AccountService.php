@@ -339,4 +339,46 @@ class AccountService
 
         return $posts.$following.$followers.$note;
     }
+
+    public static function getFollowing($id, $limit = 10, $offset = 0)
+    {
+        $result = self::hiddenFollowing($id) ? [] : Profile::whereIn(
+            'id',
+            function ($query) use ($id, $limit, $offset) {
+                $query->select('following_id')
+                    ->from('followers')
+                    ->where('profile_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->offset($offset);
+            }
+        )->get()->map(
+            function ($profile) {
+                return $profile->permalink();
+            }
+        )->toArray();
+
+        return $result;
+    }
+
+    public static function getFollowers($id, $limit = 10, $offset = 0)
+    {
+        $result = self::hiddenFollowers($id) ? [] : Profile::whereIn(
+            'id',
+            function ($query) use ($id, $limit, $offset) {
+                $query->select('profile_id')
+                    ->from('followers')
+                    ->where('following_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->offset($offset);
+            }
+        )->get()->map(
+            function ($profile) {
+                return $profile->permalink();
+            }
+        )->toArray();
+
+        return $result;
+    }
 }
