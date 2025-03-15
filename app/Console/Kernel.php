@@ -57,6 +57,7 @@ class Kernel extends ConsoleKernel
         if (app()->environment('production')) {
             $schedule->command('app:send-weekly-inactive-users')->weeklyOn(0, '10:00')->onOneServer();
             $schedule->command('app:send-weekly-popular-posts')->weeklyOn(1, '08:00')->onOneServer();
+            $schedule->command('app:send-popular-in-month')->monthlyOn(1, '08:00')->onOneServer();
         }
     }
 
