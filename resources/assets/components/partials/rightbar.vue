@@ -5,6 +5,7 @@
 		</p> -->
 
 		<notifications :profile="profile" />
+        <donate />
 
 		<!-- <div class="d-none card shadow-sm mb-3" style="border-radius: 15px;">
 			<div class="card-body">
@@ -54,10 +55,12 @@
 
 <script type="text/javascript">
 	import Notifications from './../sections/Notifications.vue';
+	import Donate        from './../sections/Donate.vue';
 
 	export default {
 		components: {
-            "notifications": Notifications
+            "notifications": Notifications,
+            "donate": Donate
 		},
 
 		data() {
