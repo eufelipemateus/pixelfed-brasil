@@ -16,11 +16,7 @@
         "delete": "Eliminar",
         "error": "Erro",
         "errorMsg": "Algo correu mal. Por favor, tente novamente mais tarde.",
-<<<<<<< HEAD
-        "oops": "Oops!",
-=======
         "oops": "Opa!",
->>>>>>> dev-contrib-origin
         "other": "Outro",
         "readMore": "Ler mais",
         "success": "Sucesso",
@@ -68,36 +64,21 @@
         "liked": "curtiu seu",
         "commented": "comentou em seu",
         "reacted": "reagiu ao seu",
-<<<<<<< HEAD
-        "shared": "Partilhou o seu",
-        "tagged": "marcou voc\u00ea numa publica\u00e7\u00e3o",
-        "updatedA": "atualizou",
-=======
         "shared": "compartilhou seu",
         "tagged": "marcou voc\u00ea em um",
         "updatedA": "atualizou um(a)",
->>>>>>> dev-contrib-origin
         "sentA": "enviou um",
         "followed": "seguiu",
         "mentioned": "mencionou",
         "you": "voc\u00ea",
         "yourApplication": "A sua candidatura para se juntar",
         "applicationApproved": "foi aprovado!",
-<<<<<<< HEAD
-        "applicationRejected": "foi rejeitado. Voc\u00ea pode inscrever-se novamente em 6 meses.",
-        "dm": "dm",
-        "groupPost": "publica\u00e7\u00e3o de grupo",
-        "modlog": "hist\u00f3rico de modera\u00e7\u00e3o",
-        "post": "publica\u00e7\u00e3o",
-        "story": "story",
-=======
         "applicationRejected": "foi rejeitado. Voc\u00ea pode se inscrever novamente para participar em 6 meses.",
         "dm": "mensagem direta",
         "groupPost": "postagem do grupo",
         "modlog": "hist\u00f3rico de modera\u00e7\u00e3o",
         "post": "publica\u00e7\u00e3o",
         "story": "hist\u00f3ria",
->>>>>>> dev-contrib-origin
         "noneFound": "Nenhuma notifica\u00e7\u00e3o encontrada"
     },
     "post": {
@@ -109,13 +90,8 @@
     "profile": {
         "posts": "Publica\u00e7\u00f5es",
         "followers": "Seguidores",
-<<<<<<< HEAD
         "following": "Seguindo",
-        "admin": "Admin",
-=======
-        "following": "A seguir",
         "admin": "Administrador",
->>>>>>> dev-contrib-origin
         "collections": "Cole\u00e7\u00f5es",
         "follow": "Seguir",
         "unfollow": "Deixar de seguir",
@@ -139,11 +115,7 @@
         "removeCW": "Remover aviso de conte\u00fado",
         "markAsSpammer": "Marcar como Spammer",
         "markAsSpammerText": "Remover das cronologias e adicionar um aviso de conte\u00fado \u00e0s publica\u00e7\u00f5es existentes e futuras",
-<<<<<<< HEAD
-        "spam": "Spam",
-=======
         "spam": "Lixo Eletr\u00f4nico",
->>>>>>> dev-contrib-origin
         "sensitive": "Conte\u00fado Sens\u00edvel",
         "abusive": "Abusivo ou prejudicial",
         "underageAccount": "Conta de menor de idade",
@@ -163,19 +135,11 @@
         "modUnlistSuccess": "Deslistou com sucesso este post",
         "modMarkAsSpammerConfirm": "Voc\u00ea realmente quer denunciar este usu\u00e1rio por spam? Todas as suas publica\u00e7\u00f5es anteriores e futuras ser\u00e3o marcadas com um aviso de conte\u00fado e removidas das linhas do tempo.",
         "modMarkAsSpammerSuccess": "Marcou com sucesso esta conta como spammer",
-<<<<<<< HEAD
-        "toFollowers": "para Seguidores",
-        "showCaption": "Mostar legenda",
-        "showLikes": "Mostrar Gostos",
-        "compactMode": "Modo compacto",
-        "embedConfirmText": "Ao utilizar este conte\u00fado, aceita os nossos",
-=======
         "toFollowers": "para seguidores",
         "showCaption": "Exibir legendas",
         "showLikes": "Mostrar Gostos",
         "compactMode": "Modo compacto",
         "embedConfirmText": "Ao usar de forma \u201cembed\u201d, voc\u00ea concorda com nossas",
->>>>>>> dev-contrib-origin
         "deletePostConfirm": "Tem a certeza que pretende apagar esta publica\u00e7\u00e3o?",
         "archivePostConfirm": "Tem a certeza que pretende arquivar esta publica\u00e7\u00e3o?",
         "unarchivePostConfirm": "Tem a certeza que pretende desarquivar este post?"
