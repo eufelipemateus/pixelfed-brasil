@@ -31,11 +31,11 @@ return [
 
 		'sensitive' => 'Sensível',
 		'sensitiveContent' => 'Conteúdo sensível',
-		'sensitiveContentWarning' => 'Esta publicação pode conter conteúdo sensível',
+		'sensitiveContentWarning' => 'Este post pode conter conteúdo sensível',
 	],
 
 	'site' => [
-		'terms' => 'Termos de Utilização',
+		'terms' => 'Termos de Uso',
 		'privacy' => 'Política de Privacidade',
 	],
 
@@ -70,7 +70,7 @@ return [
 		'terms' => 'Termos',
 
 		// Temporary links
-		'backToPreviousDesign' => 'Voltar ao design antigo'
+		'backToPreviousDesign' => 'Voltar ao design anterior'
 	],
 
 	'directMessages' => [
@@ -86,8 +86,8 @@ return [
 		'shared' => 'compartilhou seu',
 		'tagged' => 'marcou você em uma publicação',
 
-		'updatedA' => 'atualizou uma',
-		'sentA' => 'enviou uma',
+		'updatedA' => 'atualizou um(a)',
+		'sentA' => 'enviou um',
 
 		'followed' => 'começou a seguir você',
 		'mentioned' => 'mencionou você',
@@ -115,7 +115,7 @@ return [
 	'profile' => [
 		'posts' => 'Publicações',
 		'followers' => 'Seguidores',
-		'following' => 'Seguindo',
+		'following' => 'A seguir',
 		'admin' => 'Administrador',
 		'collections' => 'Coleções',
 		'follow' => 'Seguir',
@@ -165,10 +165,10 @@ return [
 		'modMarkAsSpammerConfirm' => 'Tem certeza de que deseja marcar este usuário como spammer? Todos os posts existentes e futuros serão removidos da timeline e receberão aviso de conteúdo.',
 		'modMarkAsSpammerSuccess' => 'Usuário marcado como spammer com sucesso',
 
-		'toFollowers' => 'para Seguidores',
+		'toFollowers' => 'para seguidores',
 
-		'showCaption' => 'Mostar legenda',
-		'showLikes' => 'Mostrar gostos',
+		'showCaption' => 'Exibir legendas',
+		'showLikes' => 'Mostrar Gostos',
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
@@ -178,7 +178,7 @@ return [
 	],
 
 	'story' => [
-		'add' => 'Adicionar Storie'
+		'add' => 'Adicionar Story'
 	],
 
 	'timeline' => [
@@ -204,5 +204,18 @@ return [
 		'thanksMsg' => 'Obrigado por ajudar a manter nossa comunidade segura!',
 		'contactAdminMsg' => 'Se precisar falar com um administrador sobre esta publicação ou denúncia',
 	],
+    'appearance' => [
+        'theme' => 'Tema',
+        'profileLayout' => 'Layout do Perfil',
+        'compactPreviews' => 'Pré-visualizações Compactas',
+        'loadComments' => 'Carregar Comentários',
+        'hideStats' => 'Ocultar Contagens e Estatísticas',
+        'auto' => 'Automático',
+        'lightMode' => 'Modo Claro',
+        'darkMode' => 'Modo Escuro',
+        'grid' => 'Grade',
+        'masonry' => 'Mansory',
+        'feed' => 'Feed'
+    ]
 
 ];
