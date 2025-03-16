@@ -19,6 +19,7 @@ return [
     'labs' =>                   'Laboratórios',
     'parental_controls' =>      'Controles Parentais',
 
+    'change' =>                 'Alterar',
     'submit' =>                 'Enviar',
     'error' =>                  'Erro',
     'cancel' =>                 'Cancelar',
@@ -64,6 +65,11 @@ return [
     'email.unverified' =>                                               'Não Verificado',
     'email.you_need_to' =>                                              'Você precisa',
     'email.verify_your_email' =>                                        'verificar seu email',
+    'email.send_email_new_follower' =>                                  'Enviar email quando alguém te seguir',
+    'email.send_email_new_follower_request' =>                          'Enviar email quando alguém solicitar para te seguir',
+    'email.send_email_on_share' =>                                      'Enviar email quando alguém compartilhar sua postagem',
+    'email.send_email_on_like' =>                                       'Enviar email quando alguém curtir sua postagem',
+    'email.send_email_on_mention' =>                                    'Enviar email quando alguém mencionar você',
 
     'media.default_license' =>                                          'Licença Padrão',
     'media.set_a_default_license_for_new_posts' =>                      'Defina uma licença padrão para novas postagens.',
