@@ -39,7 +39,7 @@ class FollowNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification]   ' . $this->profile->name . ' started following you')
-            ->line('' . $this->profile->name . ' started following you');
+            ->line('**@' . $this->profile->name .'** started following you');
     }
 
     /**
