@@ -18,6 +18,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Services\AccountService;
+use App\Notifications\ShareNotification;
 
 class SharePipeline implements ShouldQueue
 {
@@ -83,6 +85,10 @@ class SharePipeline implements ShouldQueue
                 'item_id' => $status->reblog_of_id ?? $status->id,
             ]
         );
+
+        if (AccountService::getAccountSettings($target->id)["send_email_on_share"]) {
+            $target->user->notify(new ShareNotification($target->id,  $status->reblog_of_id ?? $status->id));
+        }
 
         FeedInsertPipeline::dispatch($status->id, $status->profile_id)->onQueue('feed');
 
