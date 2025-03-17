@@ -39,7 +39,7 @@ class FollowRequestNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] You have new follow request!')
-            ->line($this->profile->username.' has sent you a follow request');
+            ->line('**@'. $this->profile->username.'** has sent you a follow request');
     }
 
     /**
