@@ -89,6 +89,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Purify;
 use Storage;
+use  App\Notifications\FollowRequestNotification;
 
 class ApiV1Controller extends Controller
 {
@@ -883,6 +884,7 @@ class ApiV1Controller extends Controller
             ]);
             FollowPipeline::dispatch($follower)->onQueue('high');
         }
+
 
         RelationshipService::refresh($user->profile_id, $target->id);
         Cache::forget('profile:following:'.$target->id);
