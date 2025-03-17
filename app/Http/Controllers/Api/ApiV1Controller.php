@@ -87,6 +87,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Purify;
 use Storage;
+use  App\Notifications\FollowRequestNotification;
 
 class ApiV1Controller extends Controller
 {
@@ -863,6 +864,10 @@ class ApiV1Controller extends Controller
             ]);
             if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
                 (new FollowerController)->sendFollow($user->profile, $target);
+            }
+
+            if (AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
+                $target->user->notify(new FollowRequestNotification($user->profile_id));
             }
         } else {
             $follower = Follower::firstOrCreate([
