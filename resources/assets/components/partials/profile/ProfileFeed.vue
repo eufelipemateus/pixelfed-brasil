@@ -353,7 +353,7 @@
 			<div class="row justify-content-center">
 				<div class="col-12 col-md-10">
 					<status-card
-						v-for="(s, index) in favourites"
+						v-for="(s, index) in feed"
 						:key="'prs'+s.id+':'+index"
 						:profile="user"
 						:status="s"
@@ -364,6 +364,7 @@
 						v-on:counter-change="counterChange(index, $event)"
 						v-on:likes-modal="openLikesModal(index)"
 						v-on:comment-likes-modal="openCommentLikesModal"
+                        v-on:shares-modal="openSharesModal(index)"
 						v-on:handle-report="handleReport" />
 				</div>
 
@@ -532,7 +533,6 @@
 				showReportModal: false,
 				reportedStatus: {},
 				reportedStatusId: 0,
-				favourites: [],
 				favouritesLoaded: false,
 				favouritesPage: 1,
 				canLoadMoreFavourites: false,
@@ -744,10 +744,9 @@
 				axios.get('/api/pixelfed/v1/favourites')
 				.then(res => {
 					this.tabIndex = 3;
-					this.favourites = res.data;
+					this.feed = res.data;
 					this.favouritesPage++;
 					this.favouritesLoaded = true;
-
 					if(res.data.length != 0) {
 						this.canLoadMoreFavourites = true;
 					}

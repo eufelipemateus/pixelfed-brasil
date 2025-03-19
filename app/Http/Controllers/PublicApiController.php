@@ -738,6 +738,7 @@ class PublicApiController extends Controller
                 }
                 if ($user && $status) {
                     $status['favourited'] = (bool) LikeService::liked($user->profile_id, $s->id);
+                    $status['reblogged'] = (bool) StatusService::isShared($s->id, $user->profile_id);
                 }
 
                 return $status;

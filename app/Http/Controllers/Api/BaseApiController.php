@@ -162,9 +162,10 @@ class BaseApiController extends Controller
         	->whereProfileId($user->profile_id)
         	->latest()
         	->simplePaginate($limit)
-        	->map(function($id) {
+        	->map(function($id) use ($user) {
         		$status = StatusService::get($id->status_id, false);
         		$status['favourited'] = true;
+                $status['reblogged'] = (bool) StatusService::isShared($id->status_id, $user->profile_id);
         		return $status;
         	})
         	->filter(function($post) {
