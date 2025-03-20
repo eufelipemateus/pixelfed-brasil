@@ -205,4 +205,13 @@ return [
 		'contactAdminMsg' => 'यदि आप इस पोस्ट या रिपोर्ट के बारे में किसी व्यवस्थापक से संपर्क करना चाहते हैं',
 	],
 
+	'report' => [
+		'report' => 'Report',
+		'selectReason' => 'Select a reason',
+		'reported' => 'Reported',
+		'sendingReport' => 'Sending report',
+		'thanksMsg' => 'Thanks for the report, people like you help keep our community safe!',
+		'contactAdminMsg' => 'If you\'d like to contact an administrator about this post or report',
+	],
+
 ];

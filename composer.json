@@ -18,6 +18,7 @@
         "buzz/laravel-h-captcha": "^1.0.4",
         "doctrine/dbal": "^3.0",
         "endroid/qr-code": "^6.0",
+        "felipemateus/laravel-analytics": "^1.0",
         "intervention/image": "^2.4",
         "jenssegers/agent": "^2.6",
         "laravel-notification-channels/expo": "^2.0.0",

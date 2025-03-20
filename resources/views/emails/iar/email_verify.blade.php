@@ -1,18 +1,18 @@
 @component('mail::message')
 <div class="otcontainer">
 
-## Verify Your Email Address
-        
+## Verifique seu endereço de e-mail
+
 <p class="ottext">
-    Hello,
+    Olá,
 </p>
 
 <p class="ottext">
-    Thank you for signing up to {{config('pixelfed.domain.app')}}!
+    Obrigado por se cadastrar no {{config('app.name')}}!
 </p>
 
 <p class="ottext">
-    To complete your registration, please enter the following verification code:
+    Para concluir seu registro, insira o seguinte código de verificação:
 </p>
 
 <div class="otcode">
@@ -20,11 +20,11 @@
 </div>
 
 <p class="ottext">
-This code will expire in 4 hours. If you didn't request this verification, please ignore this email.
+    Este código expirará em 4 horas. Se você não solicitou esta verificação, ignore este e-mail.
 </p>
 
 <div class="otfooter">
-<p>If you're having trouble with the verification code, please contact our <a href="{{route('site.help')}}">support team</a>.</p>
+<p>Se estiver com problemas para usar o código de verificação, entre em contato com nossa <a href="{{route('site.contact')}}">equipe de suporte</a>.</p>
 </div>
 
 </div>
