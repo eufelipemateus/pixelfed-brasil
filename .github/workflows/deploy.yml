@@ -98,6 +98,7 @@ jobs:
             echo "PF_LOGIN_WITH_MASTODON_DOMAINS=mastodon.com.br,masto.donte.com.br,mastodon.social,mastodon.online,mstdn.social,mas.to" >> .env
 
             echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
+            echo "PF_HIDE_REMOTE_INSTANCE=false" >> .env
 
             echo "APP_REGISTER=true" >> .env
 
