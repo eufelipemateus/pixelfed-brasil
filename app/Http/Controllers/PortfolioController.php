@@ -195,12 +195,13 @@ class PortfolioController extends Controller
     protected function getRecentFeed($id) {
         $media = Cache::remember(self::RECENT_FEED_KEY . $id, 3600, function() use($id) {
             return DB::table('media')
-            ->whereProfileId($id)
-            ->whereNotNull('status_id')
-            ->groupBy('status_id')
-            ->orderByDesc('id')
-            ->take(50)
-            ->pluck('status_id');
+                ->select('status_id') 
+                ->where('profile_id', $id)
+                ->whereNotNull('status_id')
+                ->groupBy('status_id')
+                ->orderByDesc(DB::raw('MAX(id)'))
+                ->limit(50)
+                ->pluck('status_id');
         });
 
         return $media->map(function($sid) use($id) {
