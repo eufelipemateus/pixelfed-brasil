@@ -90,7 +90,7 @@
     "profile": {
         "posts": "Publica\u00e7\u00f5es",
         "followers": "Seguidores",
-        "following": "A seguir",
+        "following": "Seguindo",
         "admin": "Administrador",
         "collections": "Cole\u00e7\u00f5es",
         "follow": "Seguir",
@@ -120,7 +120,7 @@
         "abusive": "Abusivo ou prejudicial",
         "underageAccount": "Conta de menor de idade",
         "copyrightInfringement": "Viola\u00e7\u00e3o de direitos de autor",
-        "impersonation": "Roubo de identidade",
+        "impersonation": "Roubo de Identidade",
         "scamOrFraud": "Esquema ou fraude",
         "confirmReport": "Confirmar den\u00fancia",
         "confirmReportText": "Tem a certeza que deseja denunciar esta mensagem?",

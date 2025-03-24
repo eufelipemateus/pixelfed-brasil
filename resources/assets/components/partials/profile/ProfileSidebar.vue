@@ -105,9 +105,9 @@
 				</p>
 
 				<p v-if="user.id != profile.id && (relationship.followed_by || relationship.muting || relationship.blocking)" class="mt-n3 text-center">
-					<span v-if="relationship.followed_by" class="badge badge-primary p-1">Follows you</span>
-					<span v-if="relationship.muting" class="badge badge-dark p-1 ml-1">Muted</span>
-					<span v-if="relationship.blocking" class="badge badge-danger p-1 ml-1">Blocked</span>
+					<span v-if="relationship.followed_by" class="badge badge-primary p-1">{{ $t("profile.followYou")}}</span>
+					<span v-if="relationship.muting" class="badge badge-dark p-1 ml-1">{{ $t("profile.muted")}}</span>
+					<span v-if="relationship.blocking" class="badge badge-danger p-1 ml-1">{{ $t("profile.blocked") }}</span>
 				</p>
 			</div>
 
@@ -145,7 +145,7 @@
 					</router-link> -->
                     <a class="btn btn-light font-weight-bold btn-block follow-btn" href="/settings/home">{{ $t('profile.editProfile') }}</a>
 					<a v-if="!profile.locked" class="btn btn-light font-weight-bold btn-block follow-btn mt-md-n4" href="/i/web/my-portfolio">
-                        My Portfolio
+                       {{ $t("profile.myPortifolio") }}
                         <span class="badge badge-success ml-1">NEW</span>
                     </a>
 				</div>
@@ -299,10 +299,11 @@
 				<router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
 				<a href="/site/terms">{{ $t('navmenu.privacy') }}</a>
 				<a href="/site/terms">{{ $t('navmenu.terms') }}</a>
+                <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank">Doar</a>
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">
-				<a href="https://pixelfed.org" class="font-weight-bold">Powered by Pixelfed</a>
+				Mantido por <a href="https://felipemateus.com" class="font-weight-bold">Felipe Mateus</a>
 			</div>
 		</div>
 
@@ -421,10 +422,10 @@
 			},
 
 			getJoinedDate() {
-				let d = new Date(this.profile.created_at);
-				let month = new Intl.DateTimeFormat("en-US", { month: "long" }).format(d);
-				let year = d.getFullYear();
-				return `${month} ${year}`;
+				return new Date(this.profile.created_at).toLocaleDateString(this.$i18n.locale, {
+                    year: 'numeric',
+                    month: 'long',
+                });
 			},
 
 			follow() {

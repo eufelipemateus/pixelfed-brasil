@@ -36,7 +36,7 @@
 			<a href="/">
 				<img class="d-block mx-auto mb-4" src="/img/pixelfed-icon-color.svg" alt="" width="72" height="57">
 			</a>
-			
+
 			<h1 class="display-4 font-weight-bold py-3">{{ config_cache('about.title') ?? __('site.photo_sharing_for_everyone') }}</h1>
 			<div class="col-lg-6 mx-auto py-3">
 			  <p class="mb-4 font-weight-light text-left" style="font-size: 26px; line-height: 40px;">
@@ -104,7 +104,7 @@
 		<div id="rules" class="container">
 			<div class="row mb-4">
 				<div class="col">
-					<h1 class="display-4 font-weight-bold mb-0 text-center">Rules</h1>
+					<h1 class="display-4 font-weight-bold mb-0 text-center">{{  __('about.rules') }}  </h1>
 				</div>
 			</div>
 			<div class="row justify-content-center">

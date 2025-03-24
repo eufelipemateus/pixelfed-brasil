@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a011d3030ab0153865ef4cd6a7b615a3",
+    "content-hash": "ff68e325910f73d787da9d174bda8160",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1461,6 +1461,86 @@
                 "source": "https://github.com/ezyang/htmlpurifier/tree/v4.18.0"
             },
             "time": "2024-11-01T03:51:45+00:00"
+        },
+        {
+            "name": "felipemateus/laravel-analytics",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/eufelipemateus/laravel-analytics.git",
+                "reference": "20bfe5e50de528c92ecdb6e1b4086de2e8bcccbd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/eufelipemateus/laravel-analytics/zipball/20bfe5e50de528c92ecdb6e1b4086de2e8bcccbd",
+                "reference": "20bfe5e50de528c92ecdb6e1b4086de2e8bcccbd",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/dbal": "^3.0",
+                "ext-intl": "*",
+                "illuminate/collections": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "illuminate/database": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "illuminate/http": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "illuminate/view": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "jaybizzle/crawler-detect": "^1.2",
+                "jenssegers/agent": "^2.6",
+                "mobiledetect/mobiledetectlib": "^2.7.6",
+                "php": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "6.0|^9.0",
+                "phpunit/phpunit": "^9.5|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AndreasElia\\Analytics\\AnalyticsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AndreasElia\\Analytics\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andreas Elia",
+                    "email": "contact@andreaselia.co.uk"
+                },
+                {
+                    "name": "Tom Irons",
+                    "email": "tom@irons.pw"
+                },
+                {
+                    "name": "Felipe Mateus",
+                    "email": "contato@felipemateus.com"
+                }
+            ],
+            "description": "Analytics for the Laravel framework.",
+            "keywords": [
+                "analytics",
+                "laravel",
+                "middleware",
+                "package"
+            ],
+            "support": {
+                "source": "https://github.com/eufelipemateus/laravel-analytics/tree/1.0.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/andreaselia",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-03-16T02:38:49+00:00"
         },
         {
             "name": "firebase/php-jwt",
@@ -12680,7 +12760,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -12693,6 +12773,6 @@
         "ext-mbstring": "*",
         "ext-openssl": "*"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
 }

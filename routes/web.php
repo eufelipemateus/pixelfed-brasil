@@ -230,6 +230,10 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('web', 'SpaController@index');
     });
 
+    Route::get('/i/app-email-verify', 'AppRegisterController@index');
+    Route::post('/i/app-email-verify', 'AppRegisterController@store')->middleware('throttle:app-signup');
+
+
     Route::group(['prefix' => 'account'], function () {
         Route::redirect('/', '/');
         Route::get('direct', 'AccountController@direct');
