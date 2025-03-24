@@ -160,8 +160,6 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         }
                     }
                 );
-        }
-        if (!$this->testing) {
             Cache::put('send_mounthly_popupar_posts_job_last_run', now(), now()->addDays(30));
         }
         info('Emails enviados com sucesso!');
