@@ -136,7 +136,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
         if ($this->testing) {
             User::whereNull('status')
                 ->whereNull('deleted_at')
-                ->where('users.is_admin', true)
+                ->where('is_admin', true)
                 ->chunk(
                     10,
                     function ($users) use ($popularPosts, $popularUsers) {
@@ -150,6 +150,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
         } else {
             User::whereNull('status')
                 ->whereNull('deleted_at')
+                ->whereNotNull("email_verified_at")
                 ->chunk(
                     1000,
                     function ($users) use ($popularPosts, $popularUsers) {
