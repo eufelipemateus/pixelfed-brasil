@@ -12,7 +12,7 @@ class SendPopularInMonth extends Command
      *
      * @var string
      */
-    protected $signature = 'app:send-popular-in-month';
+    protected $signature = 'app:send-popular-in-month {--test : Run in test mode}';
 
     /**
      * The console command description.
@@ -26,6 +26,7 @@ class SendPopularInMonth extends Command
      */
     public function handle()
     {
-        SendMonthlyPopular::dispatch()->onQueue('low');
+        $testing = $this->option('test') ?? false;
+        SendMonthlyPopular::dispatch($testing)->onQueue('low');
     }
 }

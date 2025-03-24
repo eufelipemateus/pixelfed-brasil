@@ -34,7 +34,7 @@ class MonthlyPopularPostsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Monthly Popular Posts Mail',
+            subject: '🔥 O que foi popular no mês de '.ucfirst(Carbon::now()->subMonth()->locale('pt')->translatedFormat('F')),
         );
     }
 

@@ -21,6 +21,9 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
 
+    public $testing = false;
+
+
     /**
      * The number of seconds after which the job's unique lock will be released.
      *
@@ -31,9 +34,11 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct($testing = false)
     {
         //
+
+        $this->testing = $testing;
     }
 
     /**
@@ -73,6 +78,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->orderByDesc('likes_count')
             ->take(30)
             ->get();
+
 
         if ($popularPosts->isEmpty()) {
             info('Nenhum post popular encontrado para enviar.');
@@ -125,18 +131,36 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
 
         $popularUsers = Profile::whereIn('id', $profileIds)->get();
 
-        User::whereNull('status')
-            ->whereNull('deleted_at')
-            ->chunk(
-                1000,
-                function ($users) use ($popularPosts, $popularUsers) {
-                    foreach ($users as $user) {
-                        info('Sending popular posts email to ' . $user->username);
-                        Mail::to($user->email)
-                            ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('low'));
+
+
+        if ($this->testing) {
+            User::whereNull('status')
+                ->whereNull('deleted_at')
+                ->where('users.is_admin', true)
+                ->chunk(
+                    10,
+                    function ($users) use ($popularPosts, $popularUsers) {
+                        foreach ($users as $user) {
+                            info('Sending popular posts email to ' . $user->username);
+                            Mail::to($user->email)
+                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('low'));
+                        }
                     }
-                }
-            );
+                );
+        } else {
+            User::whereNull('status')
+                ->whereNull('deleted_at')
+                ->chunk(
+                    1000,
+                    function ($users) use ($popularPosts, $popularUsers) {
+                        foreach ($users as $user) {
+                            info('Sending popular posts email to ' . $user->username);
+                            Mail::to($user->email)
+                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('low'));
+                        }
+                    }
+                );
+        }
 
         Cache::put('send_mounthly_popupar_posts_job_last_run', now(), now()->addDays(30));
         info('Emails enviados com sucesso!');
