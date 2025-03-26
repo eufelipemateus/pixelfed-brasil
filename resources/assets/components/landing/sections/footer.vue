@@ -1,11 +1,13 @@
 <template>
 	<div class="footer-component">
 		<div class="footer-component-links">
-			<a href="/site/help">Help</a>
+			<a href="/site/help">{{ $t('navmenu.help') }}</a>
 			<div class="spacer">·</div>
-			<a href="/site/terms">Terms</a>
+			<a href="/site/terms">{{ $t('navmenu.terms') }}</a>
 			<div class="spacer">·</div>
-			<a href="/site/privacy">Privacy</a>
+			<a href="/site/privacy">{{ $t('navmenu.privacy') }}</a>
+            <div class="spacer">·</div>
+            <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank" >Doar</a>
 		</div>
 
 		<div class="footer-component-attribution">

@@ -5,7 +5,7 @@
         "comments": "Commentaires",
         "like": "J'aime",
         "liked": "Aim\u00e9",
-        "likes": "J'aime",
+        "likes": "J'aimes",
         "share": "Partager",
         "shared": "Partag\u00e9",
         "shares": "Partages",
@@ -71,7 +71,7 @@
         "followed": "s'est abonn\u00e9\u00b7e \u00e0",
         "mentioned": "a mentionn\u00e9",
         "you": "vous",
-        "yourApplication": "Votre candidature \u00e0 rejoindre",
+        "yourApplication": "Votre demande d'adh\u00e9sion",
         "applicationApproved": "a \u00e9t\u00e9 approuv\u00e9e !",
         "applicationRejected": "a \u00e9t\u00e9 rejet\u00e9e. Vous pouvez refaire une demande dans 6 mois.",
         "dm": "mp",
@@ -85,7 +85,7 @@
         "shareToFollowers": "Partager avec ses abonn\u00e9\u00b7e\u00b7s",
         "shareToOther": "Partager avec d'autres",
         "noLikes": "Aucun J'aime pour le moment",
-        "uploading": "Envoi en cours"
+        "uploading": "T\u00e9l\u00e9versement"
     },
     "profile": {
         "posts": "Publications",
@@ -148,7 +148,7 @@
         "add": "Ajouter une story"
     },
     "timeline": {
-        "peopleYouMayKnow": "Connaissances possibles",
+        "peopleYouMayKnow": "Personnes que vous connaissez peut-\u00eatre",
         "onboarding": {
             "welcome": "Bienvenue",
             "thisIsYourHomeFeed": "Ceci est votre flux personnel, un flux chronologique des publications de comptes que vous suivez.",

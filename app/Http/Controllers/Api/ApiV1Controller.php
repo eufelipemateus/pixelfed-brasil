@@ -747,7 +747,7 @@ class ApiV1Controller extends Controller
         } elseif ($profile['locked']) {
             $following = FollowerService::follows($pid, $profile['id']);
             if (! $following) {
-                return response('', 403);
+                return response()->json([]);
             }
             $visibility = ['public', 'unlisted', 'private'];
         } else {
@@ -813,13 +813,13 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('follow'), 403);
 
         $user = $request->user();
+        abort_if($user->profile_id == $id, 400, 'Invalid profile');
+
         abort_if($user->has_roles && ! UserRoleService::can('can-follow', $user->id), 403, 'Invalid permissions for this action');
 
         AccountService::setLastActive($user->id);
 
-        $target = Profile::where('id', '!=', $user->profile_id)
-            ->whereNull('status')
-            ->findOrFail($id);
+        $target = Profile::whereNull('status')->findOrFail($id);
 
         abort_if($target && $target->moved_to_profile_id, 400, 'Cannot follow an account that has moved!');
 
@@ -864,15 +864,20 @@ class ApiV1Controller extends Controller
             if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
                 (new FollowerController)->sendFollow($user->profile, $target);
             }
+        } elseif ($remote == true) {
+            $follow = FollowRequest::firstOrCreate([
+                'follower_id' => $user->profile_id,
+                'following_id' => $target->id,
+            ]);
+
+            if (config('federation.activitypub.remoteFollow') == true) {
+                (new FollowerController)->sendFollow($user->profile, $target);
+            }
         } else {
             $follower = Follower::firstOrCreate([
                 'profile_id' => $user->profile_id,
                 'following_id' => $target->id,
             ]);
-
-            if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
-                (new FollowerController)->sendFollow($user->profile, $target);
-            }
             FollowPipeline::dispatch($follower)->onQueue('high');
         }
 
@@ -909,10 +914,11 @@ class ApiV1Controller extends Controller
 
         $user = $request->user();
 
+        abort_if($user->profile_id == $id, 400, 'Invalid profile');
+
         AccountService::setLastActive($user->id);
 
-        $target = Profile::where('id', '!=', $user->profile_id)
-            ->whereNull('status')
+        $target = Profile::whereNull('status')
             ->findOrFail($id);
 
         $private = (bool) $target->is_private;
@@ -929,6 +935,9 @@ class ApiV1Controller extends Controller
             if ($followRequest) {
                 $followRequest->delete();
                 RelationshipService::refresh($target->id, $user->profile_id);
+                if ($target->domain) {
+                    UnfollowPipeline::dispatch($user->profile_id, $target->id)->onQueue('high');
+                }
             }
             $resource = new Fractal\Resource\Item($target, new RelationshipTransformer);
             $res = $this->fractal->createData($resource)->toArray();
@@ -1528,7 +1537,7 @@ class ApiV1Controller extends Controller
 
         $user = $request->user();
 
-        $res = FollowRequest::whereFollowingId($user->profile->id)
+        $res = FollowRequest::whereFollowingId($user->profile_id)
             ->limit($request->input('limit', 40))
             ->pluck('follower_id')
             ->map(function ($id) {
@@ -1897,6 +1906,8 @@ class ApiV1Controller extends Controller
         switch ($media->mime) {
             case 'image/jpeg':
             case 'image/png':
+            case 'image/webp':
+            case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
 
@@ -2125,6 +2136,8 @@ class ApiV1Controller extends Controller
         switch ($media->mime) {
             case 'image/jpeg':
             case 'image/png':
+            case 'image/webp':
+            case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
 
@@ -2550,7 +2563,7 @@ class ApiV1Controller extends Controller
                 $minId = null;
             }
 
-            if ($maxId) {
+            if ($maxId && $res->count() >= $limit) {
                 $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
             }
 
@@ -2973,7 +2986,7 @@ class ApiV1Controller extends Controller
             $minId = null;
         }
 
-        if ($maxId) {
+        if ($maxId && $res->count() >= $limit) {
             $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
         }
 
@@ -3003,13 +3016,22 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $this->validate($request, [
-            'limit' => 'min:1|max:40',
+            'limit' => 'sometimes|integer|min:1|max:40',
             'scope' => 'nullable|in:inbox,sent,requests',
+            'min_id' => 'nullable|integer',
+            'max_id' => 'nullable|integer',
+            'since_id' => 'nullable|integer',
         ]);
 
         $limit = $request->input('limit', 20);
+        if ($limit > 20) {
+            $limit = 20;
+        }
         $scope = $request->input('scope', 'inbox');
         $user = $request->user();
+        $min_id = $request->input('min_id');
+        $max_id = $request->input('max_id');
+        $since_id = $request->input('since_id');
 
         if ($user->has_roles && ! UserRoleService::can('can-direct-message', $user->id)) {
             return [];
@@ -3017,7 +3039,9 @@ class ApiV1Controller extends Controller
 
         $pid = $user->profile_id;
 
-        if (config('database.default') == 'pgsql') {
+        $isPgsql = config('database.default') == 'pgsql';
+
+        if ($isPgsql) {
             $dms = DirectMessage::when($scope === 'inbox', function ($q) use ($pid) {
                 return $q->whereIsHidden(false)
                     ->where(function ($query) use ($pid) {
@@ -3053,20 +3077,38 @@ class ApiV1Controller extends Controller
                 });
         }
 
-        $dms = $dms->orderByDesc('status_id')
-            ->simplePaginate($limit)
-            ->map(function ($dm) use ($pid) {
-                $from = $pid == $dm->to_id ? $dm->from_id : $dm->to_id;
+        if ($min_id) {
+            $dms = $dms->where('id', '>', $min_id);
+        }
+        if ($max_id) {
+            $dms = $dms->where('id', '<', $max_id);
+        }
+        if ($since_id) {
+            $dms = $dms->where('id', '>', $since_id);
+        }
 
-                return [
-                    'id' => $dm->id,
-                    'unread' => false,
-                    'accounts' => [
-                        AccountService::getMastodon($from, true),
-                    ],
-                    'last_status' => StatusService::getDirectMessage($dm->status_id),
-                ];
-            })
+        $dms = $dms->orderByDesc('status_id')->orderBy('id');
+
+        $dmResults = $dms->limit($limit + 1)->get();
+
+        $hasNextPage = $dmResults->count() > $limit;
+
+        if ($hasNextPage) {
+            $dmResults = $dmResults->take($limit);
+        }
+
+        $transformedDms = $dmResults->map(function ($dm) use ($pid) {
+            $from = $pid == $dm->to_id ? $dm->from_id : $dm->to_id;
+
+            return [
+                'id' => $dm->id,
+                'unread' => false,
+                'accounts' => [
+                    AccountService::getMastodon($from, true),
+                ],
+                'last_status' => StatusService::getDirectMessage($dm->status_id),
+            ];
+        })
             ->filter(function ($dm) {
                 return $dm
                     && ! empty($dm['last_status'])
@@ -3080,7 +3122,37 @@ class ApiV1Controller extends Controller
             })
             ->values();
 
-        return $this->json($dms);
+        $links = [];
+
+        if (! $transformedDms->isEmpty()) {
+            $baseUrl = url()->current().'?'.http_build_query(array_merge(
+                $request->except(['min_id', 'max_id', 'since_id']),
+                ['limit' => $limit]
+            ));
+
+            $firstId = $transformedDms->first()['id'];
+            $lastId = $transformedDms->last()['id'];
+
+            $firstLink = $baseUrl;
+            $links[] = '<'.$firstLink.'>; rel="first"';
+
+            if ($hasNextPage) {
+                $nextLink = $baseUrl.'&max_id='.$lastId;
+                $links[] = '<'.$nextLink.'>; rel="next"';
+            }
+
+            if ($max_id || $since_id) {
+                $prevLink = $baseUrl.'&min_id='.$firstId;
+                $links[] = '<'.$prevLink.'>; rel="prev"';
+            }
+        }
+
+        if (! empty($links)) {
+            return response()->json($transformedDms->toArray())
+                ->header('Link', implode(', ', $links));
+        }
+
+        return $this->json($transformedDms);
     }
 
     /**
@@ -3510,8 +3582,8 @@ class ApiV1Controller extends Controller
             return [];
         }
 
-        $defaultCaption = '';
-        $content = $request->filled('status') ? strip_tags($request->input('status')) : $defaultCaption;
+        $content = strip_tags($request->input('status'));
+        $rendered = Autolink::create()->autolink($content);
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
 
@@ -3525,7 +3597,7 @@ class ApiV1Controller extends Controller
 
             $status = new Status;
             $status->caption = $content;
-            $status->rendered = $defaultCaption;
+            $status->rendered = $$rendered;;
             $status->scope = $visibility;
             $status->visibility = $visibility;
             $status->profile_id = $user->profile_id;
@@ -3550,7 +3622,7 @@ class ApiV1Controller extends Controller
             if (! $in_reply_to_id) {
                 $status = new Status;
                 $status->caption = $content;
-                $status->rendered = $defaultCaption;
+                $status->rendered = $rendered;
                 $status->profile_id = $user->profile_id;
                 $status->is_nsfw = $cw;
                 $status->cw_summary = $spoilerText;

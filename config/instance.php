@@ -183,4 +183,8 @@ return [
             ]
         ],
     ],
+
+    'show_peers' => env('INSTANCE_SHOW_PEERS', false),
+
+    'allow_new_account_dms' => env('INSTANCE_ALLOW_NEW_DMS', true),
 ];

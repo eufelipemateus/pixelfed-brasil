@@ -299,6 +299,7 @@
 				<router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
 				<a href="/site/terms">{{ $t('navmenu.privacy') }}</a>
 				<a href="/site/terms">{{ $t('navmenu.terms') }}</a>
+                <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank">Doar</a>
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">

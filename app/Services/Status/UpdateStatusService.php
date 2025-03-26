@@ -10,6 +10,7 @@ use App\Services\MediaStorageService;
 use App\Services\StatusService;
 use App\Status;
 use Purify;
+use App\Util\Lexer\Autolink;
 
 class UpdateStatusService
 {
@@ -65,8 +66,10 @@ class UpdateStatusService
         if (isset($attributes['status'])) {
             $cleaned = Purify::clean($attributes['status']);
             $status->caption = $cleaned;
+            $status->rendered = nl2br(Autolink::create()->autolink($cleaned));
         } else {
             $status->caption = null;
+            $status->rendered = null;
         }
         if (isset($attributes['sensitive'])) {
             if ($status->is_nsfw != (bool) $attributes['sensitive'] &&

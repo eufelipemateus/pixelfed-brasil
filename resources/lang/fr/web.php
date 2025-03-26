@@ -93,7 +93,7 @@ return [
 		'mentioned' => 'a mentionné',
 		'you' => 'vous',
 
-		'yourApplication' => 'Votre candidature à rejoindre',
+		'yourApplication' => 'Votre demande d\'adhésion',
 		'applicationApproved' => 'a été approuvée !',
 		'applicationRejected' => 'a été rejetée. Vous pouvez refaire une demande dans 6 mois.',
 

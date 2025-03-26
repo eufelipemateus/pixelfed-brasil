@@ -24,7 +24,6 @@ return [
     'cancel' =>                 'Cancel',
     'save' =>                   'Save',
     'download' =>               'Download',
-
     'home.account_settings' =>                                          'Account Settings',
     'home.change_profile_photo' =>                                      'Change Profile Photo',
     'home.select_a_profile_photo' =>                                    'Select a profile photo',
@@ -50,21 +49,18 @@ return [
     'home.storage_used' =>                                              'Storage Used',
     'home.are_you_sure_you_want_to_delete_your_profile_photo' =>        'Are you sure you want to delete your profile photo?',
     'home.an_error_occured_please_try_again_later' =>                   'An error occured, please try again later',
-
     'accessibility.reduce_motion' =>                                    'Reduce Motion',
     'accessibility.prevent_animation_effects' =>                        'Prevent animation effects.',
     'accessibility.high_contrast_mode' =>                               'High Contrast Mode',
     'accessibility.high_contrast_mode_for_the_visually_impaired' =>     'High contrast mode for the visually impaired.',
     'accessibility.disable_video_autoplay' =>                           'Disable video autoplay',
     'accessibility.prevent_videos_from_autoplaying' =>                  'Prevent videos from autoplaying.',
-
     'email.email_settings' =>                                           'Email Settings',
     'email.email_address' =>                                            'Email Address',
     'email.verified' =>                                                 'Verified',
     'email.unverified' =>                                               'Unverified',
     'email.you_need_to' =>                                              'You need to',
     'email.verify_your_email' =>                                        'verify your email',
-
     'media.default_license' =>                                          'Default License',
     'media.set_a_default_license_for_new_posts' =>                      'Set a default license for new posts.',
     'media.sync_licenses' =>                                            'Sync Licenses',
@@ -73,7 +69,6 @@ return [
     'media.require_media_descriptions' =>                               'Require Media Descriptions',
     'media.briefly_describe_your_media_to_improve_etc' =>               'Briefly describe your media to improve accessibility for vision impaired people.',
     'media.not_available_for_mobile_or_3rd_party_apps_etc' =>           'Not available for mobile or 3rd party apps at this time.',
-
     'password.update_password' =>                                       'Update Password',
     'password.current' =>                                               'Current',
     'password.your_current_password' =>                                 'Your current password',
@@ -81,7 +76,6 @@ return [
     'password.enter_new_password_here' =>                               'Enter new password here',
     'password.confirm' =>                                               'Confirm',
     'password.confirm_new_password' =>                                  'Confirm new password',
-
     'privacy.privacy_settings' =>                                       'Privacy Settings',
     'privacy.private_account' =>                                        'Private Account',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'When your account is private, only people you approve can see your photos and videos on pixelfed. Your existing followers won\'t be affected.',
@@ -123,7 +117,6 @@ return [
     'privacy.allow_new_follow_requests' =>                              'Allow new follow requests',
     'privacy.block_notifications_from_accounts_i_dont_follow' =>        'Block notifications from accounts I don\'t follow',
     'privacy.an_error_occured_please_try_again' =>                      'An error occured. Please try again.',
-
     'relationships' =>                                                          'Relationships',
     'relationships.followers' =>                                                'Followers',
     'relationships.following' =>                                                'Following',
@@ -142,7 +135,6 @@ return [
     'relationships.you_have_successfully_unfollowed_that_user' =>               'You have successfully unfollowed that user',
     'relationships.an_error_occured_when_attempting_to_unfollow_this_user' =>   'An error occured when attempting to unfollow this user',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'You have successfully unfollowed that hashtag',
-
     'security.two_factor_authentication' =>                                     'Two-factor authentication',
     'security.enabled' =>                                                       'Enabled',
     'security.danger_zone' =>                                                   'Danger Zone',
@@ -186,7 +178,6 @@ return [
     'export.we_generate_data_exports_once_per_hour_and_they_may_etc' =>         'We generate data exports once per hour, and they may not contain the latest data if you\'ve requested them recently.',
     'export.statuses' =>                                                        'Statuses',
     'export.mute_block_lists' =>                                                'Mute/Block List',
-
     // incomplete
     // some language outside the blades (in app/Http/Controllers/Settings/LabsSettings.php)
     'labs' =>                                                                   'Labs',
