@@ -1,12 +1,12 @@
 <center>
-    <h2>Olá, {{ $user->name }}</strong>!</h2>
+    <h1>Olá, {{ $user->name }}</strong>!</h1>
 
-    <h3>📷🔥 Destaques do Mês de <span style="text-transform: capitalize;">{{ $mes }}</span> no {{ config('app.name') }}!</h3>
+    <h2>📷🔥 Destaques do Mês de <span style="text-transform: capitalize;">{{ $mes }}</span> no {{ config('app.name') }}!</h2>
 
-    <h4>Posts populares em {{$mes}}:</h4>
+    <h3>Posts populares em {{$mes}}:</h3>
     <x-post-photo-grid-component :posts="$posts" />
 
-    <h4>Usuários Poulares em {{$mes}}:</h4>
+    <h3>Usuários Poulares em {{$mes}}:</h3>
     <x-users-popular-component :users="$popularUsers" />
 
     <p>

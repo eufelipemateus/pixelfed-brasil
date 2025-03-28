@@ -60,31 +60,46 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $popularPosts = Status::whereBetween(
-            'created_at',
-            [
-                Carbon::now()->startOfMonth()->subMonth()->startOfDay(),
-                Carbon::now()->startOfMonth()->subMonth()->endOfMonth()
-                    ->endOfDay()
-            ]
-        )->whereIn('type', ['photo', 'photo:album'])
-            ->where('local', true)
-            ->where('visibility', 'public')
-            ->where('is_nsfw', false)
-            ->where('reply', false)
-            ->where('scope', 'public')
-            ->with('profile')
-            ->with('media')
+        $statusIDs = Status::select('statuses.id')
+            ->selectRaw('COUNT(likes.id) AS total_likes')
+            ->whereBetween(
+                'statuses.created_at',
+                [
+                    Carbon::now()
+                        ->startOfMonth()
+                        ->subMonth()
+                        ->startOfDay(),
+                    Carbon::now()
+                        ->startOfMonth()
+                        ->subMonth()
+                        ->endOfMonth()
+                        ->endOfDay()
+                ]
+            )->leftJoin('likes', 'likes.status_id', '=', 'statuses.id')
+            ->whereIn('statuses.type', ['photo', 'photo:album'])
+            ->where('statuses.local', true)
+            ->where('statuses.visibility', 'public')
+            ->where('statuses.is_nsfw', false)
+            ->where('statuses.reply', false)
+            ->where('statuses.scope', 'public')
             ->orderByDesc('likes_count')
+            ->groupBy('statuses.id')
             ->take(30)
             ->get();
 
+            $ids = $statusIDs->pluck('id')->toArray();
+            $idsList = implode(',', $ids);
+
+            $popularPosts = Status::whereIn('id', $ids)
+                ->orderByRaw("ARRAY_POSITION(ARRAY[{$idsList}]::int[], id)")
+                ->with('profile')
+                ->with('media')
+                ->get();
 
         if ($popularPosts->isEmpty()) {
             info('Nenhum post popular encontrado para enviar.');
             return;
         }
-
 
         $profileIds = Profile::select('profiles.id')
             ->selectRaw('COUNT(likes.id) AS total_likes')
@@ -126,12 +141,12 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                 ]
             )->groupBy('profiles.id')
             ->orderByDesc('total_likes')
-            ->limit(50)
+            ->limit(20)
             ->get();
 
-        $popularUsers = Profile::whereIn('id', $profileIds)->get();
-
-
+        $popularUsers = Profile::whereIn('id', $profileIds->pluck('id'))
+            ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::int[], id)')
+            ->get();
 
         if ($this->testing) {
             User::whereNull('status')
