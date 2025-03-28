@@ -91,7 +91,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             $idsList = implode(',', $ids);
 
             $popularPosts = Status::whereIn('id', $ids)
-                ->orderByRaw("ARRAY_POSITION(ARRAY[{$idsList}]::int[], id)")
+                ->orderByRaw("ARRAY_POSITION(ARRAY[$idsList]::bigint[], id)")
                 ->with('profile')
                 ->with('media')
                 ->get();
@@ -145,7 +145,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->get();
 
         $popularUsers = Profile::whereIn('id', $profileIds->pluck('id'))
-            ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::int[], id)')
+            ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::bigint[], id)')
             ->get();
 
         if ($this->testing) {
