@@ -35,7 +35,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-
+use App\Util\Lexer\Autolink;
 class ComposeController extends Controller
 {
     protected $fractal;
@@ -572,8 +572,11 @@ class ComposeController extends Controller
         }
 
         $defaultCaption = "";
-        $status->caption = strip_tags($request->input('caption')) ?? $defaultCaption;
-        $status->rendered = $defaultCaption;
+        $content =strip_tags($request->input('caption')) ?? $defaultCaption;
+        $rendered = Autolink::create()->autolink($content);
+
+        $status->caption = $content;
+        $status->rendered = $rendered;
         $status->scope = 'draft';
         $status->visibility = 'draft';
         $status->profile_id = $profile->id;
@@ -687,8 +690,11 @@ class ComposeController extends Controller
             $status->comments_disabled = (bool) $request->input('comments_disabled');
         }
 
-        $status->caption = $request->filled('caption') ? strip_tags($request->caption) : $defaultCaption;
-        $status->rendered = $defaultCaption;
+        $content =  $request->filled('caption') ? strip_tags($request->caption) : $defaultCaption;
+        $rendered = Autolink::create()->autolink($content);
+
+        $status->caption =  $content;
+        $status->rendered = $rendered;
         $status->profile_id = $profile->id;
         $entities = [];
         $visibility = $profile->unlisted == true && $visibility == 'public' ? 'unlisted' : $visibility;
