@@ -202,10 +202,14 @@
         "showCaption": "Mostrar legenda",
         "showLikes": "Mostrar Curtidas",
         "compactMode": "Modo compacto",
-        "embedConfirmText": "Ao utilizar este conte\u00fado, voc\u00ea aceita os nossos",
-        "deletePostConfirm": "Tem certeza que deseja apagar esta publica\u00e7\u00e3o?",
-        "archivePostConfirm": "Tem certeza que deseja arquivar esta publica\u00e7\u00e3o?",
-        "unarchivePostConfirm": "Tem certeza que deseja desarquivar esta publica\u00e7\u00e3o?"
+        "embedConfirmText": "Ao utilizar este conte\u00fado, concordas com:",
+        "deletePostConfirm": "Tens a certeza que pretendes eliminar esta publica\u00e7\u00e3o?",
+        "archivePostConfirm": "Tens a certeza que pretendes arquivar esta publica\u00e7\u00e3o?",
+        "unarchivePostConfirm": "Tem a certeza que pretende desarquivar este post?",
+        "pin": "Fixar",
+        "unpin": "Desfixar",
+        "pinPostConfirm": "Tem certeza de que deseja fixar esta publica\u00e7\u00e3o?",
+        "unpinPostConfirm": "Tem certeza de que deseja desafixar esta publica\u00e7\u00e3o?"
     },
     "story": {
         "add": "Adicionar Story",
