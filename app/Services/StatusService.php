@@ -203,8 +203,7 @@ class StatusService
 
     public static function isPinned($id)
     {
-        $status = Status::find($id);
-        return $status && $status->whereNotNull("pinned_order")->count() > 0;
+        return  Status::whereStatusId($id)->whereNotNull("pinned_order")->count() > 0;
     }
 
     public static  function totalPins($pid)
