@@ -1,0 +1,158 @@
+name: Deploy
+
+on:
+    workflow_dispatch:
+    push:
+      branches:
+        - main
+        - dev
+
+jobs:
+  release:
+    name: Release Pixelfed Docker Image
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'DEV' }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+            set-safe-directory: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: composer install
+
+      - name: Generate .env
+        run: |
+            touch .env
+            echo "APP_NAME=\"Pixelfed Brasil\"" >> .env
+            echo "APP_ENV=production" >> .env
+            echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
+            echo "APP_DEBUG=false" >> .env
+
+            echo "DB_CONNECTION=pgsql" >> .env
+            echo "DB_HOST=127.0.0.1" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_DATABASE=\"${{secrets.DB_DATABASE}}\"" >> .env
+            echo "DB_USERNAME=\"${{secrets.DB_USERNAME}}\"" >> .env
+            echo "DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"" >> .env
+
+            echo "REDIS_HOST=127.0.0.1" >> .env
+            echo "REDIS_PORT=6379" >> .env
+            echo "REDIS_PASSWORD=null" >> .env
+
+            echo "MAIL_MAILER=smtp" >> .env
+            echo "MAIL_HOST=${{secrets.MAIL_HOST}}" >> .env
+            echo "MAIL_PORT=587" >> .env
+            echo "MAIL_USERNAME=${{secrets.MAIL_USER}}" >> .env
+            echo "MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"" >> .env
+            echo "MAIL_ENCRYPTION=tls" >> .env
+            echo "MAIL_FROM_ADDRESS=\"pixelfed@pixelfed.com.br\"" >> .env
+            echo "MAIL_FROM_NAME=\"Pixelfed\"" >> .env
+
+            echo "APP_LOCALE=pt" >> .env
+            echo "APP_FALLBACK_LOCALE=pt" >> .env
+            echo "APP_URL=https://${{vars.DOMAIN}}" >> .env
+            echo "APP_DOMAIN=${{vars.DOMAIN}}" >> .env
+            echo "ADMIN_DOMAIN=${{vars.DOMAIN}}"  >> .env
+            echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
+            echo "TRUST_PROXIES=*" >> .env
+
+            echo "OPEN_REGISTRATION=true" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
+            echo "ENFORCE_EMAIL_VERIFICATION=true" >> .env
+            echo "PF_MAX_USERS=5000" >> .env
+            echo "OAUTH_ENABLED=true" >> .env
+            echo "INSTANCE_PUBLIC_HASHTAGS=false"  >> .env
+            echo "INSTANCE_DISCOVER_PUBLIC=true" >> .env
+            echo "INSTANCE_DESCRIPTION=\"Pixelfed é uma plataforma de compartilhamento de imagens, uma alternativa ética às plataformas centralizadas.\"" >> .env
+            echo "INSTANCE_PUBLIC_LOCAL_TIMELINE=true" >> .env
+            echo "INSTANCE_PUBLIC_TIMELINE_CACHED=true" >> .env
+            echo "PF_NETWORK_TIMELINE=true" >> .env
+            echo "INSTANCE_NETWORK_TIMELINE_CACHED=true" >> .env
+            echo "ENABLE_COVID_LABEL=false" >> .env
+            echo "PF_IMPORT_FROM_INSTAGRAM=false" >> .env
+            echo "INSTANCE_CONTACT_FORM=true" >> .env
+            echo "INSTANCE_CONTACT_EMAIL=suporte@felipemateus.com"  >> .env
+            echo "INSTANCE_NOTIFY_AUTO_GC=true" >> .env
+            echo "REMOTE_AVATARS=false" >> .env
+            echo "PF_ENABLE_GEOLOCATION=false" >> .env
+            echo "ACCOUNT_DELETE_AFTER=30" >> .env
+            echo "PF_OPTIMIZE_IMAGES=false" >> .env
+            echo "INSTANCE_SHOW_PEERS=true" >> .env
+            echo "INSTANCE_POLLS=true" >> .env
+            echo "ACTIVITY_PUB=true" >> .env
+            echo "ACTIVITYPUB_DELIVERY_CONCURRENCY=100" >> .env
+            echo "AP_REMOTE_FOLLOW=true" >> .env
+            echo "AP_INBOX=true" >> .env
+            echo "AP_OUTBOX=true" >> .env
+            echo "AP_SHAREDINBOX=true" >> .env
+            echo "INSTANCE_DISCOVER_BEAGLE_API=true" >> .env
+            echo "INSTANCE_LANDING_SHOW_EXPLORE=false" >> .env
+            echo "INSTANCE_LANDING_SHOW_DIRECTORY=false" >> .env
+
+            echo "PF_LOGIN_WITH_MASTODON_ENABLED=true" >> .env
+            echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
+            echo "PF_LOGIN_WITH_MASTODON_DOMAINS=mastodon.com.br,masto.donte.com.br,mastodon.social,mastodon.online,mstdn.social,mas.to" >> .env
+
+            echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
+            echo "PF_HIDE_REMOTE_INSTANCE=false" >> .env
+
+            echo "APP_REGISTER=true" >> .env
+
+            echo "PAGE_503_HEADER=\"Em Manutenção\"" >> .env
+            echo "PAGE_503_BODY=\"Estamos em manutenção, voltaremos em algumas horas.\"" >> .env
+            echo "PAGE_404_HEADER=\"Desculpe, esta página não está disponível.\"" >> .env
+            echo "PAGE_404_BODY=\"O link que você seguiu pode estar quebrado ou a página pode ter sido removida. <a href='/'>Voltar para o Pixelfed</a>.\"" >> .env
+
+            echo "CAPTCHA_ENABLED=true" >> .env
+            echo "CAPTCHA_ENABLED_ON_LOGIN=true" >> .env
+            echo "CAPTCHA_ENABLED_ON_REGISTER=true" >> .env
+            echo "CAPTCHA_SECRET=${{secrets.CAPTCHA_SECRET}}" >> .env
+            echo "CAPTCHA_SITEKEY=${{secrets.CAPTCHA_SITEKEY}}" >> .env
+            echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
+
+            echo "PF_ENABLE_CLOUD=true" >> .env
+            echo "FILESYSTEM_CLOUD=spaces" >> .env
+            echo "PORTFOLIO_DOMAIN=portifolio.${{vars.DOMAIN}}" >> .env
+            echo "PORTFOLIO_PATH=" >> .env
+            echo "DO_SPACES_KEY=${{secrets.DO_SPACES_KEY}}" >> .env
+            echo "DO_SPACES_SECRET=${{secrets.DO_SPACES_SECRET}}" >> .env
+            echo "DO_SPACES_REGION=${{secrets.DO_SPACES_REGION}}" >> .env
+            echo "DO_SPACES_BUCKET=${{secrets.DO_SPACES_BUCKET}}" >> .env
+            echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
+            echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
+
+
+      - name: Generate WebPush VAPID keys
+        run:  php artisan webpush:vapid
+
+      - name: Encrypt .env
+        run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
+
+      - name: Write SSH keys
+        run: |
+            install -m 600 -D /dev/null ~/.ssh/id_rsa
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
+
+      - name: 📂 Deploy with rsync
+        run: rsync -rav --delete ./  ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}:/tmp/pixelfed   #${{secrets.WORK_DIR}}
+
+      - name: Restart Apps
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cp -TRv /tmp/pixelfed/ ${{secrets.WORK_DIR}}/
+            sudo chmod 777 -R ${{secrets.WORK_DIR}}
+            sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
+            cd ${{secrets.WORK_DIR}}
+            php artisan migrate --force
+            php artisan storage:link

@@ -1,64 +1,46 @@
-@extends('site.help.partial.template', ['breadcrumb'=>'Safety Tips'])
+@extends('site.help.partial.template', ['breadcrumb'=> __("helpcenter.safetyTips") ])
 
 @section('section')
 
   <div class="title">
-    <h3 class="font-weight-bold">Safety Tips</h3>
+    <h3 class="font-weight-bold">{{ __("helpcenter.safetyTips")  }}</h3>
   </div>
   <hr>
-{{--   <div class="card mb-3">
-  	<div class="card-body">
-  		<div class="row">
-  			<div class="col-12 col-md-3 text-center">
-  				<div class="icon-wrapper">
-  					<i class="fas fa-exclamation-circle fa-3x text-light"></i>
-  				</div>
-  			</div>
-  			<div class="col-12 col-md-9 d-flex align-items-center">
-  				<div class="text-center">
-	  				<p class="h3 font-weight-bold mb-0">Work In Progress</p>
-	  				<p class="font-weight-light mb-0">We haven't finished it yet, it will be updated soon!</p>
-  				</div>
-  			</div>
-  		</div>
-  	</div>
-  </div>
- --}}
-  <p class="lead py-4">We are committed to building a fun, easy to use photo sharing platform that is safe and secure for everyone.</p>
+  <p class="lead py-4">{{ __('helpcenter.safetyTipsSubTitle')  }}</p>
 
   <div class="card border-left-blue mb-3">
     <div class="card-body">
-      <p class="h5">Know the rules</p>
-      <p class="mb-0">To keep yourself safe, it is important to know the <a href="{{route('site.terms')}}">terms of service</a> rules.</p>
+      <p class="h5">{{ __('helpcenter.safetyTipsKnowRules') }}</p>
+      <p class="mb-0">{!! __('helpcenter.safetyTipsKnowRulesContent') !!} </p>
     </div>
   </div>
 
   <div class="card border-left-blue mb-3">
     <div class="card-body">
-      <p class="h5">Know the age guidelines</p>
-      <p class="mb-0">Please keep in mind that Pixelfed is meant for people over the age of 16 or 13 depending on where you live.</p>
+      <p class="h5">{{  __("helpcenter.safetyTipsAage") }}</p>
+      <p class="mb-0">{{ __("helpcenter.safetyTipsAageContent") }}</p>
     </div>
   </div>
 
   <div class="card border-left-blue mb-3">
     <div class="card-body">
-      <p class="h5">Report problematic content</p>
-      <p class="mb-0">You can report content that you think is in violation of our policies.</p>
+      <p class="h5">{{  __("helpcenter.safetyTipsRport")  }}</p>
+      <p class="mb-0">{{ __("helpcenter.safetyTipsRportContent") }}</p>
     </div>
   </div>
 
   <div class="card border-left-blue mb-3">
     <div class="card-body">
-      <p class="h5">Understanding content visibility</p>
-      <p class="mb-0">You can limit the visibility of your content to specific people, followers, public and more.</p>
+      <p class="h5">{{ __("helpcenter.safetyTipsVisility")  }}</p>
+      <p class="mb-0">{{ __("helpcenter.safetyTipsVisilityContent")  }}</p>
     </div>
   </div>
 
 
   <div class="card border-left-blue mb-3">
     <div class="card-body">
-      <p class="h5">Make your account or posts private</p>
-      <p class="mb-0">You can make your account private and vet new follow requests to control who your posts are shared with.</p>
+      <p class="h5">{{ __("helpcenter.safetyTipsPostsPrivacy")  }}</p>
+      <p class="mb-0">{{ __("helpcenter.safetyTipsPostsPrivacyContent") }}</p>
     </div>
   </div>
 @endsection

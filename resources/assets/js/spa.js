@@ -45,7 +45,7 @@ Vue.use(VueMasonry);
 Vue.use(VueI18n);
 Vue.use(VueTimeago, {
   name: 'Timeago',
-  locale: 'en'
+  locale: 'pt',
 });
 
 Vue.component(
@@ -586,7 +586,7 @@ let locale = document.querySelector('html').getAttribute('lang');
 
 const i18n = new VueI18n({
   locale: locale, // set locale
-  fallbackLocale: 'en',
+  fallbackLocale: 'pt',
   messages: i18nMessages
 });
 
