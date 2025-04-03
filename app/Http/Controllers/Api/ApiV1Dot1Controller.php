@@ -49,6 +49,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
 use Purify;
+use App\Util\Lexer\Autolink;
 
 class ApiV1Dot1Controller extends Controller
 {
@@ -1275,10 +1276,11 @@ class ApiV1Dot1Controller extends Controller
         $content = $request->filled('status') ? strip_tags(Purify::clean($request->input('status'))) : $defaultCaption;
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
+        $rendered = Autolink::create()->autolink($content);
 
         $status = new Status;
         $status->caption = $content;
-        $status->rendered = $defaultCaption;
+        $status->rendered = $rendered;
         $status->profile_id = $user->profile_id;
         $status->is_nsfw = $cw;
         $status->cw_summary = $spoilerText;
