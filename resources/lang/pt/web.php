@@ -124,8 +124,26 @@ return [
 		'followRequested' => 'Solicitação de seguir enviada',
 		'joined' => 'Entrou em',
 
-		'emptyCollections' => 'Nenhuma coleção encontrada',
-		'emptyPosts' => 'Nenhuma publicação encontrada',
+		'emptyCollections' => 'Não conseguimos encontrar nenhuma coleção',
+		'emptyPosts' => 'Não conseguimos encontrar nenhuma publicação',
+
+        'blocking' => 'Você está bloqueando esta conta',
+        'sponsor' => 'Doar',
+        'followYou' => 'Segue você',
+        'archives' => 'Arquivados',
+        'bookmarks' => 'Favoritos',
+        'likes' => 'Curtidas',
+        'muted' => 'Silenciado',
+        'blocked' => 'Bloqueado',
+        'myPortifolio' => 'Meu Portfólio',
+        'private' => 'Este perfil é privado',
+        'public' => 'Público',
+        'draft' => 'Rascunho',
+        'emptyLikes' => 'Não conseguimos encontrar nenhuma publicação que você tenha curtido',
+        'emptyBookmarks' => 'Não conseguimos encontrar nenhuma publicação nos seus favoritos',
+        'emptyArchives' => 'Não conseguimos encontrar nenhuma publicação arquivada',
+        'untitled' => 'Sem título',
+        'noDescription' => 'Nenhuma descrição disponível'
 	],
 
 	'menu' => [
@@ -172,9 +190,13 @@ return [
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-		'deletePostConfirm' => 'Tem certeza de que deseja excluir esta publicação?',
-		'archivePostConfirm' => 'Tem certeza de que deseja arquivar esta publicação?',
-		'unarchivePostConfirm' => 'Tem certeza de que deseja desarquivar esta publicação?',
+		'deletePostConfirm' => 'Tem a certeza que pretende apagar esta publicação?',
+		'archivePostConfirm' => 'Tem a certeza que pretende arquivar esta publicação?',
+		'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
+        'pin' => "Fixar",
+        'unpin' => "Desfixar",
+        "pinPostConfirm" => "Tem certeza de que deseja fixar esta publicação?",
+        "unpinPostConfirm" => "Tem certeza de que deseja desafixar esta publicação?"
 	],
 
 	'story' => [
