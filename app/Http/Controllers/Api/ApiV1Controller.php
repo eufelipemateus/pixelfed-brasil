@@ -2273,6 +2273,16 @@ class ApiV1Controller extends Controller
             'filter_type' => 'mute',
         ]);
 
+        Notification::whereProfileId($pid)
+            ->whereActorId($id)
+            ->get()
+            ->map(
+                function ($n) use ($pid) {
+                    NotificationService::del($pid, $n['id']);
+                    $n->forceDelete();
+                }
+            );
+
         RelationshipService::refresh($pid, $id);
 
         $resource = new Fractal\Resource\Item($account, new RelationshipTransformer);

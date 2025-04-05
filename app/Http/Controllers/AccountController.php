@@ -184,6 +184,16 @@ class AccountController extends Controller
         ]);
 
         UserFilterService::mute($pid, $filterable['id']);
+
+        Notification::whereProfileId($pid)
+            ->whereActorId($filterable['id'])
+            ->get()
+            ->map(
+                function ($n) use ($pid) {
+                    NotificationService::del($pid, $n['id']);
+                    $n->forceDelete();
+                }
+            );
         $res = RelationshipService::refresh($pid, $profile->id);
 
         if ($request->wantsJson()) {
