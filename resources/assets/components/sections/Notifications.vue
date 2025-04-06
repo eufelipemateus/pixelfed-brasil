@@ -36,11 +36,11 @@
 					<template v-else>
 						<div v-for="(n, index) in feed" :class="['my-2 p-2 px-0', n.read ? '': 'unread' ]"  :key="index">
 							<div class="media align-items-center">
-                                <a href="#" v-if="n.read"  class="mx-2 border-0 bg-transparent">
+                                <a href="#" v-if="n.read" @click="markUnRead(index)"  class="mx-2 border-0 bg-transparent">
                                     <i class="far fa-envelope-open"></i>
                                 </a>
-                                <a href="#" v-else  class="mx-2 border-0 bg-transparent">
-                                    <i class="far fa-envelope"></i>
+                                <a href="#" v-else  @click="markRead(index)" class="mx-2 border-0 bg-transparent">
+                                    <i class="fas fa-envelope"></i>
                                 </a>
 								<img
 									v-if="n.type === 'autospam.warning'"
@@ -407,7 +407,29 @@
 					}
 				})
 			},
+            markRead(index) {
+                if(this.feed[index].read) {
+                    return;
+                }
+                axios.post(`/api/v1/notifications/mark_as_read`, {
+                    id: this.feed[index].id
+                })
+                .then(res => {
+                    this.feed[index].read = true;
+                });
+            },
+            markUnRead(index){
+                if(!this.feed[index].read) {
+                    return;
+                }
+                axios.post(`/api/v1/notifications/mark_as_unread`, {
+                    id: this.feed[index].id
+                })
+                .then(res => {
+                    this.feed[index].read = false;
+                });
 
+            },
 			showAutospamInfo(status) {
 				let el = document.createElement('p');
 				el.classList.add('text-left');

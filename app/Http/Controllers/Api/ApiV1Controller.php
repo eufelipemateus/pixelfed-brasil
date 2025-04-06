@@ -4494,4 +4494,48 @@ class ApiV1Controller extends Controller
 
         return $this->json($status);
     }
+
+    /**
+     * GET /api/v1/notifications
+     *
+     * @return array
+     */
+    public function accountNotificationsMarkAsRead(Request $request)
+    {
+        /* abort_if(! $request->user(), 403);
+        abort_unless($request->user()->tokenCan('write'), 403);*/
+
+        $user = $request->user();
+        $pid = $user->profile_id;
+        $id = $request->input('id');
+        if (! $id) {
+            return $this->json(['error' => 'Missing id'], 422);
+        }
+
+        $notification = Notification::whereProfileId($pid)->findOrFail($id);
+        $notification->read_at = 'now()';
+        $notification->save();
+
+        return $this->json(['success' => true]);
+    }
+
+    public function accountNotificationsMarkAsUnread(Request $request)
+    {
+        /*
+        abort_if(! $request->user(), 403);
+        abort_unless($request->user()->tokenCan('write'), 403);*/
+
+        $user = $request->user();
+        $pid = $user->profile_id;
+        $id = $request->input('id');
+        if (! $id) {
+            return $this->json(['error' => 'Missing id'], 422);
+        }
+
+        $notification = Notification::whereProfileId($pid)->findOrFail($id);
+        $notification->read_at = null;
+        $notification->save();
+
+        return $this->json(['success' => true]);
+    }
 }
