@@ -34,8 +34,14 @@
 					</template>
 
 					<template v-else>
-						<div v-for="(n, index) in feed" class="mb-2">
+						<div v-for="(n, index) in feed" :class="['my-2 p-2 px-0', n.read ? '': 'unread' ]"  :key="index">
 							<div class="media align-items-center">
+                                <a href="#" v-if="n.read"  class="mx-2 border-0 bg-transparent">
+                                    <i class="far fa-envelope-open"></i>
+                                </a>
+                                <a href="#" v-else  class="mx-2 border-0 bg-transparent">
+                                    <i class="far fa-envelope"></i>
+                                </a>
 								<img
 									v-if="n.type === 'autospam.warning'"
 									class="mr-2 rounded-circle shadow-sm p-1"
@@ -443,5 +449,9 @@
 		.card-body {
 			width: 100%;
 		}
+
+        .unread{
+            background: #F8F9FA !important;
+        }
 	}
 </style>
