@@ -4531,6 +4531,11 @@ class ApiV1Controller extends Controller
         return $this->json(['success' => true]);
     }
 
+    /**
+     * POST /api/v1/notifications/mark_as_unread
+     *
+     * @return array
+     */
     public function accountNotificationsMarkAsUnread(Request $request)
     {
         /*
@@ -4550,5 +4555,34 @@ class ApiV1Controller extends Controller
 
         Cache::forget('service:notification:'.$id);
         return $this->json(['success' => true]);
+    }
+
+    /**
+     * GET /api/v1/notifications/status
+     *
+     * @return array
+     */
+    public function accountNotificationsStatus(Request $request){
+
+          /*
+        abort_if(! $request->user(), 403);
+        abort_unless($request->user()->tokenCan('write'), 403);*/
+        $user = $request->user();
+        $pid = $user->profile_id;
+
+        $totals = Notification::selectRaw("
+            COUNT(*) as total_unread,
+            SUM(CASE WHEN action IN ('mention', 'comment') THEN 1 ELSE 0 END) as total_unread_mentions,
+            SUM(CASE WHEN action = 'like' THEN 1 ELSE 0 END) as total_unread_favourites,
+            SUM(CASE WHEN action = 'share' THEN 1 ELSE 0 END) as total_unread_reblogs,
+            SUM(CASE WHEN action = 'follow' THEN 1 ELSE 0 END) as total_unread_followers,
+            SUM(CASE WHEN action = 'dm' THEN 1 ELSE 0 END) as total_unread_dm
+        ")
+        ->whereProfileId($pid)
+        ->whereNull('read_at')
+        ->first();
+
+        return $this->json($totals);
+
     }
 }

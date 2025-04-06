@@ -5,8 +5,11 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<span class="text-muted font-weight-bold">{{ $t("notifications.title")}}</span>
 					<div v-if="feed && feed.length">
-                        <button type="button" @click="markAllRead()" class="btn btn-primary btn-sm">
-                            <i class="fas fa-envelope"></i> <span class="badge text-bg-secondary text-red">4</span>
+                        <button v-if="totalUnread>0" type="button" @click="markAllRead()" class="btn btn-primary btn-sm">
+                            <i class="fas fa-envelope"></i> <span class="badge text-bg-secondary text-red">{{totalUnread}}</span>
+                        </button>
+                        <button v-else type="button" @click="markAllRead()" class="btn btn-outline-light btn-sm" disabled>
+                            <i class="far fa-envelope-open"></i>
                         </button>
 						<router-link to="/i/web/notifications" class="btn btn-outline-light btn-sm mr-2" style="color: #B8C2CC !important">
 							<i class="far fa-filter"></i>
@@ -212,7 +215,8 @@
 				hasLoaded: false,
 				isEmpty: false,
 				retryTimeout: undefined,
-				retryAttempts: 0
+				retryAttempts: 0,
+                totalUnread: 0,
 			}
 		},
 
@@ -232,6 +236,10 @@
 					clearTimeout(this.retryTimeout);
 					return;
 				}
+                axios.get('/api/v1/notifications/status').then(res => {
+                    this.totalUnread = res.data.total_unread;
+                });
+
 				axios.get('/api/pixelfed/v1/notifications', {
 					params: {
 						limit: 9,
@@ -419,6 +427,7 @@
                 })
                 .then(res => {
                     this.feed[index].read = true;
+                    this.totalUnread = this.totalUnread - 1;
                 });
             },
             markUnRead(index){
@@ -430,6 +439,7 @@
                 })
                 .then(res => {
                     this.feed[index].read = false;
+                    this.totalUnread = this.totalUnread + 1;
                 });
 
             },
@@ -442,6 +452,7 @@
                 .then(res => {
                     for(let i = 0; i < this.feed.length; i++) {
                         this.feed[i].read = true;
+                        this.totalUnread = 0;
                     }
                 });
 
