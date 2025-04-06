@@ -42,10 +42,10 @@
 					<template v-else>
 						<div v-for="(n, index) in feed" :class="['my-2 p-2 px-0', n.read ? '': 'unread' ]"  :key="index">
 							<div class="media align-items-center">
-                                <a href="#" v-if="n.read" @click="markUnRead(index)"  class="mx-2 border-0 bg-transparent">
+                                <a href="#" v-if="n.read" @click="markUnRead(index)"  class="mx-1 border-0 bg-transparent">
                                     <i class="far fa-envelope-open"></i>
                                 </a>
-                                <a href="#" v-else  @click="markRead(index)" class="mx-2 border-0 bg-transparent">
+                                <a href="#" v-else  @click="markRead(index)" class="mx-1 border-0 bg-transparent">
                                     <i class="fas fa-envelope"></i>
                                 </a>
 								<img
