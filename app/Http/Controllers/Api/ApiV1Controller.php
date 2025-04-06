@@ -4508,14 +4508,26 @@ class ApiV1Controller extends Controller
         $user = $request->user();
         $pid = $user->profile_id;
         $id = $request->input('id');
-        if (! $id) {
-            return $this->json(['error' => 'Missing id'], 422);
+
+        if (empty($id)) {
+            $notifications = Notification::whereNull('read_at')
+                ->whereProfileId($pid)
+                ->get();
+
+            foreach ($notifications as $n) {
+                $n->read_at = now();
+                $n->save();
+                Cache::forget('service:notification:'.$n->id);
+            }
+
+            return $this->json(['success' => true]);
         }
 
         $notification = Notification::whereProfileId($pid)->findOrFail($id);
         $notification->read_at = 'now()';
         $notification->save();
 
+        Cache::forget('service:notification:'.$id);
         return $this->json(['success' => true]);
     }
 
@@ -4536,6 +4548,7 @@ class ApiV1Controller extends Controller
         $notification->read_at = null;
         $notification->save();
 
+        Cache::forget('service:notification:'.$id);
         return $this->json(['success' => true]);
     }
 }

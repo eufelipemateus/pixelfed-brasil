@@ -5,6 +5,9 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<span class="text-muted font-weight-bold">{{ $t("notifications.title")}}</span>
 					<div v-if="feed && feed.length">
+                        <button type="button" @click="markAllRead()" class="btn btn-primary btn-sm">
+                            <i class="fas fa-envelope"></i> <span class="badge text-bg-secondary text-red">4</span>
+                        </button>
 						<router-link to="/i/web/notifications" class="btn btn-outline-light btn-sm mr-2" style="color: #B8C2CC !important">
 							<i class="far fa-filter"></i>
 						</router-link>
@@ -428,6 +431,20 @@
                 .then(res => {
                     this.feed[index].read = false;
                 });
+
+            },
+            markAllRead(){
+                if(window.confirm(this.$t('notifications.markAllRead')) == false) {
+                    return;
+                }
+
+                axios.post(`/api/v1/notifications/mark_as_read`)
+                .then(res => {
+                    for(let i = 0; i < this.feed.length; i++) {
+                        this.feed[i].read = true;
+                    }
+                });
+
 
             },
 			showAutospamInfo(status) {
