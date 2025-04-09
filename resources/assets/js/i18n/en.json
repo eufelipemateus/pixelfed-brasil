@@ -162,10 +162,6 @@
         "emptyArchives": "We can't seem to find any archived posts",
         "untitled": "Untitled",
         "noDescription": "No description available"
-<<<<<<< HEAD
-
-=======
->>>>>>> dev-contrib-origin
     },
     "menu": {
         "viewPost": "View Post",
