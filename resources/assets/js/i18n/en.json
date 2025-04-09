@@ -209,10 +209,6 @@
         "unpin": "Unpin",
         "pinPostConfirm": "Are you sure you want to pin this post?",
         "unpinPostConfirm": "Are you sure you want to unpin this post?"
-<<<<<<< HEAD
-
-=======
->>>>>>> dev-contrib-origin
     },
     "story": {
         "add": "Add Story",
