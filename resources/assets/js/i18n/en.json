@@ -114,6 +114,7 @@
         "followRequest": "Follow Requests",
         "filteringResults": "Filtering results may not include older notifications",
         "mentions": "Mentions",
+<<<<<<< HEAD
         "mentionsDescription":"Replies to your posts and posts you were mentioned in",
         "likes": "Likes",
         "likesDescription":"Accounts that liked your posts",
@@ -123,6 +124,17 @@
         "reblogsDescription":"Accounts that shared or reblogged your posts",
         "dms": "DMs",
         "dmsDescription":"Direct messages you have with other accounts",
+=======
+        "mentionsDescription": "Replies to your posts and posts you were mentioned in",
+        "likes": "Likes",
+        "likesDescription": "Accounts that liked your posts",
+        "followers": "Followers",
+        "followersDescription": "Accounts that followed you",
+        "reblogs": "Reblogs",
+        "reblogsDescription": "Accounts that shared or reblogged your posts",
+        "dms": "DMs",
+        "dmsDescription": "Direct messages you have with other accounts",
+>>>>>>> dev-contrib-origin
         "accept": "Accept",
         "reject": "Reject"
     },
@@ -162,7 +174,10 @@
         "emptyArchives": "We can't seem to find any archived posts",
         "untitled": "Untitled",
         "noDescription": "No description available"
+<<<<<<< HEAD
 
+=======
+>>>>>>> dev-contrib-origin
     },
     "menu": {
         "viewPost": "View Post",
@@ -210,7 +225,10 @@
         "unpin": "Unpin",
         "pinPostConfirm": "Are you sure you want to pin this post?",
         "unpinPostConfirm": "Are you sure you want to unpin this post?"
+<<<<<<< HEAD
 
+=======
+>>>>>>> dev-contrib-origin
     },
     "story": {
         "add": "Add Story",
