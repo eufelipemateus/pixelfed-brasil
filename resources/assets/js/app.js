@@ -96,7 +96,6 @@ window.App.util = {
 			}
 			return new Intl.NumberFormat(locale, { notation: notation , compactDisplay: "short" }).format(count);
 		}),
-<<<<<<< HEAD
 		timeAgo: (function(ts) {
             let date = new Date(ts);
             let now = new Date();
@@ -108,61 +107,25 @@ window.App.util = {
             interval = Math.floor(seconds / 2592000);
             if (interval >= 1) {
                 return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-interval, 'month');
-=======
-        timeAgo: (function(ts) {
-            const date = new Date(ts);
-            const now = new Date();
-
-            const seconds = Math.floor((now - date) / 1000);
-
-            const secondsInYear = 60 * 60 * 24 * 365.25;
-            let interval = Math.floor(seconds / secondsInYear);
-            if (interval >= 1) {
-                return interval + "y";
->>>>>>> dev-contrib-origin
             }
-
-            interval = Math.floor(seconds / (60 * 60 * 24 * 7));
+            interval = Math.floor(seconds / 604800);
             if (interval >= 1) {
-<<<<<<< HEAD
                 return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-interval, 'week');
-=======
-                return interval + "w";
->>>>>>> dev-contrib-origin
             }
-
-            interval = Math.floor(seconds / (60 * 60 * 24));
+            interval = Math.floor(seconds / 86400);
             if (interval >= 1) {
-<<<<<<< HEAD
                 return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-interval, 'day');
-=======
-                return interval + "d";
->>>>>>> dev-contrib-origin
             }
-
-            interval = Math.floor(seconds / (60 * 60));
+            interval = Math.floor(seconds / 3600);
             if (interval >= 1) {
-<<<<<<< HEAD
                 return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-interval, 'hour');
-=======
-                return interval + "h";
->>>>>>> dev-contrib-origin
             }
-
             interval = Math.floor(seconds / 60);
             if (interval >= 1) {
-<<<<<<< HEAD
                 return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-interval, 'minute');
             }
             return new Intl.RelativeTimeFormat('pt', { numeric: 'auto', style: 'short' }).format(-seconds, 'second');
 		}),
-=======
-                return interval + "m";
-            }
-
-            return Math.floor(seconds) + "s";
-        }),
->>>>>>> dev-contrib-origin
 		timeAhead: (function(ts, short = true) {
 			let date = Date.parse(ts);
 			let diff = date - Date.parse(new Date());

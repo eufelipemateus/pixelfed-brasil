@@ -114,17 +114,6 @@
         "followRequest": "Follow Requests",
         "filteringResults": "Filtering results may not include older notifications",
         "mentions": "Mentions",
-<<<<<<< HEAD
-        "mentionsDescription":"Replies to your posts and posts you were mentioned in",
-        "likes": "Likes",
-        "likesDescription":"Accounts that liked your posts",
-        "followers": "Followers",
-        "followersDescription":"Accounts that followed you",
-        "reblogs": "Reblogs",
-        "reblogsDescription":"Accounts that shared or reblogged your posts",
-        "dms": "DMs",
-        "dmsDescription":"Direct messages you have with other accounts",
-=======
         "mentionsDescription": "Replies to your posts and posts you were mentioned in",
         "likes": "Likes",
         "likesDescription": "Accounts that liked your posts",
@@ -134,7 +123,6 @@
         "reblogsDescription": "Accounts that shared or reblogged your posts",
         "dms": "DMs",
         "dmsDescription": "Direct messages you have with other accounts",
->>>>>>> dev-contrib-origin
         "accept": "Accept",
         "reject": "Reject"
     },
