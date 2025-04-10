@@ -422,9 +422,7 @@
                 if(this.feed[index].read) {
                     return;
                 }
-                axios.post(`/api/v1/notifications/mark_as_read`, {
-                    id: this.feed[index].id
-                })
+                axios.post(`/api/v1/notifications/${this.feed[index].id}/dismiss`)
                 .then(res => {
                     this.feed[index].read = true;
                     this.totalUnread = this.totalUnread - 1;
@@ -434,9 +432,7 @@
                 if(!this.feed[index].read) {
                     return;
                 }
-                axios.post(`/api/v1/notifications/mark_as_unread`, {
-                    id: this.feed[index].id
-                })
+                axios.post(`/api/v1/notifications/${this.feed[index].id}/mark_as_unread`)
                 .then(res => {
                     this.feed[index].read = false;
                     this.totalUnread = this.totalUnread + 1;
@@ -448,7 +444,7 @@
                     return;
                 }
 
-                axios.post(`/api/v1/notifications/mark_as_read`)
+                axios.post(`/api/v1/notifications/clear`)
                 .then(res => {
                     for(let i = 0; i < this.feed.length; i++) {
                         this.feed[i].read = true;
