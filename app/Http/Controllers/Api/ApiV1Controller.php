@@ -4557,6 +4557,9 @@ class ApiV1Controller extends Controller
         abort_if(! $request->user(), 403);
         abort_unless($request->user()->tokenCan('write'), 403);
 
+        $user = $request->user();
+        $pid = $user->profile_id;
+
         Notification::whereNull('read_at')
         ->whereProfileId($pid)
         ->chunk(100, function ($chunk) {
@@ -4584,7 +4587,9 @@ class ApiV1Controller extends Controller
         $limit = $request->input('limit', 100);
         $types = $request->input('types', []);
         $exclude = $request->input('exclude_types', []);
-        //$account_id = $request->input('account_id');
+
+        $user = $request->user();
+        $pid = $user->profile_id;
 
         $validTypes = ['mention', 'favourite', 'reblog', 'follow', 'follow_request', 'poll'];
 
@@ -4593,7 +4598,7 @@ class ApiV1Controller extends Controller
 
         $query = Notification::query()
             ->whereNull('read_at')
-            //->when($account_id, fn($q) => $q->where('account_id', $account_id))
+            ->where('profile_id', $pid )
             ->when(!empty($types), fn($q) => $q->whereIn('type', $types))
             ->when(!empty($exclude), fn($q) => $q->whereNotIn('type', $exclude))
             ->limit($limit);

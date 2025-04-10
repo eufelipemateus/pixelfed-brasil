@@ -236,8 +236,8 @@
 					clearTimeout(this.retryTimeout);
 					return;
 				}
-                axios.get('/api/v1/notifications/status').then(res => {
-                    this.totalUnread = res.data.total_unread;
+                axios.get('/api/v1/notifications/unread_count').then(res => {
+                    this.totalUnread = res.data.count;
                 });
 
 				axios.get('/api/pixelfed/v1/notifications', {
@@ -451,8 +451,6 @@
                         this.totalUnread = 0;
                     }
                 });
-
-
             },
 			showAutospamInfo(status) {
 				let el = document.createElement('p');
