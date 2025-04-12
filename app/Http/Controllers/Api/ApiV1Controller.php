@@ -4496,7 +4496,7 @@ class ApiV1Controller extends Controller
     }
 
     /**
-     * GET /api/v1/notifications/{id}/dismiss
+     * POST /api/v1/notifications/{id}/dismiss
      *
      * @return array
      */
