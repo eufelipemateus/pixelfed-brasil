@@ -4520,31 +4520,6 @@ class ApiV1Controller extends Controller
         return $this->json(['success' => true]);
     }
 
-    /**
-     * POST /api/v1/notifications/:id/dismiss
-     *
-     * @return array
-     */
-    public function accountNotificationsMarkAsUnread(Request $request, $id)
-    {
-
-        abort_if(! $request->user(), 403);
-        abort_unless($request->user()->tokenCan('write'), 403);
-
-        $user = $request->user();
-        $pid = $user->profile_id;
-
-        if (! $id) {
-            return $this->json(['error' => 'Missing id'], 422);
-        }
-
-        $notification = Notification::whereProfileId($pid)->findOrFail($id);
-        $notification->read_at = null;
-        $notification->save();
-
-        Cache::forget('service:notification:'.$id);
-        return $this->json(['success' => true]);
-    }
 
     /**
      * POST /api/v1/notifications/clear
