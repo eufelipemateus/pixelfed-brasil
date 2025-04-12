@@ -223,18 +223,6 @@
                     this.n.read = true;
                 });
             },
-            markUnRead(){
-                if(!this.n.read) {
-                    return;
-                }
-                axios.post(`/api/v1/notifications/mark_as_unread`, {
-                    id: this.n.id
-                })
-                .then(res => {
-                    this.n.read = false;
-                });
-
-            },
 		}
 	}
 </script>

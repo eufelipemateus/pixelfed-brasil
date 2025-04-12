@@ -426,17 +426,6 @@
                     this.totalUnread = this.totalUnread - 1;
                 });
             },
-            markUnRead(index){
-                if(!this.feed[index].read) {
-                    return;
-                }
-                axios.post(`/api/v1/notifications/${this.feed[index].id}/mark_as_unread`)
-                .then(res => {
-                    this.feed[index].read = false;
-                    this.totalUnread = this.totalUnread + 1;
-                });
-
-            },
             markAllRead(){
                 if(window.confirm(this.$t('notifications.markAllRead')) == false) {
                     return;
