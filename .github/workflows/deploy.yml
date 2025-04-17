@@ -140,6 +140,17 @@ jobs:
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
 
+
+      - name: Down  App
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{secrets.WORK_DIR}}
+            php artisan down
+
       - name: 📂 Deploy with rsync
         run: rsync -rav --delete ./  ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}:/tmp/pixelfed   #${{secrets.WORK_DIR}}
 
@@ -154,7 +165,6 @@ jobs:
             sudo chmod 777 -R ${{secrets.WORK_DIR}}
             sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
             cd ${{secrets.WORK_DIR}}
-            php artisan down
             php artisan migrate --force
             php artisan storage:link
             php artisan optimize:clear
