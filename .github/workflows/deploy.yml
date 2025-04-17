@@ -154,5 +154,12 @@ jobs:
             sudo chmod 777 -R ${{secrets.WORK_DIR}}
             sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
             cd ${{secrets.WORK_DIR}}
+            php artisan down
             php artisan migrate --force
             php artisan storage:link
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
+            php artisan up
