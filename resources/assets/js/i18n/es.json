@@ -23,7 +23,7 @@
         "proceed": "Proceder",
         "next": "Siguiente",
         "close": "Cerrar",
-        "clickHere": "haz clic aqu\u00ed",
+        "clickHere": "haz click aqu\u00ed",
         "sensitive": "Sensible",
         "sensitiveContent": "Contenido Sensible",
         "sensitiveContentWarning": "Esta publicaci\u00f3n podr\u00eda contener contenido sensible"
@@ -100,7 +100,7 @@
         "followRequested": "Seguimiento Solicitado",
         "joined": "Se uni\u00f3",
         "emptyCollections": "Parece que no podemos encontrar ninguna colecci\u00f3n",
-        "emptyPosts": "Parece que no podemos encontrar ninguna publicaci\u00f3n"
+        "emptyPosts": "Parece que no podemos encontrar ning\u00fan post"
     },
     "menu": {
         "viewPost": "Ver publicaci\u00f3n",
@@ -119,7 +119,7 @@
         "spam": "Spam",
         "sensitive": "Contenido sensible",
         "abusive": "Abusivo o Da\u00f1ino",
-        "underageAccount": "Cuenta de menor de edad",
+        "underageAccount": "Cuenta de Menor de Edad",
         "copyrightInfringement": "Infracci\u00f3n de derechos de autor",
         "impersonation": "Suplantaci\u00f3n de identidad",
         "scamOrFraud": "Scam o Fraude",
@@ -138,9 +138,9 @@
         "modMarkAsSpammerSuccess": "Cuenta marcada como spam correctamente",
         "toFollowers": "a Seguidores",
         "showCaption": "Mostrar subt\u00edtulos",
-        "showLikes": "Mostrar \"me gusta\"",
-        "compactMode": "Modo compacto",
-        "embedConfirmText": "Al utilizar esta incrustaci\u00f3n, usted acepta nuestros",
+        "showLikes": "Mostrar me gustas",
+        "compactMode": "Modo Compacto",
+        "embedConfirmText": "Usando este incrustado, usted acepta",
         "deletePostConfirm": "\u00bfSeguro que deseas eliminar esta publicaci\u00f3n?",
         "archivePostConfirm": "\u00bfSeguro que deseas archivar esta publicaci\u00f3n?",
         "unarchivePostConfirm": "\u00bfSeguro que desea desarchivar esta publicaci\u00f3n?"

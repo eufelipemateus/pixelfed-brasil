@@ -6,20 +6,20 @@
 					<div class="card-header bg-bluegray-800 nav-menu" style="border-top-left-radius: 10px; border-top-right-radius: 10px;">
 						<ul class="nav justify-content-around">
 						  <li class="nav-item">
-							<router-link to="/" class="nav-link">About</router-link>
+							<router-link to="/" class="nav-link">{{ $t('site.about') }}</router-link>
 							</li>
 							<li v-if="config.show_directory" class="nav-item">
-								<router-link to="/web/directory" class="nav-link">Directory</router-link>
+								<router-link to="/web/directory" class="nav-link">{{ $t('site.directory') }}</router-link>
 							</li>
 							<li v-if="config.show_explore_feed" class="nav-item">
-								<router-link to="/web/explore" class="nav-link">Explore</router-link>
+								<router-link to="/web/explore" class="nav-link">{{ $t('site.explore') }}</router-link>
 							</li>
 						</ul>
 					</div>
 
 					<div class="card-body">
 						<div class="py-3">
-							<p class="lead text-center">Explore trending posts</p>
+							<p class="lead text-center">{{ $t("site.exploreTrending") }}</p>
 						</div>
 
 						<div v-if="loading" class="d-flex justify-content-center align-items-center" style="min-height: 500px;">

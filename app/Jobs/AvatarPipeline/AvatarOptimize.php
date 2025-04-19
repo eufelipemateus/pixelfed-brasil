@@ -51,13 +51,24 @@ class AvatarOptimize implements ShouldQueue
         $avatar = $this->profile->avatar;
         $file = storage_path("app/$avatar->media_path");
 
+        if ((bool) config_cache('pixelfed.cloud_storage')) {
+            $file = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
+        }
+
         try {
             $img = Intervention::make($file)->orientate();
             $img->fit(200, 200, function ($constraint) {
                 $constraint->upsize();
             });
             $quality = config_cache('pixelfed.image_quality');
-            $img->save($file, $quality);
+            if ((bool) config_cache('pixelfed.cloud_storage')) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'avatar');
+                $img->save($tempFile, $quality);
+                Storage::disk(config('filesystems.cloud'))->put($avatar->media_path, file_get_contents($tempFile));
+                unlink($tempFile);
+            } else {
+                $img->save($file, $quality);
+            }
 
             $avatar = Avatar::whereProfileId($this->profile->id)->firstOrFail();
             $avatar->change_count = ++$avatar->change_count;
@@ -66,12 +77,8 @@ class AvatarOptimize implements ShouldQueue
             Cache::forget('avatar:'.$avatar->profile_id);
             $this->deleteOldAvatar($avatar->media_path, $this->current);
 
-            if ((bool) config_cache('pixelfed.cloud_storage') && (bool) config_cache('instance.avatar.local_to_cloud')) {
-                $this->uploadToCloud($avatar);
-            } else {
-                $avatar->cdn_url = null;
-                $avatar->save();
-            }
+            $avatar->cdn_url = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
+            $avatar->save();
         } catch (Exception $e) {
         }
     }
@@ -84,7 +91,11 @@ class AvatarOptimize implements ShouldQueue
             return;
         }
         if (is_file($current)) {
-            @unlink($current);
+            if ((bool) config_cache('pixelfed.cloud_storage')) {
+                Storage::disk(config('filesystems.cloud'))->delete($current);
+            } else {
+                @unlink($current);
+            }
         }
     }
 

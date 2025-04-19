@@ -14,11 +14,11 @@
 					<p class="lead text-lighter font-weight-light mb-0">Stories</p>
 				</div>
 				<div class="flex-fill py-4">
-					<p class="text-center lead font-weight-light text-lighter mb-4">Share moments with followers that last 24 hours</p>
+					<p class="text-center lead font-weight-light text-lighter mb-4">{{ $t("story.subtitle") }}</p>
 					<div class="card w-100 shadow-none bg-transparent">
 						<div class="d-flex">
 							<button type="button" class="btn btn-outline-light btn-lg font-weight-bold btn-block rounded-pill my-1" :disabled="stories.length >= 20" @click="upload()">
-								Add to Story
+								{{ $t('story.add')}}
 							</button>
 							<!-- <button :disabled="stories.length >= 20" type="button" class="btn btn-outline-light btn-lg font-weight-bold btn-block rounded-pill my-1 ml-2" @click="newPoll">
 								Create Poll
@@ -27,7 +27,7 @@
 						<p
 							v-if="stories.length >= 20"
 							class="font-weight-bold text-muted text-center">
-							You have reached the limit for new stories
+							{{ $t('story.limit')}}
 						</p>
 
 						<button
@@ -35,7 +35,7 @@
 							class="btn btn-outline-light btn-lg font-weight-bold btn-block rounded-pill my-3"
 							@click="viewMyStory"
 							:disabled="stories.length == 0">
-							<span>My Story</span>
+							<span>{{ $t("story.myStory") }}</span>
 							<sup v-if="stories.length" class="ml-2 px-2 text-light bg-danger rounded-pill" style="font-size: 12px;padding-top:2px;padding-bottom:3px;">{{ stories.length }}</sup>
 						</button>
 
@@ -73,19 +73,19 @@
 							type="button"
 							class="btn btn-outline-muted rounded-pill font-weight-bold px-4"
 							@click="deleteCurrentStory()">
-							Cancel
+							{{ $t('story.cancel')}}
 						</button>
 
 						<div class="text-center">
-							<h4 class="font-weight-light text-light mb-n1">Crop</h4>
-							<span class="small text-light">Pan around and pinch to zoom</span>
+							<h4 class="font-weight-light text-light mb-n1">{{ $t('story.crop')}}</h4>
+							<span class="small text-light">{{  $t("story.zoom") }}</span>
 						</div>
 
 						<button
 							type="button"
 							class="btn btn-outline-light rounded-pill font-weight-bold px-4"
 							@click="performCrop()">
-							Next
+							{{ $t('story.next')}}
 						</button>
 					</div>
 				</div>
@@ -98,9 +98,9 @@
 				</div>
 				<div class="flex-fill text-center">
 					<p class="h3 mb-0 text-light">Oops!</p>
-					<p class="text-muted lead">An error occurred, please try again later.</p>
+					<p class="text-muted lead">{{ $t('story.error') }}</p>
 					<p class="text-muted mb-0">
-						<a class="btn btn-outline-muted py-0 px-5 rounded-pill font-weight-bold" href="/">Go back</a>
+						<a class="btn btn-outline-muted py-0 px-5 rounded-pill font-weight-bold" href="/">{{ $t('story.goBack') }}</a>
 					</p>
 				</div>
 			</div>
@@ -127,28 +127,28 @@
 						<label for="durationSlider" class="text-light lead font-weight-bold">Options</label>
 						<div class="custom-control custom-checkbox mb-2">
 							<input type="checkbox" class="custom-control-input" id="optionReplies" v-model="canReply">
-							<label class="custom-control-label text-light font-weight-lighter" for="optionReplies">Allow replies</label>
+							<label class="custom-control-label text-light font-weight-lighter" for="optionReplies">{{ $t('story.allowReply') }}</label>
 						</div>
 						<div class="custom-control custom-checkbox mb-2">
 							<input type="checkbox" class="custom-control-input" id="formReactions" v-model="canReact">
-							<label class="custom-control-label text-light font-weight-lighter" for="formReactions">Allow reactions</label>
+							<label class="custom-control-label text-light font-weight-lighter" for="formReactions">{{ $t("story.allowReact") }}</label>
 						</div>
 					</div>
 					<div v-if="!canPostPoll" class="form-group">
 						<video ref="previewVideo" v-if="mediaType == 'video'" class="mb-4 w-100" style="max-height:200px;object-fit:contain;">
 							<source :src="mediaUrl" type="video/mp4">
 						</video>
-						<label for="durationSlider" class="text-light lead font-weight-bold">Story Duration</label>
+						<label for="durationSlider" class="text-light lead font-weight-bold">{{$t("story.storyDuration") }}</label>
 						<input type="range" class="custom-range" min="3" :max="max_duration" step="1" id="durationSlider" v-model="duration">
 						<p class="help-text text-center">
-							<span class="text-light">{{duration}} seconds</span>
+							<span class="text-light">{{duration}} {{ $t("story.seconds")}}</span>
 						</p>
 					</div>
 				</div>
 				<div class="flex-fill w-100 px-md-5">
 					<div class="d-flex">
 						<a class="btn btn-outline-muted btn-block font-weight-bold my-3 mr-3 rounded-pill" href="/" @click.prevent="deleteCurrentStory()">
-							Cancel
+							{{$t("story.cancel")}}
 						</a>
 
 						<a class="btn btn-primary btn-block font-weight-bold my-3 rounded-pill" href="#" @click.prevent="shareStoryToFollowers()">
@@ -187,7 +187,7 @@
 									</div>
 								</div>
 								<div v-if="story.showViewers && story.viewers.length" class="m-2 text-left">
-									<p class="font-weight-bold mb-2">Viewed By</p>
+									<p class="font-weight-bold mb-2">{{ $t("story.viewdBy")}}</p>
 									<div v-for="viewer in story.viewers" class="d-flex">
 										<img src="/storage/avatars/default.png" width="24" height="24" class="rounded-circle mr-2">
 										<p class="mb-0 font-weight-bold">viewer.username</p>
@@ -198,7 +198,96 @@
 					</div>
 				</div>
 				<div class="flex-fill text-center">
-					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold" href="/i/stories/new" @click.prevent="goBack()">Go back</a>
+					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold" href="/i/stories/new" @click.prevent="goBack()">{{ $t('story.goBack')}}</a>
+				</div>
+			</div>
+
+			<div v-else-if="page == 'createPoll'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center" style="height: 90vh;">
+				<div class="text-center pt-3">
+					<img class="mb-2" src="/img/pixelfed-icon-color.svg" width="70" height="70">
+					<p class="lead text-lighter font-weight-light mb-0">Stories</p>
+				</div>
+				<div class="flex-fill mt-3">
+					<div class="align-items-center">
+						<div class="form-group mb-5">
+							<label class="font-weight-bold text-lighter">Poll Question</label>
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Ask a poll question here..." v-model="pollQuestion" />
+						</div>
+						<label class="font-weight-bold text-lighter">Poll Answers</label>
+						<div v-for="(option, index) in pollOptions" class="form-group mb-4">
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Add a poll answer here..." v-model="pollOptions[index]" />
+						</div>
+						<div v-if="pollOptions.length < 4" class="mb-3">
+							<button
+								class="btn btn-block font-weight-bold rounded-pill shadow"
+								:class="[ (pollQuestion && pollQuestion.length) > 6 && (pollOptions.length == 0 || pollOptions.length && pollOptions[pollOptions.length - 1].length > 3) ? 'btn-muted' : 'btn-outline-muted' ]"
+								:disabled="!pollQuestion || pollQuestion.length < 6"
+								@click="addOptionInput">
+								Add poll option
+							</button>
+						</div>
+						<!-- <div v-for="(option, index) in pollOptions" class="form-group mb-4 d-flex align-items-center" style="max-width:400px;position: relative;">
+							<span class="font-weight-bold mr-2" style="position: absolute;left: 10px;">{{ index + 1 }}.</span>
+							<input v-if="pollOptions[index].length < 50" type="text" class="form-control rounded-pill" placeholder="Add a poll option, press enter to save" v-model="pollOptions[index]" style="padding-left: 30px;padding-right: 90px;">
+							<textarea v-else class="form-control" v-model="pollOptions[index]" placeholder="Add a poll option, press enter to save" rows="3" style="padding-left: 30px;padding-right:90px;"></textarea>
+							<button class="btn btn-danger btn-sm rounded-pill font-weight-bold" style="position: absolute;right: 5px;" @click="deletePollOption(index)">
+								<i class="fas fa-trash"></i> Delete
+							</button>
+						</div> -->
+					</div>
+				</div>
+				<div class="flex-fill text-center">
+					<a v-if="canPostPoll" class="btn btn-outline-light btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="pollPreview">{{ $t("story.next") }}</a>
+					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="goBack()">{{ $t("story.goBack")}}</a>
+				</div>
+			</div>
+
+			<div v-else-if="page == 'createPoll'" class="card card-body bg-transparent border-0 shadow-none d-flex justify-content-center" style="height: 90vh;">
+				<div class="text-center pt-3">
+					<img class="mb-2" src="/img/pixelfed-icon-color.svg" width="70" height="70">
+					<p class="lead text-lighter font-weight-light mb-0">Stories</p>
+				</div>
+				<div class="flex-fill mt-3">
+					<div class="align-items-center">
+						<div class="form-group mb-5">
+							<label class="font-weight-bold text-lighter">Poll Question</label>
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Ask a poll question here..." v-model="pollQuestion" />
+						</div>
+						<label class="font-weight-bold text-lighter">Poll Answers</label>
+						<div v-for="(option, index) in pollOptions" class="form-group mb-4">
+							<input class="form-control form-control-lg rounded-pill bg-muted shadow text-white border-0" placeholder="Add a poll answer here..." v-model="pollOptions[index]" />
+						</div>
+						<div v-if="pollOptions.length < 4" class="mb-3">
+							<button
+								class="btn btn-block font-weight-bold rounded-pill shadow"
+								:class="[ (pollQuestion && pollQuestion.length) > 6 && (pollOptions.length == 0 || pollOptions.length && pollOptions[pollOptions.length - 1].length > 3) ? 'btn-muted' : 'btn-outline-muted' ]"
+								:disabled="!pollQuestion || pollQuestion.length < 6"
+								@click="addOptionInput">
+								Add poll option
+							</button>
+						</div>
+						<!-- <div v-for="(option, index) in pollOptions" class="form-group mb-4 d-flex align-items-center" style="max-width:400px;position: relative;">
+							<span class="font-weight-bold mr-2" style="position: absolute;left: 10px;">{{ index + 1 }}.</span>
+							<input v-if="pollOptions[index].length < 50" type="text" class="form-control rounded-pill" placeholder="Add a poll option, press enter to save" v-model="pollOptions[index]" style="padding-left: 30px;padding-right: 90px;">
+							<textarea v-else class="form-control" v-model="pollOptions[index]" placeholder="Add a poll option, press enter to save" rows="3" style="padding-left: 30px;padding-right:90px;"></textarea>
+							<button class="btn btn-danger btn-sm rounded-pill font-weight-bold" style="position: absolute;right: 5px;" @click="deletePollOption(index)">
+								<i class="fas fa-trash"></i> Delete
+							</button>
+						</div> -->
+					</div>
+				</div>
+				<div class="flex-fill text-center">
+					<a v-if="canPostPoll" class="btn btn-outline-light btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="pollPreview">Next</a>
+					<a class="btn btn-outline-secondary btn-block px-5 font-weight-bold rounded-pill" href="/i/stories/new" @click.prevent="goBack()">Go back</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div v-else class="row">
+		<div class="col-12 col-md-6 offset-md-3 bg-dark rounded-lg px-0" style="height: 90vh;">
+			<div class="w-100 h-100 d-flex justify-content-center align-items-center">
+				<div class="spinner-border text-lighter" role="status">
+					<span class="sr-only">Loading...</span>
 				</div>
 			</div>
 
