@@ -5,17 +5,7 @@ on:
   # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
   workflow_dispatch:
 
-  # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
-  push:
-    tags:
-      - "*"
 
-  # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
 
 jobs:
   lint:
