@@ -127,13 +127,15 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
-
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
 
+      - name: Remove .git
+        run: rm -rf .git
+        
       - name: Write SSH keys
         run: |
             install -m 600 -D /dev/null ~/.ssh/id_rsa
