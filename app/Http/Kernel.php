@@ -20,7 +20,6 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrustProxies::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \AndreasElia\Analytics\Http\Middleware\Analytics::class,
 
     ];
 
@@ -40,6 +39,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Laravel\Passport\Http\Middleware\CreateFreshApiToken::class,
+            \AndreasElia\Analytics\Http\Middleware\Analytics::class,
             // 'restricted',
         ],
 

@@ -31,7 +31,7 @@ jobs:
             touch .env
             echo "APP_NAME=\"Pixelfed Brasil\"" >> .env
             echo "APP_ENV=production" >> .env
-            echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
+            echo "APP_KEY=${{secrets.APP_KEY}}" >> .env
             echo "APP_DEBUG=false" >> .env
 
             echo "DB_CONNECTION=pgsql" >> .env
@@ -127,18 +127,31 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
-
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
 
+      - name: Remove .git
+        run: rm -rf .git
+        
       - name: Write SSH keys
         run: |
             install -m 600 -D /dev/null ~/.ssh/id_rsa
             echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
             ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
+
+
+      - name: Down  App
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{secrets.WORK_DIR}}
+            php artisan down
 
       - name: 📂 Deploy with rsync
         run: rsync -rav --delete ./  ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}:/tmp/pixelfed   #${{secrets.WORK_DIR}}
@@ -156,3 +169,9 @@ jobs:
             cd ${{secrets.WORK_DIR}}
             php artisan migrate --force
             php artisan storage:link
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
+            php artisan up

@@ -23,7 +23,7 @@
       <label class="form-check-label font-weight-bold" for="is_private">
         {{__('settings.privacy.private_account')}}
       </label>
-      <p class="text-muted small help-text">{{__('settings.privacy.when_your_account_is_private_only_people_you_etc')}}</p>
+      <p class="text-muted small help-text">When you get a follow request, Pixelfed will not automatically approve it. You can instead manually confirm or deny the follow request. Your existing followers won't be affected.</p>
     </div>
 
     <div class="form-check pb-3">

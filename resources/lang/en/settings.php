@@ -6,6 +6,7 @@ return [
     'email' =>                  'Email',
     'invites' =>                'Invites',
     'media' =>                  'Media',
+    'filters' =>                'Filters',
     'notifications' =>          'Notifications',
     'password' =>               'Password',
     'privacy' =>                'Privacy',

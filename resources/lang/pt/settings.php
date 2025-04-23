@@ -6,6 +6,7 @@ return [
 'email' =>                  'Email',
 'invites' =>                'Convites',
 'media' =>                  'Mídia',
+'filters' =>                'Filtros',
 'notifications' =>          'Notificações',
 'password' =>               'Senha',
 'privacy' =>                'Privacidade',
