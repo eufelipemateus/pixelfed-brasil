@@ -127,6 +127,14 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
+
+            echo "AWS_ACCESS_KEY_ID=${{secrets.S3_ACCESS_KEY_ID}}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
+            echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
+            echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
+            echo "AWS_URL=${{secrets.S3_URL}}" >> .env
+
+
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid
 
@@ -135,7 +143,7 @@ jobs:
 
       - name: Remove .git
         run: rm -rf .git
-        
+
       - name: Write SSH keys
         run: |
             install -m 600 -D /dev/null ~/.ssh/id_rsa
