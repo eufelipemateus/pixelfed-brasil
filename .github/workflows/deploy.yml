@@ -94,6 +94,7 @@ jobs:
             echo "INSTANCE_DISCOVER_BEAGLE_API=true" >> .env
             echo "INSTANCE_LANDING_SHOW_EXPLORE=false" >> .env
             echo "INSTANCE_LANDING_SHOW_DIRECTORY=false" >> .env
+            echo "ACCOUNT_DELETION=true" >> .env
 
             echo "PF_LOGIN_WITH_MASTODON_ENABLED=true" >> .env
             echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
