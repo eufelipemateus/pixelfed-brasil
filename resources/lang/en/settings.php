@@ -6,6 +6,7 @@ return [
     'email' =>                  'Email',
     'invites' =>                'Invites',
     'media' =>                  'Media',
+    'filters' =>                'Filters',
     'notifications' =>          'Notifications',
     'password' =>               'Password',
     'privacy' =>                'Privacy',
@@ -20,6 +21,7 @@ return [
     'parental_controls' =>      'Parental Controls',
 
     'change' =>                 'Change',
+
     'submit' =>                 'Submit',
     'error' =>                  'Error',
     'cancel' =>                 'Cancel',
@@ -70,6 +72,7 @@ return [
     'email.send_email_on_share' =>                                      'Send email when someone shares your post',
     'email.send_email_on_like' =>                                       'Send email when someone likes your post',
     'email.send_email_on_mention' =>                                    'Send email when someone mentions you',
+
     'media.default_license' =>                                          'Default License',
     'media.set_a_default_license_for_new_posts' =>                      'Set a default license for new posts.',
     'media.sync_licenses' =>                                            'Sync Licenses',
@@ -139,6 +142,7 @@ return [
     'relationships.unfollow' =>                                                 'Unfollow',
     'relationships.mute' =>                                                     'Mute',
     'relationships.block' =>                                                    'Block',
+    'relationships.removeFollow' =>                                             'Remove  Follow',
     'relationships.mute_successful' =>                                          'Mute Successful',
     'relationships.you_have_successfully_muted_that_user' =>                    'You have successfully muted that user',
     'relationships.block_successful' =>                                         'Block Successful',
