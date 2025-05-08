@@ -5,20 +5,22 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
-class WeeklyPopularPostsMail extends Mailable
+class DesactiveInactiveAccountNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $posts;
     public $user;
 
-    public function __construct($posts, $user)
+    /**
+     * Create a new message instance.
+     */
+    public function __construct($user)
     {
-        $this->posts = $posts;
+        //
         $this->user = $user;
     }
 
@@ -28,11 +30,10 @@ class WeeklyPopularPostsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Top Posts da Semana no '.config('app.name'),
+            subject: '[IMPORTANTE] '.config('app.name') .' - Sua conta foi desativada por inatividade!',
             replyTo: [config('instance.email')]
         );
     }
-
 
     /**
      * Get the message content definition.
@@ -40,8 +41,7 @@ class WeeklyPopularPostsMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            html:'emails.weekly_popular_posts',
-            with: ['user' => $this->user, 'posts' => $this->posts]
+            markdown: 'emails.desactive_inactive_account',
         );
     }
 
