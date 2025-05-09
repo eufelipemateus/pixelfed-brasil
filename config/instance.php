@@ -264,4 +264,10 @@ return [
          */
         'max_updates_per_hour' => env('PF_CF_MAX_UPDATES_PER_HOUR', 40),
     ],
+
+    'limit_users_active' =>[
+        'enabled' => env('LIMIT_USERS_ACTIVE', false),
+        'max_users_active' => env('MAX_USER_ACTIVE', 100),
+        'user_session_timeout' => env('USER_SESSION_TIMEOUT', 15), // in minutes
+    ]
 ];
