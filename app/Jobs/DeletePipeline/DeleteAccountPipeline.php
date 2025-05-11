@@ -182,7 +182,7 @@ class DeleteAccountPipeline implements ShouldQueue
 	protected function deleteUserColumns($user)
 	{
 		DB::transaction(function() use ($user) {
-			$user->status = 'deleted';
+			$user->status = \App\Enums\StatusEnums::DELETED;
 			$user->name = 'deleted';
 			$user->email = $user->id;
 			$user->password = '';

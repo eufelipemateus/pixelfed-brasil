@@ -107,12 +107,11 @@ class SettingsController extends Controller
         abort_if(! config('pixelfed.account_deletion'), 403);
         abort_if($user->is_admin, 403);
         $profile = $user->profile;
-        $user->status = 'disabled';
-        $profile->status = 'disabled';
-        $user->save();
-        $profile->save();
+        $user->disable();
+        $profile->disable();
         Auth::logout();
         Cache::forget('profiles:private');
+        AccountService::del($profile->id);
 
         return redirect('/');
     }

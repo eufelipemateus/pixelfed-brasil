@@ -8,6 +8,8 @@ use Illuminate\Console\Command;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\confirm;
+use App\Enums\StatusEnums;
+
 
 class ReclaimUsername extends Command
 {
@@ -44,7 +46,7 @@ class ReclaimUsername extends Command
             return Command::FAILURE;
         }
 
-        if ($user->delete_after === null || $user->status !== 'deleted') {
+        if ($user->delete_after === null || $user->status !== StatusEnums::DELETED) {
             $this->error("Cannot reclaim an active account: {$username}");
             return Command::FAILURE;
         }
