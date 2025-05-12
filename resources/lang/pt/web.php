@@ -249,7 +249,7 @@ return [
             'customize_your_experience' => 'Personalize sua experiência com filtros de conteúdo poderosos que verificam palavras ou frases específicas em toda a sua conta - incluindo linhas do tempo pessoais e públicas, e feeds de hashtags.',
             'add_new_filter' => 'Adicionar Novo Filtro',
             'limit_message' => 'Você pode adicionar até <strong>:filters_num filtros</strong> que podem ter até <strong>:keywords_num palavras-chave</strong>.',
-            'learn_more_help_center' => 'Saiba mais no nosso <a href="/site/help">Centro de Ajuda</a>.',
+            'learn_more_help_center' => 'Saiba mais no nosso <a href="/help">Centro de Ajuda</a>.',
             'no_filters' => 'Você ainda não tem nenhum filtro de conteúdo',
             'no_filters_message' => 'Os filtros ajudam você a ocultar conteúdo que contém palavras ou frases específicas das suas linhas do tempo.',
             'create_first_filter' => 'Crie Seu Primeiro Filtro',

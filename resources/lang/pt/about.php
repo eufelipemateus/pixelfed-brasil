@@ -2,7 +2,7 @@
 
 return [
     'rules'             => 'Regras',
-    'rulesTerms'        => 'Para mais informações, por favor consulte nosso <a href="/site/terms">Termos de Uso</a>',
+    'rulesTerms'        => 'Para mais informações, por favor consulte nosso <a href="/terms">Termos de Uso</a>',
 
     'featureTitle'      => 'Recursos',
     'featureSubtitle'   =>  'O melhor para os mais brilhantes 📸',

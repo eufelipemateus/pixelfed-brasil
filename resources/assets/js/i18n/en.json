@@ -293,7 +293,7 @@
             "customize_your_experience": "Customize your experience with powerful content filters that screen for specific words or phrases throughout your entire account - including home and public timelines, and hashtag feeds.",
             "add_new_filter": "Add New Filter",
             "limit_message": "You can add up to <strong>:filters_num filters</strong> that can have up to <strong>:keywords_num keywords</strong>.",
-            "learn_more_help_center": "Learn more in our <a href=\"/site/help\">Help Center</a>.",
+            "learn_more_help_center": "Learn more in our <a href=\"/help\">Help Center</a>.",
             "no_filters": "You don't have any content filters yet",
             "no_filters_message": "Filters help you hide content containing specific words or phrases from your timelines.",
             "create_first_filter": "Create Your First Filter",
