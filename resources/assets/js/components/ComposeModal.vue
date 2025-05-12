@@ -335,7 +335,7 @@
 							</a>
 
 							<p class="py-3">
-								<a class="font-weight-bold" href="/site/help">Help</a>
+								<a class="font-weight-bold" href="/help">Help</a>
 							</p>
 						</div>
 					</div>

@@ -159,7 +159,7 @@
 							// 	}
 							// }).then(value => {
 							// 	if(value == 'more-info') {
-							// 		location.href = '/site/kb/groups/interaction-limits';
+							// 		location.href = '/kb/groups/interaction-limits';
 							// 	}
 							// });
 					} else {

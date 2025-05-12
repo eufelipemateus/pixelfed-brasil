@@ -59,7 +59,7 @@ class FederationController extends Controller
                     [
                         'rel' => 'http://webfinger.net/rel/profile-page',
                         'type' => 'text/html',
-                        'href' => 'https://'.$domain.'/site/kb/instance-actor',
+                        'href' => 'https://'.$domain.'/kb/instance-actor',
                     ],
                     [
                         'rel' => 'self',

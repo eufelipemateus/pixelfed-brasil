@@ -444,7 +444,7 @@
                         })
                         .then((val) => {
                             if(val == 'more') {
-                                location.href = '/site/contact'
+                                location.href = '/contact'
                             }
                             return;
                         });

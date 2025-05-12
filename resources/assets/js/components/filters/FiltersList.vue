@@ -18,7 +18,7 @@
         <!-- <p>Customize your experience with powerful content filters that screen for specific words or phrases throughout your entire account—including home and public timelines, notifications, messages, groups, hashtag feeds, and explore sections.</p> -->
         <p>Customize your experience with powerful content filters that screen for specific words or phrases throughout your entire account - including home and public timelines, and hashtag feeds.</p>
         <p class="text-muted mb-0">You can add up to <strong>20 filters</strong> that can have up to <strong>10 keywords</strong>.</p>
-        <p class="text-muted mb-4 small">Learn more in our <a href="/site/help">Help Center</a>.</p>
+        <p class="text-muted mb-4 small">Learn more in our <a href="/help">Help Center</a>.</p>
 
         <div v-if="loading" class="d-flex justify-content-center py-4">
             <div class="spinner-border text-primary" role="status">

@@ -111,7 +111,7 @@
 				</p>
 				<p class="lead text-center">{{ $t('report.thanksMsg') }}</p>
 				<hr>
-				<p class="text-center">{{ $t('report.contactAdminMsg') }}, <a href="/site/contact" class="font-weight-bold primary">{{ $t('common.clickHere') }}</a>.</p>
+				<p class="text-center">{{ $t('report.contactAdminMsg') }}, <a href="/contact" class="font-weight-bold primary">{{ $t('common.clickHere') }}</a>.</p>
 			</div>
 
 			<p class="text-center mb-0 mb-md-n3">
@@ -130,7 +130,7 @@
 				</p>
 				<p class="lead text-center">{{ $t('common.errorMsg') }}</p>
 				<hr>
-				<p class="text-center">{{ $t('report.contactAdminMsg') }}, <a href="/site/contact" class="font-weight-bold primary">{{ $t('common.clickHere') }}</a>.</p>
+				<p class="text-center">{{ $t('report.contactAdminMsg') }}, <a href="/contact" class="font-weight-bold primary">{{ $t('common.clickHere') }}</a>.</p>
 			</div>
 
 			<p class="text-center mb-0 mb-md-n3">

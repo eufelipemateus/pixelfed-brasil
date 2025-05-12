@@ -301,7 +301,7 @@
                         <div v-if="archives.length" class="col-12 col-md-8 offset-md-2 px-0 mb-sm-3 timeline mt-5">
                             <div class="alert alert-info">
                                 <p class="mb-0">Posts you archive can only be seen by you.</p>
-                                <p class="mb-0">For more information see the <a href="/site/kb/sharing-media">Sharing Media</a> help center page.</p>
+                                <p class="mb-0">For more information see the <a href="/kb/sharing-media">Sharing Media</a> help center page.</p>
                             </div>
 
                             <div v-for="(status, index) in archives">
@@ -504,7 +504,7 @@
             <textarea class="form-control disabled text-monospace" rows="6" style="overflow-y:hidden;border: 1px solid #efefef; font-size: 12px; line-height: 18px; margin: 0 0 7px;resize:none;" v-model="ctxEmbedPayload" disabled=""></textarea>
             <hr>
             <button :class="copiedEmbed ? 'btn btn-primary btn-block btn-sm py-1 font-weight-bold disabed': 'btn btn-primary btn-block btn-sm py-1 font-weight-bold'" @click="ctxCopyEmbed" :disabled="copiedEmbed">{{copiedEmbed ? 'Embed Code Copied!' : 'Copy Embed Code'}}</button>
-            <p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/site/terms">Terms of Use</a></p>
+            <p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/terms">Terms of Use</a></p>
         </div>
     </b-modal>
 </div>

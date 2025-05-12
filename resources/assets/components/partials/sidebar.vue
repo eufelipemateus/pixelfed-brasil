@@ -245,19 +245,19 @@
 		</div>
 
 		<!-- <div class="sidebar-sitelinks">
-			<a href="/site/about">{{ $t('navmenu.about') }}</a>
-			<a href="/site/language">{{ $t('navmenu.language') }}</a>
-			<a href="/site/terms">{{ $t('navmenu.privacy') }}</a>
-			<a href="/site/terms">{{ $t('navmenu.terms') }}</a>
+			<a href="/about">{{ $t('navmenu.about') }}</a>
+			<a href="/language">{{ $t('navmenu.language') }}</a>
+			<a href="/terms">{{ $t('navmenu.privacy') }}</a>
+			<a href="/terms">{{ $t('navmenu.terms') }}</a>
 		</div> -->
 
 		<div class="sidebar-attribution pr-3 d-flex justify-content-between align-items-center">
 			<router-link to="/i/web/language">
 				<i class="fal fa-language fa-2x" alt="Select a language"></i>
 			</router-link>
-			<a href="/site/help" class="font-weight-bold">{{ $t('navmenu.help') }}</a>
-			<a href="/site/privacy" class="font-weight-bold">{{ $t('navmenu.privacy') }}</a>
-			<a href="/site/terms" class="font-weight-bold">{{ $t('navmenu.terms') }}</a>
+			<a href="/help" class="font-weight-bold">{{ $t('navmenu.help') }}</a>
+			<a href="/privacy" class="font-weight-bold">{{ $t('navmenu.privacy') }}</a>
+			<a href="/terms" class="font-weight-bold">{{ $t('navmenu.terms') }}</a>
 			<a href="https://pixelfed.org" class="font-weight-bold powered-by">Powered by Pixelfed</a>
 		</div>
 
