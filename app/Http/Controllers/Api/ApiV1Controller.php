@@ -872,10 +872,9 @@ class ApiV1Controller extends Controller
             if (AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
                 $target->user->notify(new FollowRequestNotification($user->profile_id));
             }
-        } else {
-            $follower = Follower::firstOrCreate([
-                'profile_id' => $user->profile_id,
-
+        } elseif ($remote == true) {
+            $follow = FollowRequest::firstOrCreate([
+                'follower_id' => $user->profile_id,
                 'following_id' => $target->id,
             ]);
 
