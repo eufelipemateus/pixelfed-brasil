@@ -3,106 +3,64 @@
 @section('section')
 
 	<div class="title">
-		<h3 class="font-weight-bold">Sharing Photos & Videos</h3>
+		<h3 class="font-weight-bold">{{ __("helpcenter.sharingMediaTitle")  }}</h3>
 	</div>
 	<hr>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse1" role="button" aria-expanded="false" aria-controls="collapse1">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I create a post?
+			{{ __("helpcenter.howCreatePostAask") }}
 		</a>
 		<div class="collapse" id="collapse1">
-			<div>
-				To create a post using a desktop web browser:
-				<ol>
-					<li>Go to <a href="{{config('app.url')}}">{{config('app.url')}}</a>.</li>
-					<li>Click on the <i class="fas fa-camera-retro text-primary"></i> link at the top of the page.</li>
-					<li>Upload your photo(s) or video(s), add an optional caption and set other options.</li>
-					<li>Click on the <span class="font-weight-bold">Create Post</span> button.</li>
-				</ol>
-			</div>
-			<div class="pt-3">
-				To create a post using a mobile web browser:
-				<ol>
-					<li>Go to <a href="{{config('app.url')}}">{{config('app.url')}}</a>.</li>
-					<li>Click on the <i class="far fa-plus-square fa-lg"></i> button at the bottom of the page.</li>
-					<li>Upload your photo(s) or video(s), add an optional caption and set other options.</li>
-					<li>Click on the <span class="font-weight-bold">Create Post</span> button.</li>
-				</ol>
-			</div>
+			{!! __("helpcenter.howCreatePostAnswer") !!}
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse2" role="button" aria-expanded="false" aria-controls="collapse2">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I share a post with multiple photos or videos?
+			{{ __("helpcenter.howAddMultiplePhotosAsk") }}
 		</a>
 		<div class="collapse" id="collapse2">
 			<div>
-				During the compose process, you can select multiple files at a single time, or add each photo/video individually.
-			</div>
+                {{ __("helpcenter.howAddMultiplePhotosAnswer") }}
+            </div>
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse3" role="button" aria-expanded="false" aria-controls="collapse3">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I add a caption before sharing my photos or videos on Pixelfed?
+			{{ __("helpcenter.howCaptionBeforeSharePhotoAsk") }}
 		</a>
 		<div class="collapse" id="collapse3">
-			<div>
-				During the compose process, you will see the <span class="font-weight-bold">Caption</span> input. Captions are optional and limited to <span class="font-weight-bold">{{config_cache('pixelfed.max_caption_length')}}</span> characters.
-			</div>
+			{!! __("helpcenter.howCaptionBeforeSharePhotoAnswer") !!}
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse4" role="button" aria-expanded="false" aria-controls="collapse4">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I add a filter to my photos?
+			{{ __("helpcenter.howAddFilterAsk") }}
 		</a>
 		<div class="collapse" id="collapse4">
-			<div>
-				<p class="text-center">
-					<span class="alert alert-warning py-2 font-weight-bold">This is an experimental feature, filters are not federated yet!</span>
-				</p>
-				To add a filter to media during the compose post process:
-				<ol>
-					<li>
-						Click the <span class="btn btn-sm btn-outline-primary py-0">Options <i class="fas fa-chevron-down fa-sm"></i></span> button if media preview is not displayed.
-					</li>
-					<li>Select a filter from the <span class="font-weight-bold small text-muted">Select Filter</span> dropdown.</li>
-				</ol>
-			</div>
+			{!! __("helpcenter.howAddFilterAnswer") !!}
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse5" role="button" aria-expanded="false" aria-controls="collapse5">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I add a description to each photo or video for the visually impaired?
+			{{ __("helpcenter.howAddDescriptionPhotoAsk") }}
 		</a>
 		<div class="collapse" id="collapse5">
-			<div>
-				<p class="text-center">
-					<span class="alert alert-warning py-2 font-weight-bold">This is an experimental feature!</span>
-				</p>
-				<p>
-					You need to use the experimental compose UI found <a href="/i/compose">here</a>.
-				</p>
-				<ol>
-					<li>Add media by clicking the <span class="btn btn-outline-secondary btn-sm py-0">Add Photo/Video</span> button.</li>
-					<li>Set a image description by clicking the <span class="btn btn-outline-secondary btn-sm py-0">Media Description</span> button.</li>
-				</ol>
-				<p class="small text-muted"><i class="fas fa-info-circle mr-1"></i> Image descriptions are federated to instances where supported.</p>
-			</div>
+			{!! __("helpcenter.howAddDescriptionPhotoAnswer") !!}
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse6" role="button" aria-expanded="false" aria-controls="collapse6">
 			<i class="fas fa-chevron-down mr-2"></i>
-			What types of photos or videos can I upload?
+			{{ __("helpcenter.howMediaTypesCanUploadAsk") }}
 		</a>
 		<div class="collapse" id="collapse6">
 			<div>
-				You can upload the following media types:
+				{{ __("helpcenter.howMediaTypesCanUploadAnswer") }}
 				<ul>
 					@foreach(explode(',', config_cache('pixelfed.media_types')) as $type)
 					<li class="font-weight-bold">{{$type}}</li>
@@ -111,62 +69,23 @@
 			</div>
 		</div>
 	</p>
-	{{-- <p>
-		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse7" role="button" aria-expanded="false" aria-controls="collapse7">
-			<i class="fas fa-chevron-down mr-2"></i>
-			What is the limit for photo and video file sizes?
-		</a>
-		<div class="collapse" id="collapse7">
-			<div>
-
-			</div>
-		</div>
-	</p> --}}
-	{{-- <p>
-		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse8" role="button" aria-expanded="false" aria-controls="collapse8">
-			<i class="fas fa-chevron-down mr-2"></i>
-			When I share a photo, what's the image resolution?
-		</a>
-		<div class="collapse" id="collapse8">
-			<div>
-
-			</div>
-		</div>
-	</p> --}}
-	{{-- <p>
-		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse9" role="button" aria-expanded="false" aria-controls="collapse9">
-			<i class="fas fa-chevron-down mr-2"></i>
-			Can I edit my post captions, photos or videos after sharing them?
-		</a>
-		<div class="collapse" id="collapse9">
-			<div>
-
-			</div>
-		</div>
-	</p> --}}
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse10" role="button" aria-expanded="false" aria-controls="collapse10">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How can I disable comments/replies on my post?
+			{{  __('helpcenter.howDisablecommentsAsk') }}
 		</a>
 		<div class="collapse" id="collapse10">
-			<div>
-				To enable or disable comments/replies using a desktop or mobile browser:
-				<ul>
-					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> button</li>
-					<li>Click on <span class="small font-weight-bold cursor-pointer">Enable Comments</span> or <span class="small font-weight-bold cursor-pointer">Disable Comments</span></li>
-				</ul>
-			</div>
+            {!! __('helpcenter.howDisablecommentsAnswer') !!}
 		</div>
 	</p>
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse11" role="button" aria-expanded="false" aria-controls="collapse11">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How many people can I tag or mention in my comments or posts?
+			{{ __('helpcenter.howManyTagMentionAsk') }}
 		</a>
 		<div class="collapse" id="collapse11">
 			<div>
-				You can tag or mention up to 5 profiles per comment or post.
+				{{ __('helpcenter.howManyTagMentionAnswer')  }}
 			</div>
 		</div>
 	</p>
@@ -174,51 +93,30 @@
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse12" role="button" aria-expanded="false" aria-controls="collapse11">
 			<i class="fas fa-chevron-down mr-2"></i>
-			What does archive mean?
+			{{ __('helpcenter.whatArchiveMeanAsk') }}
 		</a>
 		<div class="collapse" id="collapse12">
-			<div>
-				You can archive your posts which prevents anyone from interacting or viewing it.
-				<br />
-				<strong class="text-danger">Archived posts cannot be deleted or otherwise interacted with. You may not recieve interactions (comments, likes, shares) from other servers while a post is archived.</strong>
-				<br />
-			</div>
+			{!! __('helpcenter.whatArchiveMeanAnswer') !!}
 		</div>
 	</p>
 
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse13" role="button" aria-expanded="false" aria-controls="collapse11">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How can I archive my posts?
+			{{ __('helpcenter.howArchivePostAsk') }}
 		</a>
 		<div class="collapse" id="collapse13">
-			<div>
-				To archive your posts:
-				<ul>
-					<li>Navigate to the post</li>
-					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> or <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i> button</li>
-					<li>Click on <span class="small font-weight-bold cursor-pointer">Archive</span></li>
-				</ul>
-			</div>
+			{!! __('helpcenter.howArchivePostAnswer') !!}
 		</div>
 	</p>
 
 	<p>
 		<a class="text-dark font-weight-bold" data-toggle="collapse" href="#collapse14" role="button" aria-expanded="false" aria-controls="collapse11">
 			<i class="fas fa-chevron-down mr-2"></i>
-			How do I unarchive my posts?
+			{{ __('helpcenter.howUnarchivePostAsk') }}
 		</a>
 		<div class="collapse" id="collapse14">
-			<div>
-				To unarchive your posts:
-				<ul>
-					<li>Navigate to your profile</li>
-					<li>Click on the <strong>ARCHIVES</strong> tab</li>
-					<li>Scroll to the post you want to unarchive</li>
-					<li>Open the menu, click the <i class="fas fa-ellipsis-v text-muted mx-2 cursor-pointer"></i> or <i class="fas fa-ellipsis-h text-muted mx-2 cursor-pointer"></i> button</li>
-					<li>Click on <span class="small font-weight-bold cursor-pointer">Unarchive</span></li>
-				</ul>
-			</div>
+			{!! __('helpcenter.howUnarchivePostAnswer') !!}
 		</div>
 	</p>
 

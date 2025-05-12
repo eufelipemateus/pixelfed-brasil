@@ -22,12 +22,13 @@ use FFMpeg;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Image as Intervention;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 
 class StoryComposeController extends Controller
 {
     public function apiV1Add(Request $request)
     {
+
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
         $this->validate($request, [
@@ -109,10 +110,10 @@ class StoryComposeController extends Controller
         $storagePath = MediaPathService::story($user->profile);
         $path = $photo->storePubliclyAs($storagePath, Str::random(random_int(2, 12)).'_'.Str::random(random_int(32, 35)).'_'.Str::random(random_int(1, 14)).'.'.$photo->extension());
         if (in_array($photo->getMimeType(), ['image/jpeg', 'image/png'])) {
-            $fpath = storage_path('app/'.$path);
+            $fpath = Storage::disk(config('filesystems.cloud'))->url($path);
             $img = Intervention::make($fpath);
             $img->orientate();
-            $img->save($fpath, config_cache('pixelfed.image_quality'));
+            Storage::disk(config('filesystems.cloud'))->put($path, $img->stream());
             $img->destroy();
         }
 
@@ -140,19 +141,25 @@ class StoryComposeController extends Controller
 
         $story = Story::whereProfileId($user->profile_id)->findOrFail($id);
 
-        $path = storage_path('app/'.$story->path);
+        $path = Storage::disk(config('filesystems.cloud'))->path($story->path);
+        $url = Storage::disk(config('filesystems.cloud'))->url($story->path);
 
-        if (! is_file($path)) {
+        $tempPath = tempnam(sys_get_temp_dir(), 'story_');
+        file_put_contents($tempPath, file_get_contents($url));
+
+        if (! Storage::disk(config('filesystems.cloud'))->exists($story->path)) {
             abort(400, 'Invalid or missing media.');
         }
 
         if ($story->type === 'photo') {
-            $img = Intervention::make($path);
+            $img = Intervention::make($tempPath);
             $img->crop($width, $height, $x, $y);
             $img->resize(1080, 1920, function ($constraint) {
                 $constraint->aspectRatio();
             });
-            $img->save($path, config_cache('pixelfed.image_quality'));
+            Storage::disk(config('filesystems.cloud'))->put($path, $img->stream(), 'public');
+            $img->destroy();
+            @unlink($tempPath);
         }
 
         return [

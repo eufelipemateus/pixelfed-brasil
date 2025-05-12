@@ -11,7 +11,6 @@ use League\Fractal\Serializer\ArraySerializer;
 class StatusService
 {
     const CACHE_KEY = 'pf:services:status:v1.1:';
-
     const MAX_PINNED = 3;
 
     public static function key($id, $publicOnly = true)

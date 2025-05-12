@@ -131,6 +131,13 @@
 						</a>
 					</li>
 
+                    <li class="nav-item">
+						<a class="nav-link" href="/i/admin/analytics">
+							<i class="ni ni-bold-right text-primary"></i>
+							<span class="nav-link-text">Analytics</span>
+						</a>
+					</li>
+
 					<li class="nav-item">
 						<a class="nav-link {{request()->is('*diagnostics*')?'active':''}}" href="{{route('admin.diagnostics')}}">
 							<i class="ni ni-bold-right text-primary"></i>
@@ -151,7 +158,6 @@
 							<span class="nav-link-text">Horizon</span>
 						</a>
 					</li>
-
 
 					<li class="nav-item">
 						<a class="nav-link {{request()->is('*site-news*')?'active':''}}" href="/i/admin-news">

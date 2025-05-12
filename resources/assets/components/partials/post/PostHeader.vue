@@ -146,22 +146,7 @@
 
         methods: {
             timeago(ts) {
-                let short = App.util.format.timeAgo(ts);
-                if(
-                    short.endsWith('s') ||
-                    short.endsWith('m') ||
-                    short.endsWith('h')
-                ) {
-                    return short;
-                }
-                const intl = new Intl.DateTimeFormat(undefined, {
-                    year:  'numeric',
-                    month: 'short',
-                    day:   'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric'
-                });
-                return intl.format(new Date(ts));
+                return App.util.format.timeAgo(ts);
             },
 
             openMenu() {

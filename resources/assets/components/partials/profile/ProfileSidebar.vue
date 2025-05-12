@@ -299,10 +299,11 @@
 				<router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
 				<a href="/terms">{{ $t('navmenu.privacy') }}</a>
 				<a href="/terms">{{ $t('navmenu.terms') }}</a>
+                <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank">Doar</a>
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">
-				<a href="https://pixelfed.org" class="font-weight-bold">Powered by Pixelfed</a>
+				Mantido por <a href="https://felipemateus.com" class="font-weight-bold">Felipe Mateus</a>
 			</div>
 		</div>
 

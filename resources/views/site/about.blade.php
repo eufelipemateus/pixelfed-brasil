@@ -104,7 +104,7 @@
 		<div id="rules" class="container">
 			<div class="row mb-4">
 				<div class="col">
-					<h1 class="display-4 font-weight-bold mb-0 text-center">Rules</h1>
+					<h1 class="display-4 font-weight-bold mb-0 text-center">{{  __('about.rules') }}  </h1>
 				</div>
 			</div>
 			<div class="row justify-content-center">

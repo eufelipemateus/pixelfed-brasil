@@ -1368,6 +1368,7 @@ class Inbox
 
         $instance = Instance::updateOrCreate([
             'domain' => $instanceHost,
+            'unlisted' => config("pixelfed.hide_remote_instance")
         ]);
 
         $report = new RemoteReport;
