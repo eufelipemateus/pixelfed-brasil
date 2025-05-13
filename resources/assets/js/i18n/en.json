@@ -27,10 +27,7 @@
         "sensitive": "Sensitive",
         "sensitiveContent": "Sensitive Content",
         "sensitiveContentWarning": "This post may contain sensitive content",
-<<<<<<< HEAD
-=======
         "loading": "Loading...",
->>>>>>> dev-contrib-origin
         "continue": "Continue"
     },
     "site": {
@@ -85,13 +82,8 @@
         "language": "Language",
         "privacy": "Privacy",
         "terms": "Terms",
-<<<<<<< HEAD
-        "backToPreviousDesign": "Go back to previous design",
-        "createStory": "Create Story"
-=======
         "legalNotice": "Legal Notice",
         "backToPreviousDesign": "Go back to previous design"
->>>>>>> dev-contrib-origin
     },
     "directMessages": {
         "inbox": "Inbox",
@@ -223,49 +215,13 @@
     },
     "story": {
         "add": "Add Story",
-<<<<<<< HEAD
         "subtitle": ">Share moments with followers that last 24 hours",
         "limit": "You have reached the limit for new stories",
-=======
->>>>>>> dev-contrib-origin
         "myStory": "My Story",
         "viewMyStory": "View My Story",
         "goBack": "Go Back",
         "delete": "Delete",
         "crop": "Crop",
-<<<<<<< HEAD
-        "zoom": "Pan around and pinch to zoom",
-        "error": "An error occurred, please try again later.",
-        "cropping": "Cropping",
-        "next": "Next",
-        "storyDuration": "Story Duration",
-        "seconds": "seconds",
-        "processing": "Processing",
-        "allowReply": "Allow replies",
-        "allowReact": "Allow reactions",
-        "shareWithFollowers": "Share with followers",
-        "cancel": "Cancel",
-        "viewdBy": "Viewed by",
-        "reactionSent": ">Reaction sent",
-        "replySent": ">Reply sent",
-        "viewWarning": " will be able to see that you viewed their story.",
-        "viewStory": "View Story",
-        "expiresIn": "Expires in",
-        "viewers": "Viewers",
-        "report":"Report",
-        "close":"Close",
-        "noViewers":"No viewers yet",
-        "loadMore":"Load more",
-        "spam":"Spam",
-        "sensitiveContent":"Sensitive Content",
-        "abusive":"Abusive or Harmful",
-        "other":"Other",
-        "underageAccount":"Underage Account",
-        "copyrightInfringement":"Copyright Infringement",
-        "impersonation":"Impersonation",
-        "scam":"Scam or Fraud"
-
-=======
         "error": "An error occurred, please try again later.",
         "cropping": "Cropping",
         "storyDuration": "Story Duration",
@@ -279,7 +235,6 @@
         "options": "Options",
         "allowReplies": "Allow Replies",
         "allowReactions": "Allow reactions",
-        "limit": "You have reached the limit for new stories",
         "reactionSent": "Reaction sent",
         "replySent": "Reply sent",
         "expiresIn": "Expires in",
@@ -288,7 +243,6 @@
         "close": "Close",
         "myStories": "My Stories",
         "seeAll": "See All"
->>>>>>> dev-contrib-origin
     },
     "timeline": {
         "peopleYouMayKnow": "People you may know",
@@ -323,10 +277,6 @@
         "masonry": "Masonry",
         "feed": "Feed"
     },
-<<<<<<< HEAD
-
-=======
->>>>>>> dev-contrib-origin
     "settings": {
         "filters": {
             "title": "Filters",
@@ -397,14 +347,8 @@
             "titleAdvance": "Title",
             "context": "Context",
             "review": "Review",
-<<<<<<< HEAD
-            "add_keyword" : "Add a keyword...",
-            "enter_filter_title" : "Enter filter title"
-
-=======
             "add_keyword": "Add a keyword...",
             "enter_filter_title": "Enter filter title"
->>>>>>> dev-contrib-origin
         }
     }
 }
