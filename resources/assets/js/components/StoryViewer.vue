@@ -15,13 +15,13 @@
 
 			<div v-if="activeReactionEmoji" style="position: absolute;z-index: 999;" class="w-100 h-100 d-flex justify-content-center align-items-center">
 				<div class="d-flex justify-content-center align-items-center rounded-pill shadow-lg" style="width: 120px;height: 30px;font-size:13px;background-color: rgba(0, 0, 0, 0.6);">
-					<span class="text-lighter">{{ $t("story.reactionSent") }}</span>
+					<span class="text-lighter">{{  $t("story.reactionSent") }}</span>
 				</div>
 			</div>
 
 			<div v-if="activeReply" style="position: absolute;z-index: 999;" class="w-100 h-100 d-flex justify-content-center align-items-center">
 				<div class="d-flex justify-content-center align-items-center rounded-pill shadow-lg" style="width: 120px;height: 30px;font-size:13px;background-color: rgba(0, 0, 0, 0.6);">
-					<span class="text-lighter">{{ $t("story.replySent") }}</span>
+					<span class="text-lighter">{{ $t("story.replySent")  }}</span>
 				</div>
 			</div>
 
@@ -235,9 +235,9 @@
 						{{ e }}
 					</button>
 				</div>
-				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="fetchViewers">{{ $t('story.viewers') }}</div>
-				<div v-if="!owner" class="list-group-item rounded cursor-pointer" @click="ctxMenuReport">{{ $t("story.report")}}</div>
-				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="deleteStory">{{ $t("story.delete") }}</div>
+				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="fetchViewers">{{ $t("story.viewers")}}</div>
+				<div v-if="!owner" class="list-group-item rounded cursor-pointer" @click="ctxMenuReport">>{{ $t("story.report")}}</div>
+				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="deleteStory">{{ $t("story.delete")}}</div>
 				<div class="list-group-item rounded cursor-pointer text-muted" @click="closeCtxMenu">{{ $t("story.close")}}</div>
 			</div>
 		</b-modal>
@@ -272,7 +272,7 @@
 				<div v-if="viewersHasMore" class="list-group-item text-center border-bottom-0">
 					<button class="btn btn-light font-weight-bold border rounded-pill" @click="viewersLoadMore">{{ $t("story.loadMore") }}</button>
 				</div>
-				<div class="list-group-item text-center rounded cursor-pointer text-muted" @click="closeViewersModal">{{ $t("story.close") }}</div>
+				<div class="list-group-item text-center rounded cursor-pointer text-muted" @click="closeViewersModal">{{ $t("story.close")}}</div>
 			</div>
 		</b-modal>
 

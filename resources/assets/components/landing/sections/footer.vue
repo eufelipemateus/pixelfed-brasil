@@ -7,6 +7,8 @@
 			<div class="spacer">·</div>
 			<a href="/site/privacy">{{ $t('navmenu.privacy') }}</a>
             <div class="spacer">·</div>
+            <a v-if="config.show_legal_notice_link" href="/legal-notice">Legal Notice</a>
+            <div v-if="config.show_legal_notice_link" class="spacer">·</div>
             <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank" >Doar</a>
 		</div>
 
@@ -21,17 +23,17 @@
 </template>
 
 <script type="text/javascript">
-	export default {
-		data() {
-			return {
-				config: window.pfl
-			}
-		},
+export default {
+    data() {
+        return {
+            config: window.pfl
+        }
+    },
 
-		methods: {
-			getYear() {
-				return (new Date().getFullYear());
-			}
-		}
-	}
+    methods: {
+        getYear() {
+            return (new Date().getFullYear());
+        }
+    }
+}
 </script>

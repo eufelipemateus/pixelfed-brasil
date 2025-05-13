@@ -37,8 +37,8 @@ return [
     'sendReset'        =>   'Enviar Link de Recuperação de Senha',
     'backLogin'        =>   'Back to Login',
 
-    'signInMastodon'  => 'Entrar com Mastodon'
-
+    'signInMastodon'  => 'Entrar com Mastodon',
+    'verifyYourEmailAddress' => ' - Verifique seu endereço de e-mail',
 
 
 ];

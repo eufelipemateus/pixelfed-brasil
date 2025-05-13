@@ -9,7 +9,7 @@
           <a href="{{route('site.language')}}" class="text-dark p-2">{{__('site.language')}}</a>
           <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL"  class="text-dark p-2" target="_blank" >Doar</a>
           @if(config_cache('instance.has_legal_notice'))
-            <a href="/site/legal-notice" class="text-dark p-2">Legal Notice</a>
+            <a href="/site/legal-notice" class="text-dark p-2">{{__('web.navmenu.legalNotice')}}</a>
           @endif
         </p>
         <p class="text-center text-muted small mb-0">

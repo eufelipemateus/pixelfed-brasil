@@ -32,7 +32,7 @@ return [
 		'sensitive' => 'Sensitive',
 		'sensitiveContent' => 'Sensitive Content',
 		'sensitiveContentWarning' => 'This post may contain sensitive content',
-
+        'loading' => 'Loading...',
         'continue' => 'Continue',
 	],
 
@@ -64,6 +64,8 @@ return [
         'appearance' => 'Appearance',
 		'compose' => 'Create New',
 		'logout' => 'Logout',
+        "createStory" => "Create Story",
+
 
 		// Nav footer
 		'about' => 'About',
@@ -71,9 +73,11 @@ return [
 		'language' => 'Language',
 		'privacy' => 'Privacy',
 		'terms' => 'Terms',
+        'legalNotice' => 'Legal Notice',
 
 		// Temporary links
-		'backToPreviousDesign' => 'Go back to previous design'
+		'backToPreviousDesign' => 'Go back to previous design',
+
 	],
 
 	'directMessages' => [
@@ -220,8 +224,35 @@ return [
         'unpinPostConfirm' => 'Are you sure you want to unpin this post?'
 	],
 
-	'story' => [
-		'add' => 'Add Story'
+    'story' => [
+        'add' => 'Add Story',
+        'myStory' => 'My Story',
+        'viewMyStory' => 'View My Story',
+        'goBack' => 'Go Back',
+        'delete' => 'Delete',
+        'crop' => 'Crop',
+        'error' => 'An error occurred, please try again later.',
+        'cropping' => 'Cropping',
+        'storyDuration' => 'Story Duration',
+        'seconds' => 'seconds',
+        'processing' => 'Processing',
+        'shareWithFollowers' => 'Share moments with followers that last 24 hours',
+        'cancel' => 'Cancel',
+        'viewedBy' => 'Viewed by',
+        'next' => 'Next',
+        'zoom' => 'Pan around and pinch to zoom',
+        'options' => 'Options',
+        'allowReplies' => 'Allow Replies',
+        'allowReactions' => 'Allow reactions',
+        'limit' => 'You have reached the limit for new stories',
+        'reactionSent' => 'Reaction sent',
+        'replySent' => 'Reply sent',
+        'expiresIn' => 'Expires in',
+        'viewers' => 'Viewers',
+        'report' => 'Report',
+        'close' => 'Close',
+        'myStories' => 'My Stories',
+        'seeAll' => 'See All',
 	],
 
 	'timeline' => [
@@ -339,5 +370,5 @@ return [
             'enter_filter_title' => 'Enter filter title',
         ],
 
-    ]
+    ],
 ];
