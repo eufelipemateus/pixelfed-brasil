@@ -21,17 +21,17 @@
 </template>
 
 <script type="text/javascript">
-	export default {
-		data() {
-			return {
-				config: window.pfl
-			}
-		},
+export default {
+    data() {
+        return {
+            config: window.pfl
+        }
+    },
 
-		methods: {
-			getYear() {
-				return (new Date().getFullYear());
-			}
-		}
-	}
+    methods: {
+        getYear() {
+            return (new Date().getFullYear());
+        }
+    }
+}
 </script>

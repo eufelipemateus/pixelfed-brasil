@@ -41,7 +41,7 @@ return [
     'sendReset'        =>   'Send Password Reset Link',
     'backLogin'        =>   'Back to Login',
 
-    'signInMastodon'  => 'Sign-in with Mastodon'
+    'signInMastodon'  => 'Sign-in with Mastodon',
 
 
 ];
