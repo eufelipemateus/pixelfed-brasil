@@ -8,6 +8,10 @@ use App\HasSnowflakePrimary;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use App\Services\FollowerService;
 use App\Models\ProfileAlias;
+use App\Casts\StatusEnumCast;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusEnums;
 
 class Profile extends Model
 {
@@ -23,7 +27,8 @@ class Profile extends Model
 	protected $casts = [
 		'deleted_at' => 'datetime',
 		'last_fetched_at' => 'datetime',
-		'last_status_at' => 'datetime'
+		'last_status_at' => 'datetime',
+        'status' => StatusEnumCast::class,
 	];
 	protected $hidden = ['private_key'];
 	protected $visible = ['id', 'user_id', 'username', 'name'];
@@ -379,4 +384,44 @@ class Profile extends Model
 	{
 		return $this->hasMany(ProfileAlias::class);
 	}
+
+    /**
+     * Scope a query to only active Users.
+     *
+     * @param Builder $query query builder instance
+     *
+     * @return void
+     */
+    #[Scope]
+    protected function whereActive(Builder $query)
+    {
+        return   $query->whereNull('status');
+    }
+
+     /**
+     *  Enable the user
+     *
+     * @return void
+     **/
+    public function enable(): void
+    {
+        if ($this->status == StatusEnums::DISABLED) {
+            $this->status = StatusEnums::ACTIVE;
+            $this->save();
+        }
+    }
+
+    /**
+     *  Disable the user
+     *
+     * @return void
+     **/
+    public function disable(): void
+    {
+
+        if ($this->status == StatusEnums::ACTIVE) {
+            $this->status = StatusEnums::DISABLED;
+            $this->save();
+        }
+    }
 }

@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use App\Services\BouncerService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use App\Enums\StatusEnums;
 
 class LoginController extends Controller
 {
@@ -98,9 +99,13 @@ class LoginController extends Controller
      */
     protected function authenticated($request, $user)
     {
-        if($user->status == 'deleted') {
+        if($user->status == StatusEnums::DELETED) {
             return;
         }
+
+        $profile = $user->profile;
+        $user->enable();
+        $profile->enable();
 
         $log = new AccountLog();
         $log->user_id = $user->id;

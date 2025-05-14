@@ -10,7 +10,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
-
+use App\Casts\StatusEnumCast;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusEnums;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes, UserRateLimit;
@@ -27,6 +30,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             '2fa_setup_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'status' => StatusEnumCast::class,
         ];
     }
 
@@ -129,5 +133,45 @@ class User extends Authenticatable
     public function routeNotificationForExpo()
     {
         return $this->expo_token;
+    }
+
+    /**
+     * Scope a query to only active Users.
+     *
+     * @param Builder $query query builder instance
+     *
+     * @return void
+     */
+    #[Scope]
+    protected function whereActive(Builder $query): void
+    {
+        $query->whereNull('status');
+    }
+
+    /**
+     *  Enable the user
+     *
+     * @return void
+     **/
+    public function enable(): void
+    {
+        if ($this->status == StatusEnums::DISABLED) {
+            $this->status = StatusEnums::ACTIVE;
+            $this->save();
+        }
+    }
+
+    /**
+     *  Disable the user
+     *
+     * @return void
+     **/
+    public function disable(): void
+    {
+
+        if ($this->status == StatusEnums::ACTIVE) {
+            $this->status = StatusEnums::DISABLED;
+            $this->save();
+        }
     }
 }
