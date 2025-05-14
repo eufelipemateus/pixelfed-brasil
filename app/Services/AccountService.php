@@ -142,6 +142,11 @@ class AccountService
                 'show_atom' => (bool) $settings->show_atom,
                 'is_suggestable' => (bool) $user->profile->is_suggestable,
                 'indexable' => (bool) $user->profile->indexable,
+                'send_email_new_follower' => (bool) $settings->send_email_new_follower,
+                'send_email_new_follower_request' => (bool) $settings->send_email_new_follower_request,
+                'send_email_on_share' => (bool) $settings->send_email_on_share,
+                'send_email_on_like' => (bool) $settings->send_email_on_like,
+                'send_email_on_mention' => (bool) $settings->send_email_on_mention,
             ];
         });
     }
