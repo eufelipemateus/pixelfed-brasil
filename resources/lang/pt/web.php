@@ -32,8 +32,8 @@ return [
 		'sensitive' => 'Sensível',
 		'sensitiveContent' => 'Conteúdo sensível',
 		'sensitiveContentWarning' => 'Este post pode conter conteúdo sensível',
-    'loading' => 'Carregando...',
-    'continue' => 'Continuar',
+        'loading' => 'Carregando...',
+        'continue' => 'Continuar',
 	],
 
 	'site' => [
@@ -63,11 +63,10 @@ return [
 		'settings' => 'Configurações',
 		'compose' => 'Criar nova publicação',
 		'logout' => 'Sair',
+        "createStory" => "Criar Story",
 
-		// Nav footer
 		'about' => 'Sobre',
 		'help' => 'Ajuda',
-		'language' => 'Idioma',
 		'privacy' => 'Privacidade',
 		'terms' => 'Termos',
 

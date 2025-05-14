@@ -82,8 +82,8 @@
         "language": "Language",
         "privacy": "Privacy",
         "terms": "Terms",
-        "backToPreviousDesign": "Go back to previous design",
-        "legalNotice": "Legal Notice"
+        "legalNotice": "Legal Notice",
+        "backToPreviousDesign": "Go back to previous design"
     },
     "directMessages": {
         "inbox": "Inbox",
@@ -235,7 +235,6 @@
         "options": "Options",
         "allowReplies": "Allow Replies",
         "allowReactions": "Allow reactions",
-        "limit": "You have reached the limit for new stories",
         "reactionSent": "Reaction sent",
         "replySent": "Reply sent",
         "expiresIn": "Expires in",
