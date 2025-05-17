@@ -134,7 +134,7 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
-            echo "AWS_URL=${{secrets.S3_URL}}" >> .env
+            echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
 
