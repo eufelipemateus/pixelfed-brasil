@@ -186,8 +186,7 @@ class StoryComposeController extends Controller
         }
 
         if ($story->type === 'photo') {
-
-            $img = $this->imageManager->read($path);
+            $img = $this->imageManager->read($tempPath);
             $img = $img->crop($width, $height, $x, $y);
 
             $img = $img->resize(1080, 1920, function ($constraint) {
@@ -210,6 +209,8 @@ class StoryComposeController extends Controller
             Storage::disk(config('filesystems.cloud'))->put($path, $encoded, 'public');
 
             $img->destroy();
+            @unlink($tempPath);
+
         }
 
         return [
