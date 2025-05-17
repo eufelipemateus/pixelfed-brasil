@@ -146,6 +146,7 @@ class AccountService
                 'send_email_on_share' => (bool) $settings->send_email_on_share,
                 'send_email_on_like' => (bool) $settings->send_email_on_like,
                 'send_email_on_mention' => (bool) $settings->send_email_on_mention,
+                'felipemateus_wants_updates' => (bool) $settings->felipemateus_wants_updates,
             ];
         });
     }
