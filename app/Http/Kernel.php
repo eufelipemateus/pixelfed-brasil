@@ -40,6 +40,8 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Laravel\Passport\Http\Middleware\CreateFreshApiToken::class,
             \AndreasElia\Analytics\Http\Middleware\Analytics::class,
+            \App\Http\Middleware\RefreshSessionActivity::class,
+
             // 'restricted',
         ],
 

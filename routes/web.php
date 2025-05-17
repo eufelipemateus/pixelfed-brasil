@@ -6,6 +6,9 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
     Route::get('web/directory', 'LandingController@directoryRedirect');
     Route::get('web/explore', 'LandingController@exploreRedirect');
     Route::get('authorize_interaction', 'AuthorizeInteractionController@get');
+    Route::get('/waiting-room', function () {
+        return response()->view('waiting-room', [], 503);
+    })->name('waiting-room');
 
     Auth::routes();
 

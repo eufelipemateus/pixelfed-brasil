@@ -95,6 +95,7 @@ jobs:
             echo "INSTANCE_LANDING_SHOW_EXPLORE=false" >> .env
             echo "INSTANCE_LANDING_SHOW_DIRECTORY=false" >> .env
             echo "ACCOUNT_DELETION=true" >> .env
+            echo "GROUPS_ENABLED=true" >> .env
 
             echo "PF_LOGIN_WITH_MASTODON_ENABLED=true" >> .env
             echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
