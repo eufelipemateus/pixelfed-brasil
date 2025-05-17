@@ -35,6 +35,7 @@
 		window.App = {
 			config: {!!App\Util\Site\Config::json()!!}
 		};
+        window.online_users = {{ \App\Services\SessionService::getTotalActiveSessions() }};
 	</script>
 	@endauth
 </head>

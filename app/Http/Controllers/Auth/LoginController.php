@@ -10,7 +10,8 @@ use App\Services\BouncerService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Enums\StatusEnums;
-
+use Illuminate\Support\Facades\Session;
+use App\Services\SessionService;
 class LoginController extends Controller
 {
     /*
@@ -53,6 +54,28 @@ class LoginController extends Controller
 		}
 
         return view('auth.login');
+    }
+
+
+    public function login(Request $request)
+    {
+        if (config('instance.limit_users_active.enabled')) {
+            $totalAtiveSessions = SessionService::getTotalActiveSessions();
+            if ($totalAtiveSessions >= config('instance.limit_users_active.max_users_active')) {
+                return back()->withErrors(
+                    [
+                    'limite' => 'Limite de usuários simultâneos atingido. Tente novamente mais tarde.'
+                    ]
+                );
+            }
+        }
+
+        $this->validateLogin($request);
+        if ($this->attemptLogin($request)) {
+            return $this->sendLoginResponse($request);
+        }
+
+        return $this->sendFailedLoginResponse($request);
     }
 
     /**
@@ -107,6 +130,9 @@ class LoginController extends Controller
         $user->enable();
         $profile->enable();
 
+        if (config('instance.limit_users_active.enabled')) {
+            SessionService::setActiveSession(Session::getId(), $user->id);
+        }
         $log = new AccountLog();
         $log->user_id = $user->id;
         $log->item_id = $user->id;
@@ -141,5 +167,18 @@ class LoginController extends Controller
         throw ValidationException::withMessages([
             $this->username() => [trans('auth.failed')],
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        if (config('instance.limit_users_active.enabled')) {
+            $sessionId = Session::getId();
+            SessionService::removeActiveSession($sessionId);
+        }
+        $this->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/');
     }
 }

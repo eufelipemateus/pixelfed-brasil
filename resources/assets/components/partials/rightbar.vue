@@ -7,6 +7,13 @@
 		<notifications :profile="profile" />
         <donate />
 
+        <div class="text-center my-3">
+            <p>
+                {{ totalUsers }} Usuarios Online
+            </p>
+        </div>
+
+
 		<!-- <div class="d-none card shadow-sm mb-3" style="border-radius: 15px;">
 			<div class="card-body">
 				<div class="d-flex justify-content-between">
@@ -66,6 +73,7 @@
 		data() {
 			return {
 				profile: {},
+                totalUsers: window.online_users
 			}
 		},
 
