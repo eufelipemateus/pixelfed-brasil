@@ -1227,15 +1227,26 @@ class Helpers
      */
     public static function getOrCreateInstance(string $domain): Instance
     {
-        $instance = Instance::updateOrCreate(['domain' => $domain, 'unlisted' => config("pixelfed.hide_remote_instance") ]);
+        return DB::transaction(function () use ($domain) {
+            // Tenta encontrar com lock pessimista
+            $instance = Instance::where('domain', $domain)->lockForUpdate()->first();
 
-        if ($instance->wasRecentlyCreated) {
-            \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)
-                ->onQueue('low');
-        }
+            if ($instance) {
+                return $instance;
+            }
 
-        return $instance;
+            // Cria manualmente se não existir
+            $instance = Instance::create([
+                'domain' => $domain,
+                'unlisted' => config('pixelfed.hide_remote_instance'),
+            ]);
+
+            \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
+
+            return $instance;
+        });
     }
+
 
     /**
      * Handle moved profile references
