@@ -30,7 +30,7 @@ jobs:
         run: |
             touch .env
             echo "APP_NAME=\"Pixelfed Brasil\"" >> .env
-            echo "APP_ENV=production" >> .env
+            echo "APP_ENV=${{env}}" >> .env
             echo "APP_KEY=${{secrets.APP_KEY}}" >> .env
             echo "APP_DEBUG=false" >> .env
 
