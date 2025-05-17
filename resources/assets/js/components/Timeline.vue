@@ -76,7 +76,7 @@
 										</div>
 										<div class="cursor-pointer text-muted" v-on:click="showHashtagPosts = false"><i class="fas fa-times"></i></div>
 									</div>
-									<p class="small text-muted text-center mb-0">You follow this hashtag. <a href="/site/kb/hashtags">Learn more</a></p>
+									<p class="small text-muted text-center mb-0">You follow this hashtag. <a href="/kb/hashtags">Learn more</a></p>
 								</div>
 								<div class="card-body row mx-0">
 									<div v-for="(tag, index) in hashtagPosts" class="col-4 p-1 hashtag-post-square">
@@ -332,12 +332,12 @@
 						<footer>
 							<div class="container px-0 pb-5">
 								<p class="mb-2 small text-justify">
-									<a href="/site/about" class="text-lighter pr-2">About</a>
-									<a href="/site/help" class="text-lighter pr-2">Help</a>
-									<a href="/site/language" class="text-lighter pr-2">Language</a>
+									<a href="/about" class="text-lighter pr-2">About</a>
+									<a href="/help" class="text-lighter pr-2">Help</a>
+									<a href="/language" class="text-lighter pr-2">Language</a>
 									<a href="/discover/places" class="text-lighter pr-2">Places</a>
-									<a href="/site/privacy" class="text-lighter pr-2">Privacy</a>
-									<a href="/site/terms" class="text-lighter pr-2">Terms</a>
+									<a href="/privacy" class="text-lighter pr-2">Privacy</a>
+									<a href="/terms" class="text-lighter pr-2">Terms</a>
 								</p>
 								<p class="mb-0 text-uppercase text-muted small">
 									Mantido por <a href="https://pixelfed.org" class="text-lighter" rel="noopener" title="" data-toggle="tooltip">Felipepe Mateus</a>

@@ -89,7 +89,7 @@ class InstanceActor extends Model
 				'publicKeyPem' => $this->public_key
 			],
 			'manuallyApprovesFollowers' => true,
-			'url' => url('/site/kb/instance-actor')
+			'url' => url('/kb/instance-actor')
 		];
 	}
 }

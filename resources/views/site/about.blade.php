@@ -29,7 +29,7 @@
 		<div class="container">
 			<p class="text-right mt-3">
 				<a href="/" class="font-weight-bold text-dark">Home</a>
-				<a href="/site/newsroom" class="ml-4 font-weight-bold text-dark">Newsroom</a>
+				<a href="{{route('newsroom.index')}}" class="ml-4 font-weight-bold text-dark">Newsroom</a>
 			</p>
 		</div>
 		<div class="px-4 py-5 my-5 text-center">
@@ -114,7 +114,7 @@
 						<li class="h3 my-4">{{$rule}}</li>
 						@endforeach
 					</ol>
-					<p class="h5 text-center pt-4">For more information, please review our <a href="/site/terms">Terms of Use</a></p>
+					<p class="h5 text-center pt-4">For more information, please review our <a href="{{route('site.terms')}}">Terms of Use</a></p>
 				</div>
 			</div>
 		</div>

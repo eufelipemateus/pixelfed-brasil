@@ -15,6 +15,7 @@ use Cache;
 use Illuminate\Http\Request;
 use Mail;
 use Purify;
+use App\UserSetting;
 
 trait HomeSettings
 {
@@ -152,7 +153,19 @@ trait HomeSettings
 
     public function email()
     {
-        return view('settings.email');
+        $user = Auth::user();
+        $profile = $user->profile;
+        $cachedSettings = AccountService::getAccountSettings($profile->id);
+
+
+        $settings['send_email_new_follower'] = (bool) $cachedSettings['send_email_new_follower'];
+        $settings['send_email_new_follower_request'] = (bool) $cachedSettings['send_email_new_follower_request'];
+        $settings['send_email_on_share'] = (bool) $cachedSettings['send_email_on_share'];
+        $settings['send_email_on_like'] = (bool) $cachedSettings['send_email_on_like'];
+        $settings['send_email_on_mention'] = (bool) $cachedSettings['send_email_on_mention'];
+        $settings['felipemateus_wants_updates'] = (bool) $cachedSettings['felipemateus_wants_updates'];
+
+        return view('settings.email',  compact('settings'));
     }
 
     public function emailUpdate(Request $request)
@@ -199,8 +212,52 @@ trait HomeSettings
         } else {
             return redirect('/settings/email');
         }
-
     }
+
+    public function emailConfigUpdate(Request $request)
+    {
+
+        $this->validate(
+            $request,
+            [
+                'send_email_new_follower' => 'sometimes',
+                'send_email_new_follower_request' => 'sometimes',
+                'send_email_on_share' => 'sometimes',
+                'send_email_on_like' => 'sometimes',
+                'send_email_on_mention' => 'sometimes',
+                'felipemateus_wants_updates' => 'sometimes',
+            ]
+        );
+
+        $user =  $request->user();
+        UserSetting::where("user_id", $user->id)
+            ->update(
+                [
+                    'send_email_new_follower' => (bool) $request->has(
+                        'send_email_new_follower'
+                    ),
+                    'send_email_new_follower_request' => (bool) $request->has(
+                        'send_email_new_follower_request'
+                    ),
+                    'send_email_on_share' => (bool) $request->has(
+                        'send_email_on_share'
+                    ),
+                    'send_email_on_like' => (bool) $request->has(
+                        'send_email_on_like'
+                    ),
+                    'send_email_on_mention' => (bool) $request->has(
+                        'send_email_on_mention'
+                    ),
+                    'felipemateus_wants_updates' => (bool) $request->has(
+                        'felipemateus_wants_updates'
+                    ),
+                ]
+            );
+
+        Cache::forget(AccountService::CACHE_PF_ACCT_SETTINGS_KEY.$user->profile_id);
+        return redirect('/settings/email')->with('status', 'Email Config successfully updated!');
+    }
+
 
     public function avatar()
     {

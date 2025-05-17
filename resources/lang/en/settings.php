@@ -20,6 +20,8 @@ return [
     'labs' =>                   'Labs',
     'parental_controls' =>      'Parental Controls',
 
+    'change' =>                 'Change',
+
     'submit' =>                 'Submit',
     'error' =>                  'Error',
     'cancel' =>                 'Cancel',
@@ -62,6 +64,12 @@ return [
     'email.unverified' =>                                               'Unverified',
     'email.you_need_to' =>                                              'You need to',
     'email.verify_your_email' =>                                        'verify your email',
+    'email.send_email_new_follower' =>                                  'Send email when someone follows you',
+    'email.send_email_new_follower_request' =>                          'Send email when someone requests to follow you',
+    'email.send_email_on_share' =>                                      'Send email when someone shares your post',
+    'email.send_email_on_like' =>                                       'Send email when someone likes your post',
+    'email.send_email_on_mention' =>                                    'Send email when someone mentions you',
+
     'media.default_license' =>                                          'Default License',
     'media.set_a_default_license_for_new_posts' =>                      'Set a default license for new posts.',
     'media.sync_licenses' =>                                            'Sync Licenses',

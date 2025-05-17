@@ -29,6 +29,60 @@
     </div>
     <div class="form-group row">
         <div class="col-12 text-right">
+            <button type="submit" class="btn btn-primary font-weight-bold py-0 px-5">{{__('settings.change')}}</button>
+        </div>
+    </div>
+</form>
+<form method="post" action="{{route('settings.email_config')}}">
+    @csrf
+    <div class="form-group">
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_new_follower" id="send_email_new_follower" {{$settings['send_email_new_follower'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_new_follower">
+                {{__('settings.email.send_email_new_follower')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_new_follower_request" id="send_email_new_follower_request" {{$settings['send_email_new_follower_request'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_new_follower_request">
+                {{__('settings.email.send_email_new_follower_request')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_on_share" id="send_email_on_share" {{$settings['send_email_on_share'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_on_share">
+                {{__('settings.email.send_email_on_share')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_on_like" id="send_email_on_like" {{$settings['send_email_on_like'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_on_like">
+                {{__('settings.email.send_email_on_like')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_on_mention" id="send_email_on_mention" {{$settings['send_email_on_mention'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_on_mention">
+                {{__('settings.email.send_email_on_mention')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="felipemateus_wants_updates" id="felipemateus_wants_updates" {{$settings['felipemateus_wants_updates'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="felipemateus_wants_updates">
+                Receba atualizações sobre produtos Felipe Mateus.
+            </label>
+        </div>
+
+
+    </div>
+    <div class="form-group row">
+        <div class="col-12 text-right">
             <button type="submit" class="btn btn-primary font-weight-bold py-0 px-5">{{__('settings.submit')}}</button>
         </div>
     </div>

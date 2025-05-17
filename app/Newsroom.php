@@ -19,7 +19,11 @@ class Newsroom extends Model
     	$month = $this->published_at->format('m');
     	$slug = $this->slug;
 
-    	return url("/site/newsroom/{$year}/{$month}/{$slug}");
+        return route('newsroom.show', [
+            'year' => $year,
+            'month' => $month,
+            'slug' => $slug
+        ]);
     }
 
     public function editUrl()

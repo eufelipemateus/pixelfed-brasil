@@ -43,7 +43,7 @@
                     </div>
                     <div class="list-group-item">
                         <div class="text-center">
-                            <p class="mb-0 small text-muted font-weight-bold">If you would like to respond, use the <a href="/site/contact">contact form</a>.</p>
+                            <p class="mb-0 small text-muted font-weight-bold">If you would like to respond, use the <a href="{{ route('site.contact') }}">contact form</a>.</p>
                         </div>
                     </div>
                     @endif

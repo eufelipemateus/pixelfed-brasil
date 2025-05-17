@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\{Profile, User};
 use DB;
 use App\Util\Lexer\RestrictedNames;
+use App\Enums\StatusEnums;
 
 class FixUsernames extends Command
 {
@@ -54,7 +55,7 @@ class FixUsernames extends Command
 
         $users = User::chunk(100, function($users) use($affected, $restricted) {
             foreach($users as $user) {
-                if($user->is_admin || $user->status == 'deleted') {
+                if($user->is_admin || $user->status == StatusEnums::DELETED) {
                     continue;
                 }
                 if(in_array(strtolower($user->username), array_map('strtolower', $restricted))) {
@@ -67,7 +68,7 @@ class FixUsernames extends Command
                 }
             }
         });
-        
+
         if($affected->count() > 0) {
             $this->info('Found: ' . $affected->count() . ' affected usernames');
 
@@ -105,7 +106,7 @@ class FixUsernames extends Command
                     case $opts[3]:
                         $new = false;
                         break;
-                    
+
                     default:
                         $new = "user_" . str_random(6);
                         break;

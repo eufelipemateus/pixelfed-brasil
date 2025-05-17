@@ -15,35 +15,35 @@
                 <div class="col-12">
                     <hr>
                     <div class="btn-group">
-                        @if(!$pages->contains('slug', '=', '/site/about'))
+                        @if(!$pages->contains('slug', '=', '/about'))
                         <form class="form-inline mr-1" method="post" action="/i/admin/settings/pages/create">
                             @csrf
                             <input type="hidden" name="page" value="about">
                             <button type="submit" class="btn btn-default font-weight-bold">Customize About Page</button>
                         </form>
                         @endif
-                        @if(!$pages->contains('slug', '=', '/site/privacy'))
+                        @if(!$pages->contains('slug', '=', '/privacy'))
                         <form class="form-inline mr-1" method="post" action="/i/admin/settings/pages/create">
                             @csrf
                             <input type="hidden" name="page" value="privacy">
                             <button type="submit" class="btn btn-default font-weight-bold">Customize Privacy Page</button>
                         </form>
                         @endif
-                        @if(!$pages->contains('slug', '=', '/site/terms'))
+                        @if(!$pages->contains('slug', '=', '/terms'))
                         <form class="form-inline mr-1" method="post" action="/i/admin/settings/pages/create">
                             @csrf
                             <input type="hidden" name="page" value="terms">
                             <button type="submit" class="btn btn-default font-weight-bold">Customize Terms Page</button>
                         </form>
                         @endif
-                        @if(!$pages->contains('slug', '=', '/site/kb/community-guidelines'))
+                        @if(!$pages->contains('slug', '=', '/kb/community-guidelines'))
                         <form class="form-inline mr-1" method="post" action="/i/admin/settings/pages/create">
                             @csrf
                             <input type="hidden" name="page" value="community_guidelines">
                             <button type="submit" class="btn btn-default font-weight-bold">Customize Guidelines Page</button>
                         </form>
                         @endif
-                        @if(!$pages->contains('slug', '=', '/site/legal-notice'))
+                        @if(!$pages->contains('slug', '=', '/legal-notice'))
                         <form class="form-inline" method="post" action="/i/admin/settings/pages/create">
                             @csrf
                             <input type="hidden" name="page" value="legal_notice">
@@ -64,7 +64,7 @@
       <thead class="bg-light">
         <tr class="text-center">
           <th scope="col" class="border-0" width="5%">
-            <span>ID</span> 
+            <span>ID</span>
           </th>
           <th scope="col" class="border-0" width="50%">
             <span>Slug</span>

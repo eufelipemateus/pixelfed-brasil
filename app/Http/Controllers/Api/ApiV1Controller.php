@@ -89,6 +89,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Purify;
 use Storage;
+use  App\Notifications\FollowRequestNotification;
 
 class ApiV1Controller extends Controller
 {
@@ -529,9 +530,11 @@ class ApiV1Controller extends Controller
         }
         if ($request->has('page')) {
             $res = DB::table('followers')
-                ->select('id', 'profile_id', 'following_id')
+                ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+                ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->whereFollowingId($account['id'])
-                ->orderByDesc('id')
+                ->whereNull('profiles.status')
+                ->orderByDesc('followers.id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->profile_id, true) : AccountService::getMastodon($follower->profile_id, true);
@@ -546,9 +549,11 @@ class ApiV1Controller extends Controller
         }
 
         $paginator = DB::table('followers')
-            ->select('id', 'profile_id', 'following_id')
+            ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+            ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
             ->whereFollowingId($account['id'])
-            ->orderByDesc('id')
+            ->whereNull('profiles.status')
+            ->orderByDesc('followers.id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -632,9 +637,11 @@ class ApiV1Controller extends Controller
 
         if ($request->has('page')) {
             $res = DB::table('followers')
-                ->select('id', 'profile_id', 'following_id')
-                ->whereProfileId($account['id'])
-                ->orderByDesc('id')
+                ->join('profiles', 'followers.following_id', '=', 'profiles.id')
+                ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+                ->where('followers.profile_id', $account['id'])
+                ->whereNull('profiles.status')
+                ->orderByDesc('followers.id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->following_id, true) : AccountService::getMastodon($follower->following_id, true);
@@ -649,9 +656,11 @@ class ApiV1Controller extends Controller
         }
 
         $paginator = DB::table('followers')
-            ->select('id', 'profile_id', 'following_id')
-            ->whereProfileId($account['id'])
-            ->orderByDesc('id')
+            ->join('profiles', 'followers.following_id', '=', 'profiles.id')
+            ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+            ->where('followers.profile_id', $account['id'])
+            ->whereNull('profiles.status')
+            ->orderByDesc('followers.id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -867,6 +876,10 @@ class ApiV1Controller extends Controller
             if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
                 (new FollowerController)->sendFollow($user->profile, $target);
             }
+
+            if (AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
+                $target->user->notify(new FollowRequestNotification($user->profile_id));
+            }
         } elseif ($remote == true) {
             $follow = FollowRequest::firstOrCreate([
                 'follower_id' => $user->profile_id,
@@ -1054,6 +1067,7 @@ class ApiV1Controller extends Controller
         $q = $query.'%';
 
         $profiles = Profile::where('username', 'like', $q)
+            ->whereActive()
             ->orderByDesc('followers_count')
             ->limit($limit)
             ->pluck('id')

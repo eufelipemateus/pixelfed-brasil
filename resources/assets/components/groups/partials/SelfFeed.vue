@@ -14,7 +14,7 @@
                     <h1 class="font-weight-bold">Welcome to Pixelfed Groups!</h1>
                     <p class="lead">Groups are a way to participate in like minded communities and topics.</p>
                     <hr class="my-4">
-                    <p>Anyone can create and manage their own group as long as it abides by our <a href="/site/kb/community-guidelines" target="_blank">community guidelines</a>.</p>
+                    <p>Anyone can create and manage their own group as long as it abides by our <a href="/kb/community-guidelines" target="_blank">community guidelines</a>.</p>
                     <p class="text-center mb-0">
                         <router-link to="/groups/discover" class="btn btn-primary btn-lg rounded-pill">
                             Discover Groups

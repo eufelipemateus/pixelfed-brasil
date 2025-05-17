@@ -97,7 +97,7 @@
                         </div>
                         @endif
 
-                        <p class="small">By signing up, you agree to our <a href="{{route('site.terms')}}" class="font-weight-bold text-dark">Terms of Use</a> and <a href="{{route('site.privacy')}}" class="font-weight-bold text-dark">Privacy Policy</a>, in addition, you understand that your account is managed by <span class="font-weight-bold">{{ $pc->parent->username }}</span> and they can limit your account without your permission. For more details, view the <a href="/site/kb/parental-controls" class="text-dark font-weight-bold">Parental Controls</a> help center page.</p>
+                        <p class="small">By signing up, you agree to our <a href="{{route('site.terms')}}" class="font-weight-bold text-dark">Terms of Use</a> and <a href="{{route('site.privacy')}}" class="font-weight-bold text-dark">Privacy Policy</a>, in addition, you understand that your account is managed by <span class="font-weight-bold">{{ $pc->parent->username }}</span> and they can limit your account without your permission. For more details, view the <a href="{{ route('site.help.parental-controls') }}" class="text-dark font-weight-bold">Parental Controls</a> help center page.</p>
 
                         <div class="form-group row">
                             <div class="col-md-12">

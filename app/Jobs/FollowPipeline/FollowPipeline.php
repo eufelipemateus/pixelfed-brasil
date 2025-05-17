@@ -17,6 +17,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Log;
+use App\Notifications\FollowNotification;
+
 
 class FollowPipeline implements ShouldQueue
 {
@@ -84,6 +86,10 @@ class FollowPipeline implements ShouldQueue
                 $notification->item_id = $target->id;
                 $notification->item_type = "App\Profile";
                 $notification->save();
+
+                if (AccountService::getAccountSettings($target->id)["send_email_new_follower"]) {
+                    User::find($target->user_id)->notify(new FollowNotification($actor->id));
+                }
             } catch (Exception $e) {
                 Log::error($e);
             }

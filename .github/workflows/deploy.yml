@@ -136,6 +136,8 @@ jobs:
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.S3_URL}}" >> .env
 
+            ecvho "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
+
 
       - name: Generate WebPush VAPID keys
         run:  php artisan webpush:vapid

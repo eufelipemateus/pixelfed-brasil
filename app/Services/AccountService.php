@@ -14,8 +14,7 @@ use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use NumberFormatter;
-use App\Follower;
-
+use App\Enums\StatusEnums;
 
 class AccountService
 {
@@ -29,7 +28,7 @@ class AccountService
             $fractal = new Fractal\Manager;
             $fractal->setSerializer(new ArraySerializer);
             $profile = Profile::find($id);
-            if (! $profile || $profile->status === 'delete') {
+            if (! $profile || $profile->status !== StatusEnums::ACTIVE) {
                 return null;
             }
             $resource = new Fractal\Resource\Item($profile, new AccountTransformer);
@@ -142,6 +141,12 @@ class AccountService
                 'show_atom' => (bool) $settings->show_atom,
                 'is_suggestable' => (bool) $user->profile->is_suggestable,
                 'indexable' => (bool) $user->profile->indexable,
+                'send_email_new_follower' => (bool) $settings->send_email_new_follower,
+                'send_email_new_follower_request' => (bool) $settings->send_email_new_follower_request,
+                'send_email_on_share' => (bool) $settings->send_email_on_share,
+                'send_email_on_like' => (bool) $settings->send_email_on_like,
+                'send_email_on_mention' => (bool) $settings->send_email_on_mention,
+                'felipemateus_wants_updates' => (bool) $settings->felipemateus_wants_updates,
             ];
         });
     }

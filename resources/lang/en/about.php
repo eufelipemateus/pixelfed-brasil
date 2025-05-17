@@ -2,7 +2,7 @@
 
 return [
     'rules'             => 'Rules',
-    'rulesTerms'        => 'For more information, please review our <a href="/site/terms">Terms of Use</a>',
+    'rulesTerms'        => 'For more information, please review our <a href="/terms">Terms of Use</a>',
 
     'featureTitle'      => 'Feature Packed.',
     'featureSubtitle'   => 'The best for the brightest 📸',
