@@ -9,6 +9,7 @@ use App\Models\UserDomainBlock;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\progress;
+use App\Enums\StatusEnums;
 
 class AddUserDomainBlock extends Command
 {
@@ -94,7 +95,7 @@ class AddUserDomainBlock extends Command
             return;
         }
 
-        if($user->status != null && $user->status != 'disabled') {
+        if($user->status != StatusEnums::ACTIVE && $user->status != StatusEnums::DISABLED) {
             return;
         }
 

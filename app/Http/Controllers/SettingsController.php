@@ -20,6 +20,7 @@ use Cookie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use App\Enums\StatusEnums;
 
 class SettingsController extends Controller
 {
@@ -136,8 +137,8 @@ class SettingsController extends Controller
         $ts = Carbon::now()->addMonth();
         $user->email = $user->id;
         $user->password = '';
-        $user->status = 'delete';
-        $profile->status = 'delete';
+        $user->status = StatusEnums::DELETE_QUEUE;
+        $profile->status = StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $profile->delete_after = $ts;
         $user->save();

@@ -50,6 +50,7 @@ use League\Fractal\Serializer\ArraySerializer;
 use Mail;
 use Purify;
 use App\Util\Lexer\Autolink;
+use App\Enums\StatusEnums;
 
 class ApiV1Dot1Controller extends Controller
 {
@@ -82,7 +83,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -191,7 +192,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -232,7 +233,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -273,7 +274,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -316,7 +317,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -359,7 +360,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -384,7 +385,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -461,7 +462,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -1026,7 +1027,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('push'), 403);
         abort_unless(NotificationAppGatewayService::enabled(), 404, 'Push notifications are not supported on this server.');
         $user = $request->user();
-        abort_if($user->status, 422, 'Cannot access this resource at this time');
+        abort_if($user->status != StatusEnums::ACTIVE, 422, 'Cannot access this resource at this time');
         $res = [
             'version' => PushNotificationService::PUSH_GATEWAY_VERSION,
             'username' => (string) $user->username,

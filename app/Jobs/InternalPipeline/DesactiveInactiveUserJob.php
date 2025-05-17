@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\DesactiveInactiveAccountNotification;
 use App\User;
 use App\Services\ModLogService;
+use App\Enums\StatusEnums;
 
 class DesactiveInactiveUserJob implements ShouldQueue
 {
@@ -38,8 +39,8 @@ class DesactiveInactiveUserJob implements ShouldQueue
                     foreach ($users as $user) {
                         info('Disactive inactive user ' . $user->username);
                         $profile = $user->profile;
-                        $user->status = 'disabled';
-                        $profile->status = 'disabled';
+                        $user->status = StatusEnums::DISABLED;
+                        $profile->status = StatusEnums::DISABLED;
                         $user->save();
                         $profile->save();
                         Mail::to($user->email)
@@ -68,8 +69,8 @@ class DesactiveInactiveUserJob implements ShouldQueue
                     foreach ($users as $user) {
                         info('Disactive inactive user ' . $user->username);
                             $profile = $user->profile;
-                            $user->status = 'disabled';
-                            $profile->status = 'disabled';
+                            $user->status = StatusEnums::DISABLED;
+                            $profile->status = StatusEnums::DISABLED;
                             $user->save();
                             $profile->save();
                         Mail::to($user->email)

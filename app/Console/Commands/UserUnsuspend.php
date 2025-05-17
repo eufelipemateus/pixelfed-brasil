@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\User;
+use App\Enums\StatusEnums;
 
 class UserUnsuspend extends Command
 {
@@ -51,7 +52,7 @@ class UserUnsuspend extends Command
         $this->info('Found user, username: ' . $user->username);
         if($this->confirm('Are you sure you want to unsuspend this user?')) {
             $profile = $user->profile;
-            $user->status = $profile->status = null;
+            $user->status = $profile->status = StatusEnums::ACTIVE;
             $user->save();
             $profile->save();
             $this->info('User account has been unsuspended.');
