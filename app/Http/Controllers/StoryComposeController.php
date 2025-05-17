@@ -207,8 +207,6 @@ class StoryComposeController extends Controller
 
             // Salva apenas no S3
             Storage::disk(config('filesystems.cloud'))->put($path, $encoded, 'public');
-
-            $img->destroy();
             @unlink($tempPath);
 
         }
