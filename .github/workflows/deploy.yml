@@ -71,9 +71,9 @@ jobs:
             echo "INSTANCE_DISCOVER_PUBLIC=true" >> .env
             echo "INSTANCE_DESCRIPTION=\"Pixelfed é uma plataforma de compartilhamento de imagens, uma alternativa ética às plataformas centralizadas.\"" >> .env
             echo "INSTANCE_PUBLIC_LOCAL_TIMELINE=true" >> .env
-            echo "INSTANCE_PUBLIC_TIMELINE_CACHED=true" >> .env
+            echo "INSTANCE_PUBLIC_TIMELINE_CACHED=false" >> .env
             echo "PF_NETWORK_TIMELINE=true" >> .env
-            echo "INSTANCE_NETWORK_TIMELINE_CACHED=true" >> .env
+            echo "INSTANCE_NETWORK_TIMELINE_CACHED=false" >> .env
             echo "ENABLE_COVID_LABEL=false" >> .env
             echo "PF_IMPORT_FROM_INSTAGRAM=false" >> .env
             echo "INSTANCE_CONTACT_FORM=true" >> .env

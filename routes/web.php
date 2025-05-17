@@ -11,6 +11,10 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
     })->name('waiting-room');
 
     Auth::routes();
+
+    Route::get('auth/oidc/start', 'RemoteOidcController@start');
+    Route::get('auth/oidc/callback', 'RemoteOidcController@handleCallback');
+
     Route::get('auth/raw/mastodon/start', 'RemoteAuthController@startRedirect');
     Route::post('auth/raw/mastodon/config', 'RemoteAuthController@getConfig');
     Route::post('auth/raw/mastodon/domains', 'RemoteAuthController@getAuthDomains');

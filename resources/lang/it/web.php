@@ -82,7 +82,7 @@ return [
 	'notifications' => [
 		'liked' => 'ha messo like a',
 		'commented' => 'ha commentato il tuo',
-		'reacted' => 'ha reagito a',
+		'reacted' => 'ha reagito al tuo',
 		'shared' => 'ha condiviso il tuo',
 		'tagged' => 'ti ha taggato in',
 

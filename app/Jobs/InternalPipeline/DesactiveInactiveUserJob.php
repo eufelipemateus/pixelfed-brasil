@@ -7,6 +7,8 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DesactiveInactiveAccountNotification;
 use App\User;
+use App\Services\ModLogService;
+
 class DesactiveInactiveUserJob implements ShouldQueue
 {
     use Queueable;
@@ -42,6 +44,15 @@ class DesactiveInactiveUserJob implements ShouldQueue
                         $profile->save();
                         Mail::to($user->email)
                         ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('low')));
+                        ModLogService::boot()
+                            ->objectUid($profile->id)
+                            ->objectId($profile->id)
+                            ->objectType('App\Profile::class')
+                            ->action('system.user.desactive')
+                            ->message('Conta desativada por inatividade')
+                            ->accessLevel('admin')
+                            ->user($user)
+                            ->save();
                     }
                 }
             );
@@ -63,6 +74,15 @@ class DesactiveInactiveUserJob implements ShouldQueue
                             $profile->save();
                         Mail::to($user->email)
                         ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('low')));
+                        ModLogService::boot()
+                            ->objectUid($profile->id)
+                            ->objectId($profile->id)
+                            ->objectType('App\Profile::class')
+                            ->action('system.user.desactive')
+                            ->message('Conta desativada por inatividade')
+                            ->accessLevel('admin')
+                            ->user($user)
+                            ->save();
                     }
                 }
             );
