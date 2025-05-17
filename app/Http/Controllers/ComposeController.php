@@ -19,6 +19,7 @@ use App\Services\MediaBlocklistService;
 use App\Services\MediaPathService;
 use App\Services\MediaStorageService;
 use App\Services\MediaTagService;
+use App\Services\PlaceService;
 use App\Services\SnowflakeService;
 use App\Services\UserRoleService;
 use App\Services\UserStorageService;
@@ -568,6 +569,7 @@ class ComposeController extends Controller
 
         if ($place && is_array($place)) {
             $status->place_id = $place['id'];
+            PlaceService::clearStatusesByPlaceId($place['id']);
         }
 
         if ($request->filled('comments_disabled')) {
@@ -643,13 +645,13 @@ class ComposeController extends Controller
                 });
         }
 
-        NewStatusPipeline::dispatch($status);
         Cache::forget('user:account:id:'.$profile->user_id);
         Cache::forget('_api:statuses:recent_9:'.$profile->id);
         Cache::forget('profile:status_count:'.$profile->id);
         Cache::forget('status:transformer:media:attachments:'.$status->id);
         Cache::forget('profile:embed:'.$status->profile_id);
         Cache::forget($limitKey);
+        NewStatusPipeline::dispatch($status);
 
         return $status->url();
     }

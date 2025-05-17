@@ -89,7 +89,31 @@ class Media extends Model
 
     public function activityVerb()
     {
-        $verb = 'Image';
+        $verb = 'Document';
+        switch ($this->mimeType()) {
+            case 'audio':
+                $verb = 'Audio';
+                break;
+
+            case 'image':
+                $verb = 'Document';
+                break;
+
+            case 'video':
+                $verb = 'Video';
+                break;
+
+            default:
+                $verb = 'Document';
+                break;
+        }
+
+        return $verb;
+    }
+
+    public function mediaType()
+    {
+        $verb = 'Document';
         switch ($this->mimeType()) {
             case 'audio':
                 $verb = 'Audio';
@@ -104,7 +128,7 @@ class Media extends Model
                 break;
 
             default:
-                $verb = 'Document';
+                $verb = 'Image';
                 break;
         }
 
