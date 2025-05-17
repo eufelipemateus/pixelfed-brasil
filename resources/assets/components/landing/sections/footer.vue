@@ -12,6 +12,8 @@
 
 		<div class="footer-component-attribution">
 			<div><span>© {{ getYear() }} {{config.domain}}</span></div>
+            <div class="spacer">·</div>
+            {{totalUsers }} Usuarios Online
 			<div class="spacer">·</div>
 			<div>Mantido por <a href="https://felipemateus.com" class="text-bluegray-500 font-weight-bold">Felipe Mateus</a></div>
 			<div class="spacer">·</div>
@@ -24,7 +26,8 @@
 	export default {
 		data() {
 			return {
-				config: window.pfl
+				config: window.pfl,
+                totalUsers: window.online_users
 			}
 		},
 
