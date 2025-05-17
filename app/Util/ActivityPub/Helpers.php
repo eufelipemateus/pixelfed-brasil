@@ -29,6 +29,8 @@ use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
 use Purify;
 use Validator;
+use Illuminate\Support\Facades\DB;
+
 
 class Helpers
 {
