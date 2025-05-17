@@ -44,13 +44,18 @@ class EmailService
     {
         $token = config('felipemateus.sendportal.token');
 
-        return Http::withToken($token)
+        $client = Http::withToken($token)
             ->acceptJson()
             ->withHeaders(
                 [
                 'X-PASS' => 'sendportal',
                 ]
             );
+        if (! app()->environment('production')) {
+            $client = $client->withoutVerifying();
+        }
+
+        return $client;
     }
 
     /**
