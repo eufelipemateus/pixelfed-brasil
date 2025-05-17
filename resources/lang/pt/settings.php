@@ -20,6 +20,8 @@ return [
 'labs' =>                   'Laboratórios',
 'parental_controls' =>      'Controles Parentais',
 
+'change' =>                'Alterar',
+
 'submit' =>                 'Enviar',
 'error' =>                  'Erro',
 'cancel' =>                 'Cancelar',
