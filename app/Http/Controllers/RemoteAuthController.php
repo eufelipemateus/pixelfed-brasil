@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Purify;
+USE App\Enums\StatusEnums;
 
 class RemoteAuthController extends Controller
 {
@@ -698,7 +699,7 @@ class RemoteAuthController extends Controller
         $ra = RemoteAuth::where('webfinger', $wf)->where('domain', $domain)->whereNotNull('user_id')->firstOrFail();
 
         $user = User::findOrFail($ra->user_id);
-        abort_if($user->is_admin || $user->status != null, 422, 'Invalid auth action');
+        abort_if($user->is_admin || $user->status != StatusEnums::ACTIVE, 422, 'Invalid auth action');
         Auth::loginUsingId($ra->user_id);
 
         return [200];

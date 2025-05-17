@@ -89,6 +89,9 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Purify;
 use Storage;
+use  App\Notifications\FollowRequestNotification;
+use App\Enums\StatusEnums;
+
 
 class ApiV1Controller extends Controller
 {
@@ -184,7 +187,7 @@ class ApiV1Controller extends Controller
 
         $user = $request->user();
 
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         AccountService::setLastActive($user->id);
 
         $res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($user->profile_id) : AccountService::getMastodon($user->profile_id);
