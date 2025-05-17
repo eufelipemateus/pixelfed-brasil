@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Mail;
 use Purify;
 use App\UserSetting;
+use App\Services\EmailService;
 
 trait HomeSettings
 {
@@ -170,8 +171,21 @@ trait HomeSettings
 
     public function emailUpdate(Request $request)
     {
+        $emailRules = [
+            'required',
+            'string',
+            'email:rfc,dns,spoof',
+            'max:255',
+            'unique:users,email',
+            function ($attribute, $value, $fail) {
+                if (EmailService::isBanned($value)) {
+                    $fail('Email is invalid.');
+                }
+            },
+        ];
+
         $this->validate($request, [
-            'email' => 'required|email|unique:users,email',
+            'email' => $emailRules,
         ]);
         $changes = false;
         $email = $request->input('email');
@@ -179,6 +193,7 @@ trait HomeSettings
         $profile = $user->profile;
 
         $validate = config_cache('pixelfed.enforce_email_verification');
+
 
         if ($user->email != $email) {
             $changes = true;
