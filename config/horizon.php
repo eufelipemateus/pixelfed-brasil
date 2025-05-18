@@ -188,6 +188,22 @@ return [
             ],
         ],
 
+        'DEV' => [
+            'supervisor-1' => [
+                'connection'    => 'redis',
+                'queue'         => ['high', 'default', 'follow', 'shared', 'inbox', 'feed', 'low', 'story', 'delete', 'mmo', 'intbg', 'groups', 'adelete', 'move', 'pushnotify'],
+                'balance'       => env('HORIZON_BALANCE_STRATEGY', 'auto'),
+                'minProcesses'  => env('HORIZON_MIN_PROCESSES', 1),
+                'maxProcesses'  => env('HORIZON_MAX_PROCESSES', 20),
+                'memory'        => env('HORIZON_SUPERVISOR_MEMORY', 64),
+                'tries'         => env('HORIZON_SUPERVISOR_TRIES', 3),
+                'nice'          => env('HORIZON_SUPERVISOR_NICE', 0),
+                'timeout'       => env('HORIZON_SUPERVISOR_TIMEOUT', 300),
+            ],
+        ],
+
+
+
         'local' => [
             'supervisor-1' => [
                 'connection'    => 'redis',
