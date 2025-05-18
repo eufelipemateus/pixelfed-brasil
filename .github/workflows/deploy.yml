@@ -64,6 +64,7 @@ jobs:
             echo "ADMIN_DOMAIN=${{vars.DOMAIN}}"  >> .env
             echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
             echo "TRUST_PROXIES=*" >> .env
+            echo "HORIZON_MEMORY_LIMIT=128M" >> .env
 
             echo "OPEN_REGISTRATION=true" >> .env
             echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
