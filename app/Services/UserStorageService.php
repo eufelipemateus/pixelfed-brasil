@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Media;
 use App\User;
+use App\Enums\StatusEnums;
 
 class UserStorageService
 {
@@ -12,7 +13,7 @@ class UserStorageService
     public static function get($id)
     {
         $user = User::find($id);
-        if (! $user || $user->status) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return -1;
         }
 
@@ -35,7 +36,7 @@ class UserStorageService
     public static function recalculateUpdateStorageUsed($id)
     {
         $user = User::find($id);
-        if (! $user || $user->status) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return;
         }
         $updatedVal = (int) floor(Media::whereUserId($id)->sum('size') / 1000);
