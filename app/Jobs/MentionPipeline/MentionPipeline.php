@@ -77,7 +77,7 @@ class MentionPipeline implements ShouldQueue
             ]
         );
 
-        if ($target->user_id  &&   AccountService::getAccountSettings($target)["send_email_on_mention"]) {
+        if (!empty($target->user_id)  &&   AccountService::getAccountSettings($target)["send_email_on_mention"]) {
             Profile::find($target)->user->notify(new MentionNotification($mention->profile_id, $status->id));
         }
 
