@@ -2,9 +2,9 @@ name: Laravel Test Suite
 
 on:
   push:
-    branches: [ staging, dev ]
+    branches: [ staging ]
   pull_request:
-    branches: [ staging, dev ]
+    branches: [ staging ]
 
 jobs:
   tests:
