@@ -4,7 +4,6 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\FelipeMateusPipeline\SyncFelipeMateusSubscribers;
 
 class Kernel extends ConsoleKernel
 {
@@ -56,7 +55,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:update-pages-view-statitics')->everyTenMinutes();
         $schedule->command('app:desactive-inactive-account')->weeklyOn(6, '03:00')->onOneServer();
 
-        $schedule->job(new SyncFelipeMateusSubscribers)->daily()->onOneServer();
 
         if (app()->environment('production')) {
             $schedule->command('app:send-weekly-inactive-users')->weeklyOn(0, '10:00')->onOneServer();

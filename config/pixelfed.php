@@ -292,4 +292,14 @@ return [
     'app_registration_confirm_rate_limit_attempts' => env('PF_IARC_RL_ATTEMPTS', 20),
     'app_registration_confirm_rate_limit_decay' => env('PF_IARC_RL_ATTEMPTS', 1800),
     "hide_remote_instance" => env('PF_HIDE_REMOTE_INSTANCE', true),
+
+    /**
+     * --------------------------------------------------------------------------
+     * Instance Felipe Mateus
+     *--------------------------------------------------------------------------
+     *
+     * This value is always false, this can show  pages and links broken
+     *
+     **/
+    'app_felipemateus' => false
 ];

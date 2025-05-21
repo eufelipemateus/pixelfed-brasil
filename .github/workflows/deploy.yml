@@ -29,6 +29,12 @@ jobs:
       - name: Install Composer dependencies
         run: composer install
 
+
+      - name: Install Private GitHub Package
+        run: |
+          composer config --global github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
+          composer require felipemateus/pixelfed-lib --prefer-source
+
       - name: Generate .env
         run: |
             touch .env
