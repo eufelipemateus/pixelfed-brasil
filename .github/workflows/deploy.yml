@@ -32,8 +32,13 @@ jobs:
 
       - name: Install Private GitHub Package
         run: |
-          composer config --global github-oauth.github.com ${{ secrets.GITHUB_TOKEN }}
-          composer require felipemateus/pixelfed-lib --prefer-source
+          touch .env
+          echo "CACHE_DRIVER=file" >> .env
+          echo "SESSION_DRIVER=file" >> .env
+          composer config --global github-oauth.github.com ${{ secrets.CUSTOM_TOKEN }}
+          composer config repositories.pixelfed-lib vcs https://github.com/eufelipemateus/pixelfed-lib
+          composer require felipemateus/pixelfed-lib:dev-master --prefer-source
+          rm .env
 
       - name: Generate .env
         run: |
