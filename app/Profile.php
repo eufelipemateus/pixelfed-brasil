@@ -8,7 +8,8 @@ use App\HasSnowflakePrimary;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use App\Services\FollowerService;
 use App\Models\ProfileAlias;
-
+use App\Models\UserLabel;
+use App\Services\LabelService;
 class Profile extends Model
 {
 	use HasSnowflakePrimary, SoftDeletes;
@@ -26,8 +27,11 @@ class Profile extends Model
 		'last_status_at' => 'datetime'
 	];
 	protected $hidden = ['private_key'];
-	protected $visible = ['id', 'user_id', 'username', 'name'];
+	protected $visible = ['id', 'user_id', 'username', 'name','label'];
 	protected $guarded = [];
+
+    protected $appends = ['label'];
+
 
 	public function user()
 	{
@@ -379,4 +383,16 @@ class Profile extends Model
 	{
 		return $this->hasMany(ProfileAlias::class);
 	}
+
+    public function getLabelAttribute()
+    {
+        if ($this->user->is_admin) {
+            return LabelService::get('admin');
+
+        }
+        if ($this->created_at->diffInDays(now()) < 7) {
+            return LabelService::get('new');
+        }
+        return null;
+    }
 }
