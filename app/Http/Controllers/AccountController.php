@@ -28,6 +28,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
 use PragmaRX\Google2FA\Google2FA;
+use App\Services\EmailService;
 
 class AccountController extends Controller
 {
@@ -80,16 +81,27 @@ class AccountController extends Controller
         $recentSent = EmailVerification::whereUserId(Auth::id())
             ->whereDate('created_at', '>', now()->subHours(12))->count();
 
-        return view('account.verify_email', compact('recentSent'));
+        $user = $request->user();
+        $isInvalidEmail = EmailService::isBanned($user->email);
+
+        return view('account.verify_email', compact('recentSent', 'isInvalidEmail'));
     }
 
     public function sendVerifyEmail(Request $request)
     {
+
+        $user = $request->user();
+        $isInvalidEmail = EmailService::isBanned($user->email);
+
+        if ($isInvalidEmail) {
+            return redirect()->back()->with('error', 'O e-mail cadastrado não é válido.');
+        }
+
         $recentAttempt = EmailVerification::whereUserId(Auth::id())
             ->whereDate('created_at', '>', now()->subHours(12))->count();
 
         if ($recentAttempt > 0) {
-            return redirect()->back()->with('error', 'A verification email has already been sent recently. Please check your email, or try again later.');
+            return redirect()->back()->with('error', 'AUm e-mail de verificação já foi enviado recentemente. Por favor, verifique sua caixa de entrada ou tente novamente mais tarde.');
         }
 
         EmailVerification::whereUserId(Auth::id())->delete();
@@ -107,7 +119,7 @@ class AccountController extends Controller
 
         Mail::to($user->email)->send(new ConfirmEmail($verify));
 
-        return redirect()->back()->with('status', 'Verification email sent!');
+        return redirect()->back()->with('status', 'Email de verificação enviado com sucesso! Verifique sua caixa de entrada ou pasta de spam.');
     }
 
     public function confirmVerifyEmail(Request $request, $userToken, $randomToken)
