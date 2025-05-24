@@ -30,7 +30,8 @@
 		window._sharedData = {
 			curUser: {},
 			user: {!! json_encode(\App\Services\ProfileService::get(request()->user()->profile_id)) !!},
-			version: 0
+			version: 0,
+            can_translate: {!! json_encode(\App\Services\Translate\TranslateService::canTranslate(request()->user())) !!},
 		};
 		window.App = {
 			config: {!!App\Util\Site\Config::json()!!}

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\Translate\GoogleTranslate;
 use App\Services\Translate\DeepLTranslate;
 use App\Profile;
+use App\User;
 
 /**
  * Service class for handling translation operations using different providers.
@@ -36,6 +37,7 @@ class TranslateService
 
     const CACHE_KEY_BIO = 'pf:services:profile:';
 
+    const CACHE_USER = 'pf:services:user:can_translate:';
 
     /**
      * Returns  the cache key for the given id and language.
@@ -156,6 +158,32 @@ class TranslateService
                     'text' => $text['text'],
                     'provider' => $config['provider'],
                 ];
+            }
+        );
+    }
+
+
+    /**
+     * Determines if the given user is allowed to use the translation feature.
+     *
+     * @param User $user The user to check.
+     * 
+     * @return bool True if the user can translate, false otherwise.
+     */
+    public static function canTranslate(User $user): bool
+    {
+        return Cache::remember(
+            self::CACHE_USER . $user->id,
+            21600,
+            function () use ($user) {
+                if (!config('pixelfed.translation.enabled')) {
+                    return false;
+                }
+                $settings = $user->settings;
+                if (config('pixelfed.translation.users_limited') &&  $settings['enable_translate'] == false) {
+                    return false;
+                }
+                return true;
             }
         );
     }

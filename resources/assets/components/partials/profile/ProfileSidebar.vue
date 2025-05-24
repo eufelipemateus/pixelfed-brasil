@@ -293,7 +293,7 @@
                     <div class="bio-body">
                         <div v-html="renderedBio"></div>
 
-                        <a href="#"  @click.prevent="translate" >{{$t('common.translate')}}</a>
+                        <a  v-if="canTranslate" href="#"  @click.prevent="translate" >{{$t('common.translate')}}</a>
                     </div>
                 </div>
             </div>
@@ -385,7 +385,11 @@ export default {
     computed: {
         ...mapGetters([
             'getCustomEmoji'
-        ])
+        ]),
+        canTranslate() {
+            return window._sharedData.can_translate;
+        }
+
     },
 
     data() {
