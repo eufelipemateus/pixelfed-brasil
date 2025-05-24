@@ -520,6 +520,38 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <h2>Translate</h2>
+                                        <div class="card shadow-none border card-body">
+                                            <div class="form-group mb-4 d-flex align-items-center gap-1">
+                                                <label for="form-summary" class="font-weight-bold mb-0">Provider</label>
+                                                <select v-model="posts.translate.provider" class="form-control form-control-muted mb-0">
+                                                    <option value="google" >Google Translate</option>
+                                                    <option value="deepl">DeepL</option>
+                                                </select>
+                                            </div>
+
+                                            <form-input
+                                                    name="Google API Key"
+                                                    :value="posts.translate.google_api_key"
+                                                    description=""
+                                                    :isCard="false"
+                                                    :isInline="true"
+                                                    @change="handleSubChange($event, 'posts', 'translate', 'google_api_key')"
+                                                />
+                                                <form-input
+                                                    name="DeepL API Key"
+                                                    :value="posts.translate.deepl_api_key"
+                                                    description=""
+                                                    :isCard="false"
+                                                    :isInline="true"
+                                                    @change="handleSubChange($event, 'posts', 'translate', 'deepl_api_key')"
+                                                />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div v-else-if="tabIndex === 'rules'" class="tab-pane fade show active" role="tabpanel">
@@ -917,6 +949,7 @@
                 users: [],
                 posts: [],
                 platform: [],
+                translate: [],
                 storage: [],
                 newRule: undefined,
                 isSubmittingNewRule: false,
@@ -1520,6 +1553,10 @@
 
                     case 'platform':
                         this.platform[type][sub] = $event;
+                    break;
+
+                    case 'posts':
+                        this.posts[type][sub] = $event;
                     break;
 
                     case 'media':

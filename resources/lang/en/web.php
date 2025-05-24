@@ -32,8 +32,9 @@ return [
 		'sensitive' => 'Sensitive',
 		'sensitiveContent' => 'Sensitive Content',
 		'sensitiveContentWarning' => 'This post may contain sensitive content',
-    'loading' => 'Loading...',
-    'continue' => 'Continue',
+        'loading' => 'Loading...',
+        'continue' => 'Continue',
+        'translate' => 'Translate',
 	],
 
 	'site' => [

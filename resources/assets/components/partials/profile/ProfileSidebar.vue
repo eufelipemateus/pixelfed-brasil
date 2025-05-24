@@ -292,6 +292,8 @@
                 <div class="card-body">
                     <div class="bio-body">
                         <div v-html="renderedBio"></div>
+
+                        <a href="#"  @click.prevent="translate" >{{$t('common.translate')}}</a>
                     </div>
                 </div>
             </div>
@@ -617,6 +619,15 @@ export default {
             }
             event.currentTarget.blur();
             this.$emit('unfollow');
+        },
+        async translate() {
+            try {
+                const response = await axios.get(`/api/v1/accounts/${this.profile.id}/translate`);
+                this.renderedBio = response.data.text;
+               //////// this.setBio();
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 }

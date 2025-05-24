@@ -1,6 +1,8 @@
 <template>
 	<div class="read-more-component" style="word-break: break-word;">
 		<div v-html="content"></div>
+
+        <a href="#" @click.prevent="translate" >{{$t('common.translate')}} </a>
 		<!-- <div v-if="status.content.length < 200" v-html="content"></div>
 		<div v-else>
 			<span v-html="content"></span>
@@ -93,7 +95,21 @@
 					self.content = self.content.replace(`:${emoji.shortcode}:`, img);
 				});
 				// this.content = this.content.replace(':fediverse:', '😅');
-			}
+			},
+            async translate() {
+                if (!this.status || !this.status.id) {
+                    console.warn('status is undefined or missing ID');
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/api/v1/statuses/${this.status.id}/translate`);
+                    this.status.content = response.data.text;
+                    this.rewriteLinks();
+                } catch (error) {
+                    console.log(error);
+               }
+            }
 		}
 	}
 </script>
