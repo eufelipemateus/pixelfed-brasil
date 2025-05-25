@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Internal\BeagleService;
 use App\User;
 use Illuminate\Support\Str;
+use App\Http\Resources\UserResource;
 
 class AdminSettingsService
 {
@@ -48,7 +49,7 @@ class AdminSettingsService
 
     public static function getLanding()
     {
-        $availableAdmins = User::whereIsAdmin(true)->get();
+        $availableAdmins = UserResource::collection(User::whereIsAdmin(true)->get());
         $currentAdmin = config_cache('instance.admin.pid');
 
         return [

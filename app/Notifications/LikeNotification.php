@@ -12,16 +12,16 @@ use App\Status;
 class LikeNotification extends Notification
 {
     use Queueable;
-    public $profile;
+    public $actor;
     public $status;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($target_id, $status_id)
+    public function __construct($actor_id, $status_id)
     {
         //
-        $this->profile =  Profile::find($target_id);
+        $this->actor =  Profile::find($actor_id);
         $this->status =  Status::find($status_id);
 
     }
@@ -43,7 +43,7 @@ class LikeNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] Your post was liked!')
-            ->line('**@' . $this->profile->username . '** liked your post')
+            ->line('**@' . $this->actor->username . '** liked your post')
             ->action('View Post', $this->status->url());
     }
 
