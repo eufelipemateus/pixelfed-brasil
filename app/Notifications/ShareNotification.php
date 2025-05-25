@@ -14,7 +14,7 @@ class ShareNotification extends Notification
 {
     use Queueable;
 
-    public $profile;
+    public $actor;
     public $status;
 
     /**
@@ -23,7 +23,7 @@ class ShareNotification extends Notification
     public function __construct($target_id, $status_id)
     {
         //
-        $this->profile =  Profile::find($target_id);
+        $this->actor =  Profile::find($target_id);
         $this->status =  Status::find($status_id);
     }
 
@@ -44,7 +44,7 @@ class ShareNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] Your post was shared')
-            ->line('**@' . $this->profile->username . '** shared your post')
+            ->line('**@' . $this->actor->username . '** shared your post')
             ->action('View Post', $this->status->url());
     }
     /**

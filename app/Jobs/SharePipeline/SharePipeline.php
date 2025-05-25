@@ -87,7 +87,7 @@ class SharePipeline implements ShouldQueue
         );
 
         if (AccountService::getAccountSettings($target->id)["send_email_on_share"]) {
-            $target->user->notify(new ShareNotification($target->id,  $status->reblog_of_id ?? $status->id));
+            $target->user->notify(new ShareNotification($actor->id,  $status->reblog_of_id ?? $status->id));
         }
 
         FeedInsertPipeline::dispatch($status->id, $status->profile_id)->onQueue('feed');
