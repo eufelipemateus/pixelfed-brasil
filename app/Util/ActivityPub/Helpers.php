@@ -1244,7 +1244,7 @@ class Helpers
                 ]
             ],
             ['domain'],
-            ['updated_at', 'unlisted']
+            ['updated_at' /* ,'unlisted' */]
         );
 
         $instance = Instance::where('domain', $domain)->first();
