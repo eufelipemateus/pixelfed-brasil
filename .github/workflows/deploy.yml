@@ -29,6 +29,17 @@ jobs:
       - name: Install Composer dependencies
         run: composer install
 
+
+      - name: Install Private GitHub Package
+        run: |
+          touch .env
+          echo "CACHE_DRIVER=file" >> .env
+          echo "SESSION_DRIVER=file" >> .env
+          composer config --global github-oauth.github.com ${{ secrets.CUSTOM_TOKEN }}
+          composer config repositories.pixelfed-lib vcs https://github.com/eufelipemateus/pixelfed-lib
+          composer require felipemateus/pixelfed-lib:dev-master --prefer-source
+          rm .env
+
       - name: Generate .env
         run: |
             touch .env
@@ -142,9 +153,9 @@ jobs:
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
 
+            echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
+            echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
 
-      - name: Generate WebPush VAPID keys
-        run:  php artisan webpush:vapid
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"

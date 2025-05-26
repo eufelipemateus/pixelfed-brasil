@@ -91,7 +91,6 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             ->whereNull('deleted_at')
             ->whereNotNull('last_active_at')
             ->whereNotNull("email_verified_at")
-            ->where('last_active_at', '<', now()->subDays(30))
             ->chunk(
                 1000,
                 function ($users) use ($popularPosts) {
