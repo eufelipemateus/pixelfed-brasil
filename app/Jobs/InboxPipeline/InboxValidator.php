@@ -18,6 +18,7 @@ use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Lottery;
+use App\Enums\StatusEnums;
 
 class InboxValidator implements ShouldQueue
 {
@@ -74,7 +75,7 @@ class InboxValidator implements ShouldQueue
 			return;
 		}
 
-		if($profile->status != null) {
+		if($profile->status != StatusEnums::ACTIVE) {
 			return;
 		}
 
