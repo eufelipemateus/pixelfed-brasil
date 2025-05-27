@@ -358,9 +358,6 @@
             "review": "Revis\u00e3o",
             "add_keyword": "Adicionar uma palavra-chave...",
             "enter_filter_title": "Insira o t\u00edtulo do filtro"
-        },
-        "relationships":{
-            "removeFollowers": "Remover Seguidor",
         }
     }
 }
