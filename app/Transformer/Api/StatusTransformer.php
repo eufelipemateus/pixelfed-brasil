@@ -27,7 +27,7 @@ class StatusTransformer extends Fractal\TransformerAbstract
         $poll = $status->type === 'poll' ? PollService::get($status->id, $pid) : null;
         $content = $status->caption ? nl2br(Autolink::create()->autolink($status->caption)) : '';
 
-        return [
+        $res = [
             '_v' => 1,
             'id' => (string) $status->id,
             'shortcode' => HashidService::encode($status->id),
@@ -73,5 +73,10 @@ class StatusTransformer extends Fractal\TransformerAbstract
             'edited_at' => $status->edited_at ? str_replace('+00:00', 'Z', $status->edited_at->format(DATE_RFC3339_EXTENDED)) : null,
             'pinned' => (bool) $status->pinned_order,
         ];
+
+
+        $extra = app(\App\Services\ExtraFieldsService::class)->getStatusExtraFields($status);
+
+        return array_merge($res, $extra);
     }
 }
