@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('label');
+            $table->string('description')->nullable();
             $table->string('background_color')->default('#000000');
             $table->string('text_color')->default('#000000');
         });
@@ -24,18 +25,21 @@ return new class extends Migration
             [
                 'name' => 'admin',
                 'label' => 'Admin',
+                'description' => 'This Account is an administrator of the platform.',
                 'background_color' => '#FEE2E2',
                 'text_color' => '#B91C1C'
             ],
             [
                 'name' => 'mod',
                 'label' => 'Moderator',
+                'description' => 'This Account is a moderator of the platform.',
                 'background_color' => '#E0F2FE',
                 'text_color' => '#1D4ED8'
             ],
             [
                 'name' => 'new',
                 'label' => 'New',
+                'description' => 'This Account is new to the platform.',
                 'background_color' => '#dcfce7',
                 'text_color' => '#15803d'
             ],
