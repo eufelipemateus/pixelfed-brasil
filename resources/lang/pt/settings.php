@@ -144,6 +144,8 @@ return [
     'relationships.you_have_successfully_unfollowed_that_user' =>               'Você deixou de seguir com sucesso esse usuário',
     'relationships.an_error_occured_when_attempting_to_unfollow_this_user' =>   'Ocorreu um erro ao tentar deixar de seguir esse usuário',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'Você deixou de seguir com sucesso essa hashtag',
+    'relationships.removeFollow' =>                                             'Remover seguidor',
+
 
     'security.two_factor_authentication' =>                                     'Autenticação de dois fatores',
     'security.enabled' =>                                                       'Habilitado',
@@ -188,5 +190,5 @@ return [
     'labs.experimental_features' =>                                             'Recursos experimentais',
     'labs.use_dark_mode_theme' =>                                               'Usar tema de modo escuro.',
 
-    
+
 ];
