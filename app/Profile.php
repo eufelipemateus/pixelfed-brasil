@@ -386,13 +386,15 @@ class Profile extends Model
 
     public function getLabelAttribute()
     {
-        if ($this->user->is_admin) {
-            return LabelService::get('admin');
+        if($this->user){
+            if ($this->user->is_admin) {
+                return LabelService::get('admin');
 
-        }
-        if ($this->created_at->diffInDays(now()) < 7) {
-            return LabelService::get('new');
-        }
+            }
+            if ($this->created_at->diffInDays(now()) < 7) {
+                return LabelService::get('new');
+            }
+		}
         return null;
     }
 }
