@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\StatusEnums;
 
+use App\Models\UserLabel;
+use App\Services\LabelService;
 class Profile extends Model
 {
 	use HasSnowflakePrimary, SoftDeletes;
@@ -31,8 +33,11 @@ class Profile extends Model
         'status' => StatusEnumCast::class,
 	];
 	protected $hidden = ['private_key'];
-	protected $visible = ['id', 'user_id', 'username', 'name'];
+	protected $visible = ['id', 'user_id', 'username', 'name','label'];
 	protected $guarded = [];
+
+    protected $appends = ['label'];
+
 
 	public function user()
 	{
@@ -398,7 +403,7 @@ class Profile extends Model
         return   $query->whereNull('status');
     }
 
-     /**
+    /**
      *  Enable the user
      *
      * @return void
@@ -423,5 +428,25 @@ class Profile extends Model
             $this->status = StatusEnums::DISABLED;
             $this->save();
         }
+
+    }
+
+    /**
+     * Get the label for the profile based on user status and creation date.
+     *
+     * @return array|null
+     */
+    public function getLabelAttribute()
+    {
+        if($this->user){
+            if ($this->user->is_admin) {
+                return LabelService::get('admin');
+
+            }
+            if ($this->created_at->diffInDays(now()) < 7) {
+                return LabelService::get('new');
+            }
+		}
+        return null;
     }
 }
