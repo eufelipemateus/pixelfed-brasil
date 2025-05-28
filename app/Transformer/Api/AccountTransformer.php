@@ -76,7 +76,9 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'label' => $profile->label,
         ];
 
-        return $res;
+        $extra = app(\App\Services\ExtraFieldsService::class)->getAccountExtraFields($profile);
+        return array_merge($res, $extra);
+
     }
 
     protected function includeRelationship(Profile $profile)

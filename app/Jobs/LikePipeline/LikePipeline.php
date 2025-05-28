@@ -93,7 +93,7 @@ class LikePipeline implements ShouldQueue
                 $notification->save();
 
                 if (AccountService::getAccountSettings($status->profile_id)["send_email_on_like"]) {
-                    $status->profile->user->notify(new LikeNotification($status->profile_id, $status->id));
+                    $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
                 }
 
             } catch (Exception $e) {

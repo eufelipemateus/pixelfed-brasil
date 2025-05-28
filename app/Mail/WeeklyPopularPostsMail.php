@@ -28,7 +28,7 @@ class WeeklyPopularPostsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Top Posts da Semana no '.config('app.name'),
+            subject: 'Publicações  Populares da Semana no '.config('app.name'),
             replyTo: [config('instance.email')]
         );
     }
