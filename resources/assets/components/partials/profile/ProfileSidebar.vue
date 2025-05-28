@@ -47,7 +47,7 @@
                 <div>
                     <img :src="getAvatar()" class="avatar img-fluid shadow border"
                          onerror="this.onerror=null;this.src='/storage/avatars/default.png?v=0';">
-                    <p v-if="profile.is_admin" class="text-right" style="margin-top: -30px;"><span class="admin-label">Admin</span>
+                    <p v-if="profile.label" class="text-right" style="margin-top: -30px;"><span class="label" :style="' color:'+profile.label.text_color+'; background-color: '+profile.label.background_color+ ';'" v-html="profile.label.label" ></span>
                     </p>
                 </div>
                 <!-- <button class="btn btn-link">
@@ -743,11 +743,9 @@ export default {
         }
     }
 
-    .admin-label {
+    .label {
         padding: 1px 5px;
         font-size: 12px;
-        color: #B91C1C;
-        background: #FEE2E2;
         border: 1px solid #FCA5A5;
         font-weight: 600;
         text-transform: capitalize;

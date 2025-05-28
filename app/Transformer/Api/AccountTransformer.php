@@ -73,6 +73,7 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'last_fetched_at' => optional($profile->last_fetched_at)->toJSON(),
             'pronouns' => PronounService::get($profile->id),
             'location' => $profile->location,
+            'label' => $profile->label,
         ];
 
         return $res;
