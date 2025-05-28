@@ -4696,7 +4696,7 @@ class ApiV1Controller extends Controller
         abort_if(! $request->user(), 403);
         abort_unless($request->user()->tokenCan('read'), 403);
         abort_if(config("pixelfed.translation.enabled") == false, 403);
-        abort_if(TranslateService::canTranslate( $request->user()), 403);
+        abort_if(!TranslateService::canTranslate( $request->user()), 403);
 
         $user = $request->user();
         $language = $user->language ?? app()->getLocale();
@@ -4718,7 +4718,7 @@ class ApiV1Controller extends Controller
         abort_if(! $request->user(), 403);
         abort_unless($request->user()->tokenCan('read'),403);
         abort_if(config("pixelfed.translation.enabled") == false, 403);
-        abort_if(TranslateService::canTranslate( $request->user()), 403);
+        abort_if(!TranslateService::canTranslate( $request->user()), 403);
 
         $user = $request->user();
         $language = $user->language ?? app()->getLocale();
