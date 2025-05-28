@@ -34,6 +34,7 @@ return [
 		'sensitiveContentWarning' => 'This post may contain sensitive content',
         'loading' => 'Loading...',
         'continue' => 'Continue',
+        'translate' => 'Translate',
 	],
 
 	'site' => [
