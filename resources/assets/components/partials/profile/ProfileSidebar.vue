@@ -47,7 +47,7 @@
                 <div>
                     <img :src="getAvatar()" class="avatar img-fluid shadow border"
                          onerror="this.onerror=null;this.src='/storage/avatars/default.png?v=0';">
-                    <p v-if="profile.is_admin" class="text-right" style="margin-top: -30px;"><span class="admin-label">Admin</span>
+                    <p v-if="profile.label" class="text-right" style="margin-top: -30px;"><span class="label" :style="' color:'+profile.label.text_color+'; background-color: '+profile.label.background_color+ ';'" v-html="profile.label.label" ></span>
                     </p>
                 </div>
                 <!-- <button class="btn btn-link">
@@ -292,6 +292,8 @@
                 <div class="card-body">
                     <div class="bio-body">
                         <div v-html="renderedBio"></div>
+
+                        <a  v-if="canTranslate" href="#"  @click.prevent="translate" >{{$t('common.translate')}}</a>
                     </div>
                 </div>
             </div>
@@ -383,7 +385,11 @@ export default {
     computed: {
         ...mapGetters([
             'getCustomEmoji'
-        ])
+        ]),
+        canTranslate() {
+            return window._sharedData.can_translate;
+        }
+
     },
 
     data() {
@@ -617,6 +623,15 @@ export default {
             }
             event.currentTarget.blur();
             this.$emit('unfollow');
+        },
+        async translate() {
+            try {
+                const response = await axios.get(`/api/v1/accounts/${this.profile.id}/translate`);
+                this.renderedBio = response.data.text;
+               //////// this.setBio();
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 }
@@ -743,11 +758,9 @@ export default {
         }
     }
 
-    .admin-label {
+    .label {
         padding: 1px 5px;
         font-size: 12px;
-        color: #B91C1C;
-        background: #FEE2E2;
         border: 1px solid #FCA5A5;
         font-weight: 600;
         text-transform: capitalize;

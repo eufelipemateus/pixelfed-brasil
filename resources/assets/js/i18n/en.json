@@ -28,7 +28,8 @@
         "sensitiveContent": "Sensitive Content",
         "sensitiveContentWarning": "This post may contain sensitive content",
         "loading": "Loading...",
-        "continue": "Continue"
+        "continue": "Continue",
+        "translate": "Translate"
     },
     "site": {
         "terms": "Terms of Use",

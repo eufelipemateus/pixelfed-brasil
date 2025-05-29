@@ -299,7 +299,14 @@ return [
      *--------------------------------------------------------------------------
      *
      * This value is always false, this can show  pages and links broken
-     *
      **/
-    'app_felipemateus' => false
+    'app_felipemateus' => false,
+
+    'translation' => [
+        'enabled' => env('TRANSLATION_ENABLED', false),
+        'users_limited' => env('TRANSLATION_USERS_LIMITED', false),
+        'provider' => env('TRANSLATION_PROVIDER', 'google'),
+        'google_api_key' => env('GOOGLE_API_KEY', ''),
+        'deepl_api_key' => env('DEEPL_API_KEY', ''),
+    ],
 ];

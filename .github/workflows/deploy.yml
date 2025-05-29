@@ -152,6 +152,11 @@ jobs:
             echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
+            echo "TRANSLATION_ENABLED=true" >> .env
+            echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
+            echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
+            echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
+
 
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env

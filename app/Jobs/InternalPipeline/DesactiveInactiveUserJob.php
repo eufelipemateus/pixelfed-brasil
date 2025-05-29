@@ -61,10 +61,9 @@ class DesactiveInactiveUserJob implements ShouldQueue
         User::whereNull('status')
             ->whereNull('deleted_at')
             ->whereNotNull('last_active_at')
-            ->whereNotNull("email_verified_at")
             ->where('last_active_at', '<', now()->subDays(180))
             ->chunk(
-                1000,
+                100,
                 function ($users) {
                     foreach ($users as $user) {
                         info('Disactive inactive user ' . $user->username);
