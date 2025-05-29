@@ -265,7 +265,7 @@ return [
     'safetyTipsKnowRules' => 'Conheça as regras',
     'safetyTipsKnowRulesContent' => 'Para se manter seguro, é importante conhecer as regras dos <a href="'.route('site.terms').'">termos de serviço</a>.',
     'safetyTipsAage' => 'Conheça a diretriz etária',
-    'safetyTipsAageContent' => 'Você deve ter pelo menos 16 anos de idade para usar o Pixelfed. Se você é menor de 18 anos, você deve ter permissão dos pais ou responsável legal.',
+    'safetyTipsAageContent' => 'Você deve ter pelo menos 18 anos de idade para usar o Pixelfed. Se você é menor de 18 anos, você deve ter permissão dos pais ou responsável legal.',
     'safetyTipsRport' => 'Denunciar conteúdo problemático',
     'safetyTipsRportContent' => 'Você pode denunciar conteúdos que acredita violarem nossas políticas.',
     'safetyTipsVisility' => 'Entendendo a visibilidade do conteúdo',
