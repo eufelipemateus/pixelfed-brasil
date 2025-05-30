@@ -47,7 +47,7 @@
                 <div>
                     <img :src="getAvatar()" class="avatar img-fluid shadow border"
                          onerror="this.onerror=null;this.src='/storage/avatars/default.png?v=0';">
-                    <p v-if="profile.label" class="text-right" style="margin-top: -30px;"><span class="label" :style="' color:'+profile.label.text_color+'; background-color: '+profile.label.background_color+ ';'" v-html="profile.label.label" ></span>
+                    <p v-if="profile.label" class="text-right" style="margin-top: -30px;"><span class="label" :style="' color:'+profile.label.text_color+'; background-color: '+profile.label.background_color+ ';'"  :title="profile.label.description" v-html="profile.label.label" ></span>
                     </p>
                 </div>
                 <!-- <button class="btn btn-link">
