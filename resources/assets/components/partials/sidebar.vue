@@ -263,7 +263,11 @@
             <a href="/privacy" class="font-weight-bold">{{ $t('navmenu.privacy') }}</a>
             <a href="/terms" class="font-weight-bold">{{ $t('navmenu.terms') }}</a>
             <a v-if="showLegalNoticeLink" href="/legal-notice" class="font-weight-bold">{{ $t('navmenu.legalNotice') }}</a>
-            <a href="https://pixelfed.org" class="font-weight-bold powered-by">Powered by Pixelfed</a>
+            <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL"  class="font-weight-bold"target="_blank">Doar</a>
+            <a v-if="showLegalNoticeLink" href="/legal-notice" class="font-weight-bold">{{ $t('navmenu.legalNotice') }}</a>
+            <div class="powered-by">
+                Mantido por <a href="https://felipemateus.com" class="font-weight-bold ">Felipe Mateus</a>
+            </div>
         </div>
 
         <!-- <b-modal
