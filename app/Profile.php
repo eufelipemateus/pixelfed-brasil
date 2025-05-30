@@ -443,6 +443,11 @@ class Profile extends Model
                 return LabelService::get('admin');
 
             }
+
+            if ($this->user->is_popular) {
+                return LabelService::get('popular');
+            }
+
             if ($this->created_at->diffInDays(now()) < 7) {
                 return LabelService::get('new');
             }

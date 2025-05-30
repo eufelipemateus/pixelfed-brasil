@@ -15,6 +15,7 @@ use App\User;
 use Carbon\Carbon;
 use App\Mail\MonthlyPopularPostsMail;
 use App\Profile;
+use App\Jobs\InternalPipeline\DefinePopularUsers;
 
 class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
 {
@@ -147,6 +148,10 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
         $popularUsers = Profile::whereIn('id', $profileIds->pluck('id'))
             ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::bigint[], id)')
             ->get();
+
+        DefinePopularUsers::dispatch($popularUsers)
+            ->onQueue('low')
+            ->delay(now()->addMinutes(15));
 
         if ($this->testing) {
             User::whereNull('status')

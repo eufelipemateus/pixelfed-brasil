@@ -43,6 +43,7 @@ class UserLabel extends Model
     protected $visible = [
         'label',
         'background_color',
-        'text_color'
+        'text_color',
+        'description'
     ];
 }

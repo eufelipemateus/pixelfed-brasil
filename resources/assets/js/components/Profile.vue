@@ -140,7 +140,7 @@
                                     <p v-if="profile.note" class="mb-0" v-html="profile.note"></p>
                                     <p v-if="profile.website"><a :href="profile.website" class="profile-website small" rel="me external nofollow noopener" target="_blank">{{formatWebsite(profile.website)}}</a></p>
                                     <p class="d-flex small text-muted align-items-center">
-                                        <span v-if="profile.label" class="btn  btn-sm py-0 mr-3"   :class="'btn-outline'" :style="'border: 1px solid '+profile.label.text_color+'; color:'+ profile.label.text_color +';'" v-html="profile.label.label"></span>
+                                        <span v-if="profile.label" class="btn  btn-sm py-0 mr-3"   :class="'btn-outline'" :style="'border: 1px solid '+profile.label.text_color+'; color:'+ profile.label.text_color +';'" :title="profile.label.description" v-html="profile.label.label"></span>
 
                                         <span v-if="relationship && relationship.followed_by" class="btn btn-outline-muted btn-sm py-0 mr-3">{{ $t("profile.followYou") }}</span>
                                         <span>
