@@ -6,6 +6,7 @@ use App\Profile;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\ModLogService;
+use Illuminate\Support\Facades\DB;
 
 class DefinePopularUsers implements ShouldQueue
 {
@@ -16,38 +17,55 @@ class DefinePopularUsers implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($newPopularProfiles)
+    public function __construct(array $newPopularProfiles)
     {
         $this->newPopularProfiles = $newPopularProfiles;
     }
 
     /**
      * Execute the job.
+     *
      */
     public function handle(): void
     {
-        $popularUsers = Profile::where('is_popular', true)->get();
-        $newPopularProfileIds = collect($this->newPopularProfiles)->pluck('id')->all();
+        DB::transaction(
+            function () {
 
-        $usersToUnpopular = $popularUsers->filter(
-            fn($user) => !in_array($user->id, $newPopularProfileIds)
+                $popularUsers = Profile::with('user')->where('is_popular', true)->get();
+                $currentPopularIds = $popularUsers->pluck('id')->all();
+                $newPopularProfileIds = collect($this->newPopularProfiles)->pluck('id')->all();
+                $newPopularProfileIdsSet = array_flip($newPopularProfileIds);
+
+                // Perfis que deixam de ser populares
+                $usersToUnpopular = $popularUsers->filter(
+                    fn($user) => !isset($newPopularProfileIdsSet[$user->id])
+                );
+                $idsToUnpopular = $usersToUnpopular->pluck('id')->all();
+                Profile::whereIn('id', $idsToUnpopular)->update(['is_popular' => false]);
+
+                foreach ($usersToUnpopular as $profile) {
+                    $this->_logProfileChange($profile, 'system.user.unpopular', 'Perfil removido da lista dos populares.');
+                }
+                info("Perfis removidos da popularidade: ", $idsToUnpopular);
+
+                // Perfis que passam a ser populares
+                $newlyPopularIds = array_diff($newPopularProfileIds, $currentPopularIds);
+                $newlyPopularIdsSet = array_flip($newlyPopularIds);
+
+                $newlyPopularProfiles = collect($this->newPopularProfiles)
+                    ->filter(fn($profile) => isset($newlyPopularIdsSet[$profile->id]));
+
+                Profile::whereIn('id', $newlyPopularIds)->update(['is_popular' => true]);
+
+                foreach ($newlyPopularProfiles as $profile) {
+                    $this->_logProfileChange($profile, 'system.user.popular', 'Perfil adicionado à lista dos populares.');
+                }
+
+                info("Perfis marcados como populares: ", $newPopularProfileIds);
+            }
         );
-
-        $idsToUnpopular = $usersToUnpopular->pluck('id')->all();
-        Profile::whereIn('id', $idsToUnpopular)->update(['is_popular' => false]);
-
-        foreach ($usersToUnpopular as $profile) {
-            $this->_logProfileChange($profile, 'system.user.unpopular', 'Perfil removido da lista dos populares.');
-        }
-        info("Perfis removidos da popularidade: ", $idsToUnpopular);
-
-        Profile::whereIn('id', $newPopularProfileIds)->update(['is_popular' => true]);
-        foreach ($this->newPopularProfiles as $profile) {
-            $this->_logProfileChange($profile, 'system.user.popular', 'Perfil adicionado à lista dos populares.');
-        }
-
-        info("Perfis marcados como populares: ", $newPopularProfileIds);
     }
+
 
 
     /**

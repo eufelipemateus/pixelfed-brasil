@@ -145,7 +145,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->limit(20)
             ->get();
 
-        $popularUsers = Profile::whereIn('id', $profileIds->pluck('id'))
+        $popularUsers = Profile::with('user')->whereIn('id', $profileIds->pluck('id'))
             ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::bigint[], id)')
             ->get();
 
