@@ -56,5 +56,6 @@ return [
     'view'                                                  => 'ver',
     'the_source_code_and_run_their_own_instance'            => 'o código-fonte e executar sua própria instância!',
     'open_source_in_pixelfed'                               => 'Código aberto no Pixelfed',
+    'warning_fork'                                     => 'Este site executa uma versão modificada do pixelfed que esta disponivel em <a href="https://github.com/eufelipemateus/pixelfed" target="_blank"  rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> para ser revisado e executado.'
 
 ];

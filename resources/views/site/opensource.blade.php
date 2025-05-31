@@ -7,8 +7,13 @@
   </div>
   <hr>
   <section>
-    <p class="lead">{{__('site.the_software_that_powers_this_website_is_called')}} <a href="https://pixelfed.org">Pixelfed</a> {{__('site.and_anyone_can')}} <a href="https://github.com/pixelfed/pixelfed">{{__('site.download')}}</a> {{__('site.opensource.or')}} <a href="https://github.com/pixelfed/pixelfed">{{__('site.view')}}</a> {{__('site.the_source_code_and_run_their_own_instance')}}</p>
-  </section>
+    <p class="lead">{{__('site.the_software_that_powers_this_website_is_called')}} <a href="https://pixelfed.org" target="_blank"  rel="noopener noreferrer">Pixelfed</a> {{__('site.and_anyone_can')}} <a href="https://github.com/pixelfed/pixelfed" target="_blank"  rel="noopener noreferrer">{{__('site.download')}}</a> {{__('site.opensource.or')}} <a href="https://github.com/pixelfed/pixelfed" target="_blank"  rel="noopener noreferrer">{{__('site.view')}}</a> {{__('site.the_source_code_and_run_their_own_instance')}}</p>
+
+    <p class="lead">{!! __('site.warning_fork') !!}</p>
+    @if (config('pixelfed.app_felipemateus'))
+        @includeIf('felipemateus.partials.site.opensource')
+    @endif
+</section>
 @endsection
 
 @push('meta')
