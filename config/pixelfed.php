@@ -298,7 +298,7 @@ return [
      * Instance Felipe Mateus
      *--------------------------------------------------------------------------
      *
-     * This value is always false, this can show  pages and links broken
+     * This value is always false.
      **/
     'app_felipemateus' => false,
 
