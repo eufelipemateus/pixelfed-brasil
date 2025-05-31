@@ -11,7 +11,7 @@
 
     <p class="lead">{!! __('site.warning_fork') !!}</p>
     @if (config('pixelfed.app_felipemateus'))
-        @includeIf('felipemateus.partials.site.opensource')
+        @includeIf('felipemateus::partials.site.opensource')
     @endif
 </section>
 @endsection
