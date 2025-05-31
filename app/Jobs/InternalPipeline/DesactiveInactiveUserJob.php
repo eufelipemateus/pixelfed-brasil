@@ -46,7 +46,7 @@ class DesactiveInactiveUserJob implements ShouldQueue
                         Mail::to($user->email)
                         ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('low')));
                         ModLogService::boot()
-                            ->objectUid($profile->id)
+                            ->objectUid($profile->user->id)
                             ->objectId($profile->id)
                             ->objectType('App\Profile::class')
                             ->action('system.user.desactive')

@@ -80,7 +80,7 @@ class DefinePopularUsers implements ShouldQueue
     private function _logProfileChange($profile, $action, $message)
     {
         ModLogService::boot()
-            ->objectUid($profile->id)
+            ->objectUid($profile->user->id)
             ->objectId($profile->id)
             ->objectType(Profile::class)
             ->action($action)

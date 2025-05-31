@@ -44,6 +44,13 @@ class ModLog extends Model
                 $msg = "[System] Deactivated Account";
                 break;
 
+            case 'system.user.unpopular':
+                $msg = "[System] Removed from Popular Users";
+                break;
+                
+            case 'system.user.popular':
+                $msg = "[System] Added to Popular Users";
+                break;
 
 			default:
 				$msg = 'Unknown action';
