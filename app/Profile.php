@@ -441,10 +441,9 @@ class Profile extends Model
         if($this->user){
             if ($this->user->is_admin) {
                 return LabelService::get('admin');
-
             }
 
-            if ($this->user->is_popular) {
+            if ($this->is_popular) {
                 return LabelService::get('popular');
             }
 
