@@ -12,7 +12,7 @@ class DefinePopularUsers implements ShouldQueue
 {
     use Queueable;
 
-    public  $newPopularProfiles = [];
+    public  $newPopularProfiles;
 
     /**
      * Create a new job instance.
