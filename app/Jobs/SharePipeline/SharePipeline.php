@@ -86,7 +86,7 @@ class SharePipeline implements ShouldQueue
             ]
         );
 
-        if (AccountService::getAccountSettings($target->id)["send_email_on_share"]) {
+        if (!empty($target->user_id)  && AccountService::getAccountSettings($target->id)["send_email_on_share"]) {
             $target->user->notify(new ShareNotification($actor->id,  $status->reblog_of_id ?? $status->id));
         }
 

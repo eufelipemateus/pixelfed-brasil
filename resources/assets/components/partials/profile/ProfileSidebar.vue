@@ -460,13 +460,12 @@ export default {
                 this.$emit('toggletab', tab);
             }
         },
-
-        getJoinedDate() {
-            let d = new Date(this.profile.created_at);
-            let month = new Intl.DateTimeFormat("en-US", {month: "long"}).format(d);
-            let year = d.getFullYear();
-            return `${month} ${year}`;
-        },
+       	getJoinedDate() {
+				return new Date(this.profile.created_at).toLocaleDateString(this.$i18n.locale, {
+                    year: 'numeric',
+                    month: 'long',
+                });
+		},
 
         follow() {
             event.currentTarget.blur();
