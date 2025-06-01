@@ -17,7 +17,7 @@ class DefinePopularUsers implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(array $newPopularProfiles)
+    public function __construct($newPopularProfiles)
     {
         $this->newPopularProfiles = $newPopularProfiles;
     }

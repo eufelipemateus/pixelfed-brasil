@@ -149,7 +149,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::bigint[], id)')
             ->get();
 
-        DefinePopularUsers::dispatch($popularUsers->toArray())
+        DefinePopularUsers::dispatch($popularUsers)
             ->onQueue('low')
             ->delay(now()->addMinutes(15));
 
