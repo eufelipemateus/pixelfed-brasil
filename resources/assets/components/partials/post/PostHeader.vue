@@ -30,7 +30,7 @@
                     </p>
                     <p class="text-lighter mb-0" style="font-size: 13px;">
                         <span v-if="status.account.label" class="d-none d-md-inline-block">
-                            <span class="badge badge-light user-select-none" :style="'color: '+status.account.label.text_color+';  border:1px solid'+ status.account.label.text_color+';'"  :title="profile.label.description" v-html="status.account.label.label " ></span>
+                            <span class="badge badge-light user-select-none" :style="'color: '+status.account.label.text_color+';  border:1px solid'+ status.account.label.text_color+';'"  :title="status.account.label.description" v-html="status.account.label.label " ></span>
                             <span class="mx-1 text-lighter">·</span>
                         </span>
                         <a class="timestamp text-lighter" :href="status.url" @click.prevent="goToPost()" :title="status.created_at">
