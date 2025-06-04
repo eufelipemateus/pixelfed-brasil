@@ -291,4 +291,10 @@ return [
     'app_registration_rate_limit_decay' => env('PF_IAR_RL_DECAY', 1800),
     'app_registration_confirm_rate_limit_attempts' => env('PF_IARC_RL_ATTEMPTS', 20),
     'app_registration_confirm_rate_limit_decay' => env('PF_IARC_RL_ATTEMPTS', 1800),
+
+    'limit_daily_posts' =>[
+        'enabled' => env('PF_LIMIT_DAILY_POSTS', false),
+        'limit' => (int) env('PF_LIMIT_DAILY_POSTS_LIMIT', 15),
+        'user_exceptions' => env('PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS', false),
+    ]
 ];
