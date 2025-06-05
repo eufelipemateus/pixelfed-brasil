@@ -309,4 +309,10 @@ return [
         'google_api_key' => env('GOOGLE_API_KEY', ''),
         'deepl_api_key' => env('DEEPL_API_KEY', ''),
     ],
+
+    'limit_daily_posts' =>[
+        'enabled' => env('PF_LIMIT_DAILY_POSTS', false),
+        'limit' => (int) env('PF_LIMIT_DAILY_POSTS_LIMIT', 15),
+        'user_exceptions' => env('PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS', false),
+    ]
 ];

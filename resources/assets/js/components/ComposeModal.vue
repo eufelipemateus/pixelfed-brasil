@@ -1407,6 +1407,9 @@ export default {
                                 if (err.response.data.error == "Must contain a single photo or video or multiple photos.") {
                                     swal("Wrong types of mixed media", "The album must contain a single photo or video or multiple photos.", 'error');
                                 }
+                                else if ( err.response.data.error =='limit_daily_posts') {
+                                    swal('Limite diario atingido!','Você atingiu o limite de posts diarios.', 'error');
+                                }
                                 else {
                                     this.defineErrorMessage(err);
                                 }
