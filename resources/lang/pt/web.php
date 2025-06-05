@@ -6,20 +6,20 @@ return [
 		'comment' => 'Comentar',
 		'commented' => 'Comentado',
 		'comments' => 'Comentários',
-		'like' => 'Curtir',
-		'liked' => 'Curtiu',
-		'likes' => 'Curtidas',
-		'share' => 'Compartilhar',
+		'like' => 'Gosto',
+		'liked' => 'Gostei',
+		'likes' => 'Gostos',
+		'share' => 'Partilhar',
 		'shared' => 'Compartilhado',
 		'shares' => 'Compartilhamentos',
-		'unshare' => 'Remover compartilhamento',
+		'unshare' => 'Despartilhar',
 		'bookmark' => 'Favorito',
 
 		'cancel' => 'Cancelar',
 		'copyLink' => 'Copiar link',
-		'delete' => 'Excluir',
+		'delete' => 'Eliminar',
 		'error' => 'Erro',
-		'errorMsg' => 'Algo deu errado. Tente novamente mais tarde.',
+		'errorMsg' => 'Ocorreu um erro. Por favor tente novamente mais tarde.',
 		'oops' => 'Oops!',
 		'other' => 'Outro',
 		'readMore' => 'Ler mais',
@@ -38,13 +38,13 @@ return [
 	],
 
 	'site' => [
-		'terms' => 'Termos de Uso',
+		'terms' => 'Termos de Utilização',
 		'privacy' => 'Política de Privacidade',
 	],
 
 	'navmenu' => [
-		'search' => 'Pesquisa',
-		'admin' => 'Painel Administrativo',
+		'search' => 'Pesquisar',
+		'admin' => 'Painel de administração',
 
 		// Timelines
 		'homeFeed' => 'Início',
@@ -53,7 +53,7 @@ return [
 
 		// Core features
 		'discover' => 'Explorar',
-		'directMessages' => 'Mensagens Diretas',
+		'directMessages' => 'DM',
 		'notifications' => 'Notificações',
 		'groups' => 'Grupos',
 		'stories' => 'Stories',
@@ -72,11 +72,11 @@ return [
 		'terms' => 'Termos',
 
 		// Temporary links
-		'backToPreviousDesign' => 'Voltar ao design anterior'
+		'backToPreviousDesign' => 'Voltar ao design antigo'
 	],
 
 	'directMessages' => [
-		'inbox' => 'Caixa de Entrada',
+		'inbox' => 'Caixa de entrada',
 		'sent' => 'Enviadas',
 		'requests' => 'Pedidos'
 	],
@@ -117,7 +117,7 @@ return [
 	'profile' => [
 		'posts' => 'Publicações',
 		'followers' => 'Seguidores',
-		'following' => 'A seguir',
+		'following' => 'Seguindo',
 		'admin' => 'Administrador',
 		'collections' => 'Coleções',
 		'follow' => 'Seguir',
@@ -128,24 +128,6 @@ return [
 
 		'emptyCollections' => 'Não conseguimos encontrar nenhuma coleção',
 		'emptyPosts' => 'Não conseguimos encontrar nenhuma publicação',
-
-        'blocking' => 'Você está bloqueando esta conta',
-        'sponsor' => 'Doar',
-        'followYou' => 'Segue você',
-        'archives' => 'Arquivados',
-        'bookmarks' => 'Favoritos',
-        'likes' => 'Curtidas',
-        'muted' => 'Silenciado',
-        'blocked' => 'Bloqueado',
-        'myPortifolio' => 'Meu Portfólio',
-        'private' => 'Este perfil é privado',
-        'public' => 'Público',
-        'draft' => 'Rascunho',
-        'emptyLikes' => 'Não conseguimos encontrar nenhuma publicação que você tenha curtido',
-        'emptyBookmarks' => 'Não conseguimos encontrar nenhuma publicação nos seus favoritos',
-        'emptyArchives' => 'Não conseguimos encontrar nenhuma publicação arquivada',
-        'untitled' => 'Sem título',
-        'noDescription' => 'Nenhuma descrição disponível'
 	],
 
 	'menu' => [
@@ -185,52 +167,20 @@ return [
 		'modMarkAsSpammerConfirm' => 'Tem certeza de que deseja marcar este usuário como spammer? Todos os posts existentes e futuros serão removidos da timeline e receberão aviso de conteúdo.',
 		'modMarkAsSpammerSuccess' => 'Usuário marcado como spammer com sucesso',
 
-		'toFollowers' => 'para seguidores',
+		'toFollowers' => 'para Seguidores',
 
-		'showCaption' => 'Exibir legendas',
-		'showLikes' => 'Mostrar Gostos',
+		'showCaption' => 'Mostar legenda',
+		'showLikes' => 'Mostrar gostos',
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-		'deletePostConfirm' => 'Tem a certeza que pretende apagar esta publicação?',
-		'archivePostConfirm' => 'Tem a certeza que pretende arquivar esta publicação?',
+		'deletePostConfirm' => 'Tens a certeza que pretendes eliminar esta publicação?',
+		'archivePostConfirm' => 'Tens a certeza que pretendes arquivar esta publicação?',
 		'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
-        'pin' => "Fixar",
-        'unpin' => "Desfixar",
-        "pinPostConfirm" => "Tem certeza de que deseja fixar esta publicação?",
-        "unpinPostConfirm" => "Tem certeza de que deseja desafixar esta publicação?"
 	],
 
-  'story' => [
-        'add' => 'Adicionar Story',
-        'myStory' => 'Minha Story',
-        'viewMyStory' => 'Ver Minha Story',
-        'goBack' => 'Voltar',
-        'delete' => 'Excluir',
-        'crop' => 'Cortar',
-        'error' => 'Ocorreu um erro, por favor tente novamente mais tarde.',
-        'cropping' => 'Cortando',
-        'storyDuration' => 'Duração da Story',
-        'seconds' => 'segundos',
-        'processing' => 'Processando',
-        'shareWithFollowers' => 'Compartilhe momentos com seguidores que duram 24 horas',
-        'cancel' => 'Cancelar',
-        'viewdBy' => 'Visualizado por',
-        'next' => 'Próximo',
-        'zoom' => 'Mova e pinça para dar zoom',
-        'options' => 'Opções',
-        'allowReplies' => 'Permitir Respostas',
-        'allowReactions' => 'Permitir Reações',
-        'limit' => 'Você atingiu o limite para novas stories',
-        'reactionSent' => 'Reação enviada',
-        'replySent' => 'Resposta enviada',
-        'expiresIn' => 'Expira em',
-        'viewers' => 'Visualizadores',
-        'report' => 'Denunciar',
-        'close' => 'Fechar',
-        'myStories' => 'My Stories',
-        'seeAll' => 'Ver todas as stories',
-
+	'story' => [
+		'add' => 'Adicionar Storie'
 	],
 
 	'timeline' => [
