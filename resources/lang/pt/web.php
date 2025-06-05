@@ -6,10 +6,10 @@ return [
 		'comment' => 'Comentar',
 		'commented' => 'Comentado',
 		'comments' => 'Comentários',
-		'like' => 'Gosto',
-		'liked' => 'Gostei',
-		'likes' => 'Gostos',
-		'share' => 'Partilhar',
+		'like' => 'Curtir',
+		'liked' => 'Curtiu',
+		'likes' => 'Curtidas',
+		'share' => 'Compartilhar',
 		'shared' => 'Compartilhado',
 		'shares' => 'Compartilhamentos',
 		'unshare' => 'Despartilhar',
@@ -17,7 +17,7 @@ return [
 
 		'cancel' => 'Cancelar',
 		'copyLink' => 'Copiar link',
-		'delete' => 'Eliminar',
+		'delete' => 'Excluir',
 		'error' => 'Erro',
 		'errorMsg' => 'Ocorreu um erro. Por favor tente novamente mais tarde.',
 		'oops' => 'Oops!',
@@ -38,13 +38,13 @@ return [
 	],
 
 	'site' => [
-		'terms' => 'Termos de Utilização',
+		'terms' => 'Termos de Uso',
 		'privacy' => 'Política de Privacidade',
 	],
 
 	'navmenu' => [
 		'search' => 'Pesquisar',
-		'admin' => 'Painel de administração',
+		'admin' => 'Painel Administrativo',
 
 		// Timelines
 		'homeFeed' => 'Início',
@@ -72,7 +72,7 @@ return [
 		'terms' => 'Termos',
 
 		// Temporary links
-		'backToPreviousDesign' => 'Voltar ao design antigo'
+		'backToPreviousDesign' => 'Voltar ao design anterior'
 	],
 
 	'directMessages' => [
@@ -128,6 +128,24 @@ return [
 
 		'emptyCollections' => 'Não conseguimos encontrar nenhuma coleção',
 		'emptyPosts' => 'Não conseguimos encontrar nenhuma publicação',
+
+        'blocking' => 'Você está bloqueando esta conta',
+        'sponsor' => 'Doar',
+        'followYou' => 'Segue você',
+        'archives' => 'Arquivados',
+        'bookmarks' => 'Favoritos',
+        'likes' => 'Curtidas',
+        'muted' => 'Silenciado',
+        'blocked' => 'Bloqueado',
+        'myPortifolio' => 'Meu Portfólio',
+        'private' => 'Este perfil é privado',
+        'public' => 'Público',
+        'draft' => 'Rascunho',
+        'emptyLikes' => 'Não conseguimos encontrar nenhuma publicação que você tenha curtido',
+        'emptyBookmarks' => 'Não conseguimos encontrar nenhuma publicação nos seus favoritos',
+        'emptyArchives' => 'Não conseguimos encontrar nenhuma publicação arquivada',
+        'untitled' => 'Sem título',
+        'noDescription' => 'Nenhuma descrição disponível'
 	],
 
 	'menu' => [
@@ -170,17 +188,48 @@ return [
 		'toFollowers' => 'para Seguidores',
 
 		'showCaption' => 'Mostar legenda',
-		'showLikes' => 'Mostrar gostos',
+		'showLikes' => 'Mostrar Curtidas',
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-		'deletePostConfirm' => 'Tens a certeza que pretendes eliminar esta publicação?',
+		'deletePostConfirm' => 'Tens a certeza que pretendes excluir esta publicação?',
 		'archivePostConfirm' => 'Tens a certeza que pretendes arquivar esta publicação?',
 		'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
+        'pin' => "Fixar",
+        'unpin' => "Desfixar",
+        "pinPostConfirm" => "Tem certeza de que deseja fixar esta publicação?",
+        "unpinPostConfirm" => "Tem certeza de que deseja desafixar esta publicação?"
 	],
 
 	'story' => [
-		'add' => 'Adicionar Storie'
+		'add' => 'Adicionar Storie',
+        'myStory' => 'Minha Story',
+        'viewMyStory' => 'Ver Minha Story',
+        'goBack' => 'Voltar',
+        'delete' => 'Excluir',
+        'crop' => 'Cortar',
+        'error' => 'Ocorreu um erro, por favor tente novamente mais tarde.',
+        'cropping' => 'Cortando',
+        'storyDuration' => 'Duração da Story',
+        'seconds' => 'segundos',
+        'processing' => 'Processando',
+        'shareWithFollowers' => 'Compartilhe momentos com seguidores que duram 24 horas',
+        'cancel' => 'Cancelar',
+        'viewdBy' => 'Visualizado por',
+        'next' => 'Próximo',
+        'zoom' => 'Mova e pinça para dar zoom',
+        'options' => 'Opções',
+        'allowReplies' => 'Permitir Respostas',
+        'allowReactions' => 'Permitir Reações',
+        'limit' => 'Você atingiu o limite para novas stories',
+        'reactionSent' => 'Reação enviada',
+        'replySent' => 'Resposta enviada',
+        'expiresIn' => 'Expira em',
+        'viewers' => 'Visualizadores',
+        'report' => 'Denunciar',
+        'close' => 'Fechar',
+        'myStories' => 'My Stories',
+        'seeAll' => 'Ver todas as stories',
 	],
 
 	'timeline' => [
