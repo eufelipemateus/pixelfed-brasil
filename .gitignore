@@ -34,3 +34,5 @@
 
 /packages/
 
+/resources/lang/pt
+/resources/assets/js/i18n/pt.json
