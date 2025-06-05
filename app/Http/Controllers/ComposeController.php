@@ -36,6 +36,8 @@ use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use App\Util\Lexer\Autolink;
+use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
+
 class ComposeController extends Controller
 {
     protected $fractal;
@@ -142,6 +144,10 @@ class ComposeController extends Controller
                 VideoThumbnail::dispatch($media)->onQueue('mmo');
                 $preview_url = '/storage/no-preview.png';
                 $url = '/storage/no-preview.png';
+                break;
+
+            case 'image/gif':
+                ImageGifThumbnail::dispatch($media)->onQueue('mmo');
                 break;
 
             default:
