@@ -73,39 +73,23 @@ class AvatarOptimize implements ShouldQueue
 
         $quality = config_cache('pixelfed.image_quality');
 
-        $encoder = null;
-        switch ($extension) {
-            case 'jpeg':
-            case 'jpg':
-                $encoder = new JpegEncoder($quality);
-                break;
-            case 'png':
-                $encoder = new PngEncoder();
-                break;
-            case 'webp':
-                $encoder = new WebpEncoder($quality);
-                break;
-            case 'avif':
-                $encoder = new AvifEncoder($quality);
-                break;
-            case 'heic':
-                $encoder = new JpegEncoder($quality);
-                $extension = 'jpg';
-                break;
-            default:
-                $encoder = new JpegEncoder($quality);
-                $extension = 'jpg';
-        }
+        $encoder = match ($extension) {
+            'jpeg', 'jpg' => new JpegEncoder($quality),
+            'png' => new PngEncoder(),
+            'webp' => new WebpEncoder($quality),
+            'avif' => new AvifEncoder($quality),
+            'heic' => new JpegEncoder($quality),
+            default => new JpegEncoder($quality),
+        };
 
         if ((bool) config_cache('pixelfed.cloud_storage')) {
             $file = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
         }
 
         try {
-            $img = Intervention::make($file)->orientate();
-            $img->fit(200, 200, function ($constraint) {
-                $constraint->upsize();
-            });
+            $img = $imageManager->read(file_get_contents($file));
+            $img->cover(200, 200, 'center');
+
             $quality = config_cache('pixelfed.image_quality');
             if ((bool) config_cache('pixelfed.cloud_storage')) {
                 $tempFile = tempnam(sys_get_temp_dir(), 'avatar');
