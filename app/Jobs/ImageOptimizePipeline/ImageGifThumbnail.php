@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Storage;
 
 class ImageGifThumbnail implements ShouldQueue
 {
@@ -43,28 +44,28 @@ class ImageGifThumbnail implements ShouldQueue
         $media = $this->media;
 
         if (!$media) {
-            error("Media not found in ImageGifThumbnail job.\n");
-            return;
-        }
-
-        $path = storage_path('app/' . $media->media_path);
-
-        if (!is_file($path)) {
-            error("Tried gerenerate thmbnail to media that does not exist or is not readable: $path \n");
+            error_log("Media not found in ImageGifThumbnail job.\n");
             return;
         }
 
         $pathInfo = pathinfo($media->media_path);
-        $thumbPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_thumb.png';
+        $thumbPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_thumb.jpg';
 
-        FFMpeg::fromDisk(config('filesystems.default'))
-            ->open($media->media_path)
-            ->getFrameFromSeconds(1)
-            ->export()
-            ->save($thumbPath);
+        $url = $media->remote_media? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
 
-        $media->update([
-            'thumbnail_path' => $thumbPath
-        ]);
+        try {
+            FFMpeg::openUrl($url)
+                ->getFrameFromSeconds(1)
+                ->export()
+                ->toDisk(config('filesystems.default'))
+                ->save($thumbPath);
+
+            $media->update([
+                'thumbnail_path' => $thumbPath,
+                'thumbnail_url' => Storage::disk(config('filesystems.default'))->url($thumbPath),
+            ]);
+        } catch (\Exception $e) {
+            error_log("ImageGifThumbnail job failed: " . $e->getMessage());
+        }
     }
 }
