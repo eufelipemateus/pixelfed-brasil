@@ -15,6 +15,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use NumberFormatter;
 use App\Enums\StatusEnums;
+use Carbon\Carbon;
 
 class AccountService
 {
@@ -387,5 +388,35 @@ class AccountService
         )->toArray();
 
         return $result;
+    }
+
+    public static function canPost(User $user): bool
+    {
+
+        $limitEnabled = config('pixelfed.limit_daily_posts.enabled');
+        $limit = config('pixelfed.limit_daily_posts.limit');
+        $userExceptionsEnabled = config('pixelfed.limit_daily_posts.user_exceptions');
+
+
+        if ($limitEnabled) {
+            if ($userExceptionsEnabled) {
+                $isUserException =  $user->settings['enable_limit_daily_posts_exception'] ?? false;
+
+                if ($isUserException) {
+                    return true;
+                }
+            }
+
+            $todayPosts = Status::whereProfileId($user->profile->id)
+                ->whereNull(['in_reply_to_id', 'reblog_of_id'])
+                ->whereIn('scope', ['public', 'unlisted', 'private'])
+                ->whereDate('created_at', Carbon::today())
+                ->count();
+
+            if ($todayPosts >= $limit) {
+                return false;
+            }
+        }
+        return true;
     }
 }

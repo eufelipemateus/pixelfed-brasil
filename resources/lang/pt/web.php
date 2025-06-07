@@ -12,14 +12,14 @@ return [
 		'share' => 'Compartilhar',
 		'shared' => 'Compartilhado',
 		'shares' => 'Compartilhamentos',
-		'unshare' => 'Remover compartilhamento',
+		'unshare' => 'Despartilhar',
 		'bookmark' => 'Favorito',
 
 		'cancel' => 'Cancelar',
 		'copyLink' => 'Copiar link',
 		'delete' => 'Excluir',
 		'error' => 'Erro',
-		'errorMsg' => 'Algo deu errado. Tente novamente mais tarde.',
+		'errorMsg' => 'Ocorreu um erro. Por favor tente novamente mais tarde.',
 		'oops' => 'Oops!',
 		'other' => 'Outro',
 		'readMore' => 'Ler mais',
@@ -43,7 +43,7 @@ return [
 	],
 
 	'navmenu' => [
-		'search' => 'Pesquisa',
+		'search' => 'Pesquisar',
 		'admin' => 'Painel Administrativo',
 
 		// Timelines
@@ -53,7 +53,7 @@ return [
 
 		// Core features
 		'discover' => 'Explorar',
-		'directMessages' => 'Mensagens Diretas',
+		'directMessages' => 'DM',
 		'notifications' => 'Notificações',
 		'groups' => 'Grupos',
 		'stories' => 'Stories',
@@ -76,7 +76,7 @@ return [
 	],
 
 	'directMessages' => [
-		'inbox' => 'Caixa de Entrada',
+		'inbox' => 'Caixa de entrada',
 		'sent' => 'Enviadas',
 		'requests' => 'Pedidos'
 	],
@@ -117,7 +117,7 @@ return [
 	'profile' => [
 		'posts' => 'Publicações',
 		'followers' => 'Seguidores',
-		'following' => 'A seguir',
+		'following' => 'Seguindo',
 		'admin' => 'Administrador',
 		'collections' => 'Coleções',
 		'follow' => 'Seguir',
@@ -185,15 +185,15 @@ return [
 		'modMarkAsSpammerConfirm' => 'Tem certeza de que deseja marcar este usuário como spammer? Todos os posts existentes e futuros serão removidos da timeline e receberão aviso de conteúdo.',
 		'modMarkAsSpammerSuccess' => 'Usuário marcado como spammer com sucesso',
 
-		'toFollowers' => 'para seguidores',
+		'toFollowers' => 'para Seguidores',
 
-		'showCaption' => 'Exibir legendas',
-		'showLikes' => 'Mostrar Gostos',
+		'showCaption' => 'Mostar legenda',
+		'showLikes' => 'Mostrar Curtidas',
 		'compactMode' => 'Modo compacto',
 		'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-		'deletePostConfirm' => 'Tem a certeza que pretende apagar esta publicação?',
-		'archivePostConfirm' => 'Tem a certeza que pretende arquivar esta publicação?',
+		'deletePostConfirm' => 'Tens a certeza que pretendes excluir esta publicação?',
+		'archivePostConfirm' => 'Tens a certeza que pretendes arquivar esta publicação?',
 		'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
         'pin' => "Fixar",
         'unpin' => "Desfixar",
@@ -201,8 +201,8 @@ return [
         "unpinPostConfirm" => "Tem certeza de que deseja desafixar esta publicação?"
 	],
 
-  'story' => [
-        'add' => 'Adicionar Story',
+	'story' => [
+		'add' => 'Adicionar Storie',
         'myStory' => 'Minha Story',
         'viewMyStory' => 'Ver Minha Story',
         'goBack' => 'Voltar',
@@ -230,7 +230,6 @@ return [
         'close' => 'Fechar',
         'myStories' => 'My Stories',
         'seeAll' => 'Ver todas as stories',
-
 	],
 
 	'timeline' => [

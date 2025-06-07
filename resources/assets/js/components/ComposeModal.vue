@@ -681,7 +681,12 @@
                                   <img :src="collection.thumb" class="mr-3" alt="" width="50px" height="50px">
                                   <div class="media-body">
                                     <h5 class="mt-0">{{ collection.title }}</h5>
-                                    <p class="mb-0 text-muted small">{{ collection.post_count }} Posts - Created {{ timeAgo(collection.published_at) }} ago</p>
+                                    <p class="mb-0 text-muted small">
+                                      <span>{{ collection.post_count }} Posts
+                                      <span>&middot;</span>
+                                      <span v-if="collection.visibility === 'draft'" class="primary"><i class="far fa-lock fa-sm"></i> {{ $t("profile.draft")}}</span>
+                                      <span v-else>Created {{ timeago(collection.published_at) }} ago</span>
+                                    </p>
                                   </div>
                                 </div>
                             </div>
@@ -1401,6 +1406,9 @@ export default {
                             case 400:
                                 if (err.response.data.error == "Must contain a single photo or video or multiple photos.") {
                                     swal("Wrong types of mixed media", "The album must contain a single photo or video or multiple photos.", 'error');
+                                }
+                                else if ( err.response.data.error =='limit_daily_posts') {
+                                    swal('Limite diario atingido!','Você atingiu o limite de posts diarios.', 'error');
                                 }
                                 else {
                                     this.defineErrorMessage(err);
