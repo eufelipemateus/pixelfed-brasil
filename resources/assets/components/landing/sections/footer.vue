@@ -1,19 +1,23 @@
 <template>
 	<div class="footer-component">
 		<div class="footer-component-links">
-			<a href="/site/help">Help</a>
+			<a href="/help">{{ $t('navmenu.help') }}</a>
 			<div class="spacer">·</div>
-			<a href="/site/terms">Terms</a>
+			<a href="/terms">{{ $t('navmenu.terms') }}</a>
 			<div class="spacer">·</div>
-			<a href="/site/privacy">Privacy</a>
-			<div class="spacer">·</div>
-			<a href="https://pixelfed.org/mobile-apps" target="_blank">Mobile Apps</a>
+			<a href="/privacy">{{ $t('navmenu.privacy') }}</a>
+            <div class="spacer">·</div>
+            <a v-if="config.show_legal_notice_link" href="/legal-notice">Legal Notice</a>
+            <div v-if="config.show_legal_notice_link" class="spacer">·</div>
+            <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank" >Doar</a>
 		</div>
 
 		<div class="footer-component-attribution">
 			<div><span>© {{ getYear() }} {{config.domain}}</span></div>
+            <div class="spacer">·</div>
+            {{totalUsers }} Usuarios Online
 			<div class="spacer">·</div>
-			<div><a href="https://pixelfed.org" class="text-bluegray-500 font-weight-bold">Powered by Pixelfed</a></div>
+			<div>Mantido por <a href="https://felipemateus.com" class="text-bluegray-500 font-weight-bold">Felipe Mateus</a></div>
 			<div class="spacer">·</div>
 			<div><span>v{{config.version}}</span></div>
 		</div>
@@ -24,14 +28,15 @@
 	export default {
 		data() {
 			return {
-				config: window.pfl
+				config: window.pfl,
+                totalUsers: window.online_users
 			}
 		},
 
-		methods: {
-			getYear() {
-				return (new Date().getFullYear());
-			}
-		}
-	}
+    methods: {
+        getYear() {
+            return (new Date().getFullYear());
+        }
+    }
+}
 </script>

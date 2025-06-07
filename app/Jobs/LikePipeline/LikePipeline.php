@@ -18,6 +18,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Notifications\LikeNotification;
+use App\Services\AccountService;
 
 class LikePipeline implements ShouldQueue
 {
@@ -89,6 +91,10 @@ class LikePipeline implements ShouldQueue
                 $notification->item_id = $status->id;
                 $notification->item_type = "App\Status";
                 $notification->save();
+
+                if (AccountService::getAccountSettings($status->profile_id)["send_email_on_like"]) {
+                    $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
+                }
 
             } catch (Exception $e) {
             }

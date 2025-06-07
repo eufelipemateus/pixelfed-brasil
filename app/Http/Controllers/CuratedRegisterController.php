@@ -9,6 +9,7 @@ use App\Models\CuratedRegisterActivity;
 use App\Services\EmailService;
 use App\Util\Lexer\RestrictedNames;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -229,7 +230,7 @@ class CuratedRegisterController extends Controller
             ->count();
 
         if ($totalCount && $totalCount >= config('instance.curated_registration.resend_confirmation_limit')) {
-            return redirect()->back()->withErrors(['email' => 'You have re-attempted too many times. To proceed with your application, please <a href="/site/contact" class="text-white" style="text-decoration: underline;">contact the admin team</a>.']);
+            return redirect()->back()->withErrors(['email' => 'You have re-attempted too many times. To proceed with your application, please <a href="'.route('site.contact').'" class="text-white" style="text-decoration: underline;">contact the admin team</a>.']);
         }
 
         $count = CuratedRegisterActivity::whereRegisterId($cur->id)

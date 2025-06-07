@@ -19,6 +19,7 @@ use App\Services\MediaBlocklistService;
 use App\Services\MediaPathService;
 use App\Services\MediaStorageService;
 use App\Services\MediaTagService;
+use App\Services\PlaceService;
 use App\Services\SnowflakeService;
 use App\Services\UserRoleService;
 use App\Services\UserStorageService;
@@ -30,11 +31,12 @@ use App\Util\Media\License;
 use Auth;
 use Cache;
 use DB;
-use Purify;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Util\Lexer\Autolink;
+use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
 
 class ComposeController extends Controller
 {
@@ -133,6 +135,7 @@ class ComposeController extends Controller
             case 'image/jpeg':
             case 'image/png':
             case 'image/webp':
+            case 'image/heic':
             case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
@@ -141,6 +144,10 @@ class ComposeController extends Controller
                 VideoThumbnail::dispatch($media)->onQueue('mmo');
                 $preview_url = '/storage/no-preview.png';
                 $url = '/storage/no-preview.png';
+                break;
+
+            case 'image/gif':
+                ImageGifThumbnail::dispatch($media)->onQueue('mmo');
                 break;
 
             default:
@@ -240,7 +247,13 @@ class ComposeController extends Controller
         abort_if(! $request->user(), 403);
 
         $this->validate($request, [
-            'q' => 'required|string|min:1|max:50',
+            'q' => [
+                'required',
+                'string',
+                'min:1',
+                'max:300',
+                new \App\Rules\WebFinger,
+            ],
         ]);
 
         $q = $request->input('q');
@@ -263,10 +276,11 @@ class ComposeController extends Controller
 
         $blocked->push($request->user()->profile_id);
 
+        $operator = config('database.default') === 'pgsql' ? 'ilike' : 'like';
         $results = Profile::select('id', 'domain', 'username')
             ->whereNotIn('id', $blocked)
             ->whereNull('domain')
-            ->where('username', 'like', '%'.$q.'%')
+            ->where('username', $operator, '%'.$q.'%')
             ->limit(15)
             ->get()
             ->map(function ($r) {
@@ -487,6 +501,7 @@ class ComposeController extends Controller
         ]);
 
         abort_if($request->user()->has_roles && ! UserRoleService::can('can-post', $request->user()->id), 403, 'Invalid permissions for this action');
+        abort_if(!AccountService::canPost($request->user()), 400, 'limit_daily_posts');
 
         if (config('costar.enabled') == true) {
             $blockedKeywords = config('costar.keyword.block');
@@ -561,6 +576,7 @@ class ComposeController extends Controller
 
         if ($place && is_array($place)) {
             $status->place_id = $place['id'];
+            PlaceService::clearStatusesByPlaceId($place['id']);
         }
 
         if ($request->filled('comments_disabled')) {
@@ -572,8 +588,11 @@ class ComposeController extends Controller
         }
 
         $defaultCaption = "";
-        $status->caption = strip_tags($request->input('caption')) ?? $defaultCaption;
-        $status->rendered = $defaultCaption;
+        $content =strip_tags($request->input('caption')) ?? $defaultCaption;
+        $rendered = Autolink::create()->autolink($content);
+
+        $status->caption = $content;
+        $status->rendered = $rendered;
         $status->scope = 'draft';
         $status->visibility = 'draft';
         $status->profile_id = $profile->id;
@@ -633,13 +652,13 @@ class ComposeController extends Controller
                 });
         }
 
-        NewStatusPipeline::dispatch($status);
         Cache::forget('user:account:id:'.$profile->user_id);
         Cache::forget('_api:statuses:recent_9:'.$profile->id);
         Cache::forget('profile:status_count:'.$profile->id);
         Cache::forget('status:transformer:media:attachments:'.$status->id);
         Cache::forget('profile:embed:'.$status->profile_id);
         Cache::forget($limitKey);
+        NewStatusPipeline::dispatch($status);
 
         return $status->url();
     }
@@ -677,7 +696,7 @@ class ComposeController extends Controller
         $place = $request->input('place');
         $cw = $request->input('cw');
         $tagged = $request->input('tagged');
-        $defaultCaption = config_cache('database.default') === 'mysql' ? null : "";
+        $defaultCaption = config_cache('database.default') === 'mysql' ? null : '';
 
         if ($place && is_array($place)) {
             $status->place_id = $place['id'];
@@ -687,8 +706,11 @@ class ComposeController extends Controller
             $status->comments_disabled = (bool) $request->input('comments_disabled');
         }
 
-        $status->caption = $request->filled('caption') ? strip_tags($request->caption) : $defaultCaption;
-        $status->rendered = $defaultCaption;
+        $content =  $request->filled('caption') ? strip_tags($request->caption) : $defaultCaption;
+        $rendered = Autolink::create()->autolink($content);
+
+        $status->caption =  $content;
+        $status->rendered = $rendered;
         $status->profile_id = $profile->id;
         $entities = [];
         $visibility = $profile->unlisted == true && $visibility == 'public' ? 'unlisted' : $visibility;

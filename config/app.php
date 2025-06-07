@@ -161,6 +161,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         // App\Providers\TelescopeServiceProvider::class,
         App\Providers\PassportServiceProvider::class,
+        AndreasElia\Analytics\AnalyticsServiceProvider::class,
 
     ],
 
@@ -210,6 +211,7 @@ return [
         'URL'          => Illuminate\Support\Facades\URL::class,
         'Validator'    => Illuminate\Support\Facades\Validator::class,
         'View'         => Illuminate\Support\Facades\View::class,
+        'Str'         => Illuminate\Support\Str::class,
 
         'PrettyNumber' => App\Util\Lexer\PrettyNumber::class,
         'Purify'       => Stevebauman\Purify\Facades\Purify::class,

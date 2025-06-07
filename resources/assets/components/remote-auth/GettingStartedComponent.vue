@@ -37,7 +37,7 @@
 
                     <div class="w-100">
                         <p class="text-center mb-0">
-                            <a class="font-weight-bold" href="/site/contact">Contact Support</a>
+                            <a class="font-weight-bold" href="/contact">Contact Support</a>
                         </p>
                         <hr>
                         <p class="text-center mb-0">

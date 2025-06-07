@@ -20,8 +20,8 @@
                                 <div>
                                     <p class="font-weight-bold mb-1">Import from Instagram</p>
                                     <p v-if="showDisabledWarning" class="small mb-0">This feature has been disabled by the administrators.</p>
-                                    <p v-else-if="showNotAllowedWarning" class="small mb-0">You have not been permitted to use this feature, or have reached the maximum limits. For more info, view the <a href="/site/kb/import" class="font-weight-bold">Import Help Center</a> page.</p>
-                                    <p v-else class="small mb-0">Upload the JSON export from Instagram in .zip format.<br />For more information click <a href="/site/kb/import">here</a>.</p>
+                                    <p v-else-if="showNotAllowedWarning" class="small mb-0">You have not been permitted to use this feature, or have reached the maximum limits. For more info, view the <a href="/kb/import" class="font-weight-bold">Import Help Center</a> page.</p>
+                                    <p v-else class="small mb-0">Upload the JSON export from Instagram in .zip format.<br />For more information click <a href="/kb/import">here</a>.</p>
                                 </div>
                                 <div v-if="!showDisabledWarning && !showNotAllowedWarning">
                                     <button
@@ -636,7 +636,7 @@
                 })
                 .then(res => {
                     if(res === 'contact') {
-                        window.location.href = '/site/contact'
+                        window.location.href = '/contact'
                     }
                 });
             },

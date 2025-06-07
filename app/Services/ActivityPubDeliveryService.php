@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Profile;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
+use App\Enums\StatusEnums;
 
 class ActivityPubDeliveryService
 {
@@ -45,7 +46,7 @@ class ActivityPubDeliveryService
 	{
 		abort_if(!$this->sender || !$this->to || !$this->payload, 400);
 		abort_if(!Helpers::validateUrl($this->to), 400);
-		abort_if($this->sender->domain != null || $this->sender->status != null, 400);
+		abort_if($this->sender->domain != null || $this->sender->status != StatusEnums::ACTIVE, 400);
 
 		$body = $this->payload;
 		$payload = json_encode($body);

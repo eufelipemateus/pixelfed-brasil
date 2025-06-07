@@ -119,7 +119,7 @@ class RemoteStatusDelete implements ShouldQueue, ShouldBeUniqueUntilProcessing
         if($status->in_reply_to_id) {
             $parent = Status::find($status->in_reply_to_id);
             if($parent) {
-                --$parent->reply_count;
+                $parent->reply_count = $parent->reply_count - 1;
                 $parent->save();
                 StatusService::del($parent->id);
             }

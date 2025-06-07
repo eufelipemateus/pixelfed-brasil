@@ -20,6 +20,7 @@ use Cookie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
+use App\Enums\StatusEnums;
 
 class SettingsController extends Controller
 {
@@ -107,12 +108,11 @@ class SettingsController extends Controller
         abort_if(! config('pixelfed.account_deletion'), 403);
         abort_if($user->is_admin, 403);
         $profile = $user->profile;
-        $user->status = 'disabled';
-        $profile->status = 'disabled';
-        $user->save();
-        $profile->save();
+        $user->disable();
+        $profile->disable();
         Auth::logout();
         Cache::forget('profiles:private');
+        AccountService::del($profile->id);
 
         return redirect('/');
     }
@@ -137,8 +137,8 @@ class SettingsController extends Controller
         $ts = Carbon::now()->addMonth();
         $user->email = $user->id;
         $user->password = '';
-        $user->status = 'delete';
-        $profile->status = 'delete';
+        $user->status = StatusEnums::DELETE_QUEUE;
+        $profile->status = StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $profile->delete_after = $ts;
         $user->save();
@@ -349,5 +349,10 @@ class SettingsController extends Controller
         }
 
         return redirect(route('settings'))->with('status', 'Media settings successfully updated!');
+    }
+
+    public function filtersHome(Request $request)
+    {
+        return view('settings.filters.home');
     }
 }

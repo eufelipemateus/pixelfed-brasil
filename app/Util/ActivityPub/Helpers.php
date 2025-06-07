@@ -29,6 +29,8 @@ use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
 use Purify;
 use Validator;
+use Illuminate\Support\Facades\DB;
+
 
 class Helpers
 {
@@ -175,12 +177,11 @@ class Helpers
                 return false;
             }
 
-            if (! self::passesSecurityChecks($host, $disableDNSCheck, $forceBanCheck)) {
+            if (!$disableDNSCheck && ! self::passesSecurityChecks($host, $disableDNSCheck, $forceBanCheck)) {
                 return false;
             }
 
             return $uri->toString();
-
         } catch (UriException $e) {
             return false;
         }
@@ -256,7 +257,7 @@ class Helpers
     public static function shouldCheckDNS(): bool
     {
         return app()->environment() === 'production' &&
-               (bool) config('security.url.verify_dns');
+            (bool) config('security.url.verify_dns');
     }
 
     /**
@@ -265,7 +266,7 @@ class Helpers
     public static function hasValidDNS(string $host): bool
     {
         $hash = hash('sha256', $host);
-        $key = self::URL_CACHE_PREFIX."valid-dns:sha256-{$hash}";
+        $key = self::URL_CACHE_PREFIX . "valid-dns:sha256-{$hash}";
 
         return Cache::remember($key, self::CACHE_TTL, function () use ($host) {
             return DomainService::hasValidDns($host);
@@ -476,10 +477,10 @@ class Helpers
     public static function isValidStatusData(?array $res): bool
     {
         return $res &&
-               ! empty($res) &&
-               ! isset($res['error']) &&
-               isset($res['@context']) &&
-               isset($res['published']);
+            ! empty($res) &&
+            ! isset($res['error']) &&
+            isset($res['@context']) &&
+            isset($res['published']);
     }
 
     /**
@@ -534,7 +535,7 @@ class Helpers
 
         if (is_array($attributedTo)) {
             return collect($attributedTo)
-                ->filter(fn ($o) => $o && isset($o['type']) && $o['type'] == 'Person')
+                ->filter(fn($o) => $o && isset($o['type']) && $o['type'] == 'Person')
                 ->pluck('id')
                 ->first();
         }
@@ -554,9 +555,7 @@ class Helpers
         $idDomain = parse_url($id, PHP_URL_HOST);
         $urlDomain = parse_url($url, PHP_URL_HOST);
 
-        return $idDomain &&
-               $urlDomain &&
-               strtolower($idDomain) === strtolower($urlDomain);
+        return $idDomain && $urlDomain;
     }
 
     /**
@@ -586,13 +585,13 @@ class Helpers
      */
     public static function storeStatus(string $url, Profile $profile, array $activity): Status
     {
-        $originalUrl = $url;
         $id = self::getStatusId($activity, $url);
         $url = self::getStatusUrl($activity, $id);
 
         if ((! isset($activity['type']) ||
-             in_array($activity['type'], ['Create', 'Note'])) &&
-            ! self::validateStatusDomains($originalUrl, $id, $url)) {
+                in_array($activity['type'], ['Create', 'Note'])) &&
+            ! self::validateStatusDomains($id, $url)
+        ) {
             throw new \Exception('Invalid status domains');
         }
 
@@ -647,20 +646,11 @@ class Helpers
     }
 
     /**
-     * Validate status domain consistency
+     * Validate the status URL and ID are valid
      */
-    public static function validateStatusDomains(string $originalUrl, string $id, string $url): bool
+    public static function validateStatusDomains(string $id, string $url): bool
     {
-        if (! self::validateUrl($id) || ! self::validateUrl($url)) {
-            return false;
-        }
-
-        $originalDomain = parse_url($originalUrl, PHP_URL_HOST);
-        $idDomain = parse_url($id, PHP_URL_HOST);
-        $urlDomain = parse_url($url, PHP_URL_HOST);
-
-        return strtolower($originalDomain) === strtolower($idDomain) &&
-               strtolower($originalDomain) === strtolower($urlDomain);
+        return self::validateUrl($id) && self::validateUrl($url);
     }
 
     /**
@@ -708,7 +698,8 @@ class Helpers
      */
     public static function handleStatusPostProcessing(Status $status, int $profileId, string $url): void
     {
-        if (config('instance.timeline.network.cached') &&
+        if (
+            config('instance.timeline.network.cached') &&
             self::isEligibleForNetwork($status)
         ) {
             $urlDomain = parse_url($url, PHP_URL_HOST);
@@ -721,7 +712,8 @@ class Helpers
 
         AccountStatService::incrementPostCount($profileId);
 
-        if ($status->in_reply_to_id === null &&
+        if (
+            $status->in_reply_to_id === null &&
             in_array($status->type, ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])
         ) {
             FeedInsertRemotePipeline::dispatch($status->id, $profileId)
@@ -735,10 +727,10 @@ class Helpers
     public static function isEligibleForNetwork(Status $status): bool
     {
         return $status->in_reply_to_id === null &&
-               $status->reblog_of_id === null &&
-               in_array($status->type, ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album']) &&
-               $status->created_at->gt(now()->subHours(config('instance.timeline.network.max_hours_old'))) &&
-               (config('instance.hide_nsfw_on_public_feeds') ? ! $status->is_nsfw : true);
+            $status->reblog_of_id === null &&
+            in_array($status->type, ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album']) &&
+            $status->created_at->gt(now()->subHours(config('instance.timeline.network.max_hours_old'))) &&
+            (config('instance.hide_nsfw_on_public_feeds') ? ! $status->is_nsfw : true);
     }
 
     /**
@@ -922,7 +914,7 @@ class Helpers
         $url = $media['url'];
 
         return in_array($type, $allowedTypes) &&
-               self::validateUrl($url);
+            self::validateUrl($url);
     }
 
     /**
@@ -1153,7 +1145,7 @@ class Helpers
     public static function needsFetch(?Profile $profile): bool
     {
         return ! $profile?->last_fetched_at ||
-               $profile->last_fetched_at->lt(now()->subHours(24));
+            $profile->last_fetched_at->lt(now()->subHours(24));
     }
 
     /**
@@ -1239,15 +1231,28 @@ class Helpers
      */
     public static function getOrCreateInstance(string $domain): Instance
     {
-        $instance = Instance::updateOrCreate(['domain' => $domain]);
+        // Tenta encontrar com lock pessimista
+        $now = now();
 
-        if ($instance->wasRecentlyCreated) {
-            \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)
-                ->onQueue('low');
-        }
+        Instance::upsert(
+            [
+                [
+                    'domain' => $domain,
+                    'unlisted' => config('pixelfed.hide_remote_instance'),
+                    'updated_at' => $now,
+                    'created_at' => $now,
+                ]
+            ],
+            ['domain'],
+            ['updated_at' /* ,'unlisted' */]
+        );
+
+        $instance = Instance::where('domain', $domain)->first();
+        \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
 
         return $instance;
     }
+
 
     /**
      * Handle moved profile references
@@ -1289,7 +1294,8 @@ class Helpers
      */
     public static function handleProfileAvatar(Profile $profile): void
     {
-        if (! $profile->last_fetched_at ||
+        if (
+            ! $profile->last_fetched_at ||
             $profile->last_fetched_at->lt(now()->subMonths(3))
         ) {
             RemoteAvatarFetch::dispatch($profile);

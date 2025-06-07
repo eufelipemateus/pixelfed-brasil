@@ -13,6 +13,7 @@ use App\Models\UserDomainBlock;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use DB;
 use App\Services\FollowerService;
+use App\Enums\StatusEnums;
 
 class UserObserver
 {
@@ -67,7 +68,7 @@ class UserObserver
 
     protected function handleUser($user)
     {
-        if(in_array($user->status, ['deleted', 'delete'])) {
+        if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             return;
         }
 

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\ModLogService;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Services\AccountService;
+use App\Enums\StatusEnums;
 
 trait AdminUserController
 {
@@ -210,8 +211,8 @@ trait AdminUserController
 		}
 
 		$ts = now()->addMonth();
-		$user->status = 'delete';
-		$profile->status = 'delete';
+		$user->status =  StatusEnums::DELETE_QUEUE ;
+		$profile->status = StatusEnums::DELETE_QUEUE;
 		$user->delete_after = $ts;
 		$profile->delete_after = $ts;
 		$user->save();

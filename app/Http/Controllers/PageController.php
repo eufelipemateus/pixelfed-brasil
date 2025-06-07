@@ -16,11 +16,11 @@ class PageController extends Controller
 
 	protected function cacheKeys() {
 		return [
-			'/site/about' => 'site:about',
-			'/site/privacy' => 'site:privacy',
-			'/site/terms' => 'site:terms',
-			'/site/kb/community-guidelines' => 'site:help:community-guidelines',
-			'/site/legal-notice' => 'site:legal-notice'
+			'/about' => 'site:about',
+			'/privacy' => 'site:privacy',
+			'/terms' => 'site:terms',
+			'/kb/community-guidelines' => 'site:help:community-guidelines',
+			'/legal-notice' => 'site:legal-notice'
 		];
 	}
 
@@ -65,7 +65,7 @@ class PageController extends Controller
 		$keys = $this->cacheKeys();
 		$key = $keys[$page->slug];
 		Cache::forget($key);
-		if($page->slug === '/site/legal-notice') {
+		if($page->slug === '/legal-notice') {
 			ConfigCacheService::put('instance.has_legal_notice', $page->active);
 		}
 		return response()->json(['msg' => 200]);
@@ -95,23 +95,23 @@ class PageController extends Controller
 
 		switch ($page) {
 			case 'about':
-				Page::firstOrCreate(['slug' => '/site/about']);
+				Page::firstOrCreate(['slug' => '/about']);
 				break;
 
 			case 'privacy':
-				Page::firstOrCreate(['slug' => '/site/privacy']);
+				Page::firstOrCreate(['slug' => '/privacy']);
 				break;
 
 			case 'terms':
-				Page::firstOrCreate(['slug' => '/site/terms']);
+				Page::firstOrCreate(['slug' => '/terms']);
 				break;
 
 			case 'community_guidelines':
-				Page::firstOrCreate(['slug' => '/site/kb/community-guidelines']);
+				Page::firstOrCreate(['slug' => '/kb/community-guidelines']);
 				break;
 
 			case 'legal_notice':
-				Page::firstOrCreate(['slug' => '/site/legal-notice']);
+				Page::firstOrCreate(['slug' => '/legal-notice']);
 				break;
 		}
 

@@ -15,13 +15,13 @@
 
 			<div v-if="activeReactionEmoji" style="position: absolute;z-index: 999;" class="w-100 h-100 d-flex justify-content-center align-items-center">
 				<div class="d-flex justify-content-center align-items-center rounded-pill shadow-lg" style="width: 120px;height: 30px;font-size:13px;background-color: rgba(0, 0, 0, 0.6);">
-					<span class="text-lighter">Reaction sent</span>
+					<span class="text-lighter">{{  $t("story.reactionSent") }}</span>
 				</div>
 			</div>
 
 			<div v-if="activeReply" style="position: absolute;z-index: 999;" class="w-100 h-100 d-flex justify-content-center align-items-center">
 				<div class="d-flex justify-content-center align-items-center rounded-pill shadow-lg" style="width: 120px;height: 30px;font-size:13px;background-color: rgba(0, 0, 0, 0.6);">
-					<span class="text-lighter">Reply sent</span>
+					<span class="text-lighter">{{ $t("story.replySent")  }}</span>
 				</div>
 			</div>
 
@@ -194,10 +194,10 @@
 							<img :src="profile.avatar" width="120" height="120" class="rounded-circle border mb-3 shadow">
 							<p class="lead text-lighter mb-1">View as <span class="text-white">{{profile.username}}</span></p>
 							<p class="text-lighter font-weight-lighter px-md-5 py-3">
-								<span class="text-white font-weight-bold">{{account.acct}}</span> will be able to see that you viewed their story.
+								<span class="text-white font-weight-bold">{{account.acct}}</span> {{$t('story.viewWarning')}}
 							</p>
-							<button class="btn btn-outline-lighter rounded-pill py-1 font-weight-bold" @click="confirmViewStory">View Story</button>
-							<button class="btn btn-outline-lighter rounded-pill py-1 font-weight-bold" @click="cancelViewStory">Cancel</button>
+							<button class="btn btn-outline-lighter rounded-pill py-1 font-weight-bold" @click="confirmViewStory">{{ $t("story.viewStory")}}</button>
+							<button class="btn btn-outline-lighter rounded-pill py-1 font-weight-bold" @click="cancelViewStory">{{ $t("story.cancel") }}</button>
 						</div>
 					</div>
 				</div>
@@ -217,7 +217,7 @@
 			<div class="list-group text-center">
 				<div v-if="owner" class="list-group-item rounded py-3">
 					<div class="d-flex justify-content-between align-items-center font-weight-light">
-						<span>Expires in {{timeahead(stories[storyIndex].expires_at)}}</span>
+						<span>{{ $t("story.expiresIn")}} {{timeahead(stories[storyIndex].expires_at)}}</span>
 						<span>
 							<span class="btn btn-light btn-sm font-weight-bold">
 								<i class="fas fa-eye"></i>
@@ -235,16 +235,16 @@
 						{{ e }}
 					</button>
 				</div>
-				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="fetchViewers">Viewers</div>
-				<div v-if="!owner" class="list-group-item rounded cursor-pointer" @click="ctxMenuReport">Report</div>
-				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="deleteStory">Delete</div>
-				<div class="list-group-item rounded cursor-pointer text-muted" @click="closeCtxMenu">Close</div>
+				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="fetchViewers">{{ $t("story.viewers")}}</div>
+				<div v-if="!owner" class="list-group-item rounded cursor-pointer" @click="ctxMenuReport">{{ $t("story.report")}}</div>
+				<div v-if="owner" class="list-group-item rounded cursor-pointer" @click="deleteStory">{{ $t("story.delete")}}</div>
+				<div class="list-group-item rounded cursor-pointer text-muted" @click="closeCtxMenu">{{ $t("story.close")}}</div>
 			</div>
 		</b-modal>
 
 		<b-modal ref="viewersModal"
 			id="viewers"
-			title="Viewers"
+			:title="$t('story.viewers')"
 			header-class="border-0"
 			hide-footer
 			centered
@@ -267,12 +267,12 @@
 					</div>
 				</div>
 				<div v-if="viewers.length == 0" class="list-group-item text-center text-dark font-weight-light py-5">
-					No viewers yet
+					{{ $t("story.noViewers") }}
 				</div>
 				<div v-if="viewersHasMore" class="list-group-item text-center border-bottom-0">
-					<button class="btn btn-light font-weight-bold border rounded-pill" @click="viewersLoadMore">Load More</button>
+					<button class="btn btn-light font-weight-bold border rounded-pill" @click="viewersLoadMore">{{ $t("story.loadMore") }}</button>
 				</div>
-				<div class="list-group-item text-center rounded cursor-pointer text-muted" @click="closeViewersModal">Close</div>
+				<div class="list-group-item text-center rounded cursor-pointer text-muted" @click="closeViewersModal">{{ $t("story.close")}}</div>
 			</div>
 		</b-modal>
 
@@ -285,16 +285,16 @@
 			size="sm"
 			body-class="list-group-flush p-0 rounded">
 			<p class="py-2 px-3 mb-0">
-				<div class="text-center font-weight-bold text-danger">Report</div>
+				<div class="text-center font-weight-bold text-danger">{{ $t("story.report")}}</div>
 				<div class="small text-center text-muted">Select one of the following options</div>
 			</p>
 			<div class="list-group text-center">
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('spam')">Spam</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('sensitive')">Sensitive Content</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('abusive')">Abusive or Harmful</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="openCtxReportOtherMenu()">Other</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('spam')">{{ $t("story.spam")}}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('sensitive')">{{ $t("story.sensitiveContent") }}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('abusive')">{{ $t("story.abusive") }}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="openCtxReportOtherMenu()">{{ $t("story.other")}}</div>
 				<!-- <div class="list-group-item rounded cursor-pointer" @click="ctxReportMenuGoBack()">Go Back</div> -->
-				<div class="list-group-item rounded cursor-pointer text-lighter" @click="ctxReportMenuGoBack()">Cancel</div>
+				<div class="list-group-item rounded cursor-pointer text-lighter" @click="ctxReportMenuGoBack()">{{ $t("story.cancel")}}</div>
 			</div>
 		</b-modal>
 
@@ -307,18 +307,18 @@
 			size="sm"
 			body-class="list-group-flush p-0 rounded">
 			<p class="py-2 px-3 mb-0">
-				<div class="text-center font-weight-bold text-danger">Report</div>
+				<div class="text-center font-weight-bold text-danger">{{ $t("story.report")}}</div>
 				<div class="small text-center text-muted">Select one of the following options</div>
 			</p>
 			<div class="list-group text-center">
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('underage')">Underage Account</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('copyright')">Copyright Infringement</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('impersonation')">Impersonation</div>
-				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('scam')">Scam or Fraud</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('underage')">{{ $t("story.underageAccount")}}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('copyright')">{{ $t("story.copyrightInfringement")}}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('impersonation')">{{ $t("story.impersonation")}}</div>
+				<div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('scam')">{{ $t("story.scam")}}</div>
 				<!-- <div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('terrorism')">Terrorism Related</div> -->
 				<!-- <div class="list-group-item rounded cursor-pointer font-weight-bold" @click="sendReport('other')">Other or Not listed</div> -->
 				<!-- <div class="list-group-item rounded cursor-pointer" @click="ctxReportOtherMenuGoBack()">Go Back</div> -->
-				<div class="list-group-item rounded cursor-pointer text-lighter" @click="ctxReportOtherMenuGoBack()">Cancel</div>
+				<div class="list-group-item rounded cursor-pointer text-lighter" @click="ctxReportOtherMenuGoBack()">{{ $t("story.cancel")}}</div>
 			</div>
 		</b-modal>
 	</div>

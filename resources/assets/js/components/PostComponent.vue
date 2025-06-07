@@ -400,7 +400,7 @@
 				</div>
 				<hr>
 				<button :class="copiedEmbed ? 'btn btn-primary btn-block btn-sm py-1 font-weight-bold disabed': 'btn btn-primary btn-block btn-sm py-1 font-weight-bold'" @click="ctxCopyEmbed" :disabled="copiedEmbed">{{copiedEmbed ? 'Embed Code Copied!' : 'Copy Embed Code'}}</button>
-				<p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/site/terms">Terms of Use</a></p>
+				<p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/terms">Terms of Use</a></p>
 			</div>
 		</b-modal>
 		<b-modal ref="taggedModal"
@@ -426,7 +426,7 @@
 					</div>
 				</div>
 			</div>
-			<p class="mb-0 text-center small text-muted font-weight-bold"><a href="/site/kb/tagging-people">Learn more</a> about Tagging People.</p>
+			<p class="mb-0 text-center small text-muted font-weight-bold"><a href="/kb/tagging-people">Learn more</a> about Tagging People.</p>
 		</b-modal>
 		<b-modal ref="ctxModal"
 			id="ctx-modal"

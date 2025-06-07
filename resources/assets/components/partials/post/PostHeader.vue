@@ -29,8 +29,8 @@
                         </b-popover>
                     </p>
                     <p class="text-lighter mb-0" style="font-size: 13px;">
-                        <span v-if="status.account.is_admin" class="d-none d-md-inline-block">
-                            <span class="badge badge-light text-danger user-select-none" title="Admin account">ADMIN</span>
+                        <span v-if="status.account.label" class="d-none d-md-inline-block">
+                            <span class="badge badge-light user-select-none" :style="'color: '+status.account.label.text_color+';  border:1px solid'+ status.account.label.text_color+';'"  :title="status.account.label.description" v-html="status.account.label.label " ></span>
                             <span class="mx-1 text-lighter">·</span>
                         </span>
                         <a class="timestamp text-lighter" :href="status.url" @click.prevent="goToPost()" :title="status.created_at">
@@ -146,22 +146,7 @@
 
         methods: {
             timeago(ts) {
-                let short = App.util.format.timeAgo(ts);
-                if(
-                    short.endsWith('s') ||
-                    short.endsWith('m') ||
-                    short.endsWith('h')
-                ) {
-                    return short;
-                }
-                const intl = new Intl.DateTimeFormat(undefined, {
-                    year:  'numeric',
-                    month: 'short',
-                    day:   'numeric',
-                    hour: 'numeric',
-                    minute: 'numeric'
-                });
-                return intl.format(new Date(ts));
+                return App.util.format.timeAgo(ts);
             },
 
             openMenu() {

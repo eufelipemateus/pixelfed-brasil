@@ -14,6 +14,7 @@ use App\{
 use Illuminate\Queue\InteractsWithQueue;
 use App\Jobs\AvatarPipeline\CreateAvatar;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Enums\StatusEnums;
 
 class AuthLogin
 {
@@ -88,28 +89,28 @@ class AuthLogin
 
     protected function userState($user)
     {
-        if($user->status != null) {
+        if($user->status != StatusEnums::ACTIVE) {
             $profile = $user->profile;
             if(!$profile) {
                 return;
             }
             switch ($user->status) {
-                case 'disabled':
-                    $profile->status = null;
-                    $user->status = null;
+                case StatusEnums::DISABLED:
+                    $profile->status = StatusEnums::ACTIVE;
+                    $user->status = StatusEnums::ACTIVE;
                     $profile->save();
                     $user->save();
                     break;
 
-                case 'delete':
-                    $profile->status = null;
+                case StatusEnums::DELETE_QUEUE:
+                    $profile->status = StatusEnums::ACTIVE;
                     $profile->delete_after = null;
-                    $user->status = null;
+                    $user->status = StatusEnums::ACTIVE;
                     $user->delete_after = null;
                     $profile->save();
                     $user->save();
                     break;
-                
+
                 default:
                     # code...
                     break;

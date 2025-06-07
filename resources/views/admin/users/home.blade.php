@@ -30,7 +30,7 @@
 					</div>
 				</th>
 				<th scope="col" class="border-0" width="5%">
-					<span>ID</span> 
+					<span>ID</span>
 				</th>
 				<th scope="col" class="border-0" width="40%">
 					<span>Username</span>
@@ -51,7 +51,7 @@
 		</thead>
 		<tbody>
 			@foreach($users as $key => $user)
-			@if($user->status == 'deleted')
+			@if($user->status ==  \App\Enums\StatusEnums::DELETED)
 			<tr class="font-weight-bold text-center user-row">
 				<th scope="row">
 					<div class="custom-control custom-checkbox account-select-check">
@@ -78,7 +78,7 @@
 					</span>
 				</td>
 			</tr>
-			@else 
+			@else
 			<tr class="font-weight-bold text-center user-row">
 				<th scope="row">
 					<div class="custom-control custom-checkbox account-select-check">
@@ -134,7 +134,7 @@
 						<a href="/i/admin/users/modtools/{{$user->id}}" class="pr-2 text-muted small font-weight-bold" title="Moderation Logs" data-toggle="tooltip" data-placement="bottom">
 							Mod Tools
 						</a>
-						@if($user->status !== 'deleted' && !$user->is_admin)
+						@if($user->status !==   \App\Enums\StatusEnums::DELETED && !$user->is_admin)
 						<a href="/i/admin/users/delete/{{$user->id}}" class="pr-2 text-muted small font-weight-bold" title="Delete account" data-toggle="tooltip" data-placement="bottom" onclick="deleteAccount({{$user->id}})">
 							Delete
 						</a>

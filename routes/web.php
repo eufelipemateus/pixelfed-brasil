@@ -6,8 +6,15 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
     Route::get('web/directory', 'LandingController@directoryRedirect');
     Route::get('web/explore', 'LandingController@exploreRedirect');
     Route::get('authorize_interaction', 'AuthorizeInteractionController@get');
+    Route::get('/waiting-room', function () {
+        return response()->view('waiting-room', [], 503);
+    })->name('waiting-room');
 
     Auth::routes();
+
+    Route::get('auth/oidc/start', 'RemoteOidcController@start');
+    Route::get('auth/oidc/callback', 'RemoteOidcController@handleCallback');
+
     Route::get('auth/raw/mastodon/start', 'RemoteAuthController@startRedirect');
     Route::post('auth/raw/mastodon/config', 'RemoteAuthController@getConfig');
     Route::post('auth/raw/mastodon/domains', 'RemoteAuthController@getAuthDomains');
@@ -230,6 +237,10 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('web', 'SpaController@index');
     });
 
+    Route::get('/i/app-email-verify', 'AppRegisterController@index');
+    Route::post('/i/app-email-verify', 'AppRegisterController@store')->middleware('throttle:app-signup');
+
+
     Route::group(['prefix' => 'account'], function () {
         Route::redirect('/', '/');
         Route::get('direct', 'AccountController@direct');
@@ -254,6 +265,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::post('password', 'SettingsController@passwordUpdate')->middleware('dangerzone');
         Route::get('email', 'SettingsController@email')->name('settings.email')->middleware('dangerzone');
         Route::post('email', 'SettingsController@emailUpdate')->middleware('dangerzone');
+        Route::post('email_config', 'SettingsController@emailConfigUpdate')->middleware('dangerzone')->name('settings.email_config');
         Route::get('notifications', 'SettingsController@notifications')->name('settings.notifications');
         Route::get('privacy', 'SettingsController@privacy')->name('settings.privacy');
         Route::post('privacy', 'SettingsController@privacyStore');
@@ -365,10 +377,13 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
             Route::get('manage', 'ProfileMigrationController@index');
             Route::post('manage', 'ProfileMigrationController@store');
         });
+
+        Route::group(['prefix' => 'filters'], function() {
+            Route::get('/', 'SettingsController@filtersHome')->name('settings.filters');
+        });
     });
 
-    Route::group(['prefix' => 'site'], function () {
-        Route::redirect('/', '/');
+    Route::group(['prefix' => '/'], function () {
         Route::get('about', 'SiteController@about')->name('site.about');
         Route::view('help', 'site.help')->name('site.help');
         Route::view('developer-api', 'site.developer')->name('site.developers');
@@ -410,11 +425,11 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
             Route::view('curated-onboarding', 'site.help.curated-onboarding')->name('help.curated-onboarding');
             Route::view('account-migration', 'site.help.account-migration')->name('help.account-migration');
         });
-        Route::get('newsroom/{year}/{month}/{slug}', 'NewsroomController@show');
-        Route::get('newsroom/archive', 'NewsroomController@archive');
-        Route::get('newsroom/search', 'NewsroomController@search');
-        Route::get('newsroom', 'NewsroomController@index');
-        Route::get('legal-notice', 'SiteController@legalNotice');
+        Route::get('newsroom/{year}/{month}/{slug}', 'NewsroomController@show')->name('newsroom.show');
+        Route::get('newsroom/archive', 'NewsroomController@archive')->name('newsroom.archive');
+        Route::get('newsroom/search', 'NewsroomController@search')->name('newsroom.search');
+        Route::get('newsroom', 'NewsroomController@index')->name('newsroom.index');
+        Route::get('legal-notice', 'SiteController@legalNotice')->name('legal-notice');
     });
 
     Route::group(['prefix' => 'timeline'], function () {

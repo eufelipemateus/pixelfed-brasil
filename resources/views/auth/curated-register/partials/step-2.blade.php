@@ -80,7 +80,7 @@
             <div class="details-form-field">
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="agree" name="agree" required>
-                    <label class="custom-control-label text-muted" for="agree">I have read and agreed to our <a href="/site/terms" target="_blank" class="text-white">Terms of Use</a> and <a href="/site/privacy" target="_blank" class="text-white">Privacy Policy</a>.</label>
+                    <label class="custom-control-label text-muted" for="agree">I have read and agreed to our <a href="/terms" target="_blank" class="text-white">Terms of Use</a> and <a href="/privacy" target="_blank" class="text-white">Privacy Policy</a>.</label>
                 </div>
             </div>
         </div>

@@ -108,6 +108,7 @@ Route::group(['prefix' => 'api'], function () use ($middleware) {
         Route::post('accounts/{id}/unfollow', 'Api\ApiV1Controller@accountUnfollowById')->middleware($middleware);
         Route::post('accounts/{id}/block', 'Api\ApiV1Controller@accountBlockById')->middleware($middleware);
         Route::post('accounts/{id}/unblock', 'Api\ApiV1Controller@accountUnblockById')->middleware($middleware);
+        Route::post('accounts/{id}/remove_from_followers', 'Api\ApiV1Controller@accountRemoveFollowById')->middleware($middleware);
         Route::post('accounts/{id}/pin', 'Api\ApiV1Controller@accountEndorsements')->middleware($middleware);
         Route::post('accounts/{id}/unpin', 'Api\ApiV1Controller@accountEndorsements')->middleware($middleware);
         Route::post('accounts/{id}/mute', 'Api\ApiV1Controller@accountMuteById')->middleware($middleware);
@@ -177,6 +178,10 @@ Route::group(['prefix' => 'api'], function () use ($middleware) {
         Route::get('statuses/{id}/history', 'StatusEditController@history')->middleware($middleware);
         Route::put('statuses/{id}', 'StatusEditController@store')->middleware($middleware);
 
+        Route::get('statuses/{id}/translate', 'Api\ApiV1Controller@translateStatus')->middleware($middleware);
+        Route::get('accounts/{id}/translate', 'Api\ApiV1Controller@translateBio')->middleware($middleware);
+
+        
         Route::group(['prefix' => 'admin'], function () use ($middleware) {
             Route::get('domain_blocks', 'Api\V1\Admin\DomainBlocksController@index')->middleware($middleware);
             Route::post('domain_blocks', 'Api\V1\Admin\DomainBlocksController@create')->middleware($middleware);
@@ -191,6 +196,12 @@ Route::group(['prefix' => 'api'], function () use ($middleware) {
         Route::post('media', 'Api\ApiV2Controller@mediaUploadV2')->middleware($middleware);
         Route::get('streaming/config', 'Api\ApiV2Controller@getWebsocketConfig');
         Route::get('instance', 'Api\ApiV2Controller@instance');
+
+        Route::get('filters', 'CustomFilterController@index')->middleware($middleware);
+        Route::get('filters/{id}', 'CustomFilterController@show')->middleware($middleware);
+        Route::post('filters', 'CustomFilterController@store')->middleware($middleware);
+        Route::put('filters/{id}', 'CustomFilterController@update')->middleware($middleware);
+        Route::delete('filters/{id}', 'CustomFilterController@delete')->middleware($middleware);
     });
 
     Route::group(['prefix' => 'v1.1'], function () use ($middleware) {

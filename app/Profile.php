@@ -8,7 +8,13 @@ use App\HasSnowflakePrimary;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use App\Services\FollowerService;
 use App\Models\ProfileAlias;
+use App\Casts\StatusEnumCast;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusEnums;
 
+use App\Models\UserLabel;
+use App\Services\LabelService;
 class Profile extends Model
 {
 	use HasSnowflakePrimary, SoftDeletes;
@@ -23,11 +29,15 @@ class Profile extends Model
 	protected $casts = [
 		'deleted_at' => 'datetime',
 		'last_fetched_at' => 'datetime',
-		'last_status_at' => 'datetime'
+		'last_status_at' => 'datetime',
+        'status' => StatusEnumCast::class,
 	];
 	protected $hidden = ['private_key'];
-	protected $visible = ['id', 'user_id', 'username', 'name'];
+	protected $visible = ['id', 'user_id', 'username', 'name','label'];
 	protected $guarded = [];
+
+    protected $appends = ['label'];
+
 
 	public function user()
 	{
@@ -379,4 +389,68 @@ class Profile extends Model
 	{
 		return $this->hasMany(ProfileAlias::class);
 	}
+
+    /**
+     * Scope a query to only active Users.
+     *
+     * @param Builder $query query builder instance
+     *
+     * @return void
+     */
+    #[Scope]
+    protected function whereActive(Builder $query)
+    {
+        return   $query->whereNull('status');
+    }
+
+    /**
+     *  Enable the user
+     *
+     * @return void
+     **/
+    public function enable(): void
+    {
+        if ($this->status == StatusEnums::DISABLED) {
+            $this->status = StatusEnums::ACTIVE;
+            $this->save();
+        }
+    }
+
+    /**
+     *  Disable the user
+     *
+     * @return void
+     **/
+    public function disable(): void
+    {
+
+        if ($this->status == StatusEnums::ACTIVE) {
+            $this->status = StatusEnums::DISABLED;
+            $this->save();
+        }
+
+    }
+
+    /**
+     * Get the label for the profile based on user status and creation date.
+     *
+     * @return array|null
+     */
+    public function getLabelAttribute()
+    {
+        if($this->user){
+            if ($this->user->is_admin) {
+                return LabelService::get('admin');
+            }
+
+            if ($this->is_popular) {
+                return LabelService::get('popular');
+            }
+
+            if ($this->created_at->diffInDays(now()) < 7) {
+                return LabelService::get('new');
+            }
+		}
+        return null;
+    }
 }

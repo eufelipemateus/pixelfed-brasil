@@ -64,7 +64,7 @@
                         </p>
 
                         <p class="register-terms">
-                            By registering, you agree to our <a href="/site/terms">Terms of Service</a> and <a href="/site/privacy">Privacy Policy</a>.
+                            By registering, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
                         </p>
                     </div>
                 </div>

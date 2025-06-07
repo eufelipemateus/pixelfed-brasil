@@ -30,6 +30,7 @@ use App\User;
 use Cache;
 use DB;
 use Illuminate\Http\Request;
+use App\Enums\StatusEnums;
 
 class AdminApiController extends Controller
 {
@@ -558,11 +559,11 @@ class AdminApiController extends Controller
 
             $ts = now()->addMonth();
 
-            $user->status = 'delete';
+            $user->status = StatusEnums::DELETE_QUEUE;
             $user->delete_after = $ts;
             $user->save();
 
-            $profile->status = 'delete';
+            $profile->status = StatusEnums::DELETE_QUEUE;
             $profile->delete_after = $ts;
             $profile->save();
 
@@ -583,15 +584,15 @@ class AdminApiController extends Controller
                 DB::table('oauth_auth_codes')->whereUserId($user->id)->delete();
                 $user->email = $user->id;
                 $user->password = '';
-                $user->status = 'delete';
+                $user->status = StatusEnums::DELETED;
                 $user->save();
-                $profile->status = 'delete';
+                $profile->status = StatusEnums::DELETED;
                 $profile->delete_after = now()->addMonth();
                 $profile->save();
                 AccountService::del($profile->id);
                 DeleteAccountPipeline::dispatch($user)->onQueue('high');
             } else {
-                $profile->status = 'delete';
+                $profile->status = StatusEnums::DELETE_QUEUE;
                 $profile->delete_after = now()->addMonth();
                 $profile->save();
                 AccountService::del($profile->id);

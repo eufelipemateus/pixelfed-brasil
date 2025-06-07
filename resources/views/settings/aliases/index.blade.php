@@ -42,7 +42,7 @@
                         <p class="lead">If you want to move from another account to this one, you can create an alias here first.</p>
                         <p>This alias is needed before you can move your followers from the old account to this one. Don't worry, making this change is safe and can be undone. The process of moving the account starts from the old one.</p>
 
-                        <p class="mb-0">Your followers will be migrated to your new account, and in some instances your posts too! For more information on Aliases and Account Migration, visit the <a href="/site/kb/your-profile">Help Center</a>.</p>
+                        <p class="mb-0">Your followers will be migrated to your new account, and in some instances your posts too! For more information on Aliases and Account Migration, visit the <a href="{{route('help.your-profile')}}">Help Center</a>.</p>
                     </div>
 
                     <div class="col-12 col-md-5">
