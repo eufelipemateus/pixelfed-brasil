@@ -72,7 +72,7 @@ jobs:
             echo "APP_FALLBACK_LOCALE=pt" >> .env
             echo "APP_URL=https://${{vars.DOMAIN}}" >> .env
             echo "APP_DOMAIN=${{vars.DOMAIN}}" >> .env
-            echo "ADMIN_DOMAIN=${{vars.DOMAIN}}"  >> .env
+            echo "ADMIN_DOMAIN=${{vars.ADMIN_DOMAIN}}"  >> .env
             echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
             echo "TRUST_PROXIES=*" >> .env
             echo "HORIZON_MEMORY_LIMIT=${{vars.HORIZON_MEMORY_LIMIT}}" >> .env
@@ -134,7 +134,8 @@ jobs:
             echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
 
             echo "PF_ENABLE_CLOUD=true" >> .env
-            echo "FILESYSTEM_CLOUD=spaces" >> .env
+            echo "FILESYSTEM_CLOUD=spacce" >> .env
+            echo "DANGEROUSLY_SET_FILESYSTEM_DRIVER=${{secrets.FILESYSTEM_CLOUD}}" >> .env
             echo "PORTFOLIO_DOMAIN=portifolio.${{vars.DOMAIN}}" >> .env
             echo "PORTFOLIO_PATH=" >> .env
             echo "DO_SPACES_KEY=${{secrets.DO_SPACES_KEY}}" >> .env
@@ -149,14 +150,14 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
-            echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
+            echo "AWS_URL=${{secrets.S3_URL}}" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
             echo "TRANSLATION_ENABLED=true" >> .env
             echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
             echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
             echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
-            
+
             echo "PF_LIMIT_DAILY_POSTS=true" >> .env
             echo "PF_DAILY_POST_LIMIT=6" >> .env
             echo "PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS=false" >> .env
