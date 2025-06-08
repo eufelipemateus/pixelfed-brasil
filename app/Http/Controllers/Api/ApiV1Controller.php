@@ -876,11 +876,11 @@ class ApiV1Controller extends Controller
                 'follower_id' => $user->profile_id,
                 'following_id' => $target->id,
             ]);
-            if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
+            if ($remote && config('federation.activitypub.remoteFollow') == true) {
                 (new FollowerController)->sendFollow($user->profile, $target);
             }
 
-            if (AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
+            if (!$remote &&  AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
                 $target->user->notify(new FollowRequestNotification($user->profile_id));
             }
         } elseif ($remote == true) {
