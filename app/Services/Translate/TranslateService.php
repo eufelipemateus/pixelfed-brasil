@@ -44,7 +44,7 @@ class TranslateService
      *
      * @param string $id       The id of the translation.
      * @param string $language The language code.
-     * 
+     *
      * @return string The cache key.
      */
     public static function statusKey(string $id,  string $language)
@@ -128,6 +128,13 @@ class TranslateService
                     'deepl_api_key' => $deepl_api_key,
                 ],
             ],
+            'libre' => [
+                'provider' => LibreTranslate::class,
+                'config' => [
+                    'libre_translate_api_key' => config('pixelfed.translation.libre_translate_api_key'),
+                    'libre_translate_url' => config('pixelfed.translation.libre_translate_url', 'https://libretranslate.de'),
+                ],
+            ],
             default => throw new \Exception('Invalid translation provider'),
         };
     }
@@ -167,7 +174,7 @@ class TranslateService
      * Determines if the given user is allowed to use the translation feature.
      *
      * @param User $user The user to check.
-     * 
+     *
      * @return bool True if the user can translate, false otherwise.
      */
     public static function canTranslate(User $user): bool
