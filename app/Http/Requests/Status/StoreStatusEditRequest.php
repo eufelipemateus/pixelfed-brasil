@@ -6,6 +6,7 @@ use App\Media;
 use App\Status;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Enums\StatusEnums;
 
 class StoreStatusEditRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ class StoreStatusEditRequest extends FormRequest
     public function authorize(): bool
     {
         $profile = $this->user()->profile;
-        if ($profile->status != null) {
+        if ($profile->status != StatusEnums::ACTIVE) {
             return false;
         }
         if ($profile->unlisted == true && $profile->cw == true) {
