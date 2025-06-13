@@ -30,7 +30,7 @@ class ProfileTransformer extends Fractal\TransformerAbstract
                 ],
             ],
             'id' => $profile->permalink(),
-            'type' => 'Person',
+            'type' => $profile->is_service? 'Service' :  'Person',
             'following' => $profile->permalink('/following'),
             'followers' => $profile->permalink('/followers'),
             'inbox' => $profile->permalink('/inbox'),
