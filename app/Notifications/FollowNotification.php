@@ -38,8 +38,8 @@ class FollowNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('[Notification]   ' . $this->profile->name . ' started following you')
-            ->line('**@' . $this->profile->name .'** started following you');
+            ->subject('[Notification]   ' . $this->profile->username . ' started following you')
+            ->line('**@' . $this->profile->username .'** started following you');
     }
 
     /**

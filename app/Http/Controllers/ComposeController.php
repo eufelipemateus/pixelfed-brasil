@@ -36,6 +36,8 @@ use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use App\Util\Lexer\Autolink;
+use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
+
 class ComposeController extends Controller
 {
     protected $fractal;
@@ -142,6 +144,10 @@ class ComposeController extends Controller
                 VideoThumbnail::dispatch($media)->onQueue('mmo');
                 $preview_url = '/storage/no-preview.png';
                 $url = '/storage/no-preview.png';
+                break;
+
+            case 'image/gif':
+                ImageGifThumbnail::dispatch($media)->onQueue('mmo');
                 break;
 
             default:
@@ -495,6 +501,7 @@ class ComposeController extends Controller
         ]);
 
         abort_if($request->user()->has_roles && ! UserRoleService::can('can-post', $request->user()->id), 403, 'Invalid permissions for this action');
+        abort_if(!AccountService::canPost($request->user()), 400, 'limit_daily_posts');
 
         if (config('costar.enabled') == true) {
             $blockedKeywords = config('costar.keyword.block');
