@@ -19,6 +19,7 @@ use App\Services\MediaBlocklistService;
 use App\Services\MediaPathService;
 use App\Services\MediaStorageService;
 use App\Services\MediaTagService;
+use App\Services\PlaceService;
 use App\Services\SnowflakeService;
 use App\Services\UserRoleService;
 use App\Services\UserStorageService;
@@ -132,6 +133,7 @@ class ComposeController extends Controller
             case 'image/jpeg':
             case 'image/png':
             case 'image/webp':
+            case 'image/heic':
             case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
@@ -268,10 +270,11 @@ class ComposeController extends Controller
 
         $blocked->push($request->user()->profile_id);
 
+        $operator = config('database.default') === 'pgsql' ? 'ilike' : 'like';
         $results = Profile::select('id', 'domain', 'username')
             ->whereNotIn('id', $blocked)
             ->whereNull('domain')
-            ->where('username', 'like', '%'.$q.'%')
+            ->where('username', $operator, '%'.$q.'%')
             ->limit(15)
             ->get()
             ->map(function ($r) {
@@ -566,6 +569,7 @@ class ComposeController extends Controller
 
         if ($place && is_array($place)) {
             $status->place_id = $place['id'];
+            PlaceService::clearStatusesByPlaceId($place['id']);
         }
 
         if ($request->filled('comments_disabled')) {
@@ -638,13 +642,13 @@ class ComposeController extends Controller
                 });
         }
 
-        NewStatusPipeline::dispatch($status);
         Cache::forget('user:account:id:'.$profile->user_id);
         Cache::forget('_api:statuses:recent_9:'.$profile->id);
         Cache::forget('profile:status_count:'.$profile->id);
         Cache::forget('status:transformer:media:attachments:'.$status->id);
         Cache::forget('profile:embed:'.$status->profile_id);
         Cache::forget($limitKey);
+        NewStatusPipeline::dispatch($status);
 
         return $status->url();
     }
@@ -776,11 +780,18 @@ class ComposeController extends Controller
         $uid = $request->user()->id;
         abort_if($request->user()->has_roles && ! UserRoleService::can('can-post', $request->user()->id), 403, 'Invalid permissions for this action');
 
+        $types = config_cache('pixelfed.media_types');
+        if (str_contains($types, ',')) {
+            $types = explode(',', $types);
+        }
         $default = [
+            'allowed_media_types' => $types,
+            'max_caption_length' => (int) config_cache('pixelfed.max_caption_length'),
             'default_license' => 1,
             'media_descriptions' => false,
+            'max_file_size' => (int) config_cache('pixelfed.max_photo_size'),
             'max_media_attachments' => (int) config_cache('pixelfed.max_album_length'),
-            'max_altext_length' => config_cache('pixelfed.max_altext_length'),
+            'max_altext_length' => (int) config_cache('pixelfed.max_altext_length'),
         ];
         $settings = AccountService::settings($uid);
         if (isset($settings['other']) && isset($settings['other']['scope'])) {
@@ -789,7 +800,9 @@ class ComposeController extends Controller
             $settings['compose_settings'] = $s;
         }
 
-        return array_merge($default, $settings['compose_settings']);
+        $res = array_merge($default, $settings['compose_settings']);
+
+        return response()->json($res, 200, [], JSON_UNESCAPED_SLASHES);
     }
 
     public function createPoll(Request $request)

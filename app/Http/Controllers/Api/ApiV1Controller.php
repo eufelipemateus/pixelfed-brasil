@@ -246,7 +246,7 @@ class ApiV1Controller extends Controller
         }
 
         $this->validate($request, [
-            'avatar' => 'sometimes|mimetypes:image/jpeg,image/png|max:'.config('pixelfed.max_avatar_size'),
+            'avatar' => 'sometimes|mimetypes:image/jpeg,image/jpg,image/png|max:'.config('pixelfed.max_avatar_size'),
             'display_name' => 'nullable|string|max:30',
             'note' => 'nullable|string|max:200',
             'locked' => 'nullable',
@@ -1919,9 +1919,11 @@ class ApiV1Controller extends Controller
         $media->save();
 
         switch ($media->mime) {
+            case 'image/jpg':
             case 'image/jpeg':
             case 'image/png':
             case 'image/webp':
+            case 'image/heic':
             case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
@@ -2149,9 +2151,11 @@ class ApiV1Controller extends Controller
         $media->save();
 
         switch ($media->mime) {
+            case 'image/jpg':
             case 'image/jpeg':
             case 'image/png':
             case 'image/webp':
+            case 'image/heic':
             case 'image/avif':
                 ImageOptimize::dispatch($media)->onQueue('mmo');
                 break;
@@ -3783,16 +3787,19 @@ class ApiV1Controller extends Controller
             abort(500, 'An error occured.');
         }
 
-        NewStatusPipeline::dispatch($status);
-        if ($status->in_reply_to_id) {
-            CommentPipeline::dispatch($parent, $status);
-        }
+        Cache::forget('pf:status:ap:v1:sid:'.$status->id);
+        Cache::forget('status:transformer:media:attachments:'.$status->id);
         Cache::forget('user:account:id:'.$user->id);
         Cache::forget('_api:statuses:recent_9:'.$user->profile_id);
         Cache::forget('profile:status_count:'.$user->profile_id);
         Cache::forget($user->storageUsedKey());
         Cache::forget('profile:embed:'.$status->profile_id);
         Cache::forget($limitKey);
+
+        NewStatusPipeline::dispatch($status);
+        if ($status->in_reply_to_id) {
+            CommentPipeline::dispatch($parent, $status);
+        }
 
         if ($request->has('collection_ids') && $ids) {
             $collections = Collection::whereProfileId($user->profile_id)
@@ -4573,6 +4580,48 @@ class ApiV1Controller extends Controller
                     ->pluck('domain');
             })
         );
+    }
+
+    public function accountRemoveFollowById(Request $request, $id)
+    {
+        abort_if(! $request->user(), 403);
+
+        $pid = $request->user()->profile_id;
+
+        if ($pid === $id) {
+            return $this->json(['error' => 'Request invalid! target_id is same user id.'], 500);
+        }
+
+        $exists = Follower::whereProfileId($id)
+            ->whereFollowingId($pid)
+            ->first();
+
+        abort_unless($exists, 404);
+
+        $exists->delete();
+
+        RelationshipService::refresh($pid, $id);
+        RelationshipService::refresh($pid, $id);
+
+        UnfollowPipeline::dispatch($id, $pid)->onQueue('high');
+
+        Cache::forget('profile:following:'.$id);
+        Cache::forget('profile:followers:'.$id);
+        Cache::forget('profile:following:'.$pid);
+        Cache::forget('profile:followers:'.$pid);
+        Cache::forget('api:local:exp:rec:'.$pid);
+        Cache::forget('user:account:id:'.$id);
+        Cache::forget('user:account:id:'.$pid);
+        Cache::forget('profile:follower_count:'.$id);
+        Cache::forget('profile:follower_count:'.$pid);
+        Cache::forget('profile:following_count:'.$id);
+        Cache::forget('profile:following_count:'.$pid);
+        AccountService::del($pid);
+        AccountService::del($id);
+
+        $res = RelationshipService::get($id, $pid);
+
+        return $this->json($res);
     }
 
     /**
