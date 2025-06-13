@@ -304,9 +304,10 @@
 						<i class="far fa-link"></i>
 					</span>
 
-                    <span>
-						<a :href="profile.website" class="font-weight-bold">{{ profile.website }}</a>
-					</span>
+                    <span class="font-weight-bold">
+                        <span v-if="profile.no_autolink">{{ profile.website }}</span>
+                        <a v-else :href="profile.website">{{ profile.website }}</a>
+                    </span>
                 </p>
 
                 <p class="mb-0 small">

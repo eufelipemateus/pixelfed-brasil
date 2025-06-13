@@ -268,5 +268,9 @@ return [
         'enabled' => env('LIMIT_USERS_ACTIVE', true),
         'max_users_active' => env('MAX_USER_ACTIVE', 100),
         'user_session_timeout' => env('USER_SESSION_TIMEOUT', 15), // in minutes
-    ]
+    ],
+
+    /// this define  no_autolink for new accounts
+    /// if set to true, new accounts will  have autolink enabled by default
+    'default_no_autolink' => env('PF_DEFAULT_NO_AUTOLINK', false),
 ];

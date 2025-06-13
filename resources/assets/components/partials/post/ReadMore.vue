@@ -24,6 +24,10 @@
 				type: Object
 			},
 
+            noAutoLink:{
+                type: Boolean,
+            },
+
 			cursorLimit: {
 				type: Number,
 				default: 200
@@ -80,8 +84,22 @@
 					elr.removeAttribute('target');
 					elr.setAttribute('href', '/i/web/username/' + name);
 				})
-				this.content = el.outerHTML;
 
+                if(this.noAutoLink){
+                    el.querySelectorAll('a')
+                    .forEach(link => {
+                        const classes = link.className || '';
+                        const isHashtag = classes.includes('hashtag');
+                        const isMention = classes.includes('mention') || classes.includes('list-slug');
+                        if (!isHashtag && !isMention) {
+                            const span = document.createElement('span');
+                            span.innerHTML = link.innerHTML;
+                            link.replaceWith(span);
+                        }
+                    });
+                }
+
+				this.content = el.outerHTML;
 				this.injectCustomEmoji();
 			},
 
