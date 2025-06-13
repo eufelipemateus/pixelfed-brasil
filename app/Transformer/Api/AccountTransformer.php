@@ -64,6 +64,7 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'note' => $profile->bio ?? '',
             'note_text' => $profile->bio ? strip_tags($profile->bio) : null,
             'url' => $profile->url(),
+            'no_autolink' => $profile->no_autolink ?? false,
             'avatar' => $profile->avatarUrl(),
             'website' => $profile->website,
             'local' => (bool) $local,
