@@ -145,7 +145,6 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
-
             echo "AWS_ACCESS_KEY_ID=${{secrets.S3_ACCESS_KEY_ID}}" >> .env
             echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
@@ -161,6 +160,7 @@ jobs:
             echo "PF_LIMIT_DAILY_POSTS=true" >> .env
             echo "PF_DAILY_POST_LIMIT=6" >> .env
             echo "PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS=false" >> .env
+            echo "PF_DEFAULT_NO_AUTOLINK=true" >> .env
 
 
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
