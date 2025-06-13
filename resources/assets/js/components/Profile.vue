@@ -138,7 +138,16 @@
                                         <div v-if="profile.pronouns" class="text-muted small">{{profile.pronouns.join('/')}}</div>
                                     </div>
                                     <p v-if="profile.note" class="mb-0" v-html="profile.note"></p>
-                                    <p v-if="profile.website"><a :href="profile.website" class="profile-website small" rel="me external nofollow noopener" target="_blank">{{formatWebsite(profile.website)}}</a></p>
+                                    <p v-if="profile.website" class="small">
+                                        <span v-if="profile.no_autolink" class="profile-website">{{ formatWebsite(profile.website) }}</span>
+                                        <a v-else
+                                            :href="profile.website"
+                                            class="profile-website"
+                                            rel="me external nofollow noopener"
+                                            target="_blank">
+                                            {{ formatWebsite(profile.website) }}
+                                        </a>
+                                    </p>
                                     <p class="d-flex small text-muted align-items-center">
                                         <span v-if="profile.is_admin" class="btn btn-outline-danger btn-sm py-0 mr-3" title="Admin Account" data-toggle="tooltip">
                                             {{ $t("profile.admin") }}

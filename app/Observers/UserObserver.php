@@ -93,6 +93,7 @@ class UserObserver
 
                 $profile->private_key = $pki_private;
                 $profile->public_key = $pki_public;
+                $profile->no_autolink = config('instance.default_no_autolink');
                 $profile->save();
                 $this->applyDefaultDomainBlocks($user);
                 return $profile;

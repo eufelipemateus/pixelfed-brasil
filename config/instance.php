@@ -264,4 +264,8 @@ return [
          */
         'max_updates_per_hour' => env('PF_CF_MAX_UPDATES_PER_HOUR', 40),
     ],
+
+    /// this define  no_autolink for new accounts
+    /// if set to true, new accounts will  have autolink enabled by default
+    'default_no_autolink' => env('PF_DEFAULT_NO_AUTOLINK', false),
 ];
