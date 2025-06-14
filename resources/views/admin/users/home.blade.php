@@ -115,7 +115,7 @@
                 </thead>
                 <tbody>
                     @forelse($users as $key => $user)
-                        @if($user->status==  \App\Enums\StatusEnums::DELETED)
+                        @if($user->status !=  \App\Enums\StatusEnums::ACTIVE)
                         <tr class="user-row deleted-row">
                             <td class="align-middle">
                                 <div class="custom-control custom-checkbox">
