@@ -59,9 +59,9 @@ trait AdminUserController
                 return $q->offset($offset * $limit);
             })
             ->when($trashed, function ($q) {
-                return $q->where('status', 'deleted')->orWhereNotNull('delete_after');
+                return $q->whereIn('status', ['disabled', 'delete', 'deleted'])->orWhereNotNull('delete_after');
             }, function ($q) {
-                return $q->whereNotIn('status', ['deleted'])->whereNull('delete_after')->orWhereNull('status')->whereNull('delete_after');
+                return $q->WhereNull('status')->whereNull('delete_after');
             })
             ->limit($limit)
             ->get()
@@ -70,6 +70,7 @@ trait AdminUserController
 
                 return $u;
             });
+
 
         return view('admin.users.home', compact('users', 'pagination', 'search', 'col', 'dir', 'limit', 'trashed'));
     }
