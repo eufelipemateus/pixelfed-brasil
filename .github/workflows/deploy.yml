@@ -150,6 +150,7 @@ jobs:
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.S3_URL}}" >> .env
+            echo "AWS_DEFAULT_REGION=${{secrets.S3_REGION}}" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
             echo "TRANSLATION_ENABLED=true" >> .env
