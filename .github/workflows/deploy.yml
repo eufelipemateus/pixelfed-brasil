@@ -134,7 +134,7 @@ jobs:
             echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
 
             echo "PF_ENABLE_CLOUD=true" >> .env
-            echo "FILESYSTEM_CLOUD=spacce" >> .env
+            echo "FILESYSTEM_CLOUD=spaces" >> .env
             echo "DANGEROUSLY_SET_FILESYSTEM_DRIVER=${{secrets.FILESYSTEM_CLOUD}}" >> .env
             echo "PORTFOLIO_DOMAIN=portifolio.${{vars.DOMAIN}}" >> .env
             echo "PORTFOLIO_PATH=" >> .env
