@@ -156,7 +156,7 @@ jobs:
             echo "TRANSLATION_ENABLED=true" >> .env
             echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
             echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
-            echo "DEEPL_API_KEY=d${{secrets.DEEPL_API_KEY}}" >> .env
+            echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
 
             echo "PF_LIMIT_DAILY_POSTS=true" >> .env
             echo "PF_DAILY_POST_LIMIT=6" >> .env
