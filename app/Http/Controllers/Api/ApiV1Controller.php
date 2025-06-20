@@ -3626,6 +3626,7 @@ class ApiV1Controller extends Controller
     {
         abort_if(! $request->user() || ! $request->user()->token(), 403);
         abort_unless($request->user()->tokenCan('write'), 403);
+        abort_if(!AccountService::canPost($request->user()), 400, 'limit_daily_posts');
 
         $this->validate($request, [
             'status' => 'nullable|string|max:' . (int) config_cache('pixelfed.max_caption_length'),
