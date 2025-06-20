@@ -30,6 +30,7 @@ class AccountWithStatusesTransformer extends Fractal\TransformerAbstract
 			'statuses_count' => (int) $profile->statusCount(),
 			'note' => $profile->bio ?? '',
 			'url' => $profile->url(),
+            'no_autolink' => $profile->no_autolink ?? false,
 			'avatar' => $profile->avatarUrl(),
 			'website' => $profile->website,
 			'local' => (bool) $local,

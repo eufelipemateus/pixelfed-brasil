@@ -1286,6 +1286,7 @@ class Helpers
             'indexable' => isset($res['indexable']) ? (bool) $res['indexable'] : false,
             'moved_to_profile_id' => $movedToPid,
             'is_private' => isset($res['manuallyApprovesFollowers']) ? (bool) $res['manuallyApprovesFollowers'] : true,
+            'is_service' => isset($res['type']) && $res['type'] === 'Service',
         ];
     }
 

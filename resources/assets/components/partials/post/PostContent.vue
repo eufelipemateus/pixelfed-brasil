@@ -158,7 +158,7 @@
             class="card-body status-text"
             :class="[ status.pf_type === 'text' ? 'py-0' : 'pb-0']">
             <p>
-                <read-more :status="status" :cursor-limit="300" />
+                <read-more :status="status"  :noAutoLink="profile.no_autolink"   :cursor-limit="300" />
             </p>
         </div>
     </div>
@@ -176,7 +176,9 @@
             "video-player": VideoPlayer
         },
         props: {
-
+            profile: {
+                type: Object
+            },
             status: {
                 type: Object
             },
@@ -194,7 +196,6 @@
                 sensitive: false
             };
         },
-
         computed: {
             statusRender: {
                 get() {
