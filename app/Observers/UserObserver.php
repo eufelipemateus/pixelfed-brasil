@@ -14,6 +14,8 @@ use App\Jobs\FollowPipeline\FollowPipeline;
 use DB;
 use App\Services\FollowerService;
 use App\Enums\StatusEnums;
+use App\Http\Controllers\FollowerController;
+use App\FollowRequest;
 
 class UserObserver
 {
@@ -121,12 +123,25 @@ class UserObserver
 
                 if($profiles) {
                     foreach($profiles as $p) {
-                        $follower = new Follower;
-                        $follower->profile_id = $profile->id;
-                        $follower->following_id = $p->id;
-                        $follower->save();
+                        if (empty($p->domain)) {
+                            $follower = new Follower;
+                            $follower->profile_id = $profile->id;
+                            $follower->following_id = $p->id;
+                            $follower->save();
 
-                        FollowPipeline::dispatch($follower);
+                            FollowPipeline::dispatch($follower);
+                        } else {
+                            FollowRequest::firstOrCreate(
+                                [
+                                'follower_id' => $user->profile_id,
+                                'following_id' => $p->id,
+                                ]
+                            );
+
+                            if (config('federation.activitypub.remoteFollow') == true) {
+                                (new FollowerController)->sendFollow($user->profile, $p);
+                            }
+                        }
                     }
                 }
             }
