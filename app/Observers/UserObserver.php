@@ -133,13 +133,13 @@ class UserObserver
                         } else {
                             FollowRequest::firstOrCreate(
                                 [
-                                'follower_id' => $user->profile_id,
+                                'follower_id' => $profile->id,
                                 'following_id' => $p->id,
                                 ]
                             );
 
                             if (config('federation.activitypub.remoteFollow') == true) {
-                                (new FollowerController)->sendFollow($user->profile, $p);
+                                (new FollowerController)->sendFollow($profile, $p);
                             }
                         }
                     }
