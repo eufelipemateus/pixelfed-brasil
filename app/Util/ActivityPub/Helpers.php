@@ -667,9 +667,9 @@ class Helpers
         string $scope,
         bool $commentsDisabled
     ): Status {
-        $caption = isset($activity['content']) ?
-            Purify::clean($activity['content']) :
-            '';
+        $caption =  isset($activity['content'])
+            ? Purify::clean(str_replace("\n", '<br />', $activity['content']))
+            : '';
 
         return Status::updateOrCreate(
             ['uri' => $url],
@@ -686,8 +686,8 @@ class Helpers
                 'scope' => $scope,
                 'visibility' => $scope,
                 'cw_summary' => ($cw && isset($activity['summary'])) ?
-                    Purify::clean(strip_tags($activity['summary'])) :
-                    null,
+                    Purify::clean(str_replace("\n", '<br />', $activity['summary']))
+                    : null,
                 'comments_disabled' => $commentsDisabled,
             ]
         );
