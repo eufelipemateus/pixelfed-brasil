@@ -117,10 +117,27 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         });
     }
 
+      static function htmlToPlainTextWithLineBreaks(string $html): string
+    {
+        // Força UTF-8 e normaliza quebras
+        $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Converte <br> e </p> para \n
+        $html = preg_replace(['/<br\s*\/?>/i', '/<\/p>/i'], "\n", $html);
+
+        // Remove o restante das tags
+        $text = strip_tags($html);
+
+        // Normaliza quebras consecutivas
+        $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
+        return trim($text);
+    }
+
     protected function updateImmediateAttributes($status, $activity)
     {
         if (isset($activity['content'])) {
-            $status->caption = strip_tags(Purify::clean($activity['content']));
+            $status->caption = self::htmlToPlainTextWithLineBreaks(Purify::clean($activity['content']));
         }
 
         if (isset($activity['sensitive'])) {
@@ -156,11 +173,11 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
     protected function createEdit($status, $activity)
     {
         $cleaned = isset($activity['content'])
-            ? Purify::clean(str_replace("\n", '<br />', $activity['content']))
+            ? Purify::clean($activity['content'])
             : null;
 
         $spoiler_text = isset($activity['summary'])
-            ? Purify::clean(str_replace("\n", '<br />', $activity['summary']))
+            ? Purify::clean(strip_tags($activity['summary']))
             : null;
 
         $sensitive = isset($activity['sensitive']) ? $activity['sensitive'] : null;
