@@ -7,10 +7,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\ModLogService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
-class DefinePopularUsers implements ShouldQueue
+class DefinePopularUsers implements ShouldQueue, ShouldBeUnique
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public  $newPopularProfiles;
 
@@ -22,6 +26,15 @@ class DefinePopularUsers implements ShouldQueue
         $this->newPopularProfiles = $newPopularProfiles;
     }
 
+    /**
+     * Get the unique ID for the job.
+     *
+     * @return string
+     */
+    public function uniqueId(): string
+    {
+        return 'define_popular_users';
+    }
     /**
      * Execute the job.
      *
