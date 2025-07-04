@@ -38,18 +38,18 @@ class LoadOutbox implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::info('Iniciando job LoadOutbox para: ' . $this->profile->username);
+        Log::info('Starting LoadOutbox job for: ' . $this->profile->username);
 
 
         $outboxUrl = $this->profile->outbox_url;
 
         $allItems = $this->fetchAllOutboxPages($outboxUrl);
 
-        Log::info('Total de atividades coletadas: ' . count($allItems));
+        Log::info('Total activities collected: ' . count($allItems));
         $count = 0;
         foreach ($allItems as $item) {
             if ($count >= self::LIMIT_ACTIVITIES) {
-                Log::info('Limite de atividades atingido: ' . self::LIMIT_ACTIVITIES);
+                Log::info('Activity limit reached: ' . self::LIMIT_ACTIVITIES);
                 break;
             }
             if (isset($item['type']) && $item['type'] === 'Create') {
