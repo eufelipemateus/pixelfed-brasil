@@ -29,13 +29,6 @@ class LoadOutbox implements ShouldQueue
         $this->profile = $profile;
     }
 
-    /**
-     * Execute the job.
-     *
-     * This method fetches all pages of the outbox for the given profile,
-     * processes each "Create" activity, and handles the creation of notes.
-     *
-     */
     public function handle(): void
     {
         Log::info('Starting LoadOutbox job for: ' . $this->profile->username);
@@ -59,13 +52,7 @@ class LoadOutbox implements ShouldQueue
         }
     }
 
-    /**
-     * Fetches all pages of the outbox and filters for "Create" activities with "Note" objects.
-     *
-     * This method retrieves all pages of the outbox from the given URL,
-     * filtering for activities of type "Create" that contain a "Note" object.
-     *
-     */
+
     private function fetchAllOutboxPages(string $url): array
     {
         $filteredItems = [];
@@ -100,13 +87,7 @@ class LoadOutbox implements ShouldQueue
     }
 
 
-    /**
-     * Fetches JSON data from an ActivityPub URL.
-     *
-     * This method uses cURL to retrieve JSON data from the specified URL,
-     * setting appropriate headers for ActivityPub requests.
-     *
-     */
+
     private function fetchActivityPubJson(string $url): ?array
     {
 
@@ -135,14 +116,6 @@ class LoadOutbox implements ShouldQueue
         }
     }
 
-
-    /**
-     * Verifies if the note attachment is valid.
-     *
-     * This method checks if the note has a valid inReplyTo URL or verifies
-     * the attachments of the activity.
-     *
-     */
     public function verifyNoteAttachment(array $payload)
     {
         $activity = $payload['object'];
@@ -159,14 +132,6 @@ class LoadOutbox implements ShouldQueue
         return $valid;
     }
 
-    /**
-     * Handles the creation of a note activity from the inbox pipeline.
-     *
-     * This method processes the incoming payload for a note creation,
-     * retrieves or creates the actor associated with the activity,
-     * and stores the status if it does not already exist.
-     *
-     */
     public function handleNoteCreate($payload)
     {
         $activity = $payload['object'];
@@ -196,13 +161,6 @@ class LoadOutbox implements ShouldQueue
     }
 
 
-    /**
-     * Adiciona comentários ao código selecionado.
-     *
-     * Esta função permite inserir comentários explicativos ou descritivos
-     * em trechos de código, facilitando o entendimento e a manutenção.
-     *
-     */
     public function handleCreateActivity($payload)
     {
         $activity = $payload['object'];
@@ -245,15 +203,6 @@ class LoadOutbox implements ShouldQueue
         }
     }
 
-
-    /**
-     * Handles a "Note" reply activity from the inbox pipeline.
-     *
-     * This method processes the incoming payload for a reply to a note,
-     * retrieves or creates the actor associated with the activity,
-     * and ensures the replied-to status is fetched or created.
-     *
-     */
     public function handleNoteReply($payload)
     {
         $activity = $payload['object'];
@@ -261,20 +210,11 @@ class LoadOutbox implements ShouldQueue
         if (! $actor || $actor->domain == null) {
             return;
         }
-
-        $inReplyTo = $activity['inReplyTo'];
         $url = isset($activity['url']) ? $activity['url'] : $activity['id'];
 
         Helpers::statusFirstOrFetch($url, true);
     }
 
-    /**
-     * Retrieves or creates an actor profile based on the given actor URL.
-     *
-     * This method fetches the actor's profile using the provided URL,
-     * creating it if it does not already exist.
-     *
-     */
     public function actorFirstOrCreate($actorUrl)
     {
         return Helpers::profileFetch($actorUrl);
