@@ -15,6 +15,9 @@ use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
 use App\Services\NotificationAppGatewayService;
 use App\Services\PushNotificationService;
 use App\Services\StatusService;
+use App\Services\AccountService;
+use App\Notifications\MentionNotification;
+use App\Profile;
 
 class MentionPipeline implements ShouldQueue
 {
@@ -73,6 +76,10 @@ class MentionPipeline implements ShouldQueue
                 'item_id' => $status->id,
             ]
         );
+
+        if (!empty($target->user_id)  &&   AccountService::getAccountSettings($target)["send_email_on_mention"]) {
+            Profile::find($target)->user->notify(new MentionNotification($mention->profile_id, $status->id));
+        }
 
         StatusService::del($status->id);
 

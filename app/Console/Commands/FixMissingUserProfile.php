@@ -15,6 +15,7 @@ use App\Jobs\FollowPipeline\FollowPipeline;
 use DB;
 use App\Services\FollowerService;
 use function Laravel\Prompts\search;
+USE App\Enums\StatusEnums;
 
 class FixMissingUserProfile extends Command
 {
@@ -55,7 +56,7 @@ class FixMissingUserProfile extends Command
             return;
         }
 
-        if(in_array($user->status, ['deleted', 'delete'])) {
+        if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             $this->error('User has deleted account');
             return;
         }

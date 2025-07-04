@@ -89,6 +89,10 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Purify;
 use Storage;
+use  App\Notifications\FollowRequestNotification;
+use App\Enums\StatusEnums;
+
+use App\Services\Translate\TranslateService;
 
 class ApiV1Controller extends Controller
 {
@@ -184,7 +188,7 @@ class ApiV1Controller extends Controller
 
         $user = $request->user();
 
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         AccountService::setLastActive($user->id);
 
         $res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($user->profile_id) : AccountService::getMastodon($user->profile_id);
@@ -243,7 +247,7 @@ class ApiV1Controller extends Controller
         }
 
         $this->validate($request, [
-            'avatar' => 'sometimes|mimetypes:image/jpeg,image/jpg,image/png|max:'.config('pixelfed.max_avatar_size'),
+            'avatar' => 'sometimes|mimetypes:image/jpeg,image/jpg,image/png|max:' . config('pixelfed.max_avatar_size'),
             'display_name' => 'nullable|string|max:30',
             'note' => 'nullable|string|max:200',
             'locked' => 'nullable',
@@ -253,7 +257,7 @@ class ApiV1Controller extends Controller
         ], [
             'required' => 'The :attribute field is required.',
             'avatar.mimetypes' => 'The file must be in jpeg or png format',
-            'avatar.max' => 'The :attribute exceeds the file size limit of '.PrettyNumber::size(config('pixelfed.max_avatar_size'), true, false),
+            'avatar.max' => 'The :attribute exceeds the file size limit of ' . PrettyNumber::size(config('pixelfed.max_avatar_size'), true, false),
         ]);
 
         $user = $request->user();
@@ -270,15 +274,15 @@ class ApiV1Controller extends Controller
         if ($request->has('avatar')) {
             $av = Avatar::whereProfileId($profile->id)->first();
             if ($av) {
-                $currentAvatar = storage_path('app/'.$av->media_path);
+                $currentAvatar = storage_path('app/' . $av->media_path);
                 $file = $request->file('avatar');
                 $path = "public/avatars/{$profile->id}";
-                $name = strtolower(str_random(6)).'.'.$file->guessExtension();
+                $name = strtolower(str_random(6)) . '.' . $file->guessExtension();
                 $request->file('avatar')->storePubliclyAs($path, $name);
                 $av->media_path = "{$path}/{$name}";
                 $av->save();
                 Cache::forget("avatar:{$profile->id}");
-                Cache::forget('user:account:id:'.$user->id);
+                Cache::forget('user:account:id:' . $user->id);
                 AvatarOptimize::dispatch($user->profile, $currentAvatar);
             }
             $changes = true;
@@ -302,7 +306,7 @@ class ApiV1Controller extends Controller
                     }
 
                     if ($website && ! strpos($website, '://')) {
-                        $website = 'https://'.$website;
+                        $website = 'https://' . $website;
                     }
 
                     $host = parse_url($website, PHP_URL_HOST);
@@ -370,7 +374,7 @@ class ApiV1Controller extends Controller
             $license = $request->input('license');
             abort_if(! in_array($license, License::keys()), 422, 'Invalid media license id');
             $syncLicenses = $request->input('sync_licenses') == true;
-            abort_if($syncLicenses && Cache::get('pf:settings:mls_recently:'.$user->id) == 2, 422, 'You can only sync licenses twice per 24 hours');
+            abort_if($syncLicenses && Cache::get('pf:settings:mls_recently:' . $user->id) == 2, 422, 'You can only sync licenses twice per 24 hours');
             if ($composeSettings['default_license'] != $license) {
                 $composeSettings['default_license'] = $license;
                 $licenseChanged = true;
@@ -399,7 +403,7 @@ class ApiV1Controller extends Controller
             if ($settings->show_profile_follower_count != $show_profile_follower_count) {
                 $settings->show_profile_follower_count = $show_profile_follower_count;
                 $changes = true;
-                Cache::forget('pf:acct-trans:hideFollowers:'.$profile->id);
+                Cache::forget('pf:acct-trans:hideFollowers:' . $profile->id);
             }
         }
 
@@ -408,7 +412,7 @@ class ApiV1Controller extends Controller
             if ($settings->show_profile_following_count != $show_profile_following_count) {
                 $settings->show_profile_following_count = $show_profile_following_count;
                 $changes = true;
-                Cache::forget('pf:acct-trans:hideFollowing:'.$profile->id);
+                Cache::forget('pf:acct-trans:hideFollowing:' . $profile->id);
             }
         }
 
@@ -444,26 +448,26 @@ class ApiV1Controller extends Controller
             $settings->save();
             $user->save();
             $profile->save();
-            Cache::forget('profile:settings:'.$profile->id);
-            Cache::forget('user:account:id:'.$profile->user_id);
-            Cache::forget('profile:follower_count:'.$profile->id);
-            Cache::forget('profile:following_count:'.$profile->id);
-            Cache::forget('profile:embed:'.$profile->id);
-            Cache::forget('profile:compose:settings:'.$user->id);
-            Cache::forget('profile:view:'.$profile->username);
-            Cache::forget('profile:atom:enabled:'.$profile->id);
-            Cache::forget('pfc:cached-user:wt:'.strtolower($profile->username));
-            Cache::forget('pfc:cached-user:wot:'.strtolower($profile->username));
-            Cache::forget('pf:acct:settings:hidden-followers:'.$profile->id);
-            Cache::forget('pf:acct:settings:hidden-following:'.$profile->id);
-            Cache::forget('pf:acct-trans:hideFollowing:'.$profile->id);
-            Cache::forget('pf:acct-trans:hideFollowers:'.$profile->id);
+            Cache::forget('profile:settings:' . $profile->id);
+            Cache::forget('user:account:id:' . $profile->user_id);
+            Cache::forget('profile:follower_count:' . $profile->id);
+            Cache::forget('profile:following_count:' . $profile->id);
+            Cache::forget('profile:embed:' . $profile->id);
+            Cache::forget('profile:compose:settings:' . $user->id);
+            Cache::forget('profile:view:' . $profile->username);
+            Cache::forget('profile:atom:enabled:' . $profile->id);
+            Cache::forget('pfc:cached-user:wt:' . strtolower($profile->username));
+            Cache::forget('pfc:cached-user:wot:' . strtolower($profile->username));
+            Cache::forget('pf:acct:settings:hidden-followers:' . $profile->id);
+            Cache::forget('pf:acct:settings:hidden-following:' . $profile->id);
+            Cache::forget('pf:acct-trans:hideFollowing:' . $profile->id);
+            Cache::forget('pf:acct-trans:hideFollowers:' . $profile->id);
             AccountService::del($user->profile_id);
             AccountService::forgetAccountSettings($profile->id);
         }
 
         if ($syncLicenses && $licenseChanged) {
-            $key = 'pf:settings:mls_recently:'.$user->id;
+            $key = 'pf:settings:mls_recently:' . $user->id;
             $val = Cache::has($key) ? 2 : 1;
             Cache::put($key, $val, 86400);
             MediaSyncLicensePipeline::dispatch($user->id, $request->input('license'));
@@ -529,9 +533,11 @@ class ApiV1Controller extends Controller
         }
         if ($request->has('page')) {
             $res = DB::table('followers')
-                ->select('id', 'profile_id', 'following_id')
+                ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+                ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->whereFollowingId($account['id'])
-                ->orderByDesc('id')
+                ->whereNull('profiles.status')
+                ->orderByDesc('followers.id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->profile_id, true) : AccountService::getMastodon($follower->profile_id, true);
@@ -546,9 +552,11 @@ class ApiV1Controller extends Controller
         }
 
         $paginator = DB::table('followers')
-            ->select('id', 'profile_id', 'following_id')
+            ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+            ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
             ->whereFollowingId($account['id'])
-            ->orderByDesc('id')
+            ->whereNull('profiles.status')
+            ->orderByDesc('followers.id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -556,15 +564,15 @@ class ApiV1Controller extends Controller
 
         if ($paginator->onFirstPage()) {
             if ($paginator->hasMorePages()) {
-                $link = '<'.$paginator->nextPageUrl().'>; rel="prev"';
+                $link = '<' . $paginator->nextPageUrl() . '>; rel="prev"';
             }
         } else {
             if ($paginator->previousPageUrl()) {
-                $link = '<'.$paginator->previousPageUrl().'>; rel="next"';
+                $link = '<' . $paginator->previousPageUrl() . '>; rel="next"';
             }
 
             if ($paginator->hasMorePages()) {
-                $link .= ($link ? ', ' : '').'<'.$paginator->nextPageUrl().'>; rel="prev"';
+                $link .= ($link ? ', ' : '') . '<' . $paginator->nextPageUrl() . '>; rel="prev"';
             }
         }
 
@@ -632,9 +640,11 @@ class ApiV1Controller extends Controller
 
         if ($request->has('page')) {
             $res = DB::table('followers')
-                ->select('id', 'profile_id', 'following_id')
-                ->whereProfileId($account['id'])
-                ->orderByDesc('id')
+                ->join('profiles', 'followers.following_id', '=', 'profiles.id')
+                ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+                ->where('followers.profile_id', $account['id'])
+                ->whereNull('profiles.status')
+                ->orderByDesc('followers.id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->following_id, true) : AccountService::getMastodon($follower->following_id, true);
@@ -649,9 +659,11 @@ class ApiV1Controller extends Controller
         }
 
         $paginator = DB::table('followers')
-            ->select('id', 'profile_id', 'following_id')
-            ->whereProfileId($account['id'])
-            ->orderByDesc('id')
+            ->join('profiles', 'followers.following_id', '=', 'profiles.id')
+            ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
+            ->where('followers.profile_id', $account['id'])
+            ->whereNull('profiles.status')
+            ->orderByDesc('followers.id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -659,15 +671,15 @@ class ApiV1Controller extends Controller
 
         if ($paginator->onFirstPage()) {
             if ($paginator->hasMorePages()) {
-                $link = '<'.$paginator->nextPageUrl().'>; rel="prev"';
+                $link = '<' . $paginator->nextPageUrl() . '>; rel="prev"';
             }
         } else {
             if ($paginator->previousPageUrl()) {
-                $link = '<'.$paginator->previousPageUrl().'>; rel="next"';
+                $link = '<' . $paginator->previousPageUrl() . '>; rel="next"';
             }
 
             if ($paginator->hasMorePages()) {
-                $link .= ($link ? ', ' : '').'<'.$paginator->nextPageUrl().'>; rel="prev"';
+                $link .= ($link ? ', ' : '') . '<' . $paginator->nextPageUrl() . '>; rel="prev"';
             }
         }
 
@@ -703,9 +715,9 @@ class ApiV1Controller extends Controller
             'media_type' => 'sometimes|string|in:photo,video',
             'pinned' => 'nullable',
             'exclude_replies' => 'nullable',
-            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
-            'since_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
-            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'max_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
+            'since_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
             'limit' => 'nullable|integer|min:1',
         ]);
 
@@ -856,7 +868,7 @@ class ApiV1Controller extends Controller
 
         // Rate limits, max 7500 followers per account
         if ($user->profile->following_count && $user->profile->following_count >= Follower::MAX_FOLLOWING) {
-            abort(400, 'You cannot follow more than '.Follower::MAX_FOLLOWING.' accounts');
+            abort(400, 'You cannot follow more than ' . Follower::MAX_FOLLOWING . ' accounts');
         }
 
         if ($private == true) {
@@ -864,8 +876,12 @@ class ApiV1Controller extends Controller
                 'follower_id' => $user->profile_id,
                 'following_id' => $target->id,
             ]);
-            if ($remote == true && config('federation.activitypub.remoteFollow') == true) {
+            if ($remote && config('federation.activitypub.remoteFollow') == true) {
                 (new FollowerController)->sendFollow($user->profile, $target);
+            }
+
+            if (!$remote &&  AccountService::getAccountSettings($target->id)["send_email_new_follower_request"]) {
+                $target->user->notify(new FollowRequestNotification($user->profile_id));
             }
         } elseif ($remote == true) {
             $follow = FollowRequest::firstOrCreate([
@@ -885,17 +901,17 @@ class ApiV1Controller extends Controller
         }
 
         RelationshipService::refresh($user->profile_id, $target->id);
-        Cache::forget('profile:following:'.$target->id);
-        Cache::forget('profile:followers:'.$target->id);
-        Cache::forget('profile:following:'.$user->profile_id);
-        Cache::forget('profile:followers:'.$user->profile_id);
-        Cache::forget('api:local:exp:rec:'.$user->profile_id);
-        Cache::forget('user:account:id:'.$target->user_id);
-        Cache::forget('user:account:id:'.$user->id);
-        Cache::forget('profile:follower_count:'.$target->id);
-        Cache::forget('profile:follower_count:'.$user->profile_id);
-        Cache::forget('profile:following_count:'.$target->id);
-        Cache::forget('profile:following_count:'.$user->profile_id);
+        Cache::forget('profile:following:' . $target->id);
+        Cache::forget('profile:followers:' . $target->id);
+        Cache::forget('profile:following:' . $user->profile_id);
+        Cache::forget('profile:followers:' . $user->profile_id);
+        Cache::forget('api:local:exp:rec:' . $user->profile_id);
+        Cache::forget('user:account:id:' . $target->user_id);
+        Cache::forget('user:account:id:' . $user->id);
+        Cache::forget('profile:follower_count:' . $target->id);
+        Cache::forget('profile:follower_count:' . $user->profile_id);
+        Cache::forget('profile:following_count:' . $target->id);
+        Cache::forget('profile:following_count:' . $user->profile_id);
         AccountService::del($user->profile_id);
         AccountService::del($target->id);
 
@@ -959,17 +975,17 @@ class ApiV1Controller extends Controller
         }
 
         RelationshipService::refresh($user->profile_id, $target->id);
-        Cache::forget('profile:following:'.$target->id);
-        Cache::forget('profile:followers:'.$target->id);
-        Cache::forget('profile:following:'.$user->profile_id);
-        Cache::forget('profile:followers:'.$user->profile_id);
-        Cache::forget('api:local:exp:rec:'.$user->profile_id);
-        Cache::forget('user:account:id:'.$target->user_id);
-        Cache::forget('user:account:id:'.$user->id);
-        Cache::forget('profile:follower_count:'.$target->id);
-        Cache::forget('profile:follower_count:'.$user->profile_id);
-        Cache::forget('profile:following_count:'.$target->id);
-        Cache::forget('profile:following_count:'.$user->profile_id);
+        Cache::forget('profile:following:' . $target->id);
+        Cache::forget('profile:followers:' . $target->id);
+        Cache::forget('profile:following:' . $user->profile_id);
+        Cache::forget('profile:followers:' . $user->profile_id);
+        Cache::forget('api:local:exp:rec:' . $user->profile_id);
+        Cache::forget('user:account:id:' . $target->user_id);
+        Cache::forget('user:account:id:' . $user->id);
+        Cache::forget('profile:follower_count:' . $target->id);
+        Cache::forget('profile:follower_count:' . $user->profile_id);
+        Cache::forget('profile:following_count:' . $target->id);
+        Cache::forget('profile:following_count:' . $user->profile_id);
         AccountService::del($user->profile_id);
         AccountService::del($target->id);
 
@@ -990,7 +1006,7 @@ class ApiV1Controller extends Controller
 
         $this->validate($request, [
             'id' => 'required|array|min:1',
-            'id.*' => 'required|integer|min:1|max:'.PHP_INT_MAX,
+            'id.*' => 'required|integer|min:1|max:' . PHP_INT_MAX,
         ]);
         $ids = $request->input('id');
         if (count($ids) > 20) {
@@ -1016,8 +1032,8 @@ class ApiV1Controller extends Controller
                 }
 
                 return $napi ?
-                 RelationshipService::getWithDate($pid, $id) :
-                 RelationshipService::get($pid, $id);
+                    RelationshipService::getWithDate($pid, $id) :
+                    RelationshipService::get($pid, $id);
             });
 
         return $this->json($res);
@@ -1051,9 +1067,10 @@ class ApiV1Controller extends Controller
             $limit = 20;
         }
         $resolve = $request->boolean('resolve', false);
-        $q = $query.'%';
+        $q = $query . '%';
 
         $profiles = Profile::where('username', 'like', $q)
+            ->whereActive()
             ->orderByDesc('followers_count')
             ->limit($limit)
             ->pluck('id')
@@ -1108,20 +1125,20 @@ class ApiV1Controller extends Controller
             })
             ->values();
 
-        $baseUrl = config('app.url').'/api/v1/blocks?limit='.$limit.'&';
+        $baseUrl = config('app.url') . '/api/v1/blocks?limit=' . $limit . '&';
         $next = $blocks->nextPageUrl();
         $prev = $blocks->previousPageUrl();
 
         if ($next && ! $prev) {
-            $link = '<'.$next.'>; rel="next"';
+            $link = '<' . $next . '>; rel="next"';
         }
 
         if (! $next && $prev) {
-            $link = '<'.$prev.'>; rel="prev"';
+            $link = '<' . $prev . '>; rel="prev"';
         }
 
         if ($next && $prev) {
-            $link = '<'.$next.'>; rel="next",<'.$prev.'>; rel="prev"';
+            $link = '<' . $next . '>; rel="next",<' . $prev . '>; rel="prev"';
         }
         $headers = isset($link) ? ['Link' => $link] : [];
 
@@ -1169,9 +1186,9 @@ class ApiV1Controller extends Controller
                 })
                 ->values()
                 ->count();
-            abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT.$maxLimit.' accounts');
+            abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT . $maxLimit . ' accounts');
         } else {
-            abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT.$maxLimit.' accounts');
+            abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_BLOCK_TEXT . $maxLimit . ' accounts');
         }
 
         $followed = Follower::whereProfileId($profile->id)->whereFollowingId($pid)->first();
@@ -1361,11 +1378,11 @@ class ApiV1Controller extends Controller
             $max = $ids->min() - 1;
             $min = $ids->max();
 
-            $baseUrl = config('app.url').'/api/v1/favourites?limit='.$limit.'&';
+            $baseUrl = config('app.url') . '/api/v1/favourites?limit=' . $limit . '&';
             if ($maxId) {
-                $link = '<'.$baseUrl.'max_id='.$max.'>; rel="next",<'.$baseUrl.'min_id='.$min.'>; rel="prev"';
+                $link = '<' . $baseUrl . 'max_id=' . $max . '>; rel="next",<' . $baseUrl . 'min_id=' . $min . '>; rel="prev"';
             } else {
-                $link = '<'.$baseUrl.'max_id='.$max.'>; rel="next"';
+                $link = '<' . $baseUrl . 'max_id=' . $max . '>; rel="next"';
             }
 
             return $this->json($res, 200, ['Link' => $link]);
@@ -1704,15 +1721,15 @@ class ApiV1Controller extends Controller
             $rules = Cache::remember('api:v1:instance-data:rules', 604800, function () {
                 return config_cache('app.rules') ?
                     collect(json_decode(config_cache('app.rules'), true))
-                        ->map(function ($rule, $key) {
-                            $id = $key + 1;
+                    ->map(function ($rule, $key) {
+                        $id = $key + 1;
 
-                            return [
-                                'id' => "{$id}",
-                                'text' => $rule,
-                            ];
-                        })
-                        ->toArray() : [];
+                        return [
+                            'id' => "{$id}",
+                            'text' => $rule,
+                        ];
+                    })
+                    ->toArray() : [];
             });
 
             return [
@@ -1721,7 +1738,7 @@ class ApiV1Controller extends Controller
                 'short_description' => config_cache('app.short_description'),
                 'description' => config_cache('app.description'),
                 'email' => config('instance.email'),
-                'version' => '3.5.3 (compatible; Pixelfed '.config('pixelfed.version').')',
+                'version' => '3.5.3 (compatible; Pixelfed ' . config('pixelfed.version') . ')',
                 'urls' => [
                     'streaming_api' => null,
                 ],
@@ -1803,17 +1820,17 @@ class ApiV1Controller extends Controller
         $this->validate($request, [
             'file.*' => [
                 'required_without:file',
-                'mimetypes:'.config_cache('pixelfed.media_types'),
-                'max:'.config_cache('pixelfed.max_photo_size'),
+                'mimetypes:' . config_cache('pixelfed.media_types'),
+                'max:' . config_cache('pixelfed.max_photo_size'),
             ],
             'file' => [
                 'required_without:file.*',
-                'mimetypes:'.config_cache('pixelfed.media_types'),
-                'max:'.config_cache('pixelfed.max_photo_size'),
+                'mimetypes:' . config_cache('pixelfed.media_types'),
+                'max:' . config_cache('pixelfed.max_photo_size'),
             ],
             'filter_name' => 'nullable|string|max:24',
             'filter_class' => 'nullable|alpha_dash|max:24',
-            'description' => 'nullable|string|max:'.config_cache('pixelfed.max_altext_length'),
+            'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length'),
         ]);
 
         $user = $request->user();
@@ -1829,7 +1846,7 @@ class ApiV1Controller extends Controller
             return response('', 422);
         }
 
-        $limitKey = 'compose:rate-limit:media-upload:'.$user->id;
+        $limitKey = 'compose:rate-limit:media-upload:' . $user->id;
         $limitTtl = now()->addMinutes(15);
         $limitReached = Cache::remember($limitKey, $limitTtl, function () use ($user) {
             $dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
@@ -1930,8 +1947,8 @@ class ApiV1Controller extends Controller
         Cache::forget($limitKey);
         $resource = new Fractal\Resource\Item($media, new MediaTransformer);
         $res = $this->fractal->createData($resource)->toArray();
-        $res['preview_url'] = $media->url().'?v='.time();
-        $res['url'] = $media->url().'?v='.time();
+        $res['preview_url'] = $media->url() . '?v=' . time();
+        $res['url'] = $media->url() . '?v=' . time();
 
         return $this->json($res);
     }
@@ -1948,7 +1965,7 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $this->validate($request, [
-            'description' => 'nullable|string|max:'.config_cache('pixelfed.max_altext_length'),
+            'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length'),
         ]);
 
         $user = $request->user();
@@ -1961,7 +1978,7 @@ class ApiV1Controller extends Controller
             ->findOrFail($id);
 
         $executed = RateLimiter::attempt(
-            'media:update:'.$user->id,
+            'media:update:' . $user->id,
             10,
             function () use ($media, $request) {
                 $caption = Purify::clean($request->input('description'));
@@ -1975,7 +1992,8 @@ class ApiV1Controller extends Controller
                         StatusService::del($media->status_id);
                     }
                 }
-            });
+            }
+        );
 
         if (! $executed) {
             return response()->json([
@@ -2029,17 +2047,17 @@ class ApiV1Controller extends Controller
         $this->validate($request, [
             'file.*' => [
                 'required_without:file',
-                'mimetypes:'.config_cache('pixelfed.media_types'),
-                'max:'.config_cache('pixelfed.max_photo_size'),
+                'mimetypes:' . config_cache('pixelfed.media_types'),
+                'max:' . config_cache('pixelfed.max_photo_size'),
             ],
             'file' => [
                 'required_without:file.*',
-                'mimetypes:'.config_cache('pixelfed.media_types'),
-                'max:'.config_cache('pixelfed.max_photo_size'),
+                'mimetypes:' . config_cache('pixelfed.media_types'),
+                'max:' . config_cache('pixelfed.max_photo_size'),
             ],
             'filter_name' => 'nullable|string|max:24',
             'filter_class' => 'nullable|alpha_dash|max:24',
-            'description' => 'nullable|string|max:'.config_cache('pixelfed.max_altext_length'),
+            'description' => 'nullable|string|max:' . config_cache('pixelfed.max_altext_length'),
             'replace_id' => 'sometimes',
         ]);
 
@@ -2056,7 +2074,7 @@ class ApiV1Controller extends Controller
             return response('', 422);
         }
 
-        $limitKey = 'compose:rate-limit:media-upload:'.$user->id;
+        $limitKey = 'compose:rate-limit:media-upload:' . $user->id;
         $limitTtl = now()->addMinutes(15);
         $limitReached = Cache::remember($limitKey, $limitTtl, function () use ($user) {
             $dailyLimit = Media::whereUserId($user->id)->where('created_at', '>', now()->subDays(1))->count();
@@ -2162,7 +2180,7 @@ class ApiV1Controller extends Controller
         Cache::forget($limitKey);
         $resource = new Fractal\Resource\Item($media, new MediaTransformer);
         $res = $this->fractal->createData($resource)->toArray();
-        $res['preview_url'] = $media->url().'?v='.time();
+        $res['preview_url'] = $media->url() . '?v=' . time();
         $res['url'] = null;
 
         return $this->json($res, 202);
@@ -2205,20 +2223,20 @@ class ApiV1Controller extends Controller
             })
             ->values();
 
-        $baseUrl = config('app.url').'/api/v1/mutes?limit='.$limit.'&';
+        $baseUrl = config('app.url') . '/api/v1/mutes?limit=' . $limit . '&';
         $next = $mutes->nextPageUrl();
         $prev = $mutes->previousPageUrl();
 
         if ($next && ! $prev) {
-            $link = '<'.$next.'>; rel="next"';
+            $link = '<' . $next . '>; rel="next"';
         }
 
         if (! $next && $prev) {
-            $link = '<'.$prev.'>; rel="prev"';
+            $link = '<' . $prev . '>; rel="prev"';
         }
 
         if ($next && $prev) {
-            $link = '<'.$next.'>; rel="next",<'.$prev.'>; rel="prev"';
+            $link = '<' . $next . '>; rel="next",<' . $prev . '>; rel="prev"';
         }
         $headers = isset($link) ? ['Link' => $link] : [];
 
@@ -2266,9 +2284,9 @@ class ApiV1Controller extends Controller
                 })
                 ->values()
                 ->count();
-            abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT.$maxLimit.' accounts');
+            abort_if($filterCount >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT . $maxLimit . ' accounts');
         } else {
-            abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT.$maxLimit.' accounts');
+            abort_if($count >= $maxLimit, 422, AccountController::FILTER_LIMIT_MUTE_TEXT . $maxLimit . ' accounts');
         }
 
         $filter = UserFilter::firstOrCreate([
@@ -2340,9 +2358,9 @@ class ApiV1Controller extends Controller
 
         $this->validate($request, [
             'limit' => 'sometimes|integer|min:1',
-            'min_id' => 'nullable|integer|min:1|max:'.PHP_INT_MAX,
-            'max_id' => 'nullable|integer|min:1|max:'.PHP_INT_MAX,
-            'since_id' => 'nullable|integer|min:1|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:1|max:' . PHP_INT_MAX,
+            'max_id' => 'nullable|integer|min:1|max:' . PHP_INT_MAX,
+            'since_id' => 'nullable|integer|min:1|max:' . PHP_INT_MAX,
             'types[]' => 'sometimes|array',
             'types[].*' => 'string|in:mention,reblog,follow,favourite',
             'type' => 'sometimes|string|in:mention,reblog,follow,favourite',
@@ -2392,17 +2410,17 @@ class ApiV1Controller extends Controller
         }
 
         if (empty($res)) {
-            if (! Cache::has('pf:services:notifications:hasSynced:'.$pid)) {
-                Cache::put('pf:services:notifications:hasSynced:'.$pid, 1, 1209600);
+            if (! Cache::has('pf:services:notifications:hasSynced:' . $pid)) {
+                Cache::put('pf:services:notifications:hasSynced:' . $pid, 1, 1209600);
                 NotificationWarmUserCache::dispatch($pid);
             }
         }
 
         if ($request->has('types')) {
             $typesParams = collect($types)->implode('&types[]=');
-            $baseUrl = config('app.url').'/api/v1/notifications?types[]='.$typesParams.'&limit='.$ogLimit.'&';
+            $baseUrl = config('app.url') . '/api/v1/notifications?types[]=' . $typesParams . '&limit=' . $ogLimit . '&';
         } else {
-            $baseUrl = config('app.url').'/api/v1/notifications?limit='.$ogLimit.'&';
+            $baseUrl = config('app.url') . '/api/v1/notifications?limit=' . $ogLimit . '&';
         }
 
         if ($minId == $maxId) {
@@ -2466,15 +2484,15 @@ class ApiV1Controller extends Controller
             ->values();
 
         if ($maxId) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next"';
         }
 
         if ($minId) {
-            $link = '<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         if ($maxId && $minId) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next",<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next",<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         $headers = isset($link) ? ['Link' => $link] : [];
@@ -2495,8 +2513,8 @@ class ApiV1Controller extends Controller
 
         $this->validate($request, [
             'page' => 'sometimes|integer|max:40',
-            'min_id' => 'sometimes|integer|min:0|max:'.PHP_INT_MAX,
-            'max_id' => 'sometimes|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'sometimes|integer|min:0|max:' . PHP_INT_MAX,
+            'max_id' => 'sometimes|integer|min:0|max:' . PHP_INT_MAX,
             'limit' => 'sometimes|integer|min:1',
             'include_reblogs' => 'sometimes',
         ]);
@@ -2512,11 +2530,11 @@ class ApiV1Controller extends Controller
         $pid = $request->user()->profile_id;
         $includeReblogs = $request->filled('include_reblogs') ? $request->boolean('include_reblogs') : false;
         $nullFields = $includeReblogs ?
-        ['in_reply_to_id'] :
-        ['in_reply_to_id', 'reblog_of_id'];
+            ['in_reply_to_id'] :
+            ['in_reply_to_id', 'reblog_of_id'];
         $inTypes = $includeReblogs ?
-        ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album', 'share'] :
-        ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'];
+            ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album', 'share'] :
+            ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'];
         AccountService::setLastActive($request->user()->id);
 
         $cachedFilters = CustomFilter::getCachedFiltersForAccount($pid);
@@ -2540,14 +2558,14 @@ class ApiV1Controller extends Controller
             }
 
             if (! $res) {
-                $res = Cache::has('pf:services:apiv1:home:cached:coldbootcheck:'.$pid);
+                $res = Cache::has('pf:services:apiv1:home:cached:coldbootcheck:' . $pid);
                 if (! $res) {
-                    Cache::set('pf:services:apiv1:home:cached:coldbootcheck:'.$pid, 1, 86400);
+                    Cache::set('pf:services:apiv1:home:cached:coldbootcheck:' . $pid, 1, 86400);
                     FeedWarmCachePipeline::dispatchSync($pid);
 
                     return response()->json([], 206);
                 } else {
-                    Cache::set('pf:services:apiv1:home:cached:coldbootcheck:'.$pid, 1, 86400);
+                    Cache::set('pf:services:apiv1:home:cached:coldbootcheck:' . $pid, 1, 86400);
 
                     return response()->json([], 206);
                 }
@@ -2592,7 +2610,7 @@ class ApiV1Controller extends Controller
                 })
                 ->values();
 
-            $baseUrl = config('app.url').'/api/v1/timelines/home?limit='.$limit.'&';
+            $baseUrl = config('app.url') . '/api/v1/timelines/home?limit=' . $limit . '&';
             $minId = $res->map(function ($s) {
                 return ['id' => $s['id']];
             })->min('id');
@@ -2605,15 +2623,15 @@ class ApiV1Controller extends Controller
             }
 
             if ($maxId && $res->count() >= $limit) {
-                $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
+                $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next"';
             }
 
             if ($minId) {
-                $link = '<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+                $link = '<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
             }
 
             if ($maxId && $minId) {
-                $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next",<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+                $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next",<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
             }
 
             $headers = isset($link) ? ['Link' => $link] : [];
@@ -2621,7 +2639,7 @@ class ApiV1Controller extends Controller
             return $this->json($res->toArray(), 200, $headers);
         }
 
-        $following = Cache::remember('profile:following:'.$pid, 1209600, function () use ($pid) {
+        $following = Cache::remember('profile:following:' . $pid, 1209600, function () use ($pid) {
             $following = Follower::whereProfileId($pid)->pluck('following_id');
 
             return $following->push($pid)->toArray();
@@ -2780,7 +2798,7 @@ class ApiV1Controller extends Controller
                 ->values();
         }
 
-        $baseUrl = config('app.url').'/api/v1/timelines/home?limit='.$limit.'&';
+        $baseUrl = config('app.url') . '/api/v1/timelines/home?limit=' . $limit . '&';
         $minId = $res->map(function ($s) {
             return ['id' => $s['id']];
         })->min('id');
@@ -2793,15 +2811,15 @@ class ApiV1Controller extends Controller
         }
 
         if ($maxId) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next"';
         }
 
         if ($minId) {
-            $link = '<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         if ($maxId && $minId) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next",<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next",<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         $headers = isset($link) ? ['Link' => $link] : [];
@@ -2818,8 +2836,8 @@ class ApiV1Controller extends Controller
     public function timelinePublic(Request $request)
     {
         $this->validate($request, [
-            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
-            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
+            'max_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
             'limit' => 'sometimes|integer|min:1',
             'remote' => 'sometimes',
             'local' => 'sometimes',
@@ -3068,7 +3086,7 @@ class ApiV1Controller extends Controller
             ->take($limit)
             ->values();
 
-        $baseUrl = config('app.url').'/api/v1/timelines/public?limit='.$limit.'&';
+        $baseUrl = config('app.url') . '/api/v1/timelines/public?limit=' . $limit . '&';
         if ($remote) {
             $baseUrl .= 'remote=1&';
         }
@@ -3087,15 +3105,15 @@ class ApiV1Controller extends Controller
         }
 
         if ($maxId && $res->count() >= $limit) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next"';
         }
 
         if ($minId) {
-            $link = '<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         if ($maxId && $minId) {
-            $link = '<'.$baseUrl.'max_id='.$minId.'>; rel="next",<'.$baseUrl.'min_id='.$maxId.'>; rel="prev"';
+            $link = '<' . $baseUrl . 'max_id=' . $minId . '>; rel="next",<' . $baseUrl . 'min_id=' . $maxId . '>; rel="prev"';
         }
 
         $headers = isset($link) ? ['Link' => $link] : [];
@@ -3225,7 +3243,7 @@ class ApiV1Controller extends Controller
         $links = [];
 
         if (! $transformedDms->isEmpty()) {
-            $baseUrl = url()->current().'?'.http_build_query(array_merge(
+            $baseUrl = url()->current() . '?' . http_build_query(array_merge(
                 $request->except(['min_id', 'max_id', 'since_id']),
                 ['limit' => $limit]
             ));
@@ -3234,16 +3252,16 @@ class ApiV1Controller extends Controller
             $lastId = $transformedDms->last()['id'];
 
             $firstLink = $baseUrl;
-            $links[] = '<'.$firstLink.'>; rel="first"';
+            $links[] = '<' . $firstLink . '>; rel="first"';
 
             if ($hasNextPage) {
-                $nextLink = $baseUrl.'&max_id='.$lastId;
-                $links[] = '<'.$nextLink.'>; rel="next"';
+                $nextLink = $baseUrl . '&max_id=' . $lastId;
+                $links[] = '<' . $nextLink . '>; rel="next"';
             }
 
             if ($max_id || $since_id) {
-                $prevLink = $baseUrl.'&min_id='.$firstId;
-                $links[] = '<'.$prevLink.'>; rel="prev"';
+                $prevLink = $baseUrl . '&min_id=' . $firstId;
+                $links[] = '<' . $prevLink . '>; rel="prev"';
             }
         }
 
@@ -3345,8 +3363,8 @@ class ApiV1Controller extends Controller
 
         if ($status['in_reply_to_id']) {
             $ancestors[] = $pe ?
-            StatusService::get($status['in_reply_to_id'], false) :
-            StatusService::getMastodon($status['in_reply_to_id'], false);
+                StatusService::get($status['in_reply_to_id'], false) :
+                StatusService::getMastodon($status['in_reply_to_id'], false);
         }
 
         if ($status['replies_count']) {
@@ -3358,8 +3376,8 @@ class ApiV1Controller extends Controller
                 ->pluck('id')
                 ->map(function ($sid) use ($pe) {
                     return $pe ?
-                     StatusService::get($sid, false) :
-                     StatusService::getMastodon($sid, false);
+                        StatusService::get($sid, false) :
+                        StatusService::getMastodon($sid, false);
                 })
                 ->filter(function ($post) use ($filters) {
                     return $post && isset($post['account'], $post['account']['id']) && ! in_array($post['account']['id'], $filters);
@@ -3428,7 +3446,7 @@ class ApiV1Controller extends Controller
 
         abort_if(
             ! $status->type ||
-            ! in_array($status->type, ['photo', 'photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
+                ! in_array($status->type, ['photo', 'photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
             404,
         );
 
@@ -3458,18 +3476,18 @@ class ApiV1Controller extends Controller
             $links = '';
             if ($res->onFirstPage()) {
                 if ($res->nextPageUrl()) {
-                    $links = '<'.$res->nextPageUrl().'>; rel="prev"';
+                    $links = '<' . $res->nextPageUrl() . '>; rel="prev"';
                 }
             } else {
                 if ($res->previousPageUrl()) {
-                    $links = '<'.$res->previousPageUrl().'>; rel="next"';
+                    $links = '<' . $res->previousPageUrl() . '>; rel="next"';
                 }
 
                 if ($res->nextPageUrl()) {
                     if (! empty($links)) {
                         $links .= ', ';
                     }
-                    $links .= '<'.$res->nextPageUrl().'>; rel="prev"';
+                    $links .= '<' . $res->nextPageUrl() . '>; rel="prev"';
                 }
             }
 
@@ -3529,7 +3547,7 @@ class ApiV1Controller extends Controller
 
         abort_if(
             ! $status->type ||
-            ! in_array($status->type, ['photo', 'photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
+                ! in_array($status->type, ['photo', 'photo:album', 'photo:video:album', 'reply', 'text', 'video', 'video:album']),
             404,
         );
 
@@ -3560,18 +3578,18 @@ class ApiV1Controller extends Controller
 
             if ($res->onFirstPage()) {
                 if ($res->nextPageUrl()) {
-                    $links = '<'.$res->nextPageUrl().'>; rel="prev"';
+                    $links = '<' . $res->nextPageUrl() . '>; rel="prev"';
                 }
             } else {
                 if ($res->previousPageUrl()) {
-                    $links = '<'.$res->previousPageUrl().'>; rel="next"';
+                    $links = '<' . $res->previousPageUrl() . '>; rel="next"';
                 }
 
                 if ($res->nextPageUrl()) {
                     if (! empty($links)) {
                         $links .= ', ';
                     }
-                    $links .= '<'.$res->nextPageUrl().'>; rel="prev"';
+                    $links .= '<' . $res->nextPageUrl() . '>; rel="prev"';
                 }
             }
 
@@ -3608,11 +3626,12 @@ class ApiV1Controller extends Controller
     {
         abort_if(! $request->user() || ! $request->user()->token(), 403);
         abort_unless($request->user()->tokenCan('write'), 403);
+        abort_if(!AccountService::canPost($request->user()), 400, 'limit_daily_posts');
 
         $this->validate($request, [
-            'status' => 'nullable|string|max:'.(int) config_cache('pixelfed.max_caption_length'),
+            'status' => 'nullable|string|max:' . (int) config_cache('pixelfed.max_caption_length'),
             'in_reply_to_id' => 'nullable',
-            'media_ids' => 'sometimes|array|max:'.(int) config_cache('pixelfed.max_album_length'),
+            'media_ids' => 'sometimes|array|max:' . (int) config_cache('pixelfed.max_album_length'),
             'sensitive' => 'nullable',
             'visibility' => 'string|in:private,unlisted,public,direct',
             'spoiler_text' => 'sometimes|max:140',
@@ -3628,7 +3647,7 @@ class ApiV1Controller extends Controller
         }
 
         if ($request->hasHeader('idempotency-key')) {
-            $key = 'pf:api:v1:status:idempotency-key:'.$request->user()->id.':'.hash('sha1', $request->header('idempotency-key'));
+            $key = 'pf:api:v1:status:idempotency-key:' . $request->user()->id . ':' . hash('sha1', $request->header('idempotency-key'));
             $exists = Cache::has($key);
             abort_if($exists, 400, 'Duplicate idempotency key.');
             Cache::put($key, 1, 3600);
@@ -3665,7 +3684,7 @@ class ApiV1Controller extends Controller
 
         $profile = $user->profile;
 
-        $limitKey = 'compose:rate-limit:store:'.$user->id;
+        $limitKey = 'compose:rate-limit:store:' . $user->id;
         $limitTtl = now()->addMinutes(15);
         $limitReached = Cache::remember($limitKey, $limitTtl, function () use ($user) {
             $minId = SnowflakeService::byDate(now()->subDays(1));
@@ -3688,8 +3707,8 @@ class ApiV1Controller extends Controller
             return [];
         }
 
-        $defaultCaption = '';
-        $content = $request->filled('status') ? strip_tags($request->input('status')) : $defaultCaption;
+        $content = strip_tags($request->input('status'));
+        $rendered = Autolink::create()->autolink($content);
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
 
@@ -3703,7 +3722,7 @@ class ApiV1Controller extends Controller
 
             $status = new Status;
             $status->caption = $content;
-            $status->rendered = $defaultCaption;
+            $status->rendered = $rendered;;
             $status->scope = $visibility;
             $status->visibility = $visibility;
             $status->profile_id = $user->profile_id;
@@ -3713,11 +3732,12 @@ class ApiV1Controller extends Controller
             $status->in_reply_to_profile_id = $parent->profile_id;
             $status->save();
             StatusService::del($parent->id);
-            Cache::forget('status:replies:all:'.$parent->id);
+            Cache::forget('status:replies:all:' . $parent->id);
         }
 
         if ($ids) {
-            if (Media::whereUserId($user->id)
+            if (
+                Media::whereUserId($user->id)
                 ->whereNull('status_id')
                 ->find($ids)
                 ->count() == 0
@@ -3728,7 +3748,7 @@ class ApiV1Controller extends Controller
             if (! $in_reply_to_id) {
                 $status = new Status;
                 $status->caption = $content;
-                $status->rendered = $defaultCaption;
+                $status->rendered = $rendered;
                 $status->profile_id = $user->profile_id;
                 $status->is_nsfw = $cw;
                 $status->cw_summary = $spoilerText;
@@ -3775,13 +3795,13 @@ class ApiV1Controller extends Controller
             abort(500, 'An error occured.');
         }
 
-        Cache::forget('pf:status:ap:v1:sid:'.$status->id);
-        Cache::forget('status:transformer:media:attachments:'.$status->id);
-        Cache::forget('user:account:id:'.$user->id);
-        Cache::forget('_api:statuses:recent_9:'.$user->profile_id);
-        Cache::forget('profile:status_count:'.$user->profile_id);
+        Cache::forget('pf:status:ap:v1:sid:' . $status->id);
+        Cache::forget('status:transformer:media:attachments:' . $status->id);
+        Cache::forget('user:account:id:' . $user->id);
+        Cache::forget('_api:statuses:recent_9:' . $user->profile_id);
+        Cache::forget('profile:status_count:' . $user->profile_id);
         Cache::forget($user->storageUsedKey());
-        Cache::forget('profile:embed:'.$status->profile_id);
+        Cache::forget('profile:embed:' . $status->profile_id);
         Cache::forget($limitKey);
 
         NewStatusPipeline::dispatch($status);
@@ -3839,7 +3859,7 @@ class ApiV1Controller extends Controller
 
         $resource = new Fractal\Resource\Item($status, new StatusTransformer);
 
-        Cache::forget('profile:status_count:'.$status->profile_id);
+        Cache::forget('profile:status_count:' . $status->profile_id);
         StatusDelete::dispatch($status);
 
         $res = $this->fractal->createData($resource)->toArray();
@@ -3969,8 +3989,8 @@ class ApiV1Controller extends Controller
 
         $this->validate($request, [
             'page' => 'nullable|integer|max:40',
-            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
-            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
+            'max_id' => 'nullable|integer|min:0|max:' . PHP_INT_MAX,
             'limit' => 'sometimes|integer|min:1',
             'only_media' => 'sometimes',
             '_pe' => 'sometimes',
@@ -4154,14 +4174,14 @@ class ApiV1Controller extends Controller
         $headers = [];
 
         if ($bookmarkQuery->nextCursor()) {
-            $links .= '<'.$bookmarkQuery->nextPageUrl().'&limit='.$limit.'>; rel="next"';
+            $links .= '<' . $bookmarkQuery->nextPageUrl() . '&limit=' . $limit . '>; rel="next"';
         }
 
         if ($bookmarkQuery->previousCursor()) {
             if ($links != null) {
                 $links .= ', ';
             }
-            $links .= '<'.$bookmarkQuery->previousPageUrl().'&limit='.$limit.'>; rel="prev"';
+            $links .= '<' . $bookmarkQuery->previousPageUrl() . '&limit=' . $limit . '>; rel="prev"';
         }
 
         if ($links) {
@@ -4316,14 +4336,14 @@ class ApiV1Controller extends Controller
         $sortBy = $request->input('sort', 'all');
 
         if ($sortBy == 'all' && isset($status['replies_count']) && $status['replies_count'] && $request->has('refresh_cache')) {
-            if (! Cache::has('status:replies:all-rc:'.$id)) {
-                Cache::forget('status:replies:all:'.$id);
-                Cache::put('status:replies:all-rc:'.$id, true, 300);
+            if (! Cache::has('status:replies:all-rc:' . $id)) {
+                Cache::forget('status:replies:all:' . $id);
+                Cache::put('status:replies:all-rc:' . $id, true, 300);
             }
         }
 
         if ($sortBy == 'all' && ! $request->has('cursor')) {
-            $ids = Cache::remember('status:replies:all:'.$id, 3600, function () use ($id) {
+            $ids = Cache::remember('status:replies:all:' . $id, 3600, function () use ($id) {
                 return DB::table('statuses')
                     ->where('in_reply_to_id', $id)
                     ->orderBy('id')
@@ -4593,17 +4613,17 @@ class ApiV1Controller extends Controller
 
         UnfollowPipeline::dispatch($id, $pid)->onQueue('high');
 
-        Cache::forget('profile:following:'.$id);
-        Cache::forget('profile:followers:'.$id);
-        Cache::forget('profile:following:'.$pid);
-        Cache::forget('profile:followers:'.$pid);
-        Cache::forget('api:local:exp:rec:'.$pid);
-        Cache::forget('user:account:id:'.$id);
-        Cache::forget('user:account:id:'.$pid);
-        Cache::forget('profile:follower_count:'.$id);
-        Cache::forget('profile:follower_count:'.$pid);
-        Cache::forget('profile:following_count:'.$id);
-        Cache::forget('profile:following_count:'.$pid);
+        Cache::forget('profile:following:' . $id);
+        Cache::forget('profile:followers:' . $id);
+        Cache::forget('profile:following:' . $pid);
+        Cache::forget('profile:followers:' . $pid);
+        Cache::forget('api:local:exp:rec:' . $pid);
+        Cache::forget('user:account:id:' . $id);
+        Cache::forget('user:account:id:' . $pid);
+        Cache::forget('profile:follower_count:' . $id);
+        Cache::forget('profile:follower_count:' . $pid);
+        Cache::forget('profile:following_count:' . $id);
+        Cache::forget('profile:following_count:' . $pid);
         AccountService::del($pid);
         AccountService::del($id);
 
@@ -4667,5 +4687,48 @@ class ApiV1Controller extends Controller
         $status['pinned'] = false;
 
         return $this->json($status);
+    }
+    /**
+     *  GET /api/v1/statuses/{id}/translate
+     */
+    public function translateStatus(Request $request, $id)
+    {
+
+        abort_if(! $request->user(), 403);
+        abort_unless($request->user()->tokenCan('read'), 403);
+        abort_if(config("pixelfed.translation.enabled") == false, 403);
+        abort_if(!TranslateService::canTranslate( $request->user()), 403);
+
+        $user = $request->user();
+        $language = $user->language ?? app()->getLocale();
+        $settings = $user->settings;
+
+        $translate =  TranslateService::status($id, $language);
+        $data = [
+            'text' => $translate['text'],
+        ];
+
+        return $this->json($data);
+    }
+
+    /**
+     *  GET /api/v1/accounts/{id}/translate
+     */
+    public function translateBio(Request $request, $pid){
+
+        abort_if(! $request->user(), 403);
+        abort_unless($request->user()->tokenCan('read'),403);
+        abort_if(config("pixelfed.translation.enabled") == false, 403);
+        abort_if(!TranslateService::canTranslate( $request->user()), 403);
+
+        $user = $request->user();
+        $language = $user->language ?? app()->getLocale();
+        $settings = $user->settings;
+
+        $translate =  TranslateService::bio($pid, $language);
+        $data = [
+            'text' => $translate['text'],
+        ];
+        return $this->json($data);
     }
 }

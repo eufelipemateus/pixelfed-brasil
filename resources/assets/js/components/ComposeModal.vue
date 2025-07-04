@@ -335,7 +335,7 @@
                             </a>
 
                             <p class="py-3">
-                                <a class="font-weight-bold" href="/site/help">Help</a>
+                                <a class="font-weight-bold" href="/help">Help</a>
                             </p>
                         </div>
                     </div>
@@ -1406,6 +1406,9 @@ export default {
                             case 400:
                                 if (err.response.data.error == "Must contain a single photo or video or multiple photos.") {
                                     swal("Wrong types of mixed media", "The album must contain a single photo or video or multiple photos.", 'error');
+                                }
+                                else if ( err.response.data.error =='limit_daily_posts') {
+                                    swal('Limite diario atingido!','Você atingiu o limite de posts diarios.', 'error');
                                 }
                                 else {
                                     this.defineErrorMessage(err);

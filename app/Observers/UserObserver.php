@@ -13,6 +13,9 @@ use App\Models\UserDomainBlock;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use DB;
 use App\Services\FollowerService;
+use App\Enums\StatusEnums;
+use App\Http\Controllers\FollowerController;
+use App\FollowRequest;
 
 class UserObserver
 {
@@ -67,7 +70,7 @@ class UserObserver
 
     protected function handleUser($user)
     {
-        if(in_array($user->status, ['deleted', 'delete'])) {
+        if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             return;
         }
 
@@ -93,6 +96,7 @@ class UserObserver
 
                 $profile->private_key = $pki_private;
                 $profile->public_key = $pki_public;
+                $profile->no_autolink = config('instance.default_no_autolink');
                 $profile->save();
                 $this->applyDefaultDomainBlocks($user);
                 return $profile;
@@ -119,12 +123,25 @@ class UserObserver
 
                 if($profiles) {
                     foreach($profiles as $p) {
-                        $follower = new Follower;
-                        $follower->profile_id = $profile->id;
-                        $follower->following_id = $p->id;
-                        $follower->save();
+                        if (empty($p->domain)) {
+                            $follower = new Follower;
+                            $follower->profile_id = $profile->id;
+                            $follower->following_id = $p->id;
+                            $follower->save();
 
-                        FollowPipeline::dispatch($follower);
+                            FollowPipeline::dispatch($follower);
+                        } else {
+                            FollowRequest::firstOrCreate(
+                                [
+                                'follower_id' => $profile->id,
+                                'following_id' => $p->id,
+                                ]
+                            );
+
+                            if (config('federation.activitypub.remoteFollow') == true) {
+                                (new FollowerController)->sendFollow($profile, $p);
+                            }
+                        }
                     }
                 }
             }

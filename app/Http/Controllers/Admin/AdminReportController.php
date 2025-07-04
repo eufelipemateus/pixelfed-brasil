@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Storage;
+use App\Enums\StatusEnums;
 
 trait AdminReportController
 {
@@ -293,8 +294,8 @@ trait AdminReportController
             }
 
             $ts = now()->addMonth();
-            $user->status = 'delete';
-            $profile->status = 'delete';
+            $user->status = StatusEnums::DELETE_QUEUE; ;
+            $profile->status = StatusEnums::DELETE_QUEUE;
             $user->delete_after = $ts;
             $profile->delete_after = $ts;
             $user->save();
@@ -1025,12 +1026,12 @@ trait AdminReportController
                 if ($profile->user_id) {
                     $user = $profile->user;
                     abort_if($user->is_admin, 403, 'You cannot delete admin accounts.');
-                    $user->status = 'delete';
+                    $user->status =  StatusEnums::DELETE_QUEUE;
                     $user->delete_after = $ts;
                     $user->save();
                 }
 
-                $profile->status = 'delete';
+                $profile->status = StatusEnums::DELETE_QUEUE;
                 $profile->delete_after = $ts;
                 $profile->save();
 
@@ -1054,9 +1055,9 @@ trait AdminReportController
                     DB::table('oauth_auth_codes')->whereUserId($user->id)->delete();
                     $user->email = $user->id;
                     $user->password = '';
-                    $user->status = 'delete';
+                    $user->status =  StatusEnums::DELETED ;
                     $user->save();
-                    $profile->status = 'delete';
+                    $profile->status =  StatusEnums::DELETED ;
                     $profile->delete_after = now()->addMonth();
                     $profile->save();
                     AccountService::del($profile->id);
@@ -1359,8 +1360,8 @@ trait AdminReportController
             }
 
             $ts = now()->addMonth();
-            $user->status = 'delete';
-            $profile->status = 'delete';
+            $user->status =   StatusEnums::DELETE_QUEUE;
+            $profile->status = StatusEnums::DELETE_QUEUE;
             $user->delete_after = $ts;
             $profile->delete_after = $ts;
             $user->save();

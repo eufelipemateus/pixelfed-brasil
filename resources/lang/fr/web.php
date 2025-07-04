@@ -44,8 +44,8 @@ return [
 		'admin' => 'Tableau de bord d\'administration',
 
 		// Timelines
-		'homeFeed' => 'Fil principal',
-		'localFeed' => 'Fil local',
+		'homeFeed' => 'Flux principal',
+		'localFeed' => 'Flux local',
 		'globalFeed' => 'Fil global',
 
 		// Core features

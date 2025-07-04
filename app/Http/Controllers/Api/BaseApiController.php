@@ -18,6 +18,7 @@ use Cache;
 use Illuminate\Http\Request;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Enums\StatusEnums;
 
 class BaseApiController extends Controller
 {
@@ -114,7 +115,7 @@ class BaseApiController extends Controller
         abort_if(! $request->user(), 403);
 
         $user = $request->user();
-        if ($user->status != null) {
+        if ($user->status != StatusEnums::ACTIVE) {
             Auth::logout();
             abort(403);
         }

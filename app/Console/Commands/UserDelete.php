@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\User;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
+use App\Enums\StatusEnums;
 
 class UserDelete extends Command
 {
@@ -53,7 +54,7 @@ class UserDelete extends Command
             exit;
         }
 
-        if($user->status == 'deleted' && $force == false) {
+        if($user->status == StatusEnums::DELETED && $force == false) {
             $this->error('Account has already been deleted.');
             return;
         }
@@ -74,9 +75,9 @@ class UserDelete extends Command
             exit;
         }
 
-        if($user->status !== 'deleted') {
+        if($user->status !== StatusEnums::DELETED) {
             $profile = $user->profile;
-            $profile->status = $user->status = 'deleted';
+            $profile->status = $user->status = StatusEnums::DELETED;
             $profile->save();
             $user->save();
         }

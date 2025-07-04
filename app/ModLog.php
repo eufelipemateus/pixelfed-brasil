@@ -39,7 +39,19 @@ class ModLog extends Model
 			case 'admin.user.delete':
 				$msg = "Deleted Account";
 				break;
-			
+
+            case 'system.user.desactive':
+                $msg = "[System] Deactivated Account";
+                break;
+
+            case 'system.user.unpopular':
+                $msg = "[System] Removed from Popular Users";
+                break;
+                
+            case 'system.user.popular':
+                $msg = "[System] Added to Popular Users";
+                break;
+
 			default:
 				$msg = 'Unknown action';
 				break;

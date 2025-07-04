@@ -31,3 +31,8 @@
 # Exceptions - these *MUST* be last
 !/bootstrap/cache/.gitignore
 !/public/vendor/horizon/.gitignore
+
+/packages/
+
+/resources/lang/pt
+/resources/assets/js/i18n/pt.json

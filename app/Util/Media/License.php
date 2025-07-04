@@ -13,7 +13,7 @@ class License {
                 "name" => "All Rights Reserved",
                 "description" => "You, the copyright holder, reserve all rights provided by copyright law, such as the right to make copies, distribute your work, perform your work, license, or otherwise exploit your work; no rights are waived under this license.",
                 "terms" => [],
-                "url" => url('/site/kb/licenses')
+                "url" => route('help.licenses')
             ],
             5 => [
                 "id" => 5,
@@ -21,7 +21,7 @@ class License {
                 "name" => "Public Domain Work",
                 "description" => "Works, or aspects of copyrighted works, which copyright law does not protect.",
                 "terms" => [],
-                "url" => url('/site/kb/licenses')
+                "url" =>route('help.licenses')
             ],
             6 => [
                 "id" => 6,
@@ -29,7 +29,7 @@ class License {
                 "name" => "Public Domain Dedication (CC0)",
                 "description" => "You, the copyright holder, waive your interest in your work and place the work as completely as possible in the public domain so others may freely exploit and use the work without restriction under copyright or database law.",
                 "terms" => [],
-                "url" => url('/site/kb/licenses')
+                "url" => route('help.licenses')
             ],
             11 => [
                 "id" => 11,

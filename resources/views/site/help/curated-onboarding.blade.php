@@ -71,7 +71,7 @@
     </a>
     <div class="collapse mb-5" id="collapse1">
         <div>
-            This indicates that you've attempted to verify your email address too many times. This most likely is the result of an issue delivering the verification emails to your email provider. If you are experiencing this issue, we suggest that you <a href="/site/contact">contact the admin onboarding team</a> and mention that you're having issues verifying your email address.
+            This indicates that you've attempted to verify your email address too many times. This most likely is the result of an issue delivering the verification emails to your email provider. If you are experiencing this issue, we suggest that you <a href="{{route('site.contact')}}">contact the admin onboarding team</a> and mention that you're having issues verifying your email address.
         </div>
     </div>
 </p>

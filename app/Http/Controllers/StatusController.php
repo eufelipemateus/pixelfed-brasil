@@ -22,6 +22,7 @@ use Cache;
 use DB;
 use Illuminate\Http\Request;
 use League\Fractal;
+use App\Enums\StatusEnums;
 
 class StatusController extends Controller
 {
@@ -50,7 +51,7 @@ class StatusController extends Controller
         }
 
         $user = Profile::whereNull('domain')->whereUsername($username)->firstOrFail();
-        if ($user->status != null) {
+        if ($user->status != StatusEnums::ACTIVE) {
             return ProfileController::accountCheck($user);
         }
 
@@ -191,7 +192,7 @@ class StatusController extends Controller
     {
         $user = Profile::whereNull('domain')->whereUsername($username)->firstOrFail();
 
-        if ($user->status != null) {
+        if ($user->status != StatusEnums::ACTIVE) {
             return ProfileController::accountCheck($user);
         }
 

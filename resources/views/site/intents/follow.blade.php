@@ -49,7 +49,7 @@
 			<div class="d-flex justify-content-between pt-4 small">
 				<a class="text-lighter text-decoration-none" href="/{{$user->username}}">Logged in as: <span class="font-weight-bold text-muted">{{$user->username}}</span></a>
 				<span>
-					<a class="text-decoration-none text-muted font-weight-bold mr-3" href="/site/help">Help</a>
+					<a class="text-decoration-none text-muted font-weight-bold mr-3" href="{{ route('site.help')}}">Help</a>
 					<a class="text-decoration-none text-muted font-weight-bold" href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Logout</a>
 					<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
 						@csrf

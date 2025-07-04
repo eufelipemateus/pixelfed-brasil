@@ -59,7 +59,7 @@ class FederationController extends Controller
                     [
                         'rel' => 'http://webfinger.net/rel/profile-page',
                         'type' => 'text/html',
-                        'href' => 'https://'.$domain.'/site/kb/instance-actor',
+                        'href' => 'https://'.$domain.'/kb/instance-actor',
                     ],
                     [
                         'rel' => 'self',
@@ -276,14 +276,50 @@ class FederationController extends Controller
         abort_if(! $id, 404);
         $account = AccountService::get($id);
         abort_if(! $account || ! isset($account['following_count']), 404);
+
+        $perPage = 50;
+        $page = max(1, (int) request()->query('page', 1));
+        $offset = ($page - 1) * $perPage;
+
+        $following = AccountService::getFollowing($id, $perPage, $offset);
+
+        $baseUrl = url()->current();
+        $nextPage = $account['following_count'] > $offset + $perPage ? "$baseUrl?page=" . ($page + 1) : null;
+        $prevPage = $page > 1 ? "$baseUrl?page=" . ($page - 1) : null;
+        $lastPage = $nextPage ? "$baseUrl?page=" . ceil($account['following_count'] / $perPage) : null;
+        $firstPage = "$baseUrl?page=1";
+
         $obj = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $request->getUri(),
+            'id' =>  url()->full(),
             'type' => 'OrderedCollection',
             'totalItems' => $account['following_count'] ?? 0,
         ];
 
-        return response()->json($obj)->header('Content-Type', 'application/activity+json');
+        if (!request()->has('page')) {
+            $obj['first'] = $firstPage;
+        }
+
+        if ($nextPage && request()->has('page')) {
+            $obj['next'] = $nextPage;
+        }
+
+        if ($prevPage && request()->has('page')) {
+            $obj['prev'] = $prevPage;
+        }
+
+        if ($lastPage && request()->has('page')) {
+            $obj['last'] = $lastPage;
+        }
+
+        if (request()->has('page')) {
+            $obj['partOf'] = $baseUrl;
+        }
+
+        if (request()->has('page')) {
+            $obj['orderedItems'] = $following;
+        }
+        return response()->json($obj)->header('Content-Type', 'application/activity+json');;
     }
 
     public function userFollowers(Request $request, $username)
@@ -293,12 +329,50 @@ class FederationController extends Controller
         abort_if(! $id, 404);
         $account = AccountService::get($id);
         abort_if(! $account || ! isset($account['followers_count']), 404);
+
+        $perPage = 50;
+        $page = max(1, (int) request()->query('page', 1));
+        $offset = ($page - 1) * $perPage;
+
+        $followers = AccountService::getFollowers($id, $perPage, $offset);
+
+        $baseUrl = url()->current();
+        $nextPage = $account['followers_count'] > $offset + $perPage ? "$baseUrl?page=" . ($page + 1) : null;
+        $prevPage = $page > 1 ? "$baseUrl?page=" . ($page - 1) : null;
+        $lastPage = $nextPage ? "$baseUrl?page=" . ceil($account['followers_count'] / $perPage) : null;
+        $firstPage = "$baseUrl?page=1";
+
         $obj = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $request->getUri(),
+            'id' => url()->full(),
             'type' => 'OrderedCollection',
             'totalItems' => $account['followers_count'] ?? 0,
         ];
+
+
+        if (!request()->has('page')) {
+            $obj['first'] = $firstPage;
+        }
+
+        if ($nextPage && request()->has('page')) {
+            $obj['next'] = $nextPage;
+        }
+
+        if ($prevPage && request()->has('page')) {
+            $obj['prev'] = $prevPage;
+        }
+
+        if ($lastPage && request()->has('page')) {
+            $obj['last'] = $lastPage;
+        }
+
+        if (request()->has('page')) {
+            $obj['partOf'] = $baseUrl;
+        }
+
+        if (request()->has('page')) {
+            $obj['orderedItems'] = $followers;
+        }
 
         return response()->json($obj)->header('Content-Type', 'application/activity+json');
     }

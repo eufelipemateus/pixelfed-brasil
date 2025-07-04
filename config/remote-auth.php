@@ -50,7 +50,7 @@ return [
              *   all known and reporting Pixelfed instances to prevent the same masto account from
              *   abusing this
              */
-            'enabled' => env('PF_LOGIN_WITH_MASTODON_ENFORCE_MAX_USES', true),
+            'enabled' => env('PF_LOGIN_WITH_MASTODON_ENFORCE_MAX_USES', false),
             'limit' => env('PF_LOGIN_WITH_MASTODON_MAX_USES_LIMIT', 3)
         ]
     ],

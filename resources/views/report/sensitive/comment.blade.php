@@ -32,7 +32,7 @@
           </div>
 
           <div class="col-12">
-            <p class="text-center small"><a class="font-weight-bold" href="/site/kb/community-guidelines">Learn more</a> about our community guidelines and policies.</p>
+            <p class="text-center small"><a class="font-weight-bold" href="{{route('help.community-guidelines'}}">Learn more</a> about our community guidelines and policies.</p>
           </div>
         </div>
       </div>

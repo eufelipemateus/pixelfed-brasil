@@ -17,9 +17,9 @@
 					</p>
 
 					<div class="user-stats">
-						<div class="user-stats-item user-select-none">{{ formatCount(account.statuses_count) }} Posts</div>
-						<div class="user-stats-item user-select-none">{{ formatCount(account.followers_count) }} Followers</div>
-						<div class="user-stats-item user-select-none">{{ formatCount(account.following_count) }} Following</div>
+						<div class="user-stats-item user-select-none">{{ formatCount(account.statuses_count) }} {{ $t("site.posts")}}</div>
+						<div class="user-stats-item user-select-none">{{ formatCount(account.followers_count) }} {{ $t("site.followers")}} </div>
+						<div class="user-stats-item user-select-none">{{ formatCount(account.following_count) }} {{ $t("site.following")}}</div>
 					</div>
 
 					<div v-if="account.bio" class="user-bio">

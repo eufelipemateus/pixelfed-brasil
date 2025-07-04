@@ -2,9 +2,9 @@ name: Laravel Test Suite
 
 on:
   push:
-    branches: [ staging, dev ]
+    branches: [ staging ]
   pull_request:
-    branches: [ staging, dev ]
+    branches: [ staging ]
 
 jobs:
   tests:
@@ -12,8 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        php: [ '8.3' ]
-
+        php: [ '8.4' ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

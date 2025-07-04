@@ -54,7 +54,7 @@ class GroupsAdminController extends Controller
         $logs = GroupInteraction::whereGroupId($id)
             ->latest()
             ->paginate(10)
-            ->map(function($log) use($group) {
+            ->map(function ($log) use ($group) {
                 return [
                     'id' => $log->id,
                     'profile' => GroupAccountService::get($group->id, $log->profile_id),
@@ -64,7 +64,7 @@ class GroupsAdminController extends Controller
                 ];
             });
 
-        return response()->json($logs, 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        return response()->json($logs, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
     public function getBlocks(Request $request, $id)
@@ -81,7 +81,7 @@ class GroupsAdminController extends Controller
             'moderated' => GroupBlock::whereGroupId($group->id)->whereNotNull('instance_id')->whereModerated(true)->latest()->take(3)->pluck('name')
         ];
 
-        return response()->json($blocks, 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        return response()->json($blocks, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
     public function exportBlocks(Request $request, $id)
@@ -102,8 +102,8 @@ class GroupsAdminController extends Controller
         $blocks['_version'] = '1.0.0';
         ksort($blocks);
 
-        return response()->streamDownload(function() use($blocks) {
-            echo json_encode($blocks, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        return response()->streamDownload(function () use ($blocks) {
+            echo json_encode($blocks, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         });
     }
 
@@ -123,7 +123,7 @@ class GroupsAdminController extends Controller
         $item = $request->input('item');
         $type = $request->input('type');
 
-        switch($type) {
+        switch ($type) {
             case 'instance':
                 $instance = Instance::whereDomain($item)->first();
                 abort_if(!$instance, 422, 'This domain either isn\'nt known or is invalid');
@@ -148,7 +148,7 @@ class GroupsAdminController extends Controller
                 );
 
                 return [200];
-            break;
+                break;
 
             case 'user':
                 $profile = Profile::whereUsername($item)->first();
@@ -175,7 +175,7 @@ class GroupsAdminController extends Controller
                 );
 
                 return [200];
-            break;
+                break;
 
             case 'moderate':
                 $instance = Instance::whereDomain($item)->first();
@@ -201,11 +201,11 @@ class GroupsAdminController extends Controller
                 );
 
                 return [200];
-            break;
+                break;
 
             default:
                 return response()->json([], 422, []);
-            break;
+                break;
         }
     }
 
@@ -225,7 +225,7 @@ class GroupsAdminController extends Controller
         $item = $request->input('item');
         $type = $request->input('type');
 
-        switch($type) {
+        switch ($type) {
             case 'instance':
                 $instance = Instance::whereDomain($item)->first();
                 abort_if(!$instance, 422, 'This domain either isn\'nt known or is invalid');
@@ -251,7 +251,7 @@ class GroupsAdminController extends Controller
                 $gb->delete();
 
                 return [200];
-            break;
+                break;
 
             case 'user':
                 $profile = Profile::whereUsername($item)->first();
@@ -279,7 +279,7 @@ class GroupsAdminController extends Controller
                 $gb->delete();
 
                 return [200];
-            break;
+                break;
 
             case 'moderate':
                 $instance = Instance::whereDomain($item)->first();
@@ -306,11 +306,11 @@ class GroupsAdminController extends Controller
                 $gb->delete();
 
                 return [200];
-            break;
+                break;
 
             default:
                 return response()->json([], 422, []);
-            break;
+                break;
         }
     }
 
@@ -324,30 +324,31 @@ class GroupsAdminController extends Controller
 
         $scope = $request->input('scope', 'open');
 
-        $list = GroupReport::selectRaw('id, profile_id, item_type, item_id, type, created_at, count(*) as total')
+        $reportsGrouped = GroupReport::selectRaw('item_id, COUNT(*) as total, MAX(created_at) as created_at')
             ->whereGroupId($group->id)
+            ->when($scope === 'open', fn($q) => $q->whereOpen(true))
             ->groupBy('item_id')
-            ->when($scope == 'open', function($query, $scope) {
-                return $query->whereOpen(true);
-            })
-            ->latest()
-            ->simplePaginate(10)
-            ->map(function($report) use($group) {
-                $res = [
-                    'id' => (string) $report->id,
-                    'profile' => GroupAccountService::get($group->id, $report->profile_id),
-                    'type' => $report->type,
-                    'created_at' => $report->created_at->format('c'),
-                    'total_count' => $report->total
-                ];
+            ->orderByDesc('created_at')
+            ->simplePaginate(10);
 
-                if($report->item_type === GroupPost::class) {
-                    $res['status'] = GroupPostService::get($group->id, $report->item_id);
-                }
+        $list = $reportsGrouped->map(function ($groupedReport) use ($group) {
+            $firstReport = GroupReport::where('group_id', $group->id)
+                ->where('item_id', $groupedReport->item_id)
+                ->orderBy('created_at', 'asc')
+                ->first();
 
-                return $res;
-            });
-        return response()->json($list, 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+            return [
+                'id' => (string) $firstReport->id,
+                'profile' => GroupAccountService::get($group->id, $firstReport->profile_id),
+                'type' => $firstReport->type,
+                'created_at' => $firstReport->created_at->format('c'),
+                'total_count' => (int) $groupedReport->total,
+                'status' => $firstReport->item_type === GroupPost::class
+                    ? GroupPostService::get($group->id, $firstReport->item_id)
+                    : null,
+            ];
+        });
+
+        return response()->json($list, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
-
 }

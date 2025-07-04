@@ -24,7 +24,7 @@ return [
 		'other' => 'Altro',
 		'readMore' => 'Leggi di più',
 		'success' => 'Riuscito',
-		'proceed' => 'Procedi',
+		'proceed' => 'Continua',
 		'next' => 'Avanti',
 		'close' => 'Chiudi',
 		'clickHere' => 'clicca qui',

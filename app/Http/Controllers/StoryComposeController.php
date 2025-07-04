@@ -48,6 +48,7 @@ class StoryComposeController extends Controller
 
     public function apiV1Add(Request $request)
     {
+
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
         $this->validate($request, [
@@ -127,18 +128,27 @@ class StoryComposeController extends Controller
         }
 
         $storagePath = MediaPathService::story($user->profile);
-        $path = $photo->storePubliclyAs($storagePath, Str::random(random_int(2, 12)).'_'.Str::random(random_int(32, 35)).'_'.Str::random(random_int(1, 14)).'.'.$photo->extension());
-        if (in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg', 'image/png'])) {
-            $fpath = storage_path('app/'.$path);
+        $filename = Str::random(random_int(2, 12)) . '_' .
+                Str::random(random_int(32, 35)) . '_' .
+                Str::random(random_int(1, 14)) . '.' . $photo->extension();
+        $path = $storagePath . '/' . $filename;
 
-            $img = $this->imageManager->read($fpath);
+        if (in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg', 'image/png'])) {
             $quality = config_cache('pixelfed.image_quality');
+
+            $img = $this->imageManager->read($photo->getRealPath());
+
             $encoder = in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg']) ?
                 new JpegEncoder($quality) :
                 new PngEncoder;
 
             $encoded = $img->encode($encoder);
-            file_put_contents($fpath, $encoded);
+
+            // Salva diretamente no S3
+            Storage::disk(config('filesystems.cloud'))->put($path, $encoded->toString());
+        } else {
+            // Se não for imagem tratada, salva direto o arquivo original no S3
+            Storage::disk(config('filesystems.cloud'))->put($path, fopen($photo->getRealPath(), 'r'));
         }
 
         return $path;
@@ -165,14 +175,18 @@ class StoryComposeController extends Controller
 
         $story = Story::whereProfileId($user->profile_id)->findOrFail($id);
 
-        $path = storage_path('app/'.$story->path);
+        $path = Storage::disk(config('filesystems.cloud'))->path($story->path);
+        $url = Storage::disk(config('filesystems.cloud'))->url($story->path);
 
-        if (! is_file($path)) {
+        $tempPath = tempnam(sys_get_temp_dir(), 'story_');
+        file_put_contents($tempPath, file_get_contents($url));
+
+        if (! Storage::disk(config('filesystems.cloud'))->exists($story->path)) {
             abort(400, 'Invalid or missing media.');
         }
 
         if ($story->type === 'photo') {
-            $img = $this->imageManager->read($path);
+            $img = $this->imageManager->read($tempPath);
             $img = $img->crop($width, $height, $x, $y);
 
             $img = $img->resize(1080, 1920, function ($constraint) {
@@ -190,7 +204,11 @@ class StoryComposeController extends Controller
             }
 
             $encoded = $img->encode($encoder);
-            file_put_contents($path, $encoded);
+
+            // Salva apenas no S3
+            Storage::disk(config('filesystems.cloud'))->put($path, $encoded, 'public');
+            @unlink($tempPath);
+
         }
 
         return [

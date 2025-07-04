@@ -14,7 +14,7 @@
                 <div class="col-lg-6 col-5">
                     <div class="text-right">
                         <a class="btn btn-danger px-4" style="font-size:13px;" href="{{route('admin.newsroom.create')}}">New Announcement</a>
-                        <a class="btn btn-dark px-4 mr-3" style="font-size:13px;" href="/site/newsroom">View Newsroom <i class="fas fa-chevron-right fa-sm text-lighter ml-1"></i></a>
+                        <a class="btn btn-dark px-4 mr-3" style="font-size:13px;" href="{{route('newsroom.index')}}">View Newsroom <i class="fas fa-chevron-right fa-sm text-lighter ml-1"></i></a>
                     </div>
                 </div>
             </div>

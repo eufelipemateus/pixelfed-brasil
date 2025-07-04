@@ -24,7 +24,7 @@ Here’s what you can do next:
 
 Need help getting started? Visit our [Help Center]({{url('site/help')}}) for tips, tutorials, and FAQs. Remember, our community thrives on respect and creativity, so please familiarize yourself with our [Community Guidelines]({{url('site/kb/community-guidelines')}}).
 
-If you have any questions or need assistance, feel free to reach out to [our support team]({{url('/site/contact')}}).
+If you have any questions or need assistance, feel free to reach out to [our support team]({{url('/contact')}}).
 
 Happy posting, and once again, welcome to Pixelfed!
 

@@ -75,7 +75,7 @@ class SiteController extends Controller
     public function communityGuidelines(Request $request)
     {
         return Cache::remember('site:help:community-guidelines', now()->addDays(120), function () {
-            $slug = '/site/kb/community-guidelines';
+            $slug = '/kb/community-guidelines';
             $page = Page::whereSlug($slug)->whereActive(true)->first();
 
             return View::make('site.help.community-guidelines')->with(compact('page'))->render();
@@ -85,7 +85,7 @@ class SiteController extends Controller
     public function privacy(Request $request)
     {
         $page = Cache::remember('site:privacy', now()->addDays(120), function () {
-            $slug = '/site/privacy';
+            $slug = '/privacy';
 
             return Page::whereSlug($slug)->whereActive(true)->first();
         });
@@ -96,7 +96,7 @@ class SiteController extends Controller
     public function terms(Request $request)
     {
         $page = Cache::remember('site:terms', now()->addDays(120), function () {
-            $slug = '/site/terms';
+            $slug = '/terms';
 
             return Page::whereSlug($slug)->whereActive(true)->first();
         });
@@ -170,7 +170,7 @@ class SiteController extends Controller
     public function legalNotice(Request $request)
     {
         $page = Cache::remember('site:legal-notice', now()->addDays(120), function () {
-            $slug = '/site/legal-notice';
+            $slug = '/legal-notice';
 
             return Page::whereSlug($slug)->whereActive(true)->first();
         });

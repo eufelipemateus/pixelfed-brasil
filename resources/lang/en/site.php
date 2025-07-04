@@ -1,7 +1,9 @@
 <?php
 
 return [
-
+    'title1'            => 'Photo Sharing',
+    'title2'            => 'For Everyone',
+    'mainTitle'         => 'Photo Sharing. For Everyone',
     'about'             => 'About',
     'help'              => 'Help',
     'language'          => 'Language',
@@ -66,4 +68,6 @@ return [
     'view'                                                  => 'view',
     'the_source_code_and_run_their_own_instance'            => 'the source code and run their own instance!',
     'open_source_in_pixelfed'                               => 'Open source in Pixelfed',
+    'warning_fork'                                          => 'This site runs a modified version of Pixelfed, which is available at <a href="https://github.com/eufelipemateus/pixelfed" target="_blank" rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> for review and use.'
+
 ];

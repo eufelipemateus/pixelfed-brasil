@@ -49,6 +49,8 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
 use Purify;
+use App\Util\Lexer\Autolink;
+use App\Enums\StatusEnums;
 
 class ApiV1Dot1Controller extends Controller
 {
@@ -81,7 +83,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -190,7 +192,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -231,7 +233,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -272,7 +274,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -315,7 +317,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -358,7 +360,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -383,7 +385,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
         }
@@ -460,7 +462,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $user = $request->user();
-        abort_if($user->status != null, 403);
+        abort_if($user->status != StatusEnums::ACTIVE, 403);
 
         if (config('pixelfed.bouncer.cloud_ips.ban_signups')) {
             abort_if(BouncerService::checkIp($request->ip()), 404);
@@ -1025,7 +1027,7 @@ class ApiV1Dot1Controller extends Controller
         abort_unless($request->user()->tokenCan('push'), 403);
         abort_unless(NotificationAppGatewayService::enabled(), 404, 'Push notifications are not supported on this server.');
         $user = $request->user();
-        abort_if($user->status, 422, 'Cannot access this resource at this time');
+        abort_if($user->status != StatusEnums::ACTIVE, 422, 'Cannot access this resource at this time');
         $res = [
             'version' => PushNotificationService::PUSH_GATEWAY_VERSION,
             'username' => (string) $user->username,
@@ -1179,6 +1181,7 @@ class ApiV1Dot1Controller extends Controller
     {
         abort_if(! $request->user() || ! $request->user()->token(), 403);
         abort_unless($request->user()->tokenCan('write'), 403);
+        abort_if(!AccountService::canPost($request->user()), 400, 'You reached your daily post limit.');
 
         $this->validate($request, [
             'status' => 'nullable|string|max:'.(int) config_cache('pixelfed.max_caption_length'),
@@ -1275,10 +1278,11 @@ class ApiV1Dot1Controller extends Controller
         $content = $request->filled('status') ? strip_tags(Purify::clean($request->input('status'))) : $defaultCaption;
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
+        $rendered = Autolink::create()->autolink($content);
 
         $status = new Status;
         $status->caption = $content;
-        $status->rendered = $defaultCaption;
+        $status->rendered = $rendered;
         $status->profile_id = $user->profile_id;
         $status->is_nsfw = $cw;
         $status->cw_summary = $spoilerText;

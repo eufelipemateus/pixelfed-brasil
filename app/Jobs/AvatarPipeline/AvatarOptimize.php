@@ -73,35 +73,32 @@ class AvatarOptimize implements ShouldQueue
 
         $quality = config_cache('pixelfed.image_quality');
 
-        $encoder = null;
-        switch ($extension) {
-            case 'jpeg':
-            case 'jpg':
-                $encoder = new JpegEncoder($quality);
-                break;
-            case 'png':
-                $encoder = new PngEncoder();
-                break;
-            case 'webp':
-                $encoder = new WebpEncoder($quality);
-                break;
-            case 'avif':
-                $encoder = new AvifEncoder($quality);
-                break;
-            case 'heic':
-                $encoder = new JpegEncoder($quality);
-                $extension = 'jpg';
-                break;
-            default:
-                $encoder = new JpegEncoder($quality);
-                $extension = 'jpg';
+        $encoder = match ($extension) {
+            'jpeg', 'jpg' => new JpegEncoder($quality),
+            'png' => new PngEncoder(),
+            'webp' => new WebpEncoder($quality),
+            'avif' => new AvifEncoder($quality),
+            'heic' => new JpegEncoder($quality),
+            default => new JpegEncoder($quality),
+        };
+
+        if ((bool) config_cache('pixelfed.cloud_storage')) {
+            $file = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
         }
 
         try {
-            $img = $imageManager->read($file);
-            $img = $img->coverDown(200, 200);
-            $encoded = $encoder->encode($img);
-            file_put_contents($file, $encoded->toString());
+            $img = $imageManager->read(file_get_contents($file));
+            $img->cover(200, 200, 'center');
+
+            $quality = config_cache('pixelfed.image_quality');
+            if ((bool) config_cache('pixelfed.cloud_storage')) {
+                $tempFile = tempnam(sys_get_temp_dir(), 'avatar');
+                $img->save($tempFile, $quality);
+                Storage::disk(config('filesystems.cloud'))->put($avatar->media_path, file_get_contents($tempFile));
+                unlink($tempFile);
+            } else {
+                $img->save($file, $quality);
+            }
 
             $avatar = Avatar::whereProfileId($this->profile->id)->firstOrFail();
             $avatar->change_count = ++$avatar->change_count;
@@ -110,12 +107,8 @@ class AvatarOptimize implements ShouldQueue
             Cache::forget('avatar:'.$avatar->profile_id);
             $this->deleteOldAvatar($avatar->media_path, $this->current);
 
-            if ((bool) config_cache('pixelfed.cloud_storage') && (bool) config_cache('instance.avatar.local_to_cloud')) {
-                $this->uploadToCloud($avatar);
-            } else {
-                $avatar->cdn_url = null;
-                $avatar->save();
-            }
+            $avatar->cdn_url = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
+            $avatar->save();
         } catch (Exception $e) {
         }
     }
@@ -128,7 +121,11 @@ class AvatarOptimize implements ShouldQueue
             return;
         }
         if (is_file($current)) {
-            @unlink($current);
+            if ((bool) config_cache('pixelfed.cloud_storage')) {
+                Storage::disk(config('filesystems.cloud'))->delete($current);
+            } else {
+                @unlink($current);
+            }
         }
     }
 

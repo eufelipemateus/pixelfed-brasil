@@ -1,6 +1,8 @@
 <template>
 	<div class="read-more-component" style="word-break: break-word;">
 		<div v-html="content"></div>
+
+        <a v-if="canTranslate"  href="#" @click.prevent="translate" >{{$t('common.translate')}} </a>
 		<!-- <div v-if="status.content.length < 200" v-html="content"></div>
 		<div v-else>
 			<span v-html="content"></span>
@@ -22,6 +24,10 @@
 				type: Object
 			},
 
+            noAutoLink:{
+                type: Boolean,
+            },
+
 			cursorLimit: {
 				type: Number,
 				default: 200
@@ -40,7 +46,11 @@
 		mounted() {
 			this.rewriteLinks();
 		},
-
+        computed: {
+            canTranslate() {
+                return window._sharedData.can_translate;
+            }
+        },
 		methods: {
 			readMore() {
 				this.cursor = this.cursor + 200;
@@ -74,8 +84,22 @@
 					elr.removeAttribute('target');
 					elr.setAttribute('href', '/i/web/username/' + name);
 				})
-				this.content = el.outerHTML;
 
+                if(this.noAutoLink){
+                    el.querySelectorAll('a')
+                    .forEach(link => {
+                        const classes = link.className || '';
+                        const isHashtag = classes.includes('hashtag');
+                        const isMention = classes.includes('mention') || classes.includes('list-slug');
+                        if (!isHashtag && !isMention) {
+                            const span = document.createElement('span');
+                            span.innerHTML = link.innerHTML;
+                            link.replaceWith(span);
+                        }
+                    });
+                }
+
+				this.content = el.outerHTML;
 				this.injectCustomEmoji();
 			},
 
@@ -93,7 +117,21 @@
 					self.content = self.content.replace(`:${emoji.shortcode}:`, img);
 				});
 				// this.content = this.content.replace(':fediverse:', '😅');
-			}
+			},
+            async translate() {
+                if (!this.status || !this.status.id) {
+                    console.warn('status is undefined or missing ID');
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/api/v1/statuses/${this.status.id}/translate`);
+                    this.status.content = response.data.text;
+                    this.rewriteLinks();
+                } catch (error) {
+                    console.log(error);
+               }
+            }
 		}
 	}
 </script>

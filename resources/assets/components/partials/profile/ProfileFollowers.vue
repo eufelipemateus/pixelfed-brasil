@@ -40,6 +40,10 @@
 								<div class="media-body">
 									<p class="mb-0 text-truncate">
 										<span class="text-dark font-weight-bold text-decoration-none" v-html="getUsername(account)"></span>
+                                        <span v-if="account.is_admin" class="fa-stack" title="Admin Account" data-toggle="tooltip" style="height:1em; line-height:1em; max-width:19px;">
+                                            <i class="fas fa-certificate text-danger fa-stack-1x"></i>
+                                            <i class="fas fa-crown text-white fa-sm fa-stack-1x" style="font-size:7px;"></i>
+									    </span>
 									</p>
 									<p class="mb-0 mt-n1 text-muted small text-break">&commat;{{ account.acct }}</p>
 								</div>

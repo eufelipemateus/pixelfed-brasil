@@ -253,6 +253,15 @@
                                             </a>
                                         </li>
 
+                                        <li v-if="user.is_admin" class="nav-item">
+                                            <hr class="mt-n1" style="opacity: 0.4;margin-bottom: 0;" />
+                                            <a class="nav-link" href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL"  target="_blank">
+                                                <span class="icon text-lighter">
+                                                    <i class="far fa-donate"></i>
+                                                </span>
+                                                Doar
+                                            </a>
+                                        </li>
                                         <li class="nav-item">
                                             <hr class="mt-n1" style="opacity: 0.4;margin-bottom: 0;" />
                                             <a class="nav-link" href="/" @click.prevent="logout()">
@@ -275,7 +284,7 @@
             hide-footer
             centered
             body-class="p-0 ui-menu"
-            title="$t('navmenu.appearance')">
+            :title="$t('navmenu.appearance')">
             <div class="list-group list-group-flush">
                 <div class="list-group-item px-3">
                     <div class="d-flex justify-content-between align-items-center">

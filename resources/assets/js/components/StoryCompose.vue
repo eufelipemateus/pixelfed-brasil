@@ -45,7 +45,7 @@
 					<p class="text-uppercase mb-0">
 						<a href="/" class="text-lighter font-weight-bold">Home</a>
 						<span class="px-2 text-lighter">|</span>
-						<a href="/site/help" class="text-lighter font-weight-bold">{{ $t("navmenu.help")}}</a>
+						<a href="/help" class="text-lighter font-weight-bold">Help</a>
 					</p>
 					<p class="small text-muted mb-0">v 1.0.0</p>
 				</div>

@@ -47,7 +47,7 @@
                 <div>
                     <img :src="getAvatar()" class="avatar img-fluid shadow border"
                          onerror="this.onerror=null;this.src='/storage/avatars/default.png?v=0';">
-                    <p v-if="profile.is_admin" class="text-right" style="margin-top: -30px;"><span class="admin-label">Admin</span>
+                    <p v-if="profile.label" class="text-right" style="margin-top: -30px;"><span class="label" :style="' color:'+profile.label.text_color+'; background-color: '+profile.label.background_color+ ';'"  :title="profile.label.description" v-html="profile.label.label" ></span>
                     </p>
                 </div>
                 <!-- <button class="btn btn-link">
@@ -292,6 +292,8 @@
                 <div class="card-body">
                     <div class="bio-body">
                         <div v-html="renderedBio"></div>
+
+                        <a  v-if="canTranslate" href="#"  @click.prevent="translate" >{{$t('common.translate')}}</a>
                     </div>
                 </div>
             </div>
@@ -302,9 +304,10 @@
 						<i class="far fa-link"></i>
 					</span>
 
-                    <span>
-						<a :href="profile.website" class="font-weight-bold">{{ profile.website }}</a>
-					</span>
+                    <span class="font-weight-bold">
+                        <span v-if="profile.no_autolink">{{ profile.website }}</span>
+                        <a v-else :href="profile.website">{{ profile.website }}</a>
+                    </span>
                 </p>
 
                 <p class="mb-0 small">
@@ -323,37 +326,37 @@
                                title="This user is from a remote server and may have created their account before this date"></i>
 						</span>
 					</span>
-                </p>
-            </div>
+				</p>
+			</div>
 
-            <div class="d-none d-md-flex flex-wrap sidebar-sitelinks">
-                <a href="/site/about">{{ $t('navmenu.about') }}</a>
-                <router-link to="/i/web/help">{{ $t('navmenu.help') }}</router-link>
-                <router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
-                <a href="/site/terms">{{ $t('navmenu.privacy') }}</a>
-                <a href="/site/terms">{{ $t('navmenu.terms') }}</a>
-                <a v-if="showLegalNoticeLink" href="/site/legal-notice">{{ $t('navmenu.legalNotice') }}</a>
-            </div>
+			<div class="d-none d-md-flex sidebar-sitelinks">
+				<a href="/about">{{ $t('navmenu.about') }}</a>
+				<router-link to="/i/web/help">{{ $t('navmenu.help') }}</router-link>
+				<router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
+				<a href="/terms">{{ $t('navmenu.privacy') }}</a>
+				<a href="/terms">{{ $t('navmenu.terms') }}</a>
+                <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank">Doar</a>
+			</div>
 
-            <div class="d-none d-md-block sidebar-attribution">
-                <a href="https://pixelfed.org" class="font-weight-bold">Powered by Pixelfed</a>
-            </div>
-        </div>
+			<div class="d-none d-md-block sidebar-attribution">
+				Mantido por <a href="https://felipemateus.com" class="font-weight-bold">Felipe Mateus</a>
+			</div>
+		</div>
 
-        <b-modal
-            ref="fullBio"
-            centered
-            hide-footer
-            ok-only
-            ok-title="Close"
-            ok-variant="light"
-            :scrollable="true"
-            body-class="p-md-5"
-            title="Bio"
-        >
-            <div v-html="profile.note"></div>
-        </b-modal>
-    </div>
+		<b-modal
+			ref="fullBio"
+			centered
+			hide-footer
+			ok-only
+			ok-title="Close"
+			ok-variant="light"
+			:scrollable="true"
+			body-class="p-md-5"
+			title="Bio"
+			>
+			<div v-html="profile.note"></div>
+		</b-modal>
+	</div>
 </template>
 
 <script type="text/javascript">
@@ -383,7 +386,11 @@ export default {
     computed: {
         ...mapGetters([
             'getCustomEmoji'
-        ])
+        ]),
+        canTranslate() {
+            return window._sharedData.can_translate;
+        }
+
     },
 
     data() {
@@ -454,13 +461,12 @@ export default {
                 this.$emit('toggletab', tab);
             }
         },
-
-        getJoinedDate() {
-            let d = new Date(this.profile.created_at);
-            let month = new Intl.DateTimeFormat("en-US", {month: "long"}).format(d);
-            let year = d.getFullYear();
-            return `${month} ${year}`;
-        },
+       	getJoinedDate() {
+				return new Date(this.profile.created_at).toLocaleDateString(this.$i18n.locale, {
+                    year: 'numeric',
+                    month: 'long',
+                });
+		},
 
         follow() {
             event.currentTarget.blur();
@@ -617,6 +623,15 @@ export default {
             }
             event.currentTarget.blur();
             this.$emit('unfollow');
+        },
+        async translate() {
+            try {
+                const response = await axios.get(`/api/v1/accounts/${this.profile.id}/translate`);
+                this.renderedBio = response.data.text;
+               //////// this.setBio();
+            } catch (error) {
+                console.log(error);
+            }
         }
     }
 }
@@ -743,11 +758,9 @@ export default {
         }
     }
 
-    .admin-label {
+    .label {
         padding: 1px 5px;
         font-size: 12px;
-        color: #B91C1C;
-        background: #FEE2E2;
         border: 1px solid #FCA5A5;
         font-weight: 600;
         text-transform: capitalize;

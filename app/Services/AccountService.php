@@ -14,6 +14,8 @@ use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use NumberFormatter;
+use App\Enums\StatusEnums;
+use Carbon\Carbon;
 
 class AccountService
 {
@@ -27,7 +29,7 @@ class AccountService
             $fractal = new Fractal\Manager;
             $fractal->setSerializer(new ArraySerializer);
             $profile = Profile::find($id);
-            if (! $profile || $profile->status === 'delete') {
+            if (! $profile || $profile->status !== StatusEnums::ACTIVE) {
                 return null;
             }
             $resource = new Fractal\Resource\Item($profile, new AccountTransformer);
@@ -140,6 +142,12 @@ class AccountService
                 'show_atom' => (bool) $settings->show_atom,
                 'is_suggestable' => (bool) $user->profile->is_suggestable,
                 'indexable' => (bool) $user->profile->indexable,
+                'send_email_new_follower' => (bool) $settings->send_email_new_follower,
+                'send_email_new_follower_request' => (bool) $settings->send_email_new_follower_request,
+                'send_email_on_share' => (bool) $settings->send_email_on_share,
+                'send_email_on_like' => (bool) $settings->send_email_on_like,
+                'send_email_on_mention' => (bool) $settings->send_email_on_mention,
+                'felipemateus_wants_updates' => (bool) $settings->felipemateus_wants_updates,
             ];
         });
     }
@@ -338,5 +346,77 @@ class AccountService
             '';
 
         return $posts.$following.$followers.$note;
+    }
+
+    public static function getFollowing($id, $limit = 10, $offset = 0)
+    {
+        $result = self::hiddenFollowing($id) ? [] : Profile::whereIn(
+            'id',
+            function ($query) use ($id, $limit, $offset) {
+                $query->select('following_id')
+                    ->from('followers')
+                    ->where('profile_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->offset($offset);
+            }
+        )->get()->map(
+            function ($profile) {
+                return $profile->permalink();
+            }
+        )->toArray();
+
+        return $result;
+    }
+
+    public static function getFollowers($id, $limit = 10, $offset = 0)
+    {
+        $result = self::hiddenFollowers($id) ? [] : Profile::whereIn(
+            'id',
+            function ($query) use ($id, $limit, $offset) {
+                $query->select('profile_id')
+                    ->from('followers')
+                    ->where('following_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit)
+                    ->offset($offset);
+            }
+        )->get()->map(
+            function ($profile) {
+                return $profile->permalink();
+            }
+        )->toArray();
+
+        return $result;
+    }
+
+    public static function canPost(User $user): bool
+    {
+
+        $limitEnabled = config('pixelfed.limit_daily_posts.enabled');
+        $limit = config('pixelfed.limit_daily_posts.limit');
+        $userExceptionsEnabled = config('pixelfed.limit_daily_posts.user_exceptions');
+
+
+        if ($limitEnabled) {
+            if ($userExceptionsEnabled) {
+                $isUserException =  $user->settings['enable_limit_daily_posts_exception'] ?? false;
+
+                if ($isUserException) {
+                    return true;
+                }
+            }
+
+            $todayPosts = Status::whereProfileId($user->profile->id)
+                ->whereNull(['in_reply_to_id', 'reblog_of_id'])
+                ->whereIn('scope', ['public', 'unlisted', 'private'])
+                ->whereDate('created_at', Carbon::today())
+                ->count();
+
+            if ($todayPosts >= $limit) {
+                return false;
+            }
+        }
+        return true;
     }
 }

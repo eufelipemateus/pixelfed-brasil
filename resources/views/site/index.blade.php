@@ -34,6 +34,7 @@
 	<link rel="preload" as="image" href="{{ url('/_landing/bg.jpg')}}" />
 	<script type="text/javascript">
 		window.pfl = {!! App\Services\LandingService::get() !!}
+        window.online_users = {{ \App\Services\SessionService::getTotalActiveSessions() }};
 	</script>
 </head>
 	<body>

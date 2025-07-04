@@ -56,7 +56,7 @@
                             <li>Once the transfer is initiated, there will be a waiting period during which you cannot initiate another transfer.</li>
                             <li>After the transfer, your current account will be limited in functionality, but you will retain the ability to export data and possibly reactivate the account.</li>
                         </ul>
-                        <p class="mb-0">For more information on Aliases and Account Migration, visit the <a href="/site/kb/your-profile">Help Center</a>.</p>
+                        <p class="mb-0">For more information on Aliases and Account Migration, visit the <a href="{{route('help.your-profile'}}">Help Center</a>.</p>
                         <hr>
 
                         <form method="post" autocomplete="off">

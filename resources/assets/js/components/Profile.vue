@@ -138,11 +138,19 @@
                                         <div v-if="profile.pronouns" class="text-muted small">{{profile.pronouns.join('/')}}</div>
                                     </div>
                                     <p v-if="profile.note" class="mb-0" v-html="profile.note"></p>
-                                    <p v-if="profile.website"><a :href="profile.website" class="profile-website small" rel="me external nofollow noopener" target="_blank">{{formatWebsite(profile.website)}}</a></p>
+                                    <p v-if="profile.website" class="small">
+                                        <span v-if="profile.no_autolink" class="profile-website">{{ formatWebsite(profile.website) }}</span>
+                                        <a v-else
+                                            :href="profile.website"
+                                            class="profile-website"
+                                            rel="me external nofollow noopener"
+                                            target="_blank">
+                                            {{ formatWebsite(profile.website) }}
+                                        </a>
+                                    </p>
                                     <p class="d-flex small text-muted align-items-center">
-                                        <span v-if="profile.is_admin" class="btn btn-outline-danger btn-sm py-0 mr-3" title="Admin Account" data-toggle="tooltip">
-                                            {{ $t("profile.admin") }}
-                                        </span>
+                                        <span v-if="profile.label" class="btn  btn-sm py-0 mr-3"   :class="'btn-outline'" :style="'border: 1px solid '+profile.label.text_color+'; color:'+ profile.label.text_color +';'" :title="profile.label.description" v-html="profile.label.label"></span>
+
                                         <span v-if="relationship && relationship.followed_by" class="btn btn-outline-muted btn-sm py-0 mr-3">{{ $t("profile.followYou") }}</span>
                                         <span>
                                             {{$t("profile.joined")}} {{joinedAtFormat(profile.created_at)}}
@@ -301,7 +309,7 @@
                         <div v-if="archives.length" class="col-12 col-md-8 offset-md-2 px-0 mb-sm-3 timeline mt-5">
                             <div class="alert alert-info">
                                 <p class="mb-0">Posts you archive can only be seen by you.</p>
-                                <p class="mb-0">For more information see the <a href="/site/kb/sharing-media">Sharing Media</a> help center page.</p>
+                                <p class="mb-0">For more information see the <a href="/kb/sharing-media">Sharing Media</a> help center page.</p>
                             </div>
 
                             <div v-for="(status, index) in archives">
@@ -504,7 +512,7 @@
             <textarea class="form-control disabled text-monospace" rows="6" style="overflow-y:hidden;border: 1px solid #efefef; font-size: 12px; line-height: 18px; margin: 0 0 7px;resize:none;" v-model="ctxEmbedPayload" disabled=""></textarea>
             <hr>
             <button :class="copiedEmbed ? 'btn btn-primary btn-block btn-sm py-1 font-weight-bold disabed': 'btn btn-primary btn-block btn-sm py-1 font-weight-bold'" @click="ctxCopyEmbed" :disabled="copiedEmbed">{{copiedEmbed ? 'Embed Code Copied!' : 'Copy Embed Code'}}</button>
-            <p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/site/terms">Terms of Use</a></p>
+            <p class="mb-0 px-2 small text-muted">By using this embed, you agree to our <a href="/terms">Terms of Use</a></p>
         </div>
     </b-modal>
 </div>
