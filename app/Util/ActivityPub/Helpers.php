@@ -655,24 +655,12 @@ class Helpers
 
     static function htmlToPlainTextWithLineBreaks(string $html): string
     {
-        // Força UTF-8 e normaliza quebras
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-
-        // Converte <br> e </p> para \n
         $html = preg_replace(['/<br\s*\/?>/i', '/<\/p>/i'], "\n", $html);
-
-        // Remove o restante das tags
         $text = strip_tags($html);
-
-        // Normaliza quebras consecutivas
         $text = preg_replace("/\n{3,}/", "\n\n", $text);
-
         return trim($text);
     }
-
-
-
-
 
     /**
      * Create or update status record
