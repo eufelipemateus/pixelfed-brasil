@@ -14,6 +14,7 @@ use App\Casts\StatusEnumCast;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\StatusEnums;
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes, UserRateLimit;
@@ -123,7 +124,7 @@ class User extends Authenticatable
 
     public function avatarUrl()
     {
-        if (! $this->profile_id || $this->status) {
+        if (! $this->profile_id || $this->status != StatusEnums::ACTIVE) {
             return config('app.url').'/storage/avatars/default.jpg';
         }
 

@@ -39,6 +39,7 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Pulse\Facades\Pulse;
 use Illuminate\Http\Request;
 use URL;
+use App\Util\ActivityPub\Inbox;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -103,7 +104,21 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perHour(10)->by($request->ip());
         });
 
-        // Model::preventLazyLoading(true);
+        Inbox::registerHandlers([
+            'Add' => \App\Util\ActivityPub\Handlers\AddHandler::class,
+            'Create' => \App\Util\ActivityPub\Handlers\CreateHandler::class,
+            'Follow' => \App\Util\ActivityPub\Handlers\FollowHandler::class,
+            'Announce' => \App\Util\ActivityPub\Handlers\AnnounceHandler::class,
+            'Accept' => \App\Util\ActivityPub\Handlers\AcceptHandler::class,
+            'Delete' => \App\Util\ActivityPub\Handlers\DeleteHandler::class,
+            'Like' => \App\Util\ActivityPub\Handlers\LikeHandler::class,
+            'Reject' => \App\Util\ActivityPub\Handlers\RejectHandler::class,
+            'Story:Reaction' => \App\Util\ActivityPub\Handlers\StoryReactionHandler::class,
+            'Story:Reply' => \App\Util\ActivityPub\Handlers\StoryReplyHandler::class,
+            'Flag' => \App\Util\ActivityPub\Handlers\FlagHandler::class,
+            'Update' => \App\Util\ActivityPub\Handlers\UpdateHandler::class,
+            'Move' => \App\Util\ActivityPub\Handlers\MoveHandler::class,
+        ]);
     }
 
     /**
@@ -113,7 +128,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(UserOidcService::class, function() {
+        $this->app->bind(UserOidcService::class, function () {
             return UserOidcService::build();
         });
     }
