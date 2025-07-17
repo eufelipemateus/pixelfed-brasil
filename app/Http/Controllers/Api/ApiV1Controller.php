@@ -788,6 +788,7 @@ class ApiV1Controller extends Controller
             ->whereIn('scope', $visibility)
             ->limit($limit)
             ->orderByDesc('id')
+            ->orderByDesc('created_at')
             ->get()
             ->map(function ($s) use ($user, $napi, $profile) {
                 try {
