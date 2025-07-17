@@ -134,10 +134,10 @@ class RegisterController extends Controller
         $rules = [
             'agecheck' => 'required|accepted',
             'rt' => $rt,
-            'name' => 'nullable|string|max:'.config('pixelfed.max_name_length'),
+            'name' => 'nullable|string|max:' . config('pixelfed.max_name_length'),
             'username' => $usernameRules,
             'email' => $emailRules,
-            'password' => 'required|string|min:'.config('pixelfed.min_password_length').'|confirmed',
+            'password' => 'required|string|min:' . config('pixelfed.min_password_length') . '|confirmed',
         ];
 
         if ((bool) config_cache('captcha.enabled') && (bool) config_cache('captcha.active.register')) {
@@ -160,13 +160,23 @@ class RegisterController extends Controller
             $data['email'] = strtolower($data['email']);
         }
 
-        return User::create([
+        $user = User::create([
             'name' => Purify::clean($data['name']),
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'app_register_ip' => request()->ip(),
         ]);
+
+        if (!empty($data['ref'])) {
+            $referrer = User::where('refer_code', $data['ref'])->first();
+            if ($referrer) {
+                $user->referred_by = $referrer->id;
+            }
+        }
+
+        $user->save();
+        return $user;
     }
 
     /**
