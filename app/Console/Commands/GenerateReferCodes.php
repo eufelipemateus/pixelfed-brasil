@@ -21,7 +21,7 @@ class GenerateReferCodes extends Command
 
         foreach ($users as $user) {
             do {
-                $code = strtoupper(Str::random(8));
+                $code = strtoupper(Str::random(6));
             } while (User::where('refer_code', $code)->exists());
 
             $user->refer_code = $code;
