@@ -737,17 +737,11 @@ class ApiV1Controller extends Controller
         if ($limit > 40) {
             $limit = 40;
         }
-        $max_id = $request->max_id;
-        $min_id = $request->min_id;
-
-        if (! $max_id && ! $min_id) {
-            $min_id = 1;
-        }
 
         $pid = $request->user()->profile_id;
-        $scope = $request->only_media == true ?
-            ['photo', 'photo:album', 'video', 'video:album'] :
-            ['photo', 'photo:album', 'video', 'video:album', 'share', 'reply'];
+        $scope = $request->only_media == true
+            ? ['photo', 'photo:album', 'video', 'video:album']
+            : ['photo', 'photo:album', 'video', 'video:album', 'share', 'reply'];
 
         if ($request->only_media && $request->has('media_type')) {
             $mt = $request->input('media_type');
@@ -769,9 +763,14 @@ class ApiV1Controller extends Controller
             $visibility = $following ? ['public', 'unlisted', 'private'] : ['public', 'unlisted'];
         }
 
-        $dir = $min_id ? '>' : '<';
-        $id = $min_id ?? $max_id;
-        $res = Status::select(
+        // Buscar created_at com base no min_id
+        $createdAt = null;
+        if ($request->filled('min_id')) {
+            $status = Status::select('created_at')->where('id', $request->min_id)->first();
+            $createdAt = $status?->created_at;
+        }
+
+        $resQuery = Status::select(
             'profile_id',
             'in_reply_to_id',
             'reblog_of_id',
@@ -784,14 +783,21 @@ class ApiV1Controller extends Controller
             ->whereNull('in_reply_to_id')
             ->whereNull('reblog_of_id')
             ->whereIn('type', $scope)
-            ->where('id', $dir, $id)
-            ->whereIn('scope', $visibility)
+            ->whereIn('scope', $visibility);
+
+        if ($createdAt) {
+            $resQuery->where('created_at', '>', $createdAt);
+        }
+
+        $res = $resQuery
+            ->orderByDesc('created_at')
             ->limit($limit)
-            ->orderByDesc('id')
             ->get()
             ->map(function ($s) use ($user, $napi, $profile) {
                 try {
-                    $status = $napi ? StatusService::get($s->id, false) : StatusService::getMastodon($s->id, false);
+                    $status = $napi
+                        ? StatusService::get($s->id, false)
+                        : StatusService::getMastodon($s->id, false);
                 } catch (\Exception $e) {
                     return false;
                 }
@@ -808,9 +814,7 @@ class ApiV1Controller extends Controller
 
                 return $status;
             })
-            ->filter(function ($s) {
-                return $s;
-            })
+            ->filter()
             ->values();
 
         return $this->json($res);

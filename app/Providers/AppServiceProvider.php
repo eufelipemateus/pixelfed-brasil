@@ -113,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
             'Delete' => \App\Util\ActivityPub\Handlers\DeleteHandler::class,
             'Like' => \App\Util\ActivityPub\Handlers\LikeHandler::class,
             'Reject' => \App\Util\ActivityPub\Handlers\RejectHandler::class,
+            'Undo' => \App\Util\ActivityPub\Handlers\UndoHandler::class,
             'Story:Reaction' => \App\Util\ActivityPub\Handlers\StoryReactionHandler::class,
             'Story:Reply' => \App\Util\ActivityPub\Handlers\StoryReplyHandler::class,
             'Flag' => \App\Util\ActivityPub\Handlers\FlagHandler::class,

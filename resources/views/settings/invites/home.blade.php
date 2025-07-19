@@ -2,44 +2,62 @@
 
 @section('section')
 
-  <div class="title">
-    <h3 class="font-weight-bold">Invites</h3>
-    <p class="lead">Send email invites to your friends and family!</p>
-  </div>
-  <hr>
-  @if($invites->count() > 0) 
-  <table class="table table-light">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Email</th>
-        <th scope="col">Valid For</th>
-        <th scope="col">Actions</th>
-      </tr>
-    </thead>
+<div class="mb-4">
+  <h3 class="font-weight-bold">Convites</h3>
+  <p class="text-muted">Compartilhe seu link único com amigos e veja quem se registrou com ele.</p>
+</div>
+
+<hr>
+
+<div class="mb-4">
+  <p><strong>Seu código de indicação:</strong> {{ auth()->user()->refer_code }}</p>
+  <p>
+    <strong>Seu link de convite:</strong>
+    <input type="text" readonly class="form-control w-100"
+           value="{{ route('register', ['ref' => auth()->user()->refer_code]) }}">
+  </p>
+</div>
+
+@if($referrals->count() > 0)
+  <h5 class="mt-5">Contas que usaram seu código:</h5>
+  <div class="table-responsive">
+    <table class="table table-striped table-sm mt-3">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Data de Cadastro</th>
+        </tr>
+      </thead>
     <tbody>
-      @foreach($invites as $invite)
-      <tr>
-        <th scope="row">{{$invite->id}}</th>
-        <td>{{$invite->email}}</td>
-        <td>{{$invite->message}}</td>
+      @foreach($referrals as $user)
+        <tr>
+        <td>{{ $user->id }}</td>
         <td>
-          @if($invite->used_at == null)
-          <button class="btn btn-outline-danger btn-sm">Delete</button>
-          @endif
+          <a href="{{ route('web.profile', ['id' => $user->profile_id]) }}">
+            {{ $user->username }}
+          </a>
         </td>
-      </tr>
+        <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
+        </tr>
       @endforeach
     </tbody>
-  </table>
-  @else
-  <div class="d-flex align-items-center justify-content-center text-center pb-4">
-  	<div>
-      <p class="pt-5"><i class="far fa-envelope-open text-lighter fa-6x"></i></p>
-      <p class="lead">You haven't invited anyone yet.</p>
-      <p><a class="btn btn-primary btn-lg py-0 font-weight-bold" href="{{route('settings.invites.create')}}">Invite someone</a></p>
-	  	<p class="font-weight-lighter text-muted">You have <b class="font-weight-bold text-dark">{{$limit - $used}}</b> invites left.</p>
-  	</div>
+    <tfoot>
+      <tr>
+        <td colspan="3">
+            {{ $referrals->links() }}
+
+        </td>
+      </tr>
+    </tfoot>
+    </table>
   </div>
-  @endif
+@else
+  <div class="text-center py-5">
+    <i class="fas fa-user-friends text-muted fa-4x mb-3"></i>
+    <h5>Ninguém se cadastrou com seu código ainda.</h5>
+    <p class="text-muted">Compartilhe seu link acima e acompanhe aqui os cadastros.</p>
+  </div>
+@endif
+
 @endsection
