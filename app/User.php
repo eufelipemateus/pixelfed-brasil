@@ -44,7 +44,11 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::creating(function ($user) {
-            $user->refer_code = strtoupper(Str::random(6));
+            do {
+                $code = strtoupper(Str::random(6));
+            } while (User::where('refer_code', $code)->exists());
+
+            $user->refer_code = $code;
         });
     }
 
