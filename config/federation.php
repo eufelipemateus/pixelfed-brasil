@@ -61,4 +61,14 @@ return [
     ],
 
     'migration' => env('PF_ACCT_MIGRATION_ENABLED', true),
+
+    'pixelfed_only' => [
+        'enabled' => env('PIXELFED_ONLY', false),
+        'exceptions' => [
+            // Add here the domains or identifiers that should be exceptions
+            // Example:
+            // 'example.com',
+            // 'anotherdomain.org',
+        ],
+    ],
 ];
