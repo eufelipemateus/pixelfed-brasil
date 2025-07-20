@@ -298,5 +298,8 @@ return [
         'provider' => env('TRANSLATION_PROVIDER', 'google'),
         'google_api_key' => env('GOOGLE_API_KEY', ''),
         'deepl_api_key' => env('DEEPL_API_KEY', ''),
+        'libre_translate_api_key' => env('LIBRE_API_KEY', ''),
+        'libre_translate_url' => env('LIBRE_API_URL', 'https://libretranslate.de'),
+
     ],
 ];
