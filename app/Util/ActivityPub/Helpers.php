@@ -1187,12 +1187,13 @@ class Helpers
             self::buildProfileData($res, $webfinger, $movedToPid)
         );
 
-        self::handleProfileAvatar($profile);
 
-        if (empty($profile->last_fetched_at)) {
+        if (!$profile->last_fetched_at) {
             LoadOutbox::dispatch($profile)
                 ->onQueue('low');
         }
+
+        self::handleProfileAvatar($profile);
 
         return $profile;
     }
