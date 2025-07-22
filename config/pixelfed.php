@@ -233,11 +233,6 @@ return [
     */
     'user_invites' => [
         'enabled' => env('PF_USER_INVITES', true),
-        'limit' => [
-            'total' => (int) env('PF_USER_INVITES_TOTAL_LIMIT', 0),
-            'daily' => (int) env('PF_USER_INVITES_DAILY_LIMIT', 0),
-            'monthly' => (int) env('PF_USER_INVITES_MONTHLY_LIMIT', 0),
-        ],
     ],
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),
