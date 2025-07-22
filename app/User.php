@@ -37,6 +37,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             '2fa_setup_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'status' => StatusEnumCast::class,
         ];
     }
 
