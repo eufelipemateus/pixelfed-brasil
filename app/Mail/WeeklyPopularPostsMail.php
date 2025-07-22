@@ -11,15 +11,11 @@ use Illuminate\Mail\Mailables\Envelope;
 
 class WeeklyPopularPostsMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
-    public $posts;
-    public $user;
-
-    public function __construct($posts, $user)
+    public function __construct(public $posts, public $user, public $promoters = [])
     {
-        $this->posts = $posts;
-        $this->user = $user;
     }
 
     /**
@@ -28,7 +24,7 @@ class WeeklyPopularPostsMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Publicações  Populares da Semana no '.config('app.name'),
+            subject: 'Publicações  Populares da Semana no ' . config('app.name'),
             replyTo: [config('instance.email')]
         );
     }
@@ -41,7 +37,11 @@ class WeeklyPopularPostsMail extends Mailable
     {
         return new Content(
             html:'emails.weekly_popular_posts',
-            with: ['user' => $this->user, 'posts' => $this->posts]
+            with: [
+                'user' => $this->user,
+                'posts' => $this->posts,
+                'promoters' => $this->promoters
+            ]
         );
     }
 
