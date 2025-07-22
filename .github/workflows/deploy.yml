@@ -150,11 +150,11 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
-            echo "AWS_URL=${{secrets.S3_URL}}" >> .env
+            echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
             echo "AWS_DEFAULT_REGION=daf" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
-            echo "TRANSLATION_ENABLED=true" >> .env
+            echo "TRANSLATION_ENABLED=false" >> .env
             echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
             echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
             echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
