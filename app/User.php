@@ -10,10 +10,20 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
+use App\Casts\StatusEnumCast;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use App\Enums\StatusEnums;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable, SoftDeletes, UserRateLimit;
+    use HasApiTokens;
+    use HasFactory;
+    use HasPushSubscriptions;
+    use Notifiable;
+    use SoftDeletes;
+    use UserRateLimit;
 
     /**
      * The attributes that should be mutated to dates.
@@ -28,6 +38,17 @@ class User extends Authenticatable
             '2fa_setup_at' => 'datetime',
             'last_active_at' => 'datetime',
         ];
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            do {
+                $code = strtoupper(Str::random(6));
+            } while (User::where('refer_code', $code)->exists());
+
+            $user->refer_code = $code;
+        });
     }
 
     /**
@@ -58,9 +79,16 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'email', 'password', 'is_admin', 'remember_token',
-        'email_verified_at', '2fa_enabled', '2fa_secret',
-        '2fa_backup_codes', '2fa_setup_at', 'deleted_at',
+        'email',
+        'password',
+        'is_admin',
+        'remember_token',
+        'email_verified_at',
+        '2fa_enabled',
+        '2fa_secret',
+        '2fa_backup_codes',
+        '2fa_setup_at',
+        'deleted_at',
         'updated_at',
     ];
 
@@ -71,7 +99,7 @@ class User extends Authenticatable
 
     public function url()
     {
-        return url(config('app.url').'/'.$this->username);
+        return url(config('app.url') . '/' . $this->username);
     }
 
     public function settings()
@@ -94,7 +122,7 @@ class User extends Authenticatable
 
     public function receivesBroadcastNotificationsOn()
     {
-        return 'App.User.'.$this->id;
+        return 'App.User.' . $this->id;
     }
 
     public function devices()
@@ -104,7 +132,7 @@ class User extends Authenticatable
 
     public function storageUsedKey()
     {
-        return 'profile:storage:used:'.$this->id;
+        return 'profile:storage:used:' . $this->id;
     }
 
     public function accountLog()
@@ -119,8 +147,8 @@ class User extends Authenticatable
 
     public function avatarUrl()
     {
-        if (! $this->profile_id || $this->status) {
-            return config('app.url').'/storage/avatars/default.jpg';
+        if (! $this->profile_id || $this->status != StatusEnums::ACTIVE) {
+            return config('app.url') . '/storage/avatars/default.jpg';
         }
 
         return AvatarService::get($this->profile_id);
