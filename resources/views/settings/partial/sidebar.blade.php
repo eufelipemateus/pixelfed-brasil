@@ -9,9 +9,11 @@
             <li class="nav-item pl-3 {{request()->is('settings/email')?'active':''}}">
                 <a class="nav-link font-weight-light text-muted" href="{{route('settings.email')}}">{{__('settings.email')}}</a>
             </li>
+            @if(config('instance.user_invites.enabled'))
             <li class="nav-item pl-3 {{request()->is('settings/invites*')?'active':''}}">
                 <a class="nav-link font-weight-light text-muted" href="{{route('settings.invites')}}">{{__('settings.invites')}}</a>
             </li>
+            @endif
             <li class="nav-item pl-3 {{request()->is('settings/media*')?'active':''}}">
                 <a class="nav-link font-weight-light text-muted" href="{{route('settings.media')}}">{{__('settings.media')}}</a>
             </li>

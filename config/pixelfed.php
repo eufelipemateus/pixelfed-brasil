@@ -233,11 +233,6 @@ return [
     */
     'user_invites' => [
         'enabled' => env('PF_USER_INVITES', true),
-        'limit' => [
-            'total' => (int) env('PF_USER_INVITES_TOTAL_LIMIT', 0),
-            'daily' => (int) env('PF_USER_INVITES_DAILY_LIMIT', 0),
-            'monthly' => (int) env('PF_USER_INVITES_MONTHLY_LIMIT', 0),
-        ],
     ],
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),
@@ -291,28 +286,4 @@ return [
     'app_registration_rate_limit_decay' => env('PF_IAR_RL_DECAY', 1800),
     'app_registration_confirm_rate_limit_attempts' => env('PF_IARC_RL_ATTEMPTS', 20),
     'app_registration_confirm_rate_limit_decay' => env('PF_IARC_RL_ATTEMPTS', 1800),
-    "hide_remote_instance" => env('PF_HIDE_REMOTE_INSTANCE', true),
-
-    /**
-     * --------------------------------------------------------------------------
-     * Instance Felipe Mateus
-     *--------------------------------------------------------------------------
-     *
-     * This value is always false.
-     **/
-    'app_felipemateus' => false,
-
-    'translation' => [
-        'enabled' => env('TRANSLATION_ENABLED', false),
-        'users_limited' => env('TRANSLATION_USERS_LIMITED', false),
-        'provider' => env('TRANSLATION_PROVIDER', 'google'),
-        'google_api_key' => env('GOOGLE_API_KEY', ''),
-        'deepl_api_key' => env('DEEPL_API_KEY', ''),
-    ],
-
-    'limit_daily_posts' =>[
-        'enabled' => env('PF_LIMIT_DAILY_POSTS_ENABLED', false),
-        'limit' => (int) env('PF_LIMIT_DAILY_POSTS_LIMIT', 15),
-        'user_exceptions' => env('PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS', false),
-    ]
 ];
