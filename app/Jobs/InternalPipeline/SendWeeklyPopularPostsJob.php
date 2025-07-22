@@ -97,7 +97,7 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
                     foreach ($users as $user) {
                         info('Sending popular posts email to ' . $user->username);
                         Mail::to($user->email)
-                            ->queue((new WeeklyPopularPostsMail($popularPosts, $user))->onQueue('low'));
+                            ->queue((new WeeklyPopularPostsMail($popularPosts, $user))->onQueue('email'));
                     }
                 }
             );
