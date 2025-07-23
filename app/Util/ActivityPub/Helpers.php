@@ -1177,7 +1177,7 @@ class Helpers
 
         $webfinger = "@{$username}@{$domain}";
         $instance = self::getOrCreateInstance($domain);
-        if (empty($instance->shared_inbox)) {
+        if (!empty($instance->shared_inbox)) {
             $sharedInbox = data_get($res, 'endpoints.sharedInbox');
 
             if (filter_var($sharedInbox, FILTER_VALIDATE_URL)) {
