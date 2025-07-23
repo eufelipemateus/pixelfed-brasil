@@ -20,6 +20,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use App\Services\AccountService;
 use App\Notifications\ShareNotification;
+use App\Instance;
 
 class SharePipeline implements ShouldQueue
 {
@@ -115,6 +116,11 @@ class SharePipeline implements ShouldQueue
             return;
         }
 
+        if ($status->scope === 'public') {
+            $knownSharedInboxes = Instance::whereNotNull('shared_inbox')->pluck('shared_inbox')->toArray();
+            $audience = array_unique(array_merge($audience, $knownSharedInboxes));
+        }
+
         $payload = json_encode($activity);
 
         $client = new Client([
@@ -145,15 +151,12 @@ class SharePipeline implements ShouldQueue
 
         $pool = new Pool($client, $requests($audience), [
             'concurrency' => config('federation.activitypub.delivery.concurrency'),
-            'fulfilled' => function ($response, $index) {
-            },
-            'rejected' => function ($reason, $index) {
-            },
+            'fulfilled' => function ($response, $index) {},
+            'rejected' => function ($reason, $index) {},
         ]);
 
         $promise = $pool->promise();
 
         $promise->wait();
-
     }
 }

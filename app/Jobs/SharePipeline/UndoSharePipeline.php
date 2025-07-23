@@ -18,10 +18,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Instance;
 
 class UndoSharePipeline implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     protected $status;
 
@@ -75,13 +79,14 @@ class UndoSharePipeline implements ShouldQueue
 
     public function remoteAnnounceDeliver()
     {
+
+        $status = $this->status;
+
         if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
             $status->delete();
-
             return 1;
         }
 
-        $status = $this->status;
         $profile = $status->profile;
 
         $fractal = new Fractal\Manager();
@@ -93,6 +98,11 @@ class UndoSharePipeline implements ShouldQueue
 
         if (empty($audience) || $status->scope != 'public') {
             return 1;
+        }
+
+        if ($status->scope === 'public') {
+            $knownSharedInboxes = Instance::whereNotNull('shared_inbox')->pluck('shared_inbox')->toArray();
+            $audience = array_unique(array_merge($audience, $knownSharedInboxes));
         }
 
         $payload = json_encode($activity);
