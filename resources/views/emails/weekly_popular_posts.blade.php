@@ -15,7 +15,7 @@
         @if($promoters->isNotEmpty())
         <x-users-popular-component :users="$promoters" />
         @else
-        <p>Nenhum promotor esta semana. Que tal convidar amigos para se juntar ao {{ config('app.name') }}?</p>
+        <p style="margin-top: 2%;"><strong>Nenhum promotor esta semana. Que tal convidar amigos para se juntar ao {{ config('app.name') }}?</strong></p>
         @endif
 
         <p>
