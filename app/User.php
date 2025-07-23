@@ -52,7 +52,6 @@ class User extends Authenticatable
         });
     }
 
-
     /**
      * The attributes that are mass assignable.
      *
@@ -210,5 +209,10 @@ class User extends Authenticatable
     public function referrals()
     {
         return $this->hasMany(User::class, 'referred_by');
+    }
+
+    public function inviteLink()
+    {
+        return route('register', ['ref' => $this->refer_code]);
     }
 }

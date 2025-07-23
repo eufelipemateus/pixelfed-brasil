@@ -163,7 +163,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         foreach ($users as $user) {
                             info('Sending popular posts email to ' . $user->username);
                             Mail::to($user->email)
-                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('low'));
+                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('email'));
                         }
                     }
                 );
@@ -177,7 +177,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         foreach ($users as $user) {
                             info('Sending popular posts email to ' . $user->username);
                             Mail::to($user->email)
-                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('low'));
+                                ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('email'));
                         }
                     }
                 );
