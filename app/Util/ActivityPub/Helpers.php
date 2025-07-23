@@ -1178,8 +1178,13 @@ class Helpers
         $webfinger = "@{$username}@{$domain}";
         $instance = self::getOrCreateInstance($domain);
         if (empty($instance->shared_inbox)) {
-            $instance->shared_inbox = $res['endpoints']['sharedInbox'];
+            $sharedInbox = data_get($res, 'endpoints.sharedInbox');
+
+            if (filter_var($sharedInbox, FILTER_VALIDATE_URL)) {
+                $instance->shared_inbox = $sharedInbox;
+            }
         }
+
 
         $movedToPid = $movedToCheck ? null : self::handleMovedTo($res);
 
