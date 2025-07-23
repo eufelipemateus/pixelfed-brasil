@@ -168,7 +168,7 @@ class RegisterController extends Controller
             'app_register_ip' => request()->ip(),
         ]);
 
-        if (!empty($data['ref'])) {
+        if (!empty($data['ref']) &&  config('pixelfed.user_invites.enabled') ) {
             $referrer = User::where('refer_code', $data['ref'])->first();
             if ($referrer) {
                 $user->referred_by = $referrer->id;
