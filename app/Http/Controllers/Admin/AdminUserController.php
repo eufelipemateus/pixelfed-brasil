@@ -71,7 +71,6 @@ trait AdminUserController
                 return $u;
             });
 
-
         return view('admin.users.home', compact('users', 'pagination', 'search', 'col', 'dir', 'limit', 'trashed'));
     }
 

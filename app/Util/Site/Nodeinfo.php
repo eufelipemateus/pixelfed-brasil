@@ -87,9 +87,12 @@ class Nodeinfo
     {
         return Cache::remember('api:nodeinfo:active-users-half-year', 43200, function () {
             return User::withTrashed()
-                ->select('last_active_at, updated_at')
-                ->where('last_active_at', '>', now()->subMonths(6))
-                ->orWhere('updated_at', '>', now()->subMonths(6))
+                ->select('last_active_at', 'updated_at')
+                ->whereNull('status')
+                ->where(function ($query) {
+                    $query->where('last_active_at', '>', now()->subMonths(6))
+                        ->orWhere('updated_at', '>', now()->subMonths(6));
+                })
                 ->count();
         });
     }

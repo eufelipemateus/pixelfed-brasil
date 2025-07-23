@@ -44,7 +44,7 @@ class DesactiveInactiveUserJob implements ShouldQueue
                         $user->save();
                         $profile->save();
                         Mail::to($user->email)
-                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('low')));
+                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
                         ModLogService::boot()
                             ->objectUid($profile->user->id)
                             ->objectId($profile->id)
@@ -73,7 +73,7 @@ class DesactiveInactiveUserJob implements ShouldQueue
                             $user->save();
                             $profile->save();
                         Mail::to($user->email)
-                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('low')));
+                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
                         ModLogService::boot()
                             ->objectUid($profile->id)
                             ->objectId($profile->id)

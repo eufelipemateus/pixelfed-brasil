@@ -66,7 +66,7 @@ class SendWeeklyInactiveUserJob implements ShouldQueue, ShouldBeUnique
                     foreach ($users as $user) {
                         info('Sending inactive user email to ' . $user->username);
                         Mail::to($user->email)
-                            ->queue(((new InactiveUser($user))->onQueue('low')));
+                            ->queue(((new InactiveUser($user))->onQueue('email')));
                     }
                 }
             );
