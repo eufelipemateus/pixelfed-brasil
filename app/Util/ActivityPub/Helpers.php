@@ -1177,6 +1177,10 @@ class Helpers
 
         $webfinger = "@{$username}@{$domain}";
         $instance = self::getOrCreateInstance($domain);
+        if (empty($instance->shared_inbox)) {
+            $instance->shared_inbox = $res['endpoints']['sharedInbox'];
+        }
+
         $movedToPid = $movedToCheck ? null : self::handleMovedTo($res);
 
         $profile = Profile::updateOrCreate(
@@ -1194,6 +1198,8 @@ class Helpers
         }
 
         self::handleProfileAvatar($profile);
+
+
 
         return $profile;
     }
