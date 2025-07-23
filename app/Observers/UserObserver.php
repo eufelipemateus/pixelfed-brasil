@@ -52,7 +52,7 @@ class UserObserver
     public function updated(User $user): void
     {
         $this->handleUser($user);
-        if($user->profile) {
+        if ($user->profile) {
             $this->applyDefaultDomainBlocks($user);
         }
     }
@@ -70,16 +70,16 @@ class UserObserver
 
     protected function handleUser($user)
     {
-        if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
+        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             return;
         }
 
-        if(Profile::whereUsername($user->username)->exists()) {
+        if (Profile::whereUsername($user->username)->exists()) {
             return;
         }
 
         if (empty($user->profile)) {
-            $profile = DB::transaction(function() use($user) {
+            $profile = DB::transaction(function () use ($user) {
                 $profile = new Profile();
                 $profile->user_id = $user->id;
                 $profile->username = $user->username;
@@ -103,7 +103,7 @@ class UserObserver
             });
 
 
-            DB::transaction(function() use($user, $profile) {
+            DB::transaction(function () use ($user, $profile) {
                 $user = User::findOrFail($user->id);
                 $user->profile_id = $profile->id;
                 $user->save();
@@ -111,18 +111,18 @@ class UserObserver
                 CreateAvatar::dispatch($profile);
             });
 
-            if((bool) config_cache('account.autofollow') == true) {
+            if ((bool) config_cache('account.autofollow') == true) {
                 $names = config_cache('account.autofollow_usernames');
                 $names = explode(',', $names);
 
-                if(!$names || !last($names)) {
+                if (!$names || !last($names)) {
                     return;
                 }
 
                 $profiles = Profile::whereIn('username', $names)->get();
 
-                if($profiles) {
-                    foreach($profiles as $p) {
+                if ($profiles) {
+                    foreach ($profiles as $p) {
                         if (empty($p->domain)) {
                             $follower = new Follower;
                             $follower->profile_id = $profile->id;
@@ -133,8 +133,8 @@ class UserObserver
                         } else {
                             FollowRequest::firstOrCreate(
                                 [
-                                'follower_id' => $profile->id,
-                                'following_id' => $p->id,
+                                    'follower_id' => $profile->id,
+                                    'following_id' => $p->id,
                                 ]
                             );
 
@@ -144,11 +144,22 @@ class UserObserver
                         }
                     }
                 }
+
+                if (!empty($user->referred_by) && config('pixelfed.user_invites.enabled')) {
+                    $target = Profile::whereUserId($user->referred_by)->first();
+
+                    $follower = new Follower();
+                    $follower->profile_id = $profile->id;
+                    $follower->following_id = $target->id;
+                    $follower->save();
+
+                    FollowPipeline::dispatch($follower);
+                }
             }
         }
 
         if (empty($user->settings)) {
-            DB::transaction(function() use($user) {
+            DB::transaction(function () use ($user) {
                 UserSetting::firstOrCreate([
                     'user_id' => $user->id
                 ]);
@@ -158,16 +169,16 @@ class UserObserver
 
     protected function applyDefaultDomainBlocks($user)
     {
-        if($user->profile_id == null) {
+        if ($user->profile_id == null) {
             return;
         }
         $defaultDomainBlocks = DefaultDomainBlock::pluck('domain')->toArray();
 
-        if(!$defaultDomainBlocks || !count($defaultDomainBlocks)) {
+        if (!$defaultDomainBlocks || !count($defaultDomainBlocks)) {
             return;
         }
 
-        foreach($defaultDomainBlocks as $domain) {
+        foreach ($defaultDomainBlocks as $domain) {
             UserDomainBlock::updateOrCreate([
                 'profile_id' => $user->profile_id,
                 'domain' => strtolower(trim($domain))
