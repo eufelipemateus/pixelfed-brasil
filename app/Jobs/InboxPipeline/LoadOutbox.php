@@ -86,35 +86,53 @@ class LoadOutbox implements ShouldQueue
         return $filteredItems;
     }
 
-
-
     private function fetchActivityPubJson(string $url): ?array
     {
-
         $version = config('pixelfed.version');
         $appUrl = config('app.url');
 
+        $baseHeaders = [
+            'Accept' => 'application/activity+json',
+            'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
+        ];
+
+        $signedHeaders = \App\Util\ActivityPub\HttpSignature::instanceActorSign(
+            $url,
+            false,
+            $baseHeaders,
+            'get'
+        );
+
+        $curlHeaders = array_map(
+            fn($k, $v) => "$k: $v",
+            array_keys($signedHeaders),
+            $signedHeaders
+        );
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt(
-            $ch,
-            CURLOPT_HTTPHEADER,
-            [
-                'Accept: application/activity+json',
-                'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
-            ]
-        );
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $curlHeaders);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15); // Opcional: evitar travamentos
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
         curl_close($ch);
 
-        if ($httpCode === 200) {
-            return json_decode($response, true);
+        if ($httpCode === 200 && $response) {
+            $json = json_decode($response, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $json;
+            } else {
+                \Log::warning("JSON decode error on: $url - " . json_last_error_msg());
+            }
         } else {
-            Log::info("Error requesting: $url (HTTP $httpCode)");
-            return null;
+            \Log::info("Error requesting: $url (HTTP $httpCode) " . ($error ? "- cURL error: $error" : ''));
         }
+
+        return null;
     }
+
 
     public function verifyNoteAttachment(array $payload)
     {
