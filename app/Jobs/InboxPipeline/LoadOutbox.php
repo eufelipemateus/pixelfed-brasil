@@ -129,10 +129,8 @@ class LoadOutbox implements ShouldQueue
         } else {
             \Log::info("Error requesting: $url (HTTP $httpCode) " . ($error ? "- cURL error: $error" : ''));
         }
-
         return null;
     }
-
 
     public function verifyNoteAttachment(array $payload)
     {

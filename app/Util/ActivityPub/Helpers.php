@@ -1199,7 +1199,7 @@ class Helpers
 
         if (!$profile->last_fetched_at) {
             LoadOutbox::dispatch($profile)
-                ->onQueue('low');
+                ->onQueue('sync');
         }
 
         self::handleProfileAvatar($profile);
