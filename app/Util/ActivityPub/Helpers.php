@@ -1196,15 +1196,7 @@ class Helpers
             self::buildProfileData($res, $webfinger, $movedToPid)
         );
 
-
-        if (!$profile->last_fetched_at) {
-            LoadOutbox::dispatch($profile)
-                ->onQueue('sync');
-        }
-
         self::handleProfileAvatar($profile);
-
-
 
         return $profile;
     }
