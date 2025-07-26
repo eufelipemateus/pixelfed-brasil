@@ -25,10 +25,10 @@ class FollowerService
     public static function add($actor, $target, $refresh = true)
     {
         $ts = (int) microtime(true);
-        if($refresh) {
-          RelationshipService::refresh($actor, $target);
+        if ($refresh) {
+            RelationshipService::refresh($actor, $target);
         } else {
-          RelationshipService::forget($actor, $target);
+            RelationshipService::forget($actor, $target);
         }
         Redis::zadd(self::FOLLOWING_KEY . $actor, $ts, $target);
         Redis::zadd(self::FOLLOWERS_KEY . $target, $ts, $actor);
@@ -43,7 +43,7 @@ class FollowerService
         Redis::zrem(self::FOLLOWERS_KEY . $target, $actor);
         Cache::forget(self::FOLLOWERS_LOCAL_KEY . $actor);
         Cache::forget(self::FOLLOWERS_LOCAL_KEY . $target);
-        if($silent !== true) {
+        if ($silent !== true) {
             AccountService::del($actor);
             AccountService::del($target);
             RelationshipService::refresh($actor, $target);
@@ -81,7 +81,7 @@ class FollowerService
 
     public static function followerCount($id, $warmCache = true)
     {
-        if($warmCache) {
+        if ($warmCache) {
             self::cacheSyncCheck($id, 'followers');
         }
         return Redis::zCard(self::FOLLOWERS_KEY . $id);
@@ -89,7 +89,7 @@ class FollowerService
 
     public static function followingCount($id, $warmCache = true)
     {
-        if($warmCache) {
+        if ($warmCache) {
             self::cacheSyncCheck($id, 'following');
         }
         return Redis::zCard(self::FOLLOWING_KEY . $id);
@@ -97,15 +97,15 @@ class FollowerService
 
     public static function follows(string $actor, string $target, $quickCheck = false)
     {
-        if($actor == $target) {
+        if ($actor == $target) {
             return false;
         }
 
-        if($quickCheck) {
+        if ($quickCheck) {
             return (bool) Redis::zScore(self::FOLLOWERS_KEY . $target, $actor);
         }
 
-        if(self::followerCount($target, false) && self::followingCount($actor, false)) {
+        if (self::followerCount($target, false) && self::followingCount($actor, false)) {
             self::cacheSyncCheck($target, 'followers');
             return (bool) Redis::zScore(self::FOLLOWERS_KEY . $target, $actor);
         } else {
@@ -117,14 +117,14 @@ class FollowerService
 
     public static function cacheSyncCheck($id, $scope = 'followers')
     {
-        if($scope === 'followers') {
-            if(Cache::get(self::FOLLOWERS_SYNC_KEY . $id) != null) {
+        if ($scope === 'followers') {
+            if (Cache::get(self::FOLLOWERS_SYNC_KEY . $id) != null) {
                 return;
             }
             FollowServiceWarmCache::dispatch($id)->onQueue('low');
         }
-        if($scope === 'following') {
-            if(Cache::get(self::FOLLOWING_SYNC_KEY . $id) != null) {
+        if ($scope === 'following') {
+            if (Cache::get(self::FOLLOWING_SYNC_KEY . $id) != null) {
                 return;
             }
             FollowServiceWarmCache::dispatch($id)->onQueue('low');
@@ -140,9 +140,9 @@ class FollowerService
     public static function softwareAudience($profile, $software = 'pixelfed')
     {
         return collect(self::audience($profile))
-            ->filter(function($inbox) use($software) {
+            ->filter(function ($inbox) use ($software) {
                 $domain = parse_url($inbox, PHP_URL_HOST);
-                if(!$domain) {
+                if (!$domain) {
                     return false;
                 }
                 return InstanceService::software($domain) === strtolower($software);
@@ -155,23 +155,22 @@ class FollowerService
     protected function getAudienceInboxes($pid, $scope = null)
     {
         $key = 'pf:services:follower:audience:' . $pid;
+        $profile = Profile::whereNull(['status', 'domain'])->find($pid);
+        if (!$profile) {
+            return [];
+        }
+
         $bannedDomains = InstanceService::getBannedDomains();
-        $domains = Cache::remember($key, 432000, function() use($pid, $bannedDomains) {
-            $profile = Profile::whereNull(['status', 'domain'])->find($pid);
-            if(!$profile) {
-                return [];
-            }
+        $domains = Cache::remember($key, 432000, function () use ($pid, $bannedDomains) {
             return DB::table('followers')
                 ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->where('followers.following_id', $pid)
                 ->whereNotNull('profiles.inbox_url')
                 ->whereNull('profiles.deleted_at')
-                ->select('followers.profile_id', 'followers.following_id', 'profiles.id', 'profiles.user_id', 'profiles.deleted_at', 'profiles.sharedInbox', 'profiles.inbox_url')
+                ->select('profiles.sharedInbox', 'profiles.inbox_url')
                 ->get()
-                ->map(function($r) {
-                    return $r->sharedInbox ?? $r->inbox_url;
-                })
-                ->filter(function($r) use($bannedDomains) {
+                ->map(fn($r) => $r->sharedInbox ?? $r->inbox_url)
+                ->filter(function ($r) use ($bannedDomains) {
                     $domain = parse_url($r, PHP_URL_HOST);
                     return $r && !in_array($domain, $bannedDomains);
                 })
@@ -179,29 +178,30 @@ class FollowerService
                 ->values();
         });
 
-        if(!$domains || !$domains->count()) {
-            return [];
+        if (!$domains || !$domains->count()) {
+            $domains = collect();
         }
 
-        $banned = InstanceService::getBannedDomains();
-
-        if(!$banned || count($banned) === 0) {
-            return $domains->toArray();
-        }
-
-        $res = $domains->filter(function($domain) use($banned) {
+        $audience = $domains->filter(function ($domain) use ($bannedDomains) {
             $parsed = parse_url($domain, PHP_URL_HOST);
-            return !in_array($parsed, $banned);
-        })
-        ->values()
-        ->toArray();
+            return !in_array($parsed, $bannedDomains);
+        })->values()->toArray();
 
-        return $res;
+        if (
+            $scope === 'public' &&
+            $profile->user &&
+            ($profile->user->is_admin || $profile->is_popular)
+        ) {
+            $knownSharedInboxes = InstanceService::getAllSharedInboxsPublic();
+
+            $audience = array_unique(array_merge($audience, $knownSharedInboxes));
+        }
+
+        return $audience;
     }
-
     public static function mutualCount($pid, $mid)
     {
-        return Cache::remember(self::CACHE_KEY . ':mutualcount:' . $pid . ':' . $mid, 3600, function() use($pid, $mid) {
+        return Cache::remember(self::CACHE_KEY . ':mutualcount:' . $pid . ':' . $mid, 3600, function () use ($pid, $mid) {
             return DB::table('followers as u')
                 ->join('followers as s', 'u.following_id', '=', 's.following_id')
                 ->where('s.profile_id', $mid)
@@ -213,7 +213,7 @@ class FollowerService
     public static function mutualIds($pid, $mid, $limit = 3)
     {
         $key = self::CACHE_KEY . ':mutualids:' . $pid . ':' . $mid . ':limit_' . $limit;
-        return Cache::remember($key, 3600, function() use($pid, $mid, $limit) {
+        return Cache::remember($key, 3600, function () use ($pid, $mid, $limit) {
             return DB::table('followers as u')
                 ->join('followers as s', 'u.following_id', '=', 's.following_id')
                 ->where('s.profile_id', $mid)
@@ -226,14 +226,14 @@ class FollowerService
 
     public static function mutualAccounts($actorId, $profileId)
     {
-        if($actorId == $profileId) {
+        if ($actorId == $profileId) {
             return [];
         }
         $actorKey = self::FOLLOWING_KEY . $actorId;
         $profileKey = self::FOLLOWERS_KEY . $profileId;
         $key = self::FOLLOWERS_INTER_KEY . $actorId . ':' . $profileId;
         $res = Redis::zinterstore($key, [$actorKey, $profileKey]);
-        if($res) {
+        if ($res) {
             return Redis::zrange($key, 0, -1);
         } else {
             return [];
@@ -252,7 +252,7 @@ class FollowerService
     public static function localFollowerIds($pid, $limit = 0)
     {
         $key = self::FOLLOWERS_LOCAL_KEY . $pid;
-        $res = Cache::remember($key, 7200, function() use($pid) {
+        $res = Cache::remember($key, 7200, function () use ($pid) {
             return DB::table('followers')
                 ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->where('followers.following_id', $pid)

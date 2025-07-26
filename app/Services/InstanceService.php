@@ -24,6 +24,8 @@ class InstanceService
 
     const CACHE_KEY_API_PEERS_LIST = 'pf:services:instance:api:peers:list:v0';
 
+    const CACHE_KEY_SHARED_INBOXES_PUBLIC = 'pf:services:instance:shared-inboxes-public';
+
     public function __construct()
     {
         ini_set('memory_limit', config('pixelfed.memory_limit', '1024M'));
@@ -149,6 +151,20 @@ class InstanceService
             ConfigCacheService::put('instance.banner.blurhash', $blurhash);
 
             return $blurhash;
+        });
+    }
+
+    public static function getAllSharedInboxsPublic()
+    {
+        return Cache::remember(self::CACHE_KEY_SHARED_INBOXES_PUBLIC, 432000, function () {
+            $bannedDomains = InstanceService::getBannedDomains();
+            return  Instance::whereNotNull('shared_inbox')
+                ->pluck('shared_inbox')
+                ->filter(function ($url) use ($bannedDomains) {
+                    $domain = parse_url($url, PHP_URL_HOST);
+                    return $url && !in_array($domain, $bannedDomains);
+                })
+                ->toArray();
         });
     }
 }

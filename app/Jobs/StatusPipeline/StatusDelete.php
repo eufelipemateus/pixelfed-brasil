@@ -32,7 +32,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Instance;
 
 class StatusDelete implements ShouldQueue
 {
@@ -169,7 +168,7 @@ class StatusDelete implements ShouldQueue
             return;
         }
 
-        $audience = Instance::whereNotNull('shared_inbox')->pluck('shared_inbox')->toArray();
+        $audience = $status->profile->getAudienceInbox();
 
         $fractal = new Fractal\Manager();
         $fractal->setSerializer(new ArraySerializer());
