@@ -60,7 +60,7 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 			return;
 		}
 
-		$audience = $status->profile->getAudienceInbox();
+		$audience = $status->profile->getAudienceInbox($status->scope);
 
 		if(empty($audience) || !in_array($status->scope, ['public', 'unlisted', 'private'])) {
 			// Return on profiles with no remote followers

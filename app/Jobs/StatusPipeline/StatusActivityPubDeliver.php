@@ -66,7 +66,7 @@ class StatusActivityPubDeliver implements ShouldQueue
             return;
         }
 
-        $audienceInboxes = $status->profile->getAudienceInbox();
+        $audienceInboxes = $status->profile->getAudienceInbox($status->scope);
 
         $mentionInboxes = $status->mentions
             ->filter(fn($mention) => $mention->domain !== null)

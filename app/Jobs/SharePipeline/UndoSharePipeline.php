@@ -89,7 +89,7 @@ class UndoSharePipeline implements ShouldQueue
         $resource = new Fractal\Resource\Item($status, new UndoAnnounce());
         $activity = $fractal->createData($resource)->toArray();
 
-        $audience = $status->profile->getAudienceInbox();
+        $audience = $status->profile->getAudienceInbox($status->scope);
 
         if (empty($audience) || $status->scope != 'public') {
             return 1;
