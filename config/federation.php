@@ -24,7 +24,8 @@ return [
             'logger' => [
                 'enabled' => env('AP_LOGGER_ENABLED', false),
                 'driver' => 'log'
-            ]
+            ],
+            'allow_share_all' => env('AP_ALLOW_SHARE_ALL', false),
         ],
 
         'ingest' => [
