@@ -10,9 +10,6 @@
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/v/stable.svg" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/license.svg" alt="License"></a>
 <a title="Crowdin" target="_blank" href="https://crowdin.com/project/pixelfed"><img src="https://badges.crowdin.net/pixelfed/localized.svg"></a>
-</p>
-
-<p align="center">
 <a href="https://fedidb.org/software/pixelfed"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.fedidb.org%2Fv1%2Fsoftware%2Fpixelfed&query=%24.user_count&logo=pixelfed&logoColor=white&label=Total%20Users" alt="Total Pixelfed users from FediDB" /></a>
 </p>
 
