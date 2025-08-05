@@ -15,17 +15,3 @@
 <p align="center">
 <a href="https://fedidb.org/software/pixelfed"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.fedidb.org%2Fv1%2Fsoftware%2Fpixelfed&query=%24.user_count&logo=pixelfed&logoColor=white&label=Total%20Users" alt="Total Pixelfed users from FediDB" /></a>
 </p>
-
-
-
-
-# Stable Version
-
-
-[https://github.com/eufelipemateus/pixelfed/tree/main](https://github.com/eufelipemateus/pixelfed/tree/main)
-
-
-# Dev Version
-
-
-[https://github.com/eufelipemateus/pixelfed/tree/dev](https://github.com/eufelipemateus/pixelfed/tree/dev)
