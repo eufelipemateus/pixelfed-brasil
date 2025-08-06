@@ -190,10 +190,10 @@ class FollowerService
         if (
             $scope === 'public' &&
             $profile->user &&
+            config('federation.activitypub.delivery.allow_share_all') &&
             ($profile->user->is_admin || $profile->is_popular)
         ) {
             $knownSharedInboxes = InstanceService::getAllSharedInboxsPublic();
-
             $audience = array_unique(array_merge($audience, $knownSharedInboxes));
         }
 
