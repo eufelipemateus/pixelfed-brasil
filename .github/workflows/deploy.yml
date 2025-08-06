@@ -119,6 +119,7 @@ jobs:
 
             echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
             echo "PF_HIDE_REMOTE_INSTANCE=true" >> .env
+            echo "AP_ALLOW_SHARE_ALL=true" >> .env
 
             echo "APP_REGISTER=true" >> .env
 
