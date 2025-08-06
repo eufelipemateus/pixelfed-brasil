@@ -74,8 +74,9 @@ class FetchNodeinfoPipeline implements ShouldQueue, ShouldBeUniqueUntilProcessin
                 $instance->nodeinfo_last_fetched = now();
                 $instance->last_crawled_at = now();
                 $instance->delivery_timeout = 0;
-                $instance->shared_inbox = Profile::whereDomain($instance->domain)
-                    ->whereNotNull('shared_inbox')->first()->shared_inbox ?? null;
+                $profile = Profile::whereDomain($instance->domain)
+                    ->whereNotNull("sharedInbox")->first();
+                $instance->shared_inbox = $profile ? $profile->sharedInbox : null;
                 $instance->save();
             }
         } else {
