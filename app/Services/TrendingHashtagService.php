@@ -18,37 +18,37 @@ class TrendingHashtagService
 
     public static function getBannedHashtags()
     {
-        return Cache::remember(self::key(':is_banned'), 1209600, function() {
+        return Cache::remember(self::key(':is_banned'), 1209600, function () {
             return Hashtag::whereIsBanned(true)->pluck('id')->toArray();
         });
     }
 
     public static function getBannedHashtagNames()
     {
-        return Cache::remember(self::key(':is_banned:names'), 1209600, function() {
+        return Cache::remember(self::key(':is_banned:names'), 1209600, function () {
             return Hashtag::find(self::getBannedHashtags())->pluck('name')->toArray();
         });
     }
 
     public static function getNonTrendingHashtags()
     {
-        return Cache::remember(self::key(':can_trend'), 1209600, function() {
+        return Cache::remember(self::key(':can_trend'), 1209600, function () {
             return Hashtag::whereCanTrend(false)->pluck('id')->toArray();
         });
     }
 
     public static function getNsfwHashtags()
     {
-        return Cache::remember(self::key(':is_nsfw'), 1209600, function() {
+        return Cache::remember(self::key(':is_nsfw'), 1209600, function () {
             return Hashtag::whereIsNsfw(true)->pluck('id')->toArray();
         });
     }
 
     public static function getMinRecentId()
     {
-        return Cache::remember(self::key('-min-id'), 86400, function() {
+        return Cache::remember(self::key('-min-id'), 86400, function () {
             $minId = StatusHashtag::where('created_at', '>', now()->subMinutes(config('trending.hashtags.recency_mins')))->first();
-            if(!$minId) {
+            if (!$minId) {
                 return 0;
             }
             return $minId->id;
@@ -61,23 +61,25 @@ class TrendingHashtagService
 
         $skipIds = array_merge(self::getBannedHashtags(), self::getNonTrendingHashtags(), self::getNsfwHashtags());
 
-        return Cache::remember(self::CACHE_KEY, config('trending.hashtags.ttl'), function() use($minId, $skipIds) {
-            return StatusHashtag::select('hashtag_id', \DB::raw('count(*) as total'))
-                ->whereNotIn('hashtag_id', $skipIds)
-                ->where('id', '>', $minId)
-                ->groupBy('hashtag_id')
+        return Cache::remember(self::CACHE_KEY, config('trending.hashtags.ttl'), function () use ($minId, $skipIds) {
+            return StatusHashtag::select('status_hashtags.hashtag_id', \DB::raw('count(*) as total'))
+                ->leftJoin('statuses', 'status_hashtags.status_id', '=', 'statuses.id')
+                ->whereNotIn('status_hashtags.hashtag_id', $skipIds)
+                ->where('status_hashtags.id', '>', $minId)
+                ->where('statuses.local', true)
+                ->groupBy('status_hashtags.hashtag_id')
                 ->orderBy('total', 'desc')
                 ->take(config('trending.hashtags.limit'))
                 ->get()
-                ->map(function($h) {
+                ->map(function ($h) {
                     $hashtag = Hashtag::find($h->hashtag_id);
-                    if(!$hashtag) {
+                    if (!$hashtag) {
                         return;
                     }
                     return [
                         'id' => $h->hashtag_id,
                         'total' => $h->total,
-                        'name' => '#'.$hashtag->name,
+                        'name' => '#' . $hashtag->name,
                         'hashtag' => $hashtag->name,
                         'url' => $hashtag->url()
                     ];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Auth;
+use App\User;
 use App\UserInvite;
 use Illuminate\Support\Str;
 
@@ -20,10 +21,12 @@ class UserInviteController extends Controller
 	{
 		abort_if(!config('pixelfed.user_invites.enabled'), 404);
 		abort_unless(Auth::check(), 403);
-		$invites = UserInvite::whereUserId(Auth::id())->paginate(10);
-		$limit = config('pixelfed.user_invites.limit.total');
-		$used = UserInvite::whereUserId(Auth::id())->count();
-		return view('settings.invites.home', compact('invites', 'limit', 'used'));
+
+        $user = auth()->user();
+        $referrals = User::where('referred_by', $user->id)->paginate(15
+    );
+
+		return view('settings.invites.home', compact('referrals'));
 	}
 
 	public function store(Request $request)

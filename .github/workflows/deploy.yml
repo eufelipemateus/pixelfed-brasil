@@ -76,6 +76,7 @@ jobs:
             echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
             echo "TRUST_PROXIES=*" >> .env
             echo "HORIZON_MEMORY_LIMIT=${{vars.HORIZON_MEMORY_LIMIT}}" >> .env
+            echo "HORIZON_MAX_PROCESSES=${{vars.HORIZON_MAX_PROCESSES}}" >> .env
 
             echo "OPEN_REGISTRATION=true" >> .env
             echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
@@ -118,6 +119,7 @@ jobs:
 
             echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
             echo "PF_HIDE_REMOTE_INSTANCE=true" >> .env
+            echo "AP_ALLOW_SHARE_ALL=true" >> .env
 
             echo "APP_REGISTER=true" >> .env
 
@@ -149,20 +151,20 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
             echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
             echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
-            echo "AWS_URL=${{secrets.S3_URL}}" >> .env
+            echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
             echo "AWS_DEFAULT_REGION=daf" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
-            echo "TRANSLATION_ENABLED=true" >> .env
+            echo "TRANSLATION_ENABLED=false" >> .env
             echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
             echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
             echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
 
-            echo "PF_LIMIT_DAILY_POSTS=true" >> .env
-            echo "PF_DAILY_POST_LIMIT=6" >> .env
+            echo "PF_LIMIT_DAILY_POSTS_ENABLED=true" >> .env
+            echo "PF_LIMIT_DAILY_POSTS_LIMIT=6" >> .env
             echo "PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS=false" >> .env
             echo "PF_DEFAULT_NO_AUTOLINK=false" >> .env
-
+            echo "PF_IMPORT_FROM_INSTAGRAM=${{vars.PF_IMPORT_FROM_INSTAGRAM}}" >> .env
 
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env

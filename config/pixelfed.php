@@ -232,12 +232,7 @@ return [
     |
     */
     'user_invites' => [
-        'enabled' => env('PF_USER_INVITES', false),
-        'limit' => [
-            'total' => (int) env('PF_USER_INVITES_TOTAL_LIMIT', 0),
-            'daily' => (int) env('PF_USER_INVITES_DAILY_LIMIT', 0),
-            'monthly' => (int) env('PF_USER_INVITES_MONTHLY_LIMIT', 0),
-        ],
+        'enabled' => env('PF_USER_INVITES', true),
     ],
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),
@@ -311,7 +306,7 @@ return [
     ],
 
     'limit_daily_posts' =>[
-        'enabled' => env('PF_LIMIT_DAILY_POSTS', false),
+        'enabled' => env('PF_LIMIT_DAILY_POSTS_ENABLED', false),
         'limit' => (int) env('PF_LIMIT_DAILY_POSTS_LIMIT', 15),
         'user_exceptions' => env('PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS', false),
     ]

@@ -120,7 +120,7 @@ class FollowerService
         }
 
         if ($quickCheck) {
-            return (bool) Redis::zScore(self::FOLLOWERS_KEY.$target, $actor);
+            return (bool) Redis::zScore(self::FOLLOWERS_KEY . $target, $actor);
         }
 
         if (self::followerCount($target, false) && self::followingCount($actor, false)) {
@@ -138,13 +138,13 @@ class FollowerService
     public static function cacheSyncCheck($id, $scope = 'followers')
     {
         if ($scope === 'followers') {
-            if (Cache::get(self::FOLLOWERS_SYNC_KEY.$id) != null) {
+            if (Cache::get(self::FOLLOWERS_SYNC_KEY . $id) != null) {
                 return;
             }
             FollowServiceWarmCache::dispatch($id)->onQueue('low');
         }
         if ($scope === 'following') {
-            if (Cache::get(self::FOLLOWING_SYNC_KEY.$id) != null) {
+            if (Cache::get(self::FOLLOWING_SYNC_KEY . $id) != null) {
                 return;
             }
             FollowServiceWarmCache::dispatch($id)->onQueue('low');
@@ -162,7 +162,7 @@ class FollowerService
         return collect(self::audience($profile))
             ->filter(function ($inbox) use ($software) {
                 $domain = parse_url($inbox, PHP_URL_HOST);
-                if (! $domain) {
+                if (!$domain) {
                     return false;
                 }
 
@@ -175,24 +175,22 @@ class FollowerService
 
     protected function getAudienceInboxes($pid, $scope = null)
     {
-        $key = 'pf:services:follower:audience:'.$pid;
+        $key = 'pf:services:follower:audience:' . $pid;
+        $profile = Profile::whereNull(['status', 'domain'])->find($pid);
+        if (!$profile) {
+            return [];
+        }
+
         $bannedDomains = InstanceService::getBannedDomains();
         $domains = Cache::remember($key, 432000, function () use ($pid, $bannedDomains) {
-            $profile = Profile::whereNull(['status', 'domain'])->find($pid);
-            if (! $profile) {
-                return [];
-            }
-
             return DB::table('followers')
                 ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->where('followers.following_id', $pid)
                 ->whereNotNull('profiles.inbox_url')
                 ->whereNull('profiles.deleted_at')
-                ->select('followers.profile_id', 'followers.following_id', 'profiles.id', 'profiles.user_id', 'profiles.deleted_at', 'profiles.sharedInbox', 'profiles.inbox_url')
+                ->select('profiles.sharedInbox', 'profiles.inbox_url')
                 ->get()
-                ->map(function ($r) {
-                    return $r->sharedInbox ?? $r->inbox_url;
-                })
+                ->map(fn($r) => $r->sharedInbox ?? $r->inbox_url)
                 ->filter(function ($r) use ($bannedDomains) {
                     $domain = parse_url($r, PHP_URL_HOST);
 
@@ -202,30 +200,30 @@ class FollowerService
                 ->values();
         });
 
-        if (! $domains || ! $domains->count()) {
-            return [];
+        if (!$domains || !$domains->count()) {
+            $domains = collect();
         }
 
-        $banned = InstanceService::getBannedDomains();
-
-        if (! $banned || count($banned) === 0) {
-            return $domains->toArray();
-        }
-
-        $res = $domains->filter(function ($domain) use ($banned) {
+        $audience = $domains->filter(function ($domain) use ($bannedDomains) {
             $parsed = parse_url($domain, PHP_URL_HOST);
+            return !in_array($parsed, $bannedDomains);
+        })->values()->toArray();
 
-            return ! in_array($parsed, $banned);
-        })
-            ->values()
-            ->toArray();
+        if (
+            $scope === 'public' &&
+            $profile->user &&
+            config('federation.activitypub.delivery.allow_share_all') &&
+            ($profile->user->is_admin || $profile->is_popular)
+        ) {
+            $knownSharedInboxes = InstanceService::getAllSharedInboxsPublic();
+            $audience = array_unique(array_merge($audience, $knownSharedInboxes));
+        }
 
-        return $res;
+        return $audience;
     }
-
     public static function mutualCount($pid, $mid)
     {
-        return Cache::remember(self::CACHE_KEY.':mutualcount:'.$pid.':'.$mid, 3600, function () use ($pid, $mid) {
+        return Cache::remember(self::CACHE_KEY . ':mutualcount:' . $pid . ':' . $mid, 3600, function () use ($pid, $mid) {
             return DB::table('followers as u')
                 ->join('followers as s', 'u.following_id', '=', 's.following_id')
                 ->where('s.profile_id', $mid)
@@ -236,8 +234,7 @@ class FollowerService
 
     public static function mutualIds($pid, $mid, $limit = 3)
     {
-        $key = self::CACHE_KEY.':mutualids:'.$pid.':'.$mid.':limit_'.$limit;
-
+        $key = self::CACHE_KEY . ':mutualids:' . $pid . ':' . $mid . ':limit_' . $limit;
         return Cache::remember($key, 3600, function () use ($pid, $mid, $limit) {
             return DB::table('followers as u')
                 ->join('followers as s', 'u.following_id', '=', 's.following_id')
@@ -394,7 +391,7 @@ class FollowerService
 
     public static function localFollowerIds($pid, $limit = 0)
     {
-        $key = self::FOLLOWERS_LOCAL_KEY.$pid;
+        $key = self::FOLLOWERS_LOCAL_KEY . $pid;
         $res = Cache::remember($key, 7200, function () use ($pid) {
             return DB::table('followers')
                 ->join('profiles', 'followers.profile_id', '=', 'profiles.id')
