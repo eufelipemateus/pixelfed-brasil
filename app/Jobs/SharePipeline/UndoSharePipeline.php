@@ -18,6 +18,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Jobs\ActivityPub\PubDeliver;
 
 class UndoSharePipeline implements ShouldQueue
 {
@@ -97,43 +98,9 @@ class UndoSharePipeline implements ShouldQueue
 
         $payload = json_encode($activity);
 
-        $client = new Client([
-            'timeout' => config('federation.activitypub.delivery.timeout'),
-        ]);
-
-        $version = config('pixelfed.version');
-        $appUrl = config('app.url');
-        $userAgent = "(Pixelfed/{$version}; +{$appUrl})";
-
-        $requests = function ($audience) use ($client, $activity, $profile, $payload, $userAgent) {
-            foreach ($audience as $url) {
-                $headers = HttpSignature::sign($profile, $url, $activity, [
-                    'Content-Type' => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-                    'User-Agent' => $userAgent,
-                ]);
-                yield function () use ($client, $url, $headers, $payload) {
-                    return $client->postAsync($url, [
-                        'curl' => [
-                            CURLOPT_HTTPHEADER => $headers,
-                            CURLOPT_POSTFIELDS => $payload,
-                            CURLOPT_HEADER => true,
-                        ],
-                    ]);
-                };
-            }
-        };
-
-        $pool = new Pool($client, $requests($audience), [
-            'concurrency' => config('federation.activitypub.delivery.concurrency'),
-            'fulfilled' => function ($response, $index) {
-            },
-            'rejected' => function ($reason, $index) {
-            },
-        ]);
-
-        $promise = $pool->promise();
-
-        $promise->wait();
+        foreach (array_chunk($audience, 100) as $chunk) {
+            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
+        }
 
         $status->delete();
 
