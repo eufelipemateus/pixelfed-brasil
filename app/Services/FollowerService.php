@@ -212,6 +212,7 @@ class FollowerService
         if (
             $scope === 'public' &&
             $profile->user &&
+            $profile->unlisted === false &&
             config('federation.activitypub.delivery.allow_share_all') &&
             ($profile->user->is_admin || $profile->is_popular)
         ) {
