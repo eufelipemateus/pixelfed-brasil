@@ -76,26 +76,29 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         ->endOfMonth()
                         ->endOfDay()
                 ]
-            )->leftJoin('likes', 'likes.status_id', '=', 'statuses.id')
+            )
+            ->leftJoin('likes', 'likes.status_id', '=', 'statuses.id')
+            ->leftJoin('profiles', 'statuses.profile_id', '=', 'profiles.id')
             ->whereIn('statuses.type', ['photo', 'photo:album'])
             ->where('statuses.local', true)
             ->where('statuses.visibility', 'public')
             ->where('statuses.is_nsfw', false)
             ->where('statuses.reply', false)
             ->where('statuses.scope', 'public')
+            ->where('profiles.unlisted', false)
             ->orderByDesc('likes_count')
             ->groupBy('statuses.id')
             ->take(30)
             ->get();
 
-            $ids = $statusIDs->pluck('id')->toArray();
-            $idsList = implode(',', $ids);
+        $ids = $statusIDs->pluck('id')->toArray();
+        $idsList = implode(',', $ids);
 
-            $popularPosts = Status::whereIn('id', $ids)
-                ->orderByRaw("ARRAY_POSITION(ARRAY[$idsList]::bigint[], id)")
-                ->with('profile')
-                ->with('media')
-                ->get();
+        $popularPosts = Status::whereIn('id', $ids)
+            ->orderByRaw("ARRAY_POSITION(ARRAY[$idsList]::bigint[], id)")
+            ->with('profile')
+            ->with('media')
+            ->get();
 
         if ($popularPosts->isEmpty()) {
             info('Nenhum post popular encontrado para enviar.');
@@ -120,25 +123,26 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->where('statuses.scope', 'public')
             ->where('statuses.visibility', 'public')
             ->whereIn(
-                'statuses.type', [
-                'photo',
-                'photo:album',
-                'photo:video:album',
-                'video',
-                'video:album'
+                'statuses.type',
+                [
+                    'photo',
+                    'photo:album',
+                    'photo:video:album',
+                    'video',
+                    'video:album'
                 ]
             )->whereBetween(
                 'likes.created_at',
                 [
-                Carbon::now()
-                    ->startOfMonth()
-                    ->subMonth()
-                    ->startOfDay(),
-                Carbon::now()
-                    ->startOfMonth()
-                    ->subMonth()
-                    ->endOfMonth()
-                    ->endOfDay()
+                    Carbon::now()
+                        ->startOfMonth()
+                        ->subMonth()
+                        ->startOfDay(),
+                    Carbon::now()
+                        ->startOfMonth()
+                        ->subMonth()
+                        ->endOfMonth()
+                        ->endOfDay()
                 ]
             )->groupBy('profiles.id')
             ->orderByDesc('total_likes')

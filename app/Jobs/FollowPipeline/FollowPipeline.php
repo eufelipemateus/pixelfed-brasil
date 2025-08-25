@@ -87,7 +87,8 @@ class FollowPipeline implements ShouldQueue
                 $notification->item_type = "App\Profile";
                 $notification->save();
 
-                if (AccountService::getAccountSettings($target->id)["send_email_new_follower"]) {
+                $account = AccountService::getAccountSettings($target->id);
+                if ( $account &&  $account["send_email_new_follower"]) {
                     User::find($target->user_id)->notify(new FollowNotification($actor->id));
                 }
             } catch (Exception $e) {

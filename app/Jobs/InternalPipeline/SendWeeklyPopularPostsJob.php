@@ -66,7 +66,9 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
                 ->pluck('referred_by')
                 ->unique()
                 ->values();
-            $promoters = Profile::whereIn('user_id', $promotersIds)->get();
+            $promoters = Profile::whereIn('user_id', $promotersIds)
+                ->where('unlisted', false)
+                ->get();
         } else {
             $promoters = collect();
         }
@@ -91,8 +93,10 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             ->where('is_nsfw', false)
             ->where('reply', false)
             ->where('scope', 'public')
-            ->with('profile')
-            ->with('media')
+            ->with(['profile', 'media'])
+            ->whereHas('profile', function ($query) {
+                $query->where('unlisted', false);
+            })
             ->orderByDesc('likes_count')
             ->take(10)
             ->get();
