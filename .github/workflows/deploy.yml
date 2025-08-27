@@ -65,7 +65,7 @@ jobs:
             echo "MAIL_USERNAME=${{secrets.MAIL_USER}}" >> .env
             echo "MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"" >> .env
             echo "MAIL_ENCRYPTION=tls" >> .env
-            echo "MAIL_FROM_ADDRESS=\"pixelfed@pixelfed.com.br\"" >> .env
+            echo "MAIL_FROM_ADDRESS=\"noreply@pixelfed.com.br\"" >> .env
             echo "MAIL_FROM_NAME=\"Pixelfed Brasil\"" >> .env
 
             echo "APP_LOCALE=pt" >> .env
