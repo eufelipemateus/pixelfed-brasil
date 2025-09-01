@@ -27,8 +27,8 @@ class Nodeinfo
                 'metadata' => [
                     'nodeName' => config_cache('app.name'),
                     'software' => [
-                        'homepage' => 'https://pixelfed.org',
-                        'repo' => 'https://github.com/eufelipemateus/pixelfed',
+                        'homepage' => 'https://github.com/eufelipemateus/pixelfed-brasil',
+                        'repo' => 'https://github.com/eufelipemateus/pixelfed-brasil',
                     ],
                     'config' => $features,
                 ],
@@ -40,7 +40,7 @@ class Nodeinfo
                     'outbound' => [],
                 ],
                 'software' => [
-                    'name' => 'pixelfed',
+                    'name' => 'pixelfed-brasil',
                     'version' => config('pixelfed.version'),
                 ],
                 'usage' => [
