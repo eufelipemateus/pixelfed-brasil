@@ -362,6 +362,17 @@ class RestrictedNames
         '500',
         '503',
         '504',
+        'about',
+        'help',
+        'developer-api',
+        'fediverse',
+        'open-source',
+        'banned-instances',
+        'terms',
+        'platform',
+        'language',
+        'contact',
+        'legal-notice',
     ];
 
     public static function get()
