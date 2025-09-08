@@ -39,7 +39,6 @@
 	@endif
 
 	<script type="text/javascript">window._sharedData = {curUser: {}, version: 0}; window.App = {config: {!!App\Util\Site\Config::json()!!}};</script>
-
 </head>
 <body class="loggedIn">
 	@include('layouts.partial.nav')
@@ -88,6 +87,7 @@
 	<link href="{{ mix('css/app.css') }}" rel="stylesheet" data-stylesheet="light">
 	<script type="text/javascript">window._sharedData = {curUser: {}, version: 0}; window.App = {config: {!!App\Util\Site\Config::json()!!}};</script>
 	@stack('styles')
+    @yield('schema')
 </head>
 <body>
 	@include('layouts.partial.nav')

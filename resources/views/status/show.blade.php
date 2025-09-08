@@ -26,6 +26,40 @@ if($displayName && $captionPreview) {
 
 @endphp
 
+@section('schema')
+    @if($mediaCount && ($s['pf_type'] === "photo" || $s['pf_type'] === "photo:album"))
+    <x-status-schema-generator
+        type="image"
+        :url="$s['media_attachments'][0]['url']"
+        :caption="$captionPreview ?? $ogDescription"
+        :creator="$displayName ?? $ogTitle"
+        :creator-url="$s['account']['url'] ?? url('/')"
+        :published-at="(new DateTime($s['created_at']))->format(DateTime::ATOM)"
+        :site-name="config_cache('app.name')"
+        :site-logo="url('/img/pixelfed-icon-color.png')"
+        :license="$s['media_attachments'][0]['license']['url']  ??  route('help.licenses')  "
+        :acquire-license-page="route('help.licenses') "
+        :credit-text="'Imagem por @' . $s['account']['username'] . $domain . ', via Pixelfed Brasil'"
+        :copyright-notice="'Felipe Mateus <suporte@felipemateus.com>'" />
+    @elseif($mediaCount && ($s['pf_type'] === "video" || $s['pf_type'] === "video:album"))
+    <x-status-schema-generator
+        type="video"
+        :url="$s['url']"
+        :caption="$captionPreview ?? $ogDescription"
+        :creator="$displayName ?? $ogTitle"
+        :creator-url="$s['account']['url'] ?? url('/')"
+        :published-at="(new DateTime($s['created_at']))->format(DateTime::ATOM)"
+        :site-name="config_cache('app.name')"
+        :site-logo="url('/img/pixelfed-icon-color.png')"
+        :thumbnail="$s['media_attachments'][0]['preview_url'] ?? $s['media_attachments'][0]['url']"
+        :views="0"
+        :embed-url="$s['url']"
+        :regionsAllowed="['BR']"
+        :name="$user->username . ' shared a video'"
+        />
+    @endif
+@endsection
+
 @section('content')
 <noscript>
   <div class="container">
