@@ -58,9 +58,9 @@
         {
             "@@context": "https://schema.org",
             "@@type": "Organization",
-            "name" => "{{ config('app.name', 'Pixelfed Brasil') }}",
-            "url" => "{{ url('/') }}",
-            "logo" => "{{ url('/img/pixelfed-icon-color.png') }}",
+            "name" : "{{ config('app.name', 'Pixelfed Brasil') }}",
+            "url" : "{{ url('/') }}",
+            "logo" : "{{ url('/img/pixelfed-icon-color.png') }}",
             "sameAs": [
                 "https://pixelfed.com.br/PixelfedBrasil"
             ],

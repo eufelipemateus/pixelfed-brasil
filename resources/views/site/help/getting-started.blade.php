@@ -4,41 +4,41 @@
 @section('section')
 <script type="application/ld+json">
     {
-	"@context": "https://schema.org",
-    "@type": "FAQPage",
+	"@@context": "https://schema.org",
+    "@@type": "FAQPage",
     "mainEntity": [{
-        "@type": "Question",
+        "@@type": "Question",
         "name": "{{ __('helpcenter.howCreateAccountAask')}}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{!! __('helpcenter.howCreateAccountAnswer') !!}"
         }
       }, {
-        "@type": "Question",
+        "@@type": "Question",
         "name":	"{{ __('helpcenter.howUpdateProfileAsk')}}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{!! __('helpcenter.howUpdateProfileAnswer') !!}"
         }
       }, {
-        "@type": "Question",
+        "@@type": "Question",
         "name": "{{ __('helpcenter.howInactiveUserAsk')}}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{{ __('helpcenter.howInactiveUserAnswer')}}"
         }
       }, {
-        "@type": "Question",
+        "@@type": "Question",
         "name": "{{ __('helpcenter.whyChantUserAsk') }}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{!! __('helpcenter.whyChantUserAnswer') !!}"
         }
       }, {
-        "@type": "Question",
+        "@@type": "Question",
         "name": "{{ __('helpcenter.whyReceiveEmaillAsk')}}",
         "acceptedAnswer": {
-        	"@type": "Answer",
+        	"@@type": "Answer",
         	"text":"{{ __('helpcenter.whyReceiveEmaillAnswer')}}"
 		}
     },
@@ -46,7 +46,7 @@
         "@type": "Question",
         "name": "{{ __('helpcenter.whyExistsEmailAsk')}}",
         "acceptedAnswer": {
-        	"@type": "Answer",
+        	"@@type": "Answer",
         	"text":"{{ __('helpcenter.whyExistsEmailAnswer')}}"
 		}
     }
