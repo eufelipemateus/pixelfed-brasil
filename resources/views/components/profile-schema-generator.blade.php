@@ -16,7 +16,7 @@
         "@@type": "InteractionCounter",
         "interactionType": "https://schema.org/FollowAction",
         "userInteractionCount": {{ $profile->followerCount() }}
-      },
+      }
     ],
     "agentInteractionStatistic": {
       "@@type": "InteractionCounter",
