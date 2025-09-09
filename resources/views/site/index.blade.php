@@ -40,11 +40,11 @@
         {
             "@@context": "https://schema.org",
             "@@type": "WebSite",
-            "name": config('app.name', 'Pixelfed Brasil'),
-            "url": url('/'),
+            "name": "{{ config('app.name', 'Pixelfed Brasil') }}",
+            "url": "{{ url('/') }}",
             "potentialAction": {
                 "@@type": "CreateAction",
-                "target": url('/register')
+                "target": "{{ url('/register') }}"
             },
             "creator": {
                 "@@type": "Person",
@@ -58,15 +58,15 @@
         {
             "@@context": "https://schema.org",
             "@@type": "Organization",
-            "name" => config('app.name', 'Pixelfed Brasil'),
-            "url" => url('/'),
-            "logo" => url('/img/pixelfed-icon-color.png'),
+            "name" => "{{ config('app.name', 'Pixelfed Brasil') }}",
+            "url" => "{{ url('/') }}",
+            "logo" => "{{ url('/img/pixelfed-icon-color.png') }}",
             "sameAs": [
                 "https://pixelfed.com.br/PixelfedBrasil"
             ],
             "contactPoint": [{
                 "@@type": "ContactPoint",
-                "url": route('site.contact'),
+                "url": "{{ route('site.contact') }}",
                 "contactType": "customer support",
                 "availableLanguage": [
                     "Portuguese"
