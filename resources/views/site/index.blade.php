@@ -41,7 +41,7 @@
 		<main id="content">
 			<noscript>
 				<div class="container">
-					<h1 class="pt-5 text-center">Pixelfed</h1>
+					<h1 class="pt-5 text-center">config('app.name', 'Pixelfed Brasil')</h1>
 					<p class="pt-2 text-center lead">Please enable javascript to view this content.</p>
 				</div>
 			</noscript>
