@@ -38,16 +38,16 @@
 	</script>
     <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
+            "@@context": "https://schema.org",
+            "@@type": "WebSite",
             "name": config('app.name', 'Pixelfed Brasil'),
             "url": url('/'),
             "potentialAction": {
-                "@type": "CreateAction",
+                "@@type": "CreateAction",
                 "target": url('/register')
             },
             "creator": {
-                "@type": "Person",
+                "@@type": "Person",
                 "name": "Felipe Mateus",
                 "url": "https://pixelfed.com.br/felipemateus"
             }
@@ -56,8 +56,8 @@
 
     <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-            "@type": "Organization",
+            "@@context": "https://schema.org",
+            "@@type": "Organization",
             "name" => config('app.name', 'Pixelfed Brasil'),
             "url" => url('/'),
             "logo" => url('/img/pixelfed-icon-color.png'),
@@ -65,7 +65,7 @@
                 "https://pixelfed.com.br/PixelfedBrasil"
             ],
             "contactPoint": [{
-                "@type": "ContactPoint",
+                "@@type": "ContactPoint",
                 "url": route('site.contact'),
                 "contactType": "customer support",
                 "availableLanguage": [
@@ -73,7 +73,7 @@
                 ]
             }],
             "founder": {
-                "@type": "Person",
+                "@@type": "Person",
                 "name": "Felipe Mateus",
                 "url": "https://felipemateus.com"
             }
