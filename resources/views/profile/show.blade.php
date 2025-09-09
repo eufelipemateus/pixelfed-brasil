@@ -9,6 +9,10 @@ $acct = $profile->username . '@' . config('pixelfed.domain.app');
 $metaDescription = \App\Services\AccountService::getMetaDescription($profile->id);
 @endphp
 
+@section('schema')
+ <x-profile-schema-generator :profile="$profile" :settings="$settings"/>
+@endsection
+
 @section('content')
 @if (session('error'))
 		<div class="alert alert-danger text-center font-weight-bold mb-0">

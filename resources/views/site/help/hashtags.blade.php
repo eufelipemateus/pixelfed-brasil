@@ -3,20 +3,20 @@
 @section('section')
 <script type="application/ld+json">
     {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
+      "@@context": "https://schema.org",
+      "@@type": "FAQPage",
       "mainEntity": [{
-        "@type": "Question",
+        "@@type": "Question",
         "name": "{{ __('helpcenter.howUseHashtagAsk')}}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{!! __('helpcenter.howUseHashtagAnswer') !!}"
         }
       }, {
-        "@type": "Question",
+        "@@type": "Question",
         "name": " {{ __('helpcenter.howFollowHashtagAsk')}}",
         "acceptedAnswer": {
-          "@type": "Answer",
+          "@@type": "Answer",
           "text": "{!! __('helpcenter.howFollowHashtagAnswer') !!}"
         }
       }]

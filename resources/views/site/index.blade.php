@@ -38,16 +38,16 @@
 	</script>
     <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": config('app.name', 'Pixelfed Brasil'),
-            "url": url('/'),
+            "@@context": "https://schema.org",
+            "@@type": "WebSite",
+            "name": "{{ config('app.name', 'Pixelfed Brasil') }}",
+            "url": "{{ url('/') }}",
             "potentialAction": {
-                "@type": "CreateAction",
-                "target": url('/register')
+                "@@type": "CreateAction",
+                "target": "{{ url('/register') }}"
             },
             "creator": {
-                "@type": "Person",
+                "@@type": "Person",
                 "name": "Felipe Mateus",
                 "url": "https://pixelfed.com.br/felipemateus"
             }
@@ -58,15 +58,15 @@
         {
             "@@context": "https://schema.org",
             "@@type": "Organization",
-            "name" => config('app.name', 'Pixelfed Brasil'),
-            "url" => url('/'),
-            "logo" => url('/img/pixelfed-icon-color.png'),
+            "name" : "{{ config('app.name', 'Pixelfed Brasil') }}",
+            "url" : "{{ url('/') }}",
+            "logo" : "{{ url('/img/pixelfed-icon-color.png') }}",
             "sameAs": [
                 "https://pixelfed.com.br/PixelfedBrasil"
             ],
             "contactPoint": [{
                 "@@type": "ContactPoint",
-                "url": route('site.contact'),
+                "url": "{{ route('site.contact') }}",
                 "contactType": "customer support",
                 "availableLanguage": [
                     "Portuguese"
@@ -84,7 +84,7 @@
 		<main id="content">
 			<noscript>
 				<div class="container">
-					<h1 class="pt-5 text-center">config('app.name', 'Pixelfed Brasil')</h1>
+					<h1 class="pt-5 text-center">Pixelfed</h1>
 					<p class="pt-2 text-center lead">Please enable javascript to view this content.</p>
 				</div>
 			</noscript>
