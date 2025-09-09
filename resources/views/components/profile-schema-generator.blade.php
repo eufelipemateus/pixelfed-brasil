@@ -17,11 +17,6 @@
         "interactionType": "https://schema.org/FollowAction",
         "userInteractionCount": {{ $settings['followers']['count'] ? $profile->followers_count : 0 }}
       },
-      {
-        "@@type": "InteractionCounter",
-        "interactionType": "https://schema.org/LikeAction",
-        "userInteractionCount": {{ $settings['likes']['count'] ?? 0 }}
-      }
     ],
     "agentInteractionStatistic": {
       "@@type": "InteractionCounter",
