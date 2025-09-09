@@ -15,16 +15,16 @@
       {
         "@@type": "InteractionCounter",
         "interactionType": "https://schema.org/FollowAction",
-        "userInteractionCount": {{ $settings['followers']['count'] ? $profile->followers_count : 0 }}
+        "userInteractionCount": {{ $profile->followerCount() }}
       },
     ],
     "agentInteractionStatistic": {
       "@@type": "InteractionCounter",
       "interactionType": "https://schema.org/WriteAction",
-      "userInteractionCount": {{ $profile->status_count }}
+      "userInteractionCount": {{ $profile->statusCount() }}
     },
     "description": "{{ $profile->bio }}",
-    "image": "{{ $profile->avatar_url }}",
+    "image": "{{ $profile->avatarUrl() }}",
     "sameAs": [
       "{{$profile->website}}"
     ]
