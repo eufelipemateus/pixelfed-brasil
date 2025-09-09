@@ -36,6 +36,49 @@
 		window.pfl = {!! App\Services\LandingService::get() !!}
         window.online_users = {{ \App\Services\SessionService::getTotalActiveSessions() }};
 	</script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": config('app.name', 'Pixelfed Brasil'),
+            "url": url('/'),
+            "potentialAction": {
+                "@type": "CreateAction",
+                "target": url('/register')
+            },
+            "creator": {
+                "@type": "Person",
+                "name": "Felipe Mateus",
+                "url": "https://pixelfed.com.br/felipemateus"
+            }
+        }
+    </script>
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name" => config('app.name', 'Pixelfed Brasil'),
+            "url" => url('/'),
+            "logo" => url('/img/pixelfed-icon-color.png'),
+            "sameAs": [
+                "https://pixelfed.com.br/PixelfedBrasil"
+            ],
+            "contactPoint": [{
+                "@type": "ContactPoint",
+                "url": route('site.contact'),
+                "contactType": "customer support",
+                "availableLanguage": [
+                    "Portuguese"
+                ]
+            }],
+            "founder": {
+                "@type": "Person",
+                "name": "Felipe Mateus",
+                "url": "https://felipemateus.com"
+            }
+        }
+    </script>
 </head>
 	<body>
 		<main id="content">
