@@ -54,8 +54,6 @@
     }
 @endphp
 
-
-
 @section('section')
     <script type="application/ld+json">
     {!! json_encode($data) !!}
