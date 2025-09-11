@@ -42,6 +42,18 @@ return [
     'sign_up_today'                                         => 'Inscreva-se hoje',
     'and_join_our_community_of_photographers_from_etc'      => 'e junte-se à nossa comunidade de fotógrafos de todo o mundo.',
 
+ // site/contact
+    'you_can_contact_the_admins'                            => 'Você pode contatar os administradores',
+    'by_using_the_form_below'                               => 'usando o formulário abaixo',
+    'or'                                                    => 'ou',
+    'by_sending_an_email_to'                                => 'enviando um email para',
+    'the_admins_have_not_set_a_contact_email_address'       => 'Os administradores não definiram um endereço de email de contato',
+    'Message'                                               => 'Mensagem',
+    'request_response_from_admins'                          => 'Solicitar resposta dos administradores',
+    'Submit'                                                => 'Enviar',
+    'log_in_to_send_a_message'                              => 'faça login para enviar uma mensagem',
+    'Please'                                                => 'Por favor',
+
     // site/fediverse
     'is_a_portmanteau_of_federation_and_universe_etc'       => 'é um portmanteau de “federação” e “universo”. É um nome comum e informal para uma federação de servidores de redes sociais, especializados em diferentes tipos de mídia.',
     'supported_fediverse_projects'                          => 'Projetos Fediverse Suportados',
