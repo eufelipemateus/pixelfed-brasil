@@ -40,7 +40,9 @@ if($displayName && $captionPreview) {
         :license="$s['media_attachments'][0]['license']['url']  ??  route('help.licenses')  "
         :acquire-license-page="route('help.licenses') "
         :credit-text="'Imagem por @' . $s['account']['username'] . $domain . ', via Pixelfed Brasil'"
-        :copyright-notice="'Felipe Mateus <suporte@felipemateus.com>'" />
+        :copyright-notice="'Felipe Mateus <suporte@felipemateus.com>'"
+        :location-name="$s['place']['name'] ?? null"
+        />
     @elseif($mediaCount && ($s['pf_type'] === "video" || $s['pf_type'] === "video:album"))
     <x-status-schema-generator
         type="video"
