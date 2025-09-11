@@ -22,6 +22,7 @@ class StatusSchemaGenerator extends Component
     public $acquireLicensePage;
     public $creditText;
     public $copyrightNotice;
+    public $locationName;
 
     public $name;
     public $description;
@@ -45,6 +46,8 @@ class StatusSchemaGenerator extends Component
         $acquireLicensePage = null,
         $creditText = null,
         $copyrightNotice = null,
+        $locationName = null,
+        
         // Vídeo
         $name = null,
         $description = null,
@@ -66,6 +69,7 @@ class StatusSchemaGenerator extends Component
         $this->acquireLicensePage = $acquireLicensePage;
         $this->creditText = $creditText;
         $this->copyrightNotice = $copyrightNotice;
+        $this->locationName = $locationName;
 
         $this->name = $name;
         $this->description = $description;

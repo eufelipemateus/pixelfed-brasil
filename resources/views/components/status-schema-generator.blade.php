@@ -7,6 +7,10 @@ $commonPublisher = [
         "url" => $siteLogo ?? asset('logo.png'),
     ],
 ];
+
+$contentLocation = !is_null($locationName)
+    ? ['@type' => 'Place', 'name' => $locationName]
+    : null;
 @endphp
 
 @if($type === 'image')
@@ -25,7 +29,8 @@ $commonPublisher = [
     'copyrightNotice' => $copyrightNotice ?? null,
     'publisher' => $commonPublisher,
     'datePublished' => $publishedAt,
-    'caption' => $caption ?? null
+    'caption' => $caption ?? null,
+    'contentLocation' => $contentLocation
 ], JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT) !!}
 </script>
 @endif
@@ -52,7 +57,8 @@ $commonPublisher = [
         'name' => $creator,
         'url' => $creatorUrl ?? null,
     ],
-    'publisher' => $commonPublisher
+    'publisher' => $commonPublisher,
+    'contentLocation' => $contentLocation
 ], JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT) !!}
 </script>
 @endif
