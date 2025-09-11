@@ -31,7 +31,7 @@ $contentLocation = !is_null($locationName)
     'datePublished' => $publishedAt,
     'caption' => $caption ?? null,
     'contentLocation' => $contentLocation
-], JSON_UNESCAPED_SLASHES|JSON_PRETTY_PRINT) !!}
+]) !!}
 </script>
 @endif
 

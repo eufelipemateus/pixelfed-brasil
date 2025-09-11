@@ -1,7 +1,65 @@
 @extends('site.help.partial.template', ['breadcrumb'=>__("helpcenter.profieleTitle")  ])
 
-@section('section')
+@php
+    $data = [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => []
+    ];
 
+    // Lista de perguntas/respostas (use __() ou {!! !!} conforme precisar)
+    $questions = [
+        [ __("helpcenter.profileEditBioAsk"), __("helpcenter.profileEditBioAnswer") ],
+        [ __("helpcenter.profileEditUpdateUsernameAsk"), __("helpcenter.profileEditUpdateUsernameAnswer") ],
+        [ __('helpcenter.profilePrivacyAsk'), __('helpcenter.profilePrivacyAnswer') ],
+        [ __("helpcenter.profileSecurityHowSecureAsk"), __("helpcenter.profileSecurityHowSecureAnswer") ],
+        [ __("helpcenter.profileSecurityHowAddSecurityAsk"), __("helpcenter.profileSecurityHowAddSecurityAnswer") ],
+        [ __("helpcenter.profileSecurityHowReportUnauthorizedAsk"), __("helpcenter.profileSecurityHowReportUnauthorizedAnswer") ],
+        [ __("helpcenter.profileMigrarionHowMigrateAsk"), __("helpcenter.profileMigrarionHowMigrateAnswer") ],
+        [ __("helpcenter.profileMigrationHowLongAsk"), __("helpcenter.profileMigrationHowLongAnswer") ],
+        [ __("helpcenter.profileMigrationWhyPostNotAsk"), __("helpcenter.profileMigrationWhyPostNotAnswer") ],
+        [ __('helpcenter.profileDeleteTemporaryAsk'), __('helpcenter.profileDeleteTemporaryAnswer') ],
+    ];
+
+    foreach ($questions as $qa) {
+        $q = $qa[0];
+        $a = $qa[1];
+        // remove tags HTML das respostas para evitar "<" dentro do array fonte
+        $data['mainEntity'][] = [
+            '@type' => 'Question',
+            'name' => $q,
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => is_string($a) ? strip_tags($a) : '',
+            ],
+        ];
+    }
+
+    // Se a exclusão de conta está ativada, adiciona a pergunta extra (texto sem HTML)
+    if (config('pixelfed.account_deletion')) {
+        $deleteText = 'When you delete your account, your profile, photos, videos, comments, likes and followers will be permanently removed.';
+        if (config('pixelfed.account_delete_after')) {
+            $deleteText .= ' Deletion will occur after ' . config('pixelfed.account_delete_after') . ' days unless you log in to cancel.';
+        }
+        $deleteText .= ' To permanently delete your account: 1) Go to the Delete Your Account page; 2) Navigate to Security Settings; 3) Confirm your account password; 4) Click Delete; 5) Follow the instructions.';
+
+        $data['mainEntity'][] = [
+            '@type' => 'Question',
+            'name' => 'How do I delete my account?',
+            'acceptedAnswer' => [
+                '@type' => 'Answer',
+                'text' => $deleteText,
+            ],
+        ];
+    }
+@endphp
+
+
+
+@section('section')
+    <script type="application/ld+json">
+    {!! json_encode($data) !!}
+    </script>
 
   <div class="title">
     <h3 class="font-weight-bold">{{ __("helpcenter.profieleTitle")  }}</h3>
