@@ -196,7 +196,7 @@ class SitemapController extends Controller
                         'priority' => $priority
                     ])->render()
                 );
-                return Storage::url("public/sitemaps/{$filename}");
+                return Storage::disk('s3')->url("sitemaps/{$filename}");
             })->toArray();
         });
 
