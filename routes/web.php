@@ -487,6 +487,15 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('notifications', 'GroupController@index');
         Route::get('{id}', 'GroupController@show');
     });
+
+    Route::group(['prefix' => 'sitemap'], function() {
+        Route::get('/', 'SitemapController@index');
+        Route::get('/site', 'SitemapController@site')->name('sitemap.site');
+        Route::get('/popular', 'SitemapController@popular')->name('sitemap.popular');
+        Route::get('/recents', 'SitemapController@recents')->name('sitemap.recents');
+        Route::get('/common', 'SitemapController@common')->name('sitemap.common');
+    });
+
     Route::get('g/{hid}', 'GroupController@groupShortLinkRedirect');
 
     Route::get('stories/{username}', 'ProfileController@stories');

@@ -362,6 +362,7 @@ class RestrictedNames
         '500',
         '503',
         '504',
+        'sitemap'
     ];
 
     public static function get()
