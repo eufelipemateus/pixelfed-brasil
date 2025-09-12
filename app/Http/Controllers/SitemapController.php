@@ -105,7 +105,7 @@ class SitemapController extends Controller
                         'priority' => $priority
                     ])->render()
                 );
-                return url("storage/sitemaps/{$filename}");
+                return Storage::url("public/sitemaps/{$filename}");
             })->toArray();
         });
 
@@ -151,7 +151,7 @@ class SitemapController extends Controller
                         'priority' => $priority
                     ])->render()
                 );
-                return url("storage/sitemaps/{$filename}");
+                return Storage::url("public/sitemaps/{$filename}");
             })->toArray();
         });
 
@@ -196,7 +196,7 @@ class SitemapController extends Controller
                         'priority' => $priority
                     ])->render()
                 );
-                return Storage::disk('s3')->url("sitemaps/{$filename}");
+                return Storage::url("public/sitemaps/{$filename}");
             })->toArray();
         });
 
