@@ -60,6 +60,9 @@ if($displayName && $captionPreview) {
         :name="$user->username . ' shared a video'"
         />
     @endif
+
+    <x-forum-schema-generator :status="$s" />
+
 @endsection
 
 @section('content')

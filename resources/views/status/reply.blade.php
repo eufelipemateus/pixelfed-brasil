@@ -1,5 +1,13 @@
 @extends('layouts.app')
 
+@php
+$s = \App\Services\StatusService::get($status->id, false);
+@endphp
+
+@section("schema")
+<x-forum-schema-generator :status="$s" />
+@endsection
+
 @section('content')
 
 <div class="container reply-container">
@@ -200,7 +208,7 @@
     $('.reactions').hide();
     $('.more-comments').hide();
     $('.card-footer').hide();
-    new Vue({ 
+    new Vue({
       el: '#content'
     });
   });
