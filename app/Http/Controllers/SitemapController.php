@@ -87,6 +87,7 @@ class SitemapController extends Controller
                     ->where('local', true)
                     ->where('scope', 'public')
                     ->where('visibility', 'public')
+                    ->whereIn('type', ['text', 'image', 'video', 'photo:album', 'video:album'])
                     ->orderBy('likes_count', 'desc')
                     ->chunk(100, function ($chunkedStatuses) use (&$urls) {
                         foreach ($chunkedStatuses as $status) {
@@ -137,6 +138,7 @@ class SitemapController extends Controller
                         ->where('local', true)
                         ->where('scope', 'public')
                         ->where('visibility', 'public')
+                        ->whereIn('type', ['text', 'image', 'video', 'photo:album', 'video:album'])
                         ->orderBy('likes_count', 'desc')
                         ->chunk(100, function ($statuses) use (&$urls) {
                             $urls = array_merge($urls, $statuses->map(fn($status) => $status->url())->toArray());
@@ -187,6 +189,7 @@ class SitemapController extends Controller
                         ->where('local', true)
                         ->where('scope', 'public')
                         ->where('visibility', 'public')
+                        ->whereIn('type', ['text', 'image', 'video', 'photo:album', 'video:album'])
                         ->orderBy('likes_count', 'desc')
                         ->chunk(100, function ($statuses) use (&$urls) {
                             $urls = array_merge($urls, $statuses->map(fn($status) => $status->url())->toArray());
