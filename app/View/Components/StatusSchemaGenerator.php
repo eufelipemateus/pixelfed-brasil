@@ -27,7 +27,7 @@ class StatusSchemaGenerator extends Component
     public $name;
     public $description;
     public $duration;
-    public $thumbnailUrls;
+    public $thumbnail;
     public $embedUrl;
     public $views;
     public $regionsAllowed;
@@ -47,11 +47,11 @@ class StatusSchemaGenerator extends Component
         $creditText = null,
         $copyrightNotice = null,
         $locationName = null,
-        
+
         // Vídeo
         $name = null,
         $description = null,
-        $thumbnailUrls = null,
+        $thumbnail = null,
         $embedUrl = null,
         $views = 0,
         $regionsAllowed = null
@@ -73,7 +73,7 @@ class StatusSchemaGenerator extends Component
 
         $this->name = $name;
         $this->description = $description;
-        $this->thumbnailUrls = $thumbnailUrls;
+        $this->thumbnail = $thumbnail;
         $this->embedUrl = $embedUrl;
         $this->views = $views;
         $this->regionsAllowed = $regionsAllowed;
