@@ -179,6 +179,7 @@ class SitemapController extends Controller
                     $query->whereNull('users.is_admin')->orWhere('users.is_admin', false);
                 })
                 ->where('profiles.created_at', '<=', now()->subMonths(6))
+                ->select('profiles.*')
                 ->chunk(500, function ($profiles) use (&$urls) {
                     $urls = array_merge($urls, $profiles->map(fn($profile) => $profile->url())->toArray());
                     $profileIds = $profiles->pluck('id');
