@@ -95,6 +95,7 @@ class SitemapController extends Controller
                         }
                     });
             }
+            $urls = $this->filter404Urls($urls);
 
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-popular-{$index}.xml";
@@ -144,6 +145,8 @@ class SitemapController extends Controller
                             $urls = array_merge($urls, $statuses->map(fn($status) => $status->url())->toArray());
                         });
                 });
+
+            $urls = $this->filter404Urls($urls);
 
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-recents-{$index}.xml";
@@ -197,6 +200,7 @@ class SitemapController extends Controller
                         });
                 });
 
+            $urls = $this->filter404Urls($urls);
 
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-common-{$index}.xml";
@@ -214,5 +218,13 @@ class SitemapController extends Controller
 
         return response()->view('sitemap.part', ['urls' => $sitemaps])
             ->header('Content-Type', 'application/xml');
+    }
+
+
+    function filter404Urls(array $urls): array
+    {
+        return array_values(array_filter($urls, function ($url) {
+            return !str_contains($url, '/404');
+        }));
     }
 }
