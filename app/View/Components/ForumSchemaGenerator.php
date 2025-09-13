@@ -77,7 +77,8 @@ class ForumSchemaGenerator extends Component
             "contentUrl" => $status['media_attachments'][0]['url'],
             "name" => $this->headline,
             "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['thumbnail_url'] ?? null,
+            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
+            "description" => $this->articleBody,
         ] : null;
     }
 
@@ -88,7 +89,7 @@ class ForumSchemaGenerator extends Component
             "contentUrl" => $status['media_attachments'][0]['url'],
             "name" => $this->headline,
             "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['thumbnail_url'] ?? null,
+            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
         ] : null;
     }
 
@@ -124,8 +125,6 @@ class ForumSchemaGenerator extends Component
                 ],
                 "datePublished" => (new DateTime($comment['created_at']))->format(DateTime::ATOM),
                 "url" => $comment['url'] ?? null,
-                "thumbnailUrl" => $comment['media_attachments'][0]['thumbnail_url'] ?? null,
-                "description" => strip_tags($comment['content'] ?? ''),
                 "text" => $comment['content_text'] ?? '',
                 "interactionStatistic" => [
                     [
