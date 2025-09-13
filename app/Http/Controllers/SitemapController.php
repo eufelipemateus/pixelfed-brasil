@@ -172,7 +172,7 @@ class SitemapController extends Controller
                 ->where('is_private', false)
                 ->whereNull('profiles.deleted_at')
                 ->whereNotNull('user_id')
-                ->orderByDesc('created_at')
+                ->orderByDesc('profiles.created_at')
                 ->leftJoin('users', 'profiles.user_id', '=', 'users.id')
                 ->where('is_popular', false)
                 ->where(function ($query) {
