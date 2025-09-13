@@ -1,6 +1,103 @@
 @extends('site.help.partial.template', ['breadcrumb'=>'Sharing Photos & Videos'])
 
+
 @section('section')
+    <script type="application/ld+json">
+    {!! json_encode([
+        '@@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => [
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howCreatePostAask"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howCreatePostAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howAddMultiplePhotosAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howAddMultiplePhotosAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howCaptionBeforeSharePhotoAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howCaptionBeforeSharePhotoAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howAddFilterAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howAddFilterAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howAddDescriptionPhotoAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howAddDescriptionPhotoAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howMediaTypesCanUploadAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howMediaTypesCanUploadAnswer") . ' ' . implode(', ', explode(',', config_cache('pixelfed.media_types'))),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howDisablecommentsAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howDisablecommentsAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howManyTagMentionAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howManyTagMentionAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.whatArchiveMeanAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.whatArchiveMeanAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howArchivePostAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howArchivePostAnswer"),
+                ],
+            ],
+            [
+                '@type' => 'Question',
+                'name' => __("helpcenter.howUnarchivePostAsk"),
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => __("helpcenter.howUnarchivePostAnswer"),
+                ],
+            ],
+        ]
+    ]) !!}
+    </script>
 
 	<div class="title">
 		<h3 class="font-weight-bold">{{ __("helpcenter.sharingMediaTitle")  }}</h3>
