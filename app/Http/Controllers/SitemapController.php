@@ -99,15 +99,19 @@ class SitemapController extends Controller
 
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-popular-{$index}.xml";
+                $path = "sitemaps/{$filename}";
+                if (Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
                 Storage::disk('public')->put(
-                    "sitemaps/{$filename}",
+                    $path,
                     view('sitemap.xml', [
                         'urls' => $chunk,
                         'frequency' => $frequency,
                         'priority' => $priority
                     ])->render()
                 );
-                return Storage::disk('public')->url("sitemaps/{$filename}");
+                return Storage::disk('public')->url($path);
             })->toArray();
         });
 
@@ -125,6 +129,7 @@ class SitemapController extends Controller
             Profile::where('unlisted', false)
                 ->where('is_private', false)
                 ->whereNull('deleted_at')
+                ->whereNull('profiles.status')
                 ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->where('is_popular', false)
@@ -150,15 +155,19 @@ class SitemapController extends Controller
 
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-recents-{$index}.xml";
+                $path = "sitemaps/{$filename}";
+                if (Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
                 Storage::disk('public')->put(
-                    "sitemaps/{$filename}",
+                    $path,
                     view('sitemap.xml', [
                         'urls' => $chunk,
                         'frequency' => $frequency,
                         'priority' => $priority
                     ])->render()
                 );
-                return Storage::disk('public')->url("sitemaps/{$filename}");
+                return Storage::disk('public')->url($path);
             })->toArray();
         });
 
@@ -178,6 +187,7 @@ class SitemapController extends Controller
                 ->orderByDesc('profiles.created_at')
                 ->leftJoin('users', 'profiles.user_id', '=', 'users.id')
                 ->where('is_popular', false)
+                ->whereNull('profiles.status')
                 ->where(function ($query) {
                     $query->whereNull('users.is_admin')->orWhere('users.is_admin', false);
                 })
@@ -202,17 +212,24 @@ class SitemapController extends Controller
 
             $urls = $this->filter404Urls($urls);
 
+
+
+
             return collect($urls)->chunk(self::CHUNK_SIZE)->map(function ($chunk, $index) use ($frequency, $priority) {
                 $filename = "sitemap-common-{$index}.xml";
+                $path = "sitemaps/{$filename}";
+                if (Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
                 Storage::disk('public')->put(
-                    "sitemaps/{$filename}",
+                    $path,
                     view('sitemap.xml', [
                         'urls' => $chunk,
                         'frequency' => $frequency,
                         'priority' => $priority
                     ])->render()
                 );
-                return Storage::disk('public')->url("sitemaps/{$filename}");
+                return Storage::disk('public')->url($path);
             })->toArray();
         });
 
