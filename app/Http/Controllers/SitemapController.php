@@ -124,6 +124,7 @@ class SitemapController extends Controller
             Profile::where('unlisted', false)
                 ->where('is_private', false)
                 ->whereNull('deleted_at')
+                ->whereNull('profiles.status')
                 ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->where('is_popular', false)
@@ -175,6 +176,7 @@ class SitemapController extends Controller
                 ->orderByDesc('profiles.created_at')
                 ->leftJoin('users', 'profiles.user_id', '=', 'users.id')
                 ->where('is_popular', false)
+                ->whereNull('profiles.status')
                 ->where(function ($query) {
                     $query->whereNull('users.is_admin')->orWhere('users.is_admin', false);
                 })
