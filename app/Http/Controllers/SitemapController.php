@@ -123,6 +123,7 @@ class SitemapController extends Controller
             Profile::where('unlisted', false)
                 ->where('is_private', false)
                 ->whereNull('deleted_at')
+                ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->chunk(500, function ($profiles) use (&$urls) {
@@ -167,6 +168,7 @@ class SitemapController extends Controller
             Profile::where('unlisted', false)
                 ->where('is_private', false)
                 ->whereNull('deleted_at')
+                ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->where('created_at', '<=', now()->subMonths(6))
                 ->chunk(500, function ($profiles) use (&$urls) {
