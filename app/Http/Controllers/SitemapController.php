@@ -170,7 +170,7 @@ class SitemapController extends Controller
 
             Profile::where('unlisted', false)
                 ->where('is_private', false)
-                ->whereNull('deleted_at')
+                ->whereNull('profiles.deleted_at')
                 ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->leftJoin('users', 'profiles.user_id', '=', 'users.id')
@@ -178,7 +178,7 @@ class SitemapController extends Controller
                 ->where(function ($query) {
                     $query->whereNull('users.is_admin')->orWhere('users.is_admin', false);
                 })
-                ->where('created_at', '<=', now()->subMonths(6))
+                ->where('profiles.created_at', '<=', now()->subMonths(6))
                 ->chunk(500, function ($profiles) use (&$urls) {
                     $urls = array_merge($urls, $profiles->map(fn($profile) => $profile->url())->toArray());
                     $profileIds = $profiles->pluck('id');
