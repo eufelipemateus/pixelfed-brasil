@@ -132,6 +132,7 @@ class SitemapController extends Controller
                 ->whereNotNull('user_id')
                 ->orderByDesc('created_at')
                 ->where('is_popular', false)
+                ->whereNull('status')
                 ->where('created_at', '>=', now()->subMonths(6))
                 ->chunk(500, function ($profiles) use (&$urls) {
                     $urls = array_merge($urls, $profiles->map(fn($profile) => $profile->url())->toArray());
