@@ -17,7 +17,7 @@ use App\UserFilter;
 use App\Util\ActivityPub\Contracts\ActivityHandler;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Support\Str;
-use Purify;
+use App\Services\SanitizeService;
 use App\Profile;
 use App\Services\AccountService;
 use App\Models\PollVote;
@@ -164,7 +164,7 @@ class CreateHandler implements ActivityHandler
             return;
         }
 
-        $msg = Purify::clean($activity['content']);
+        $msg = app(SanitizeService::class)->html($activity['content']);
         $msgText = strip_tags($msg);
 
         if (Str::startsWith($msgText, '@' . $profile->username)) {

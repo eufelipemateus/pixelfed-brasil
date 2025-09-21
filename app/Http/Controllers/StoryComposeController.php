@@ -14,6 +14,7 @@ use App\Notification;
 use App\Report;
 use App\Services\FollowerService;
 use App\Services\MediaPathService;
+use App\Services\StoryIndexService;
 use App\Services\StoryService;
 use App\Services\UserRoleService;
 use App\Status;
@@ -240,6 +241,9 @@ class StoryComposeController extends Controller
         $story->can_react = $request->input('can_react');
         $story->save();
 
+        $index = app(StoryIndexService::class);
+        $index->indexStory($story);
+
         StoryService::delLatest($story->profile_id);
         StoryFanout::dispatch($story)->onQueue('story');
         StoryService::addRotateQueue($story->id);
@@ -260,6 +264,9 @@ class StoryComposeController extends Controller
             ->findOrFail($id);
         $story->active = false;
         $story->save();
+
+        $index = app(StoryIndexService::class);
+        $index->removeStory($story->id, $story->profile_id);
 
         StoryDelete::dispatch($story)->onQueue('story');
 

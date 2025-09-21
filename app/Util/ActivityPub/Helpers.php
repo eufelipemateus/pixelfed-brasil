@@ -27,7 +27,7 @@ use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
-use Purify;
+use App\Services\SanitizeService;
 use Validator;
 use App\Jobs\InboxPipeline\LoadOutbox;
 
@@ -677,7 +677,7 @@ class Helpers
         bool $commentsDisabled
     ): Status {
         $caption =  isset($activity['content'])
-            ? Purify::clean($activity['content']) :
+            ? app(SanitizeService::class)->html($activity['content']) :
             '';
 
         return Status::updateOrCreate(
@@ -695,7 +695,7 @@ class Helpers
                 'scope' => $scope,
                 'visibility' => $scope,
                 'cw_summary' => ($cw && isset($activity['summary'])) ?
-                    Purify::clean(strip_tags($activity['summary']))
+                    app(SanitizeService::class)->html($activity['summary'])
                     : null,
                 'comments_disabled' => $commentsDisabled,
             ]
