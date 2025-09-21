@@ -8,7 +8,8 @@ use App\Status;
 use App\Instance;
 use App\Models\RemoteReport;
 use App\Profile;
-use Purify;
+use App\Services\SanitizeService;
+
 
 class FlagHandler implements ActivityHandler
 {
@@ -40,9 +41,9 @@ class FlagHandler implements ActivityHandler
         $content = null;
         if (isset($this->payload['content'])) {
             if (strlen($this->payload['content']) > 5000) {
-                $content = Purify::clean(substr($this->payload['content'], 0, 5000) . ' ... (truncated message due to exceeding max length)');
+                $content = app(SanitizeService::class)->html(substr($this->payload['content'], 0, 5000).' ... (truncated message due to exceeding max length)');
             } else {
-                $content = Purify::clean($this->payload['content']);
+                $content = app(SanitizeService::class)->html($this->payload['content']);
             }
         }
         $object = $this->payload['object'];

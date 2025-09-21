@@ -13,7 +13,8 @@ use App\Services\AccountService;
 use App\Services\FollowerService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
-use Purify;
+use App\Services\SanitizeService;
+
 
 class StoryReplyHandler implements ActivityHandler
 {
@@ -37,7 +38,9 @@ class StoryReplyHandler implements ActivityHandler
         $actor = $this->payload['actor'];
         $storyUrl = $this->payload['inReplyTo'];
         $to = $this->payload['to'];
-        $text = Purify::clean($this->payload['content']);
+        $text = app(SanitizeService::class)->html($this->payload['content']);
+
+
 
         if (parse_url($id, PHP_URL_HOST) !== parse_url($actor, PHP_URL_HOST)) {
             return;
