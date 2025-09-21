@@ -4758,14 +4758,9 @@ class ApiV1Controller extends Controller
         $pid = $user->profile_id;
 
         Notification::whereNull('read_at')
-        ->whereProfileId($pid)
-        ->chunk(100, function ($chunk) {
-            foreach ($chunk as $n) {
-            $n->read_at = now();
-            $n->save();
-            Cache::forget('service:notification:'.$n->id);
-            }
-        });
+            ->whereProfileId($pid)
+            ->update(['read_at' => now()]);
+        NotificationWarmUserCache::dispatch($pid);
 
         return $this->json(['success' => true]);
     }

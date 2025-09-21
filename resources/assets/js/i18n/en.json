@@ -128,7 +128,8 @@
         "dms": "DMs",
         "dmsDescription": "Direct messages you have with other accounts",
         "accept": "Accept",
-        "reject": "Reject"
+        "reject": "Reject",
+        "markAllRead": "Confirm you want to mark all as read?"
     },
     "post": {
         "shareToFollowers": "Share to followers",
