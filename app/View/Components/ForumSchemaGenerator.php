@@ -59,6 +59,7 @@ class ForumSchemaGenerator extends Component
             $this->getImage($original);
         } elseif ($mediaCount && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album")) {
             $this->getVideo($original);
+            $this->getImage($original, true);
         }
 
 
@@ -77,18 +78,19 @@ class ForumSchemaGenerator extends Component
             "contentUrl" => $status['media_attachments'][0]['url'],
             "name" => $this->headline,
             "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['thumbnail_url'] ?? null,
+            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
+            "description" => $this->articleBody,
         ] : null;
     }
 
-    public function getImage($status)
+    public function getImage($status, $forceThumbnail = false)
     {
         $this->image = count($status['media_attachments']) ?  [
             "@type" => "ImageObject",
-            "contentUrl" => $status['media_attachments'][0]['url'],
+            "contentUrl" => $forceThumbnail ? $status['media_attachments'][0]['preview_url'] : $status['media_attachments'][0]['url'],
             "name" => $this->headline,
             "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['thumbnail_url'] ?? null,
+            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
         ] : null;
     }
 

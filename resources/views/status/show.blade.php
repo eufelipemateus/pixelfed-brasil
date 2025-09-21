@@ -95,7 +95,7 @@ if($displayName && $captionPreview) {
     @endif<meta property="og:description" content="{{ $ogDescription }}">
     <meta property="og:published_time" content="{{$s['created_at']}}">
     <meta property="profile:username" content="{{ $wf }}">
-    <link href='{{$s['url']}}' rel='alternate' type='application/activity+json'>
+    <link href='{{$s["url"]}}' rel='alternate' type='application/activity+json'>
     <meta name="description" content="{{ $ogDescription }}">
 @endpush
 

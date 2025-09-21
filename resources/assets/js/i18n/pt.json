@@ -127,7 +127,8 @@
         "dms": "DMs",
         "dmsDescription": "Mensagens diretas que voc\u00ea tem com outras contas",
         "accept": "Aceitar",
-        "reject": "Rejeitar"
+        "reject": "Rejeitar",
+        "markAllRead": "Confirmar que deseja marcar todas como lidas?"
     },
     "post": {
         "shareToFollowers": "Partilhar com os seguidores",
