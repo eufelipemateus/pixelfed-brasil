@@ -6,7 +6,7 @@
 					<span class="text-muted font-weight-bold">{{ $t("notifications.title")}}</span>
 					<div v-if="feed && feed.length">
                         <button v-if="totalUnread>0" type="button" @click="markAllRead()" class="btn btn-primary btn-sm">
-                            <i class="fas fa-envelope"></i> <span class="badge text-bg-secondary text-red">{{totalUnread}}</span>
+                            <i class="fas fa-envelope"></i> <span class="badge text-bg-secondary text-red">{{totalUnread > 99 ? '99+' : totalUnread }}</span>
                         </button>
                         <button v-else type="button" @click="markAllRead()" class="btn btn-outline-light btn-sm" disabled>
                             <i class="far fa-envelope-open"></i>
@@ -179,10 +179,12 @@
 
 						<div v-else>
 							<intersect v-if="hasLoaded && canLoadMore" @enter="enterIntersect">
-								<placeholder small style="margin-top: -6px" />
-								<placeholder small/>
-								<placeholder small/>
-								<placeholder small/>
+								<div>
+                                    <placeholder small style="margin-top: -6px" />
+                                    <placeholder small/>
+                                    <placeholder small/>
+                                    <placeholder small/>
+                                </div>
 							</intersect>
 
 							<div v-else class="d-block" style="height: 10px;">
@@ -233,6 +235,19 @@
 		destroyed() {
 			clearTimeout(this.retryTimeout);
 		},
+        watch: {
+            totalUnread(to) {
+                if(to < 0) {
+                    this.totalUnread = 0;
+                    document.title = `${document.title.replace(/^\(\d+\+\?\) /, '').replace(/^\(\d+\) /, '')}`;
+                }
+                if(to > 99) {
+                    document.title = `(99+) ${document.title.replace(/^\(\d+\+\?\) /, '')}`;
+                } else {
+                    document.title = `(${this.totalUnread}) ${document.title.replace(/^\(\d+\+\?\) /, '').replace(/^\(\d+\) /, '')}`;
+                }
+            }
+        },
 
 		methods: {
 			init() {
