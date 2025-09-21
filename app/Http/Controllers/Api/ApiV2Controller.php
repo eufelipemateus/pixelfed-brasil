@@ -65,7 +65,7 @@ class ApiV2Controller extends Controller
             return [
                 'domain' => config('pixelfed.domain.app'),
                 'title' => config_cache('app.name'),
-                'version' => '3.5.3 (compatible; Pixelfed '.config('pixelfed.version').')',
+                'version' => ' (compatible; Pixelfed '.config('pixelfed.version').')',
                 'source_url' => 'https://github.com/pixelfed/pixelfed',
                 'description' => config_cache('app.short_description'),
                 'usage' => [
