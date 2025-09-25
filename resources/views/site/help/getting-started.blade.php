@@ -4,11 +4,11 @@
 @section('section')
 <script type="application/ld+json">
 {!! json_encode([
-    "@context" => "https://schema.org",
-    "@type" => "FAQPage",
+    "@@context" => "https://schema.org",
+    "@@type" => "FAQPage",
     "mainEntity" => [
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.howCreateAccountAask'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
@@ -16,7 +16,7 @@
             ]
         ],
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.howUpdateProfileAsk'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
@@ -24,7 +24,7 @@
             ]
         ],
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.howInactiveUserAsk'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
@@ -32,7 +32,7 @@
             ]
         ],
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.whyChantUserAsk'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
@@ -40,7 +40,7 @@
             ]
         ],
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.whyReceiveEmaillAsk'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
@@ -48,7 +48,7 @@
             ]
         ],
         [
-            "@type" => "Question",
+            "@@type" => "Question",
             "name" => __('helpcenter.whyExistsEmailAsk'),
             "acceptedAnswer" => [
                 "@type" => "Answer",
