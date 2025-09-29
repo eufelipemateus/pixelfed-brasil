@@ -1742,7 +1742,7 @@ class ApiV1Controller extends Controller
                 'short_description' => config_cache('app.short_description'),
                 'description' => config_cache('app.description'),
                 'email' => config('instance.email'),
-                'version' => '3.5.3 (compatible; Pixelfed ' . config('pixelfed.version') . ')',
+                'version' => ' (compatible; Pixelfed ' . config('pixelfed.version') . ')',
                 'urls' => [
                     'streaming_api' => null,
                 ],

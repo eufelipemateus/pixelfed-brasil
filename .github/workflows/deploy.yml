@@ -99,6 +99,7 @@ jobs:
             echo "PF_ENABLE_GEOLOCATION=false" >> .env
             echo "ACCOUNT_DELETE_AFTER=30" >> .env
             echo "PF_OPTIMIZE_IMAGES=false" >> .env
+            echo "PF_OPTIMIZE_VIDEOS=false" >> .env
             echo "INSTANCE_SHOW_PEERS=true" >> .env
             echo "INSTANCE_POLLS=true" >> .env
             echo "ACTIVITY_PUB=true" >> .env
