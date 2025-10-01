@@ -158,7 +158,7 @@ class InstanceService
     {
         return Cache::remember(self::CACHE_KEY_SHARED_INBOXES_PUBLIC, 432000, function () {
             $bannedDomains = InstanceService::getBannedDomains();
-            return  Instance::whereNotNull('shared_inbox')
+            return  Instance::whereNotNull('shared_inbox')->where('nodeinfo_last_fetched', '>', now()->subMonths(3))
                 ->pluck('shared_inbox')
                 ->filter(function ($url) use ($bannedDomains) {
                     $domain = parse_url($url, PHP_URL_HOST);
