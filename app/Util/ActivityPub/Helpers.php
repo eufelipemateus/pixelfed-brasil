@@ -841,8 +841,8 @@ class Helpers
         $status->url = isset($res['url']) ? $res['url'] : $url;
         $status->uri = isset($res['url']) ? $res['url'] : $url;
         $status->object_url = $id;
-        $status->caption = strip_tags(Purify::clean($res['content'])) ?? $defaultCaption;
-        $status->rendered = Purify::clean($res['content'] ?? $defaultCaption);
+        $status->caption = strip_tags(app(SanitizeService::class)->html($res['content'])) ?? $defaultCaption;
+        $status->rendered = app(SanitizeService::class)->html($res['content'] ?? $defaultCaption);
         $status->created_at = Carbon::parse($ts)->tz('UTC');
         $status->in_reply_to_id = null;
         $status->local = false;
@@ -850,7 +850,7 @@ class Helpers
         $status->scope = 'draft';
         $status->visibility = 'draft';
         $status->cw_summary = $cw == true && isset($res['summary']) ?
-            Purify::clean(strip_tags($res['summary'])) : null;
+            app(SanitizeService::class)->html(strip_tags($res['summary'])) : null;
         $status->save();
 
         $poll = new Poll;
@@ -964,7 +964,7 @@ class Helpers
     {
         $media->blurhash = $data['blurhash'] ?? null;
         $media->caption = isset($data['name']) ?
-            Purify::clean($data['name']) :
+            app(SanitizeService::class)->html($data['name']) :
             null;
 
         if (isset($data['width'])) {
@@ -1079,7 +1079,7 @@ class Helpers
         }
 
         if (isset($data['name'])) {
-            $media->caption = Purify::clean($data['name']);
+            $media->caption = app(SanitizeService::class)->html($data['name']);
         }
 
         if (isset($data['width'])) {
@@ -1191,7 +1191,7 @@ class Helpers
         $profile = Profile::updateOrCreate(
             [
                 'domain' => strtolower($domain),
-                'username' => Purify::clean($webfinger),
+                'username' => app(SanitizeService::class)->html($webfinger),
             ],
             self::buildProfileData($res, $webfinger, $movedToPid)
         );
@@ -1231,7 +1231,7 @@ class Helpers
             return null;
         }
 
-        return Purify::clean($username);
+        return app(SanitizeService::class)->html($username);
     }
 
     /**
@@ -1292,11 +1292,11 @@ class Helpers
     public static function buildProfileData(array $res, string $webfinger, ?int $movedToPid): array
     {
         return [
-            'webfinger' => Purify::clean($webfinger),
+            'webfinger' => app(SanitizeService::class)->html($webfinger),
             'key_id' => $res['publicKey']['id'],
             'remote_url' => $res['id'],
-            'name' => isset($res['name']) ? Purify::clean($res['name']) : 'user',
-            'bio' => isset($res['summary']) ? Purify::clean($res['summary']) : null,
+            'name' => isset($res['name']) ? app(SanitizeService::class)->html($res['name']) : 'user',
+            'bio' => isset($res['summary']) ? app(SanitizeService::class)->html($res['summary']) : null,
             'sharedInbox' => $res['endpoints']['sharedInbox'] ?? null,
             'inbox_url' => $res['inbox'],
             'outbox_url' => $res['outbox'] ?? null,
