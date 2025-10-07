@@ -170,7 +170,7 @@ class GroupsFeedController extends Controller
             $status = GroupPostService::get($id, $k);
             if($status && $user) {
                 $pid = $user->profile_id;
-                $sid = $status['account']['id'];
+                $sid = $status['account']['id'] ?? false;
                 $status['favourited'] = (bool) GroupsLikeService::liked($pid, $status['id']);
                 $status['favourites_count'] = GroupsLikeService::count($status['id']);
                 $status['relationship'] = $pid == $sid ? [] : RelationshipService::get($pid, $sid);
