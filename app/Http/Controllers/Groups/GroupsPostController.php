@@ -58,7 +58,7 @@ class GroupsPostController extends Controller
         $gp->profile_id = $pid;
         $gp->caption = e($caption);
         $gp->type = $type;
-        $gp->visibility = 'draft';
+        $gp->visibility = 'public';
         $gp->save();
 
         $status = $gp;

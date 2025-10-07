@@ -27,7 +27,7 @@ class GroupPostTransformer extends Fractal\TransformerAbstract
             'id'                        => (string) $status->id,
             'gid'                       => $status->group_id ? (string) $status->group_id : null,
             'url'                       => '/groups/' . $status->group_id . '/p/' . $status->id,
-            'content'                   => $status->caption,
+            'content'                   => $status->caption ? nl2br(Autolink::create()->autolink($status->caption)) : '',
             'content_text'              => $status->caption,
             'created_at'                => str_replace('+00:00', 'Z', $status->created_at->format(DATE_RFC3339_EXTENDED)),
             'reblogs_count'             => $status->reblogs_count ?? 0,
