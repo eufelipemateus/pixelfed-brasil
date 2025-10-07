@@ -178,7 +178,7 @@ class GroupsFeedController extends Controller
             return $status;
         })
         ->filter(function($s) use($filtered) {
-            return $s && (in_array($s['account']['id'], $filtered) == false || $s['account']['id'] == null);
+            return $s && isset($s['account']['id']) && (!in_array($s['account']['id'], $filtered) || $s['account']['id'] == null);
         })
         ->values()
         ->toArray();
