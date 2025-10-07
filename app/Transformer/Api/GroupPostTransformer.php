@@ -52,7 +52,14 @@ class GroupPostTransformer extends Fractal\TransformerAbstract
             'parent'                    => [],
             'place'                     => null,
             'local'                     => (bool) !$status->remote_url,
-            'account'                   => AccountService::get($status->profile_id, true),
+            'account'                   => $status->profile_id
+                                            ? AccountService::get($status->profile_id, true)
+                                            : [
+                                                'id' => null,
+                                                'username' => 'unknown',
+                                                'display_name' => 'Usuário desconhecido',
+                                                'avatar' => null,
+                                            ],
             'poll'                      => [],
         ];
     }
