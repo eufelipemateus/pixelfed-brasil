@@ -40,7 +40,7 @@ class Nodeinfo
                     'outbound' => [],
                 ],
                 'software' => [
-                    'name' => 'pixelfed-brasil',
+                    'name' => 'pixelfed', /// Change to pixelfed-brasil
                     'version' => config('pixelfed.version'),
                 ],
                 'usage' => [
