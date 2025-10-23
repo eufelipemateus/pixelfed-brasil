@@ -232,7 +232,7 @@ return [
     |
     */
     'user_invites' => [
-        'enabled' => env('PF_USER_INVITES', true),
+        'enabled' => env('PF_USER_INVITES', false),
     ],
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),
