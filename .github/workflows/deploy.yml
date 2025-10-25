@@ -167,6 +167,9 @@ jobs:
             echo "PF_DEFAULT_NO_AUTOLINK=false" >> .env
             echo "PF_IMPORT_FROM_INSTAGRAM=${{vars.PF_IMPORT_FROM_INSTAGRAM}}" >> .env
 
+            echo "PF_USER_INVITES=false" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=false" >> .env
+
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
 
