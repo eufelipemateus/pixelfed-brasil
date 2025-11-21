@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\AccountLog;
 use App\EmailVerification;
+use App\Follower;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\StatusController;
 use App\Http\Resources\StatusStateless;
@@ -31,7 +32,9 @@ use App\Services\NotificationAppGatewayService;
 use App\Services\ProfileStatusService;
 use App\Services\PublicTimelineService;
 use App\Services\PushNotificationService;
+use App\Services\SanitizeService;
 use App\Services\StatusService;
+use App\Services\UserRoleService;
 use App\Services\UserStorageService;
 use App\Status;
 use App\StatusArchived;
@@ -156,7 +159,7 @@ class ApiV1Dot1Controller extends Controller
                 if ($object->profile_id == $user->profile_id) {
                     return $this->error('Cannot self report', 400, ['error_code' => 'ERROR_NO_SELF_REPORTS']);
                 }
-                if (! FollowerService::follows($user->profile_id, $object->profile_id)) {
+                if (! Follower::whereProfileId($user->profile_id)->whereFollowingId($object->profile_id)->exists()) {
                     return $this->error('Invalid object id', 400, ['error_code' => 'ERROR_INVALID_OBJECT_ID']);
                 }
                 $object_type = 'App\Story';
@@ -170,7 +173,6 @@ class ApiV1Dot1Controller extends Controller
 
             default:
                 return $this->error('Invalid report type', 400, ['error_code' => 'ERROR_REPORT_OBJECT_TYPE_INVALID']);
-                break;
         }
 
         if ($exists !== 0) {
@@ -1296,7 +1298,8 @@ class ApiV1Dot1Controller extends Controller
             return [];
         }
         $defaultCaption = '';
-        $content = $request->filled('status') ? strip_tags(Purify::clean($request->input('status'))) : $defaultCaption;
+        $cleanedStatus = app(SanitizeService::class)->html($request->input('status', ''));
+        $content = $request->filled('status') ? strip_tags($cleanedStatus) : $defaultCaption;
         $cw = $user->profile->cw == true ? true : $request->boolean('sensitive', false);
         $spoilerText = $cw && $request->filled('spoiler_text') ? $request->input('spoiler_text') : null;
         $rendered = Autolink::create()->autolink($content);

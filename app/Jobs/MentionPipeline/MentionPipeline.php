@@ -18,6 +18,7 @@ use App\Services\StatusService;
 use App\Services\AccountService;
 use App\Notifications\MentionNotification;
 use App\Profile;
+use Illuminate\Support\Facades\Log;
 
 class MentionPipeline implements ShouldQueue
 {
@@ -53,8 +54,33 @@ class MentionPipeline implements ShouldQueue
     {
         $status = $this->status;
         $mention = $this->mention;
-        $actor = $this->status->profile;
-        $target = $this->mention->profile_id;
+
+        // Verify status exists
+        if (!$status) {
+            Log::info("MentionPipeline: Status no longer exists, skipping job");
+            return;
+        }
+
+        // Verify mention exists
+        if (!$mention) {
+            Log::info("MentionPipeline: Mention no longer exists, skipping job");
+            return;
+        }
+
+        $actor = $status->profile;
+        $target = $mention->profile_id;
+
+        // Verify actor profile exists
+        if (!$actor) {
+            Log::info("MentionPipeline: Actor profile no longer exists for status {$status->id}, skipping job");
+            return;
+        }
+
+        // Verify target profile ID exists
+        if (!$target) {
+            Log::info("MentionPipeline: Target profile ID missing for mention {$mention->id}, skipping job");
+            return;
+        }
 
         $exists = Notification::whereProfileId($target)
                   ->whereActorId($actor->id)

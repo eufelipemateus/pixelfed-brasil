@@ -2,6 +2,14 @@
 
 ## [Unreleased](https://github.com/pixelfed/pixelfed/compare/v0.12.5...dev)
 
+- Update Status storage, add SanitizerService to fix spacing in html stripped content ([3686c9212](https://github.com/pixelfed/pixelfed/commit/3686c9212))
+- Update app config, add description and rule env variables ([0980519a9](https://github.com/pixelfed/pixelfed/commit/0980519a9))
+- Update InstanceService, fix total post count when config_cache is disabled ([f0bc9d66e](https://github.com/pixelfed/pixelfed/commit/f0bc9d66e))
+- Update media storage pipeline, improve support for non-local filesystems ([2e719bd00](https://github.com/pixelfed/pixelfed/commit/2e719bd00))
+-  ([](https://github.com/pixelfed/pixelfed/commit/))
+
+## [v0.12.6 (2025-09-03)](https://github.com/pixelfed/pixelfed/compare/v0.12.6...dev)
+
 ### Added
 - Pinned Posts ([2f655d000](https://github.com/pixelfed/pixelfed/commit/2f655d000))
 - Custom Filters ([#5928](https://github.com/pixelfed/pixelfed/pull/5928)) ([437d742ac](https://github.com/pixelfed/pixelfed/commit/437d742ac))
@@ -74,7 +82,9 @@
 - Update StoryIndexService, improve redis compatability ([dbba52303](https://github.com/pixelfed/pixelfed/commit/dbba52303))
 - Update StoryFetch, fix mass assignment bug preventing proper model creation ([1e3147028](https://github.com/pixelfed/pixelfed/commit/1e3147028))
 - Update StoryRotateMedia job, handle StoryIndexService cache invalidation ([e2a64c730](https://github.com/pixelfed/pixelfed/commit/e2a64c730))
--  ([](https://github.com/pixelfed/pixelfed/commit/))
+- Update ApiV1StoryController, fix viewer pagination ([5d4674daa](https://github.com/pixelfed/pixelfed/commit/5d4674daa))
+- Update StoryApiV1Controller, reduce min story size to 10kb ([f195102b3](https://github.com/pixelfed/pixelfed/commit/f195102b3))
+- Update ApiV1Dot1Controller, fix Story report follower check ([ec21eec50](https://github.com/pixelfed/pixelfed/commit/ec21eec50))
 
 ## [v0.12.5 (2025-03-23)](https://github.com/pixelfed/pixelfed/compare/v0.12.5...dev)
 
