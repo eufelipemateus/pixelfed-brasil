@@ -5,9 +5,9 @@ namespace App\Jobs\InboxPipeline;
 use Cache;
 use App\Profile;
 use App\Util\ActivityPub\{
-	Helpers,
-	HttpSignature,
-	Inbox
+    Helpers,
+    HttpSignature,
+    Inbox
 };
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

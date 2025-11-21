@@ -182,13 +182,10 @@ trait AdminReportController
                     switch ($tab) {
                         case 'home':
                             return $q->whereNull('appeal_handled_at');
-                            break;
                         case 'spam':
                             return $q->whereIsSpam(true);
-                            break;
                         case 'not-spam':
                             return $q->whereIsSpam(false);
-                            break;
                     }
                 })
                 ->latest()
@@ -729,7 +726,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'delete':
                 $profile = Profile::find($report->reported_profile_id);
@@ -761,7 +757,6 @@ trait AdminReportController
                 StoryDelete::dispatch($story)->onQueue('story');
 
                 return [200];
-                break;
 
             case 'delete-all':
                 $profile = Profile::find($report->reported_profile_id);
@@ -793,7 +788,6 @@ trait AdminReportController
                 });
 
                 return [200];
-                break;
         }
     }
 
@@ -808,7 +802,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'nsfw':
                 if ($report->object_type === 'App\Profile') {
@@ -868,7 +861,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'unlist':
                 if ($report->object_type === 'App\Profile') {
@@ -928,7 +920,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'private':
                 if ($report->object_type === 'App\Profile') {
@@ -988,7 +979,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'delete':
                 if (config('pixelfed.account_deletion') == false) {
@@ -1071,7 +1061,6 @@ trait AdminReportController
                 }
 
                 return [200];
-                break;
         }
     }
 
@@ -1086,7 +1075,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'nsfw':
                 $status = Status::find($report->object_id);
@@ -1121,7 +1109,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'private':
                 $status = Status::find($report->object_id);
@@ -1158,7 +1145,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'unlist':
                 $status = Status::find($report->object_id);
@@ -1197,7 +1183,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
 
             case 'delete':
                 $status = Status::find($report->object_id);
@@ -1227,7 +1212,6 @@ trait AdminReportController
                     ]);
 
                 return [200];
-                break;
         }
     }
 

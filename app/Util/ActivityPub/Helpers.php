@@ -19,6 +19,7 @@ use App\Services\DomainService;
 use App\Services\InstanceService;
 use App\Services\MediaPathService;
 use App\Services\NetworkTimelineService;
+use App\Services\SanitizeService;
 use App\Services\UserFilterService;
 use App\Status;
 use App\Util\Media\License;
@@ -177,7 +178,7 @@ class Helpers
                 return false;
             }
 
-            if (!$disableDNSCheck && ! self::passesSecurityChecks($host, $disableDNSCheck, $forceBanCheck)) {
+            if (! $disableDNSCheck && ! self::passesSecurityChecks($host, $disableDNSCheck, $forceBanCheck)) {
                 return false;
             }
 
@@ -676,9 +677,12 @@ class Helpers
         string $scope,
         bool $commentsDisabled
     ): Status {
-        $caption =  isset($activity['content'])
-            ? app(SanitizeService::class)->html($activity['content']) :
+        $caption = isset($activity['content']) ?
+            app(SanitizeService::class)->html($activity['content']) :
             '';
+        $cwSummary = ($cw && isset($activity['summary'])) ?
+            app(SanitizeService::class)->html($activity['summary']) :
+            null;
 
         return Status::updateOrCreate(
             ['uri' => $url],
@@ -836,6 +840,9 @@ class Helpers
         })->toArray();
 
         $defaultCaption = '';
+        $cleanedCaption = ! empty($res['content']) ?
+            app(SanitizeService::class)->html($res['content']) :
+            null;
         $status = new Status;
         $status->profile_id = $profile->id;
         $status->url = isset($res['url']) ? $res['url'] : $url;

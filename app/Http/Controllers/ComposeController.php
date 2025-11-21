@@ -523,7 +523,7 @@ class ComposeController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'media.*' => 'required',
             'media.*.id' => 'required|integer|min:1',
             'media.*.filter_class' => 'nullable|alpha_dash|max:30',
@@ -707,7 +707,7 @@ class ComposeController extends Controller
     {
         abort_unless(config('exp.top'), 404);
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'cw' => 'nullable|boolean',
             'visibility' => 'required|string|in:public,private,unlisted|min:2|max:10',
             'place' => 'nullable',
@@ -861,7 +861,7 @@ class ComposeController extends Controller
     public function createPoll(Request $request)
     {
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'cw' => 'nullable|boolean',
             'visibility' => 'required|string|in:public,private',
             'comments_disabled' => 'nullable',

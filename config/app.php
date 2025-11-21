@@ -102,9 +102,9 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
-    'short_description' => 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.',
-    'description' => 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.',
-    'rules' => null,
+    'short_description' => env('PF_SHORT_DESCRIPTION', 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.'),
+    'description' => env('PF_DESCRIPTION', 'Pixelfed is an image sharing platform, an ethical alternative to centralized platforms.'),
+    'rules' => env('PF_RULES', null),
     'logo' => '/img/pixelfed-icon-color.svg',
     'banner_image' => '/storage/headers/default.jpg',
     'dev_log' => env('PIXELFED_DEV_LOG', false),
@@ -151,6 +151,7 @@ return [
         /*
          * Package Service Providers...
          */
+        ProtoneMedia\LaravelFFMpeg\Support\ServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -217,7 +218,7 @@ return [
 
         'PrettyNumber' => App\Util\Lexer\PrettyNumber::class,
         'Purify' => Stevebauman\Purify\Facades\Purify::class,
-        'FFMpeg' => Pbmedia\LaravelFFMpeg\FFMpegFacade::class,
+        'FFMpeg' => ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::class,
         'Captcha' => Buzz\LaravelHCaptcha\CaptchaFacade::class,
     ],
 
