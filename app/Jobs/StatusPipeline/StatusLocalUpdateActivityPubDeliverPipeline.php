@@ -2,7 +2,7 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use Cache, Log;
+use Illuminate\Support\Facades\Log;
 use App\Status;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,7 +46,18 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
     public function handle()
     {
         $status = $this->status;
-        $profile = $status->profile;
+		// Verify status exists
+		if (!$status) {
+			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Status no longer exists, skipping job");
+			return;
+		}
+
+		$profile = $status->profile;
+		// Verify profile exists
+		if (!$profile) {
+			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
+			return;
+		}
 
         // ignore group posts
         // if($status->group_id != null) {

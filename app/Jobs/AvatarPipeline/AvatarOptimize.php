@@ -4,6 +4,7 @@ namespace App\Jobs\AvatarPipeline;
 
 use App\Avatar;
 use App\Profile;
+use App\Util\Media\ImageDriverManager;
 use Cache;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -57,19 +58,7 @@ class AvatarOptimize implements ShouldQueue
         $fileInfo = pathinfo($file);
         $extension = strtolower($fileInfo['extension'] ?? 'jpg');
 
-        $driver = match(config('image.driver')) {
-            'imagick' => \Intervention\Image\Drivers\Imagick\Driver::class,
-            'vips' => \Intervention\Image\Drivers\Vips\Driver::class,
-            default => \Intervention\Image\Drivers\Gd\Driver::class
-        };
-
-        $imageManager = new ImageManager(
-            $driver,
-            autoOrientation: true,
-            decodeAnimation: true,
-            blendingColor: 'ffffff',
-            strip: true
-        );
+        $imageManager = ImageDriverManager::createImageManager();
 
         $quality = config_cache('pixelfed.image_quality');
 
@@ -107,9 +96,13 @@ class AvatarOptimize implements ShouldQueue
             Cache::forget('avatar:'.$avatar->profile_id);
             $this->deleteOldAvatar($avatar->media_path, $this->current);
 
-            $avatar->cdn_url = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
-            $avatar->save();
-        } catch (Exception $e) {
+            if ((bool) config_cache('pixelfed.cloud_storage') && (bool) config_cache('instance.avatar.local_to_cloud')) {
+                $this->uploadToCloud($avatar);
+            } else {
+                $avatar->cdn_url = null;
+                $avatar->save();
+            }
+        } catch (\Exception $e) {
         }
     }
 

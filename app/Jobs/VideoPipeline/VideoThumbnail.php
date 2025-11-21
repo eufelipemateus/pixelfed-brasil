@@ -7,17 +7,18 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\File;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use FFMpeg;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 use App\Media;
 use App\Jobs\MediaPipeline\MediaStoragePipeline;
 use App\Util\Media\Blurhash;
 use App\Services\MediaService;
 use App\Services\StatusService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Exception;
 
 class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
 {
@@ -110,9 +111,7 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             }
 
         } catch (Exception $e) {
-
-        } finally {
-           @unlink($tempFile);
+            Log::error("VideoThumbnail: Failed to generate thumbnail for media {$media->id}: " . $e->getMessage());
         }
 
         if($media->status_id) {
