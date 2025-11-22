@@ -6,8 +6,7 @@ use App\Util\Media\License;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Storage;
-
+use Illuminate\Support\Facades\Storage;
 class Media extends Model
 {
     use SoftDeletes;
@@ -46,6 +45,9 @@ class Media extends Model
             return $this->remote_url;
         }
 
+        if (empty($this->media_path)) {
+            abort(500, 'Media path vazio ao gerar URL do arquivo.');
+        }
         return url(Storage::url($this->media_path));
     }
 
