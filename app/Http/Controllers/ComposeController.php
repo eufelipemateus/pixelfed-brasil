@@ -37,6 +37,7 @@ use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use App\Util\Lexer\Autolink;
 use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
+use Illuminate\Support\Facades\Log;
 
 class ComposeController extends Controller
 {
@@ -108,6 +109,7 @@ class ComposeController extends Controller
         abort_if(in_array($photo->getMimeType(), $mimes) == false, 400, 'Invalid media format');
 
         $storagePath = MediaPathService::get($user, 2);
+        Log::info('Storage path: '.$storagePath);
         $path = $photo->storePublicly($storagePath);
         $hash = \hash_file('sha256', $photo);
         $mime = $photo->getMimeType();

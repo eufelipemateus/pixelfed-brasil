@@ -45,9 +45,6 @@ class Media extends Model
             return $this->remote_url;
         }
 
-        if (empty($this->media_path)) {
-            abort(500, 'Media path vazio ao gerar URL do arquivo.');
-        }
         return url(Storage::url($this->media_path));
     }
 
