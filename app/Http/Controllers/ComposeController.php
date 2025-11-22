@@ -109,8 +109,10 @@ class ComposeController extends Controller
         abort_if(in_array($photo->getMimeType(), $mimes) == false, 400, 'Invalid media format');
 
         $storagePath = MediaPathService::get($user, 2);
-        Log::info('Storage path: '.$storagePath);
+        abort_if(empty($storagePath), 400, 'Storage path vazio');
+
         $path = $photo->storePublicly($storagePath);
+        abort_if($path === false, 500, 'Falha ao salvar no R2');
         $hash = \hash_file('sha256', $photo);
         $mime = $photo->getMimeType();
 
