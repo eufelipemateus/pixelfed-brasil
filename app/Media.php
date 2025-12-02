@@ -6,8 +6,7 @@ use App\Util\Media\License;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
-use Storage;
-
+use Illuminate\Support\Facades\Storage;
 class Media extends Model
 {
     use SoftDeletes;
@@ -22,8 +21,7 @@ class Media extends Model
     protected $casts = [
         'srcset' => 'array',
         'deleted_at' => 'datetime',
-        'skip_optimize' => 'boolean',
-        'replicated_at' => 'datetime',
+        'skip_optimize' => 'boolean'
     ];
 
     public function status()

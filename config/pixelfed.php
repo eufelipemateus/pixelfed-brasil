@@ -23,7 +23,7 @@ return [
     | This value is the version of your Pixelfed instance.
     |
     */
-    'version' => '0.12.5',
+    'version' => '0.12.6',
 
     /*
     |--------------------------------------------------------------------------
@@ -232,7 +232,7 @@ return [
     |
     */
     'user_invites' => [
-        'enabled' => env('PF_USER_INVITES', true),
+        'enabled' => env('PF_USER_INVITES', false),
     ],
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),

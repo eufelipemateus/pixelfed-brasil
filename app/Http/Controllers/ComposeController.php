@@ -28,15 +28,16 @@ use App\Transformer\Api\MediaTransformer;
 use App\UserFilter;
 use App\Util\Media\Filter;
 use App\Util\Media\License;
-use Auth;
-use Cache;
-use DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use App\Util\Lexer\Autolink;
 use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
+use Illuminate\Support\Facades\Log;
 
 class ComposeController extends Controller
 {
@@ -108,7 +109,10 @@ class ComposeController extends Controller
         abort_if(in_array($photo->getMimeType(), $mimes) == false, 400, 'Invalid media format');
 
         $storagePath = MediaPathService::get($user, 2);
+        abort_if(empty($storagePath), 400, 'Storage path vazio');
+
         $path = $photo->storePublicly($storagePath);
+        abort_if($path === false, 500, 'Falha ao salvar no R2');
         $hash = \hash_file('sha256', $photo);
         $mime = $photo->getMimeType();
 
@@ -523,7 +527,7 @@ class ComposeController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'media.*' => 'required',
             'media.*.id' => 'required|integer|min:1',
             'media.*.filter_class' => 'nullable|alpha_dash|max:30',
@@ -707,7 +711,7 @@ class ComposeController extends Controller
     {
         abort_unless(config('exp.top'), 404);
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'cw' => 'nullable|boolean',
             'visibility' => 'required|string|in:public,private,unlisted|min:2|max:10',
             'place' => 'nullable',
@@ -861,7 +865,7 @@ class ComposeController extends Controller
     public function createPoll(Request $request)
     {
         $this->validate($request, [
-            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length', 500),
+            'caption' => 'nullable|string|max:'.config_cache('pixelfed.max_caption_length'),
             'cw' => 'nullable|boolean',
             'visibility' => 'required|string|in:public,private',
             'comments_disabled' => 'nullable',

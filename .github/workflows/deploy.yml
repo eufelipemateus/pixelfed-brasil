@@ -148,12 +148,10 @@ jobs:
             echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
             echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
 
-            echo "AWS_ACCESS_KEY_ID=${{secrets.S3_ACCESS_KEY_ID}}" >> .env
-            echo "AWS_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
-            echo "AWS_BUCKET=${{secrets.S3_BUCKET}}" >> .env
-            echo "AWS_ENDPOINT=${{secrets.S3_ENDPOINT}}" >> .env
-            echo "#AWS_URL=${{secrets.S3_URL}}" >> .env
-            echo "AWS_DEFAULT_REGION=daf" >> .env
+            echo "R2_ACCESS_KEY_ID=${{secrets.S3_ACCESS_KEY_ID}}" >> .env
+            echo "R2_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
+            echo "R2_BUCKET=${{secrets.S3_BUCKET}}" >> .env
+            echo "R2_ENDPOINT=https://${{secrets.R2_ACCOUNT_ID}}.r2.cloudflarestorage.com" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
             echo "TRANSLATION_ENABLED=false" >> .env
@@ -166,6 +164,9 @@ jobs:
             echo "PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS=false" >> .env
             echo "PF_DEFAULT_NO_AUTOLINK=false" >> .env
             echo "PF_IMPORT_FROM_INSTAGRAM=${{vars.PF_IMPORT_FROM_INSTAGRAM}}" >> .env
+
+            echo "PF_USER_INVITES=false" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=false" >> .env
 
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
