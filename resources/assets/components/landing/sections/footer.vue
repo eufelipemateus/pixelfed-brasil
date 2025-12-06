@@ -17,7 +17,7 @@
             <div class="spacer">·</div>
             {{totalUsers }} Usuarios Online
 			<div class="spacer">·</div>
-			<div>Mantido por <a href="https://felipemateus.com" class="text-bluegray-500 font-weight-bold">Felipe Mateus</a></div>
+			<div>Mantido por <a href="https://felipemateus.com/eufelipemateus" class="text-bluegray-500 font-weight-bold">Felipe Mateus</a></div>
 			<div class="spacer">·</div>
 			<div><span>v{{config.version}}</span></div>
 		</div>

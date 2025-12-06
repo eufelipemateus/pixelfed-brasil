@@ -17,7 +17,7 @@
           <span class="mx-2">·</span>
            {{  \App\Services\SessionService::getTotalActiveSessions()}} Usuarios Online
           <span class="mx-2">·</span>
-          Mantido por <a href="https://felipemateus.com" class="text-muted font-weight-bold" rel="noopener">Felipe Mateus </a>
+          Mantido por <a href="https://felipemateus.com/eufelipemateus" class="text-muted font-weight-bold" rel="noopener">Felipe Mateus </a>
           <span class="mx-2">·</span>
           <span class="text-muted">v{{config('pixelfed.version')}}</span>
         </p>

@@ -75,7 +75,7 @@
             "founder": {
                 "@@type": "Person",
                 "name": "Felipe Mateus",
-                "url": "https://felipemateus.com"
+                "url": "https://felipemateus.com/eufelipemateus"
             }
         }
     </script>
