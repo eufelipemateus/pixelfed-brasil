@@ -154,7 +154,7 @@ jobs:
             echo "R2_ENDPOINT=https://${{secrets.R2_ACCOUNT_ID}}.r2.cloudflarestorage.com" >> .env
 
             echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
-            echo "TRANSLATION_ENABLED=false" >> .env
+            echo "TRANSLATION_ENABLED=true" >> .env
             echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
             echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
             echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
