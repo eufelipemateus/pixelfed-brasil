@@ -330,11 +330,13 @@
 			</div>
 
 			<div class="d-none d-md-flex sidebar-sitelinks">
-				<router-link to="/i/web/help">{{ $t('navmenu.help') }}</router-link>
-				<router-link to="/i/web/language">{{ $t('navmenu.language') }}</router-link>
-				<a href="/terms">{{ $t('navmenu.privacy') }}</a>
+                <router-link to="/i/web/language">
+                    <i class="fal fa-language fa-2x" alt="Select a language"></i>
+                </router-link>
+				<router-link to="/help">{{ $t('navmenu.help') }}</router-link>
+				<a href="/privacy">{{ $t('navmenu.privacy') }}</a>
 				<a href="/terms">{{ $t('navmenu.terms') }}</a>
-                <a href="/donate" style="color: #ff6600;" >{{ $t('navmenu.donate') }}</a>
+                <a href="/donate" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 18px;">{{ $t('navmenu.donate') }}</a>
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">
