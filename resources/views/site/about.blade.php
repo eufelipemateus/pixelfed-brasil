@@ -36,8 +36,8 @@
     <main id="content">
         <div class="container">
             <p class="text-right mt-3">
-                <a href="/" class="font-weight-bold text-dark">Home</a>
-                <a href="{{route('newsroom.index')}}" class="ml-4 font-weight-bold text-dark">Newsroom</a>
+                <a href="/" class="font-weight-bold text-dark">{{ __('site.home') }}</a>
+                <a href="{{route('newsroom.index')}}" class="ml-4 font-weight-bold text-dark">{{ __('site.newsroom') }}</a>
             </p>
         </div>
 
