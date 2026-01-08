@@ -18,6 +18,8 @@ return [
     'contact-us'    => 'Contacte-nos',
     'places'        => 'Locais',
     'profiles'      => 'Perfis',
+    'home'          => 'Início',
+    'newsroom'      => 'Notícias',
 
     // site/about
     'photo_sharing_for_everyone'                            => 'Compartilhamento de Fotos. Para Todos',
@@ -68,6 +70,25 @@ return [
     'view'                                                  => 'ver',
     'the_source_code_and_run_their_own_instance'            => 'o código-fonte e executar sua própria instância!',
     'open_source_in_pixelfed'                               => 'Código aberto no Pixelfed',
-    'warning_fork'                                     => 'Este site executa uma versão modificada do pixelfed que esta disponivel em <a href="https://github.com/eufelipemateus/pixelfed" target="_blank"  rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> para ser revisado e executado.'
+    'warning_fork'                                     => 'Este site executa uma versão modificada do pixelfed que esta disponivel em <a href="https://github.com/eufelipemateus/pixelfed" target="_blank"  rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> para ser revisado e executado.',
+
+    // site/about custom history page
+    'manifest_history_badge' => 'MANIFESTO E HISTÓRIA',
+    'about_title' => 'Sobre o Pixelfed Brasil',
+    'about_journey' => 'Uma jornada de soberania digital, iniciada com o propósito de devolver a fotografia aos fotógrafos.',
+    'history_2022_title' => 'O Início',
+    'history_2022_text' => 'Lançamos o projeto como uma semente de resistência aos algoritmos. Foi o ano de entender o Fediverso e conectar os primeiros brasileiros à rede descentralizada.',
+    'history_2023_title' => 'O Reinício',
+    'history_2023_text' => 'Recomeçamos do zero absoluto. Nova infraestrutura, mais segurança e uma base técnica sólida para garantir que a instância seja eterna e independente.',
+    'innovation_forks_title' => 'Inovação e Forks',
+    'innovation_forks_text' => 'Não apenas rodamos um software. Operamos com <strong>forks customizados</strong> do Pixelfed original, aplicando melhorias técnicas exclusivas para a nossa comunidade brasileira.',
+    'commitment_lgpd_title' => 'Compromisso LGPD',
+    'commitment_lgpd_text' => 'Seguimos rigorosamente a <strong>Lei Geral de Proteção de Dados (LGPD)</strong>. Seus dados não são mercadoria. Não coletamos informações para venda e não possuímos algoritmos de personalização.',
+    'marco_civil_text' => 'Em total conformidade com o Marco Civil da Internet.',
+    'tracking_algorithms' => 'Algoritmos de Rastreamento',
+    'chronological_order' => 'Ordem Cronológica',
+    'join_members' => 'Junte-se a :count membros que acreditam em uma rede social mais justa.',
+    'create_account_terms' => 'Criar Conta e Respeitar Termos',
+    'accept_terms_text' => 'Ao se cadastrar, você aceita os nossos <a href=":terms_url">Termos de Uso</a> e as leis brasileiras.'
 
 ];

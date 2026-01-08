@@ -18,6 +18,8 @@ return [
     'contact-us'        => 'Contact Us',
     'places'            => 'Places',
     'profiles'          => 'Profiles',
+    'home'              => 'Home',
+    'newsroom'          => 'Newsroom',
 
     // site/contact
     'you_can_contact_the_admins'                            => 'You can contact the admins',
@@ -68,6 +70,25 @@ return [
     'view'                                                  => 'view',
     'the_source_code_and_run_their_own_instance'            => 'the source code and run their own instance!',
     'open_source_in_pixelfed'                               => 'Open source in Pixelfed',
-    'warning_fork'                                          => 'This site runs a modified version of Pixelfed, which is available at <a href="https://github.com/eufelipemateus/pixelfed" target="_blank" rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> for review and use.'
+    'warning_fork'                                          => 'This site runs a modified version of Pixelfed, which is available at <a href="https://github.com/eufelipemateus/pixelfed" target="_blank" rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> for review and use.',
+
+    // site/about custom history page
+    'manifest_history_badge' => 'MANIFESTO & HISTORY',
+    'about_title' => 'About Pixelfed Brasil',
+    'about_journey' => 'A journey of digital sovereignty, started with the purpose of giving photography back to photographers.',
+    'history_2022_title' => 'The Beginning',
+    'history_2022_text' => 'We launched the project as a seed of resistance to algorithms. It was the year to understand the Fediverse and connect the first Brazilians to the decentralized network.',
+    'history_2023_title' => 'The Restart',
+    'history_2023_text' => 'We started again from absolute zero. New infrastructure, more security and a solid technical base to ensure the instance is eternal and independent.',
+    'innovation_forks_title' => 'Innovation & Forks',
+    'innovation_forks_text' => 'We do not just run software. We operate with <strong>custom forks</strong> of the original Pixelfed, applying exclusive technical improvements for our Brazilian community.',
+    'commitment_lgpd_title' => 'LGPD Commitment',
+    'commitment_lgpd_text' => 'We strictly follow the <strong>General Data Protection Law (LGPD)</strong>. Your data is not merchandise. We do not collect information for sale and do not have personalization algorithms.',
+    'marco_civil_text' => 'In full compliance with the Brazilian Internet Civil Rights Framework.',
+    'tracking_algorithms' => 'Tracking Algorithms',
+    'chronological_order' => 'Chronological Order',
+    'join_members' => 'Join :count members who believe in a fairer social network.',
+    'create_account_terms' => 'Create Account and Respect Terms',
+    'accept_terms_text' => 'By registering, you accept our <a href=":terms_url">Terms of Use</a> and Brazilian laws.'
 
 ];
