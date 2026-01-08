@@ -9,7 +9,7 @@
             <div class="spacer">·</div>
             <a v-if="config.show_legal_notice_link" href="/legal-notice">Legal Notice</a>
             <div v-if="config.show_legal_notice_link" class="spacer">·</div>
-            <a href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL" target="_blank" >Doar</a>
+			<a href="/donate" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 18px;" >{{ $t('navmenu.donate') }}</a>
 		</div>
 
 		<div class="footer-component-attribution">

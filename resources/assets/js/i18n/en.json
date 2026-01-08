@@ -84,7 +84,8 @@
         "privacy": "Privacy",
         "terms": "Terms",
         "legalNotice": "Legal Notice",
-        "backToPreviousDesign": "Go back to previous design"
+        "backToPreviousDesign": "Go back to previous design",
+        "donate": "Donate"
     },
     "directMessages": {
         "inbox": "Inbox",
