@@ -131,7 +131,7 @@ class SiteController extends Controller
 
     public function legacyProfileRedirect(Request $request, $username)
     {
-        $username = Str::contains($username, '@') ? '@'.$username : $username;
+        $username = Str::contains($username, '@') ? '@' . $username : $username;
         if (str_contains($username, '@')) {
             $profile = Profile::whereUsername($username)
                 ->firstOrFail();
@@ -141,7 +141,6 @@ class SiteController extends Controller
             } else {
                 $url = "/i/web/profile/_/{$profile->id}";
             }
-
         } else {
             $profile = Profile::whereUsername($username)
                 ->whereNull('domain')
@@ -154,7 +153,7 @@ class SiteController extends Controller
 
     public function legacyWebfingerRedirect(Request $request, $username, $domain)
     {
-        $un = '@'.$username.'@'.$domain;
+        $un = '@' . $username . '@' . $domain;
         $profile = Profile::whereUsername($un)
             ->firstOrFail();
 
@@ -199,5 +198,12 @@ class SiteController extends Controller
         }
 
         return view('auth.curated-register.index', ['step' => 1]);
+    }
+
+    public function donate()
+    {
+        return Cache::remember('site.donate', now()->addMinutes(15), function () {
+            return view('site.donate')->render();
+        });
     }
 }
