@@ -373,7 +373,8 @@ class RestrictedNames
         'language',
         'contact',
         'legal-notice',
-        'sitemap'
+        'sitemap',
+        'donate'
     ];
 
     public static function get()
