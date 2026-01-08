@@ -20,6 +20,7 @@ return [
     'profiles'      => 'Perfis',
     'home'          => 'Início',
     'newsroom'      => 'Notícias',
+    'donate'        => 'Doar',
 
     // site/about
     'photo_sharing_for_everyone'                            => 'Compartilhamento de Fotos. Para Todos',
@@ -89,6 +90,19 @@ return [
     'chronological_order' => 'Ordem Cronológica',
     'join_members' => 'Junte-se a :count membros que acreditam em uma rede social mais justa.',
     'create_account_terms' => 'Criar Conta e Respeitar Termos',
-    'accept_terms_text' => 'Ao se cadastrar, você aceita os nossos <a href=":terms_url">Termos de Uso</a> e as leis brasileiras.'
+    'accept_terms_text' => 'Ao se cadastrar, você aceita os nossos <a href=":terms_url">Termos de Uso</a> e as leis brasileiras.',
+
+    // site/donate
+    'donate_title' => 'Sustente esta Comunidade',
+    'donate_intro' => 'O <strong>Pixelfed Brasil</strong> é um projeto independente. Não exibimos anúncios, não vendemos dados e não temos investidores. Nosso servidor é mantido exclusivamente por pessoas como você.',
+    'donate_monthly_help' => 'Contribua com qualquer valor mensal para ajudar nos custos de hospedagem e armazenamento de fotos.',
+    'donate_button' => 'QUERO APOIAR O PROJETO AGORA',
+    'donate_redirect_notice' => 'Você será redirecionado para a plataforma segura do Apoia.se',
+    'donate_server_title' => 'Servidor',
+    'donate_server_desc' => 'Hospedagem de alto desempenho em solo brasileiro para baixa latência.',
+    'donate_storage_title' => 'Armazenamento',
+    'donate_storage_desc' => 'Backups e storage para garantir que suas fotos nunca desapareçam.',
+    'donate_maintenance_title' => 'Manutenção',
+    'donate_maintenance_desc' => 'Desenvolvimento de nossos <strong>forks exclusivos</strong> e atualizações de segurança.',
 
 ];

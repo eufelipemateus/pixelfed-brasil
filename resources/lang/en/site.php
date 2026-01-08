@@ -20,6 +20,7 @@ return [
     'profiles'          => 'Profiles',
     'home'              => 'Home',
     'newsroom'          => 'Newsroom',
+    'donate'            => 'Donate',
 
     // site/contact
     'you_can_contact_the_admins'                            => 'You can contact the admins',
@@ -89,6 +90,19 @@ return [
     'chronological_order' => 'Chronological Order',
     'join_members' => 'Join :count members who believe in a fairer social network.',
     'create_account_terms' => 'Create Account and Respect Terms',
-    'accept_terms_text' => 'By registering, you accept our <a href=":terms_url">Terms of Use</a> and Brazilian laws.'
+    'accept_terms_text' => 'By registering, you accept our <a href=":terms_url">Terms of Use</a> and Brazilian laws.',
+
+    // site/donate
+    'donate_title' => 'Support this Community',
+    'donate_intro' => '<strong>Pixelfed Brasil</strong> is an independent project. We do not show ads, sell data, or have investors. Our server is maintained exclusively by people like you.',
+    'donate_monthly_help' => 'Contribute any monthly amount to help with hosting and photo storage costs.',
+    'donate_button' => 'I WANT TO SUPPORT THE PROJECT NOW',
+    'donate_redirect_notice' => 'You will be redirected to the secure Apoia.se platform',
+    'donate_server_title' => 'Server',
+    'donate_server_desc' => 'High-performance hosting in Brazil for low latency.',
+    'donate_storage_title' => 'Storage',
+    'donate_storage_desc' => 'Backups and storage to ensure your photos never disappear.',
+    'donate_maintenance_title' => 'Maintenance',
+    'donate_maintenance_desc' => 'Development of our <strong>exclusive forks</strong> and security updates.',
 
 ];
