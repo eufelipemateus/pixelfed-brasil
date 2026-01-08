@@ -430,6 +430,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('newsroom/search', 'NewsroomController@search')->name('newsroom.search');
         Route::get('newsroom', 'NewsroomController@index')->name('newsroom.index');
         Route::get('legal-notice', 'SiteController@legalNotice')->name('legal-notice');
+        Route::get('donate', 'SiteController@donate')->name('site.donate');
     });
 
     Route::group(['prefix' => 'timeline'], function () {

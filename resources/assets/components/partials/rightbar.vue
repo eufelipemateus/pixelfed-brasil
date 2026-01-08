@@ -5,8 +5,6 @@
 		</p> -->
 
 		<notifications :profile="profile" />
-        <donate />
-
         <div class="text-center my-3">
             <p>
                 {{ totalUsers }} Usuarios Online
