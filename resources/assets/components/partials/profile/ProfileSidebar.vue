@@ -336,7 +336,7 @@
 				<router-link to="/help">{{ $t('navmenu.help') }}</router-link>
 				<a href="/privacy">{{ $t('navmenu.privacy') }}</a>
 				<a href="/terms">{{ $t('navmenu.terms') }}</a>
-                <a href="/donate" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 18px;">{{ $t('navmenu.donate') }}</a>
+                <a href="/donate" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 12px;">{{ $t('navmenu.donate') }}</a>
 			</div>
 
 			<div class="d-none d-md-block sidebar-attribution">
