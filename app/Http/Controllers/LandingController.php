@@ -38,6 +38,7 @@ class LandingController extends Controller
             Profile::whereNull('domain')
                 ->whereIsSuggestable(true)
                 ->orderByDesc('updated_at')
+                ->whereNull('status')
                 ->cursorPaginate(20)
         );
     }
