@@ -12,21 +12,21 @@
                 <div v-if="showReblogBanner && getScope() === 'home'" class="card bg-g-amin card-body shadow-sm mb-3" style="border-radius: 15px;">
                     <div class="d-flex justify-content-around align-items-center">
                         <div class="flex-grow-1 ft-std">
-                            <h2 class="font-weight-bold text-white mb-0">Introducing Reblogs in feeds</h2>
+                            <h2 class="font-weight-bold text-white mb-0">{{ $t("timeline.reblog.introducing")}}</h2>
                             <hr />
                             <p class="lead text-white mb-0">
-                                See reblogs from accounts you follow in your home feed!
+                                {{ $t("timeline.reblog.description") }}
                             </p>
                             <p class="text-white small mb-1" style="opacity:0.6">
-                                You can disable reblogs in feeds on the Timeline Settings page.
+                                {{ $t("timeline.reblog.disableInfo") }}
                             </p>
                             <hr />
                             <div class="d-flex">
                                 <button class="btn btn-light rounded-pill font-weight-bold btn-block mr-2" @click.prevent="enableReblogs()">
-                                    <template v-if="!enablingReblogs">Show reblogs in home feed</template>
+                                    <template v-if="!enablingReblogs">{{ $t("timeline.reblog.showReblogs") }}</template>
                                     <b-spinner small v-else />
                                 </button>
-                                <button class="btn btn-outline-light rounded-pill font-weight-bold px-5" @click.prevent="hideReblogs()">Hide</button>
+                                <button class="btn btn-outline-light rounded-pill font-weight-bold px-5" @click.prevent="hideReblogs()">{{ $t("common.hide")}}</button>
                             </div>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
                 <button
                     class="btn btn-primary rounded-pill font-weight-bold"
                     @click="tryToLoadMore">
-                    Load more
+                    {{ $t("common.showMore") }}
                 </button>
             </div>
 
@@ -70,7 +70,7 @@
             <div v-if="!isLoaded && feed.length && endFeedReached" style="margin-bottom: 50vh">
                 <div class="card card-body shadow-sm mb-3" style="border-radius: 15px;">
                     <p class="display-4 text-center">✨</p>
-                    <p class="lead mb-0 text-center">You have reached the end of this feed</p>
+                    <p class="lead mb-0 text-center">{{ $t("common.endOfFeed") }}</p>
                 </div>
             </div>
 

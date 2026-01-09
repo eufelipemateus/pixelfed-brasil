@@ -29,7 +29,10 @@
         "sensitiveContentWarning": "This post may contain sensitive content",
         "loading": "Loading...",
         "continue": "Continue",
-        "translate": "Translate"
+        "translate": "Translate",
+        "Hide": "Hide",
+        "showMore": "Show more",
+        "endFeed": "You have reached the end of the feed."
     },
     "site": {
         "terms": "Terms of Use",
@@ -258,6 +261,12 @@
     },
     "timeline": {
         "peopleYouMayKnow": "People you may know",
+        "reblog":{
+            "introducing": "Introducing Reblogs in feeds",
+            "description": "See reblogs from accounts you follow in your home feed!",
+            "disableInfo": "You can disable reblogs in feeds on the Timeline Settings page.",
+            "showReblogs": "Show reblogs in home feed"
+        },
         "onboarding": {
             "welcome": "Welcome",
             "thisIsYourHomeFeed": "This is your home feed, a chronological feed of posts from accounts you follow.",

@@ -29,7 +29,10 @@
         "sensitiveContentWarning": "Este post pode conter conte\u00fado sens\u00edvel",
         "loading": "Carregando...",
         "continue": "Continuar",
-        "translate": "Traduzir"
+        "translate": "Traduzir",
+        "hide": "Ocultar",
+        "showMore": "Mostrar mais",
+        "endOfFeed": "Voc\u00ea atingiu o final do feed."
     },
     "site": {
         "terms": "Termos de Uso",
@@ -266,6 +269,13 @@
     },
     "timeline": {
         "peopleYouMayKnow": "Pessoas que talvez conhe\u00e7a",
+        "reblog":{
+        "introducing": "Apresentando Reblogs nos feeds",
+        "description": "Veja reblogs de contas que voc\u00ea segue no seu feed inicial!",
+        "disableInfo": "Voc\u00ea pode desativar reblogs nos feeds na p\u00e1gina de Configura\u00e7\u00f5es da Linha do Tempo.",
+        "showReblogs": "Mostrar reblogs no feed inicial"
+
+        },
         "onboarding": {
             "welcome": "Bem-vindo",
             "thisIsYourHomeFeed": "Este \u00e9 o seu feed pessoal, com publica\u00e7\u00f5es em ordem cronol\u00f3gica das contas que segue.",
