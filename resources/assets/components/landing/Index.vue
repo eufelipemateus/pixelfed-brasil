@@ -74,7 +74,7 @@
                                         </div>
                                     </a>
                                 </div>
-                                <div v-if="config.contact.email" class="contact-info ml-4 mt-3 mt-md-0">
+                                <div v-if="config.contact.email" class="contact-info ml-4">
                                     <span class="label-small text-uppercase text-muted d-block" style="font-size: 0.7rem;">{{ $t('site.contact') }}</span>
                                     <a :href="`mailto:${config.contact.email}`" class="text-white-50 small">{{ config.contact.email }}</a>
                                 </div>
@@ -151,7 +151,6 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
-    gap: 2rem;
     flex-wrap: wrap;
 }
 .admin-contact-flex .admin-info {
