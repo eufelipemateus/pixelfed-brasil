@@ -84,31 +84,6 @@
                             </div>
                         </div>
 
-                        <div class="server-admin">
-                            <div class="list-group">
-                                <div v-if="config.contact.account" class="list-group-item bg-transparent">
-                                    <p class="item-label">Managed By</p>
-                                    <a :href="config.contact.account.url" class="admin-card" target="_blank">
-                                        <div class="d-flex">
-                                            <img :src="config.contact.account.avatar" width="45" height="45"
-                                                class="avatar" :alt="`${config.contact.account.username}'s avatar`"
-                                                onerror="this.src='/storage/avatars/default.jpg';this.onerror=null;">
-
-                                            <div class="user-info">
-                                                <p class="display-name">{{ config.contact.account.display_name }}</p>
-                                                <p class="username">&commat;{{ config.contact.account.username }}</p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                <div v-if="config.contact.email" class="list-group-item bg-transparent">
-                                    <p class="item-label">Contact</p>
-                                    <a :href="`mailto:${config.contact.email}?subject=Regarding ${config.domain}`"
-                                        class="admin-email" target="_blank">{{ config.contact.email }}</a>
-                                </div>
-                            </div>
-                        </div>
                         <div class="accordion" id="accordion">
                             <div class="card bg-bluegray-700">
                                 <div class="card-header bg-bluegray-800" id="headingOne">
