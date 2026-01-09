@@ -119,6 +119,10 @@ class AppServiceProvider extends ServiceProvider
             'Flag' => \App\Util\ActivityPub\Handlers\FlagHandler::class,
             'Update' => \App\Util\ActivityPub\Handlers\UpdateHandler::class,
             'Move' => \App\Util\ActivityPub\Handlers\MoveHandler::class,
+            // Novos tipos ActivityStreams
+            'Article' => \App\Util\ActivityPub\Handlers\ArticleHandler::class,
+            'Audio' => \App\Util\ActivityPub\Handlers\AudioHandler::class,
+            'Video' => \App\Util\ActivityPub\Handlers\VideoHandler::class,
         ]);
     }
 
