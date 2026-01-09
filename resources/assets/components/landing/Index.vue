@@ -63,26 +63,21 @@
                         </div>
 
                         <div class="admin-grid-modern p-4 rounded-lg mb-5 border border-dark">
-                            <div v-if="config.contact.account" class="admin-info">
-                                <span class="label-small text-uppercase text-muted" style="font-size: 0.7rem;">{{
-                                    $t('site.managedBy') }}</span>
-                                <a :href="config.contact.account.url"
-                                    class="d-flex align-items-center mt-2 text-decoration-none" target="_blank">
-                                    <img :src="config.contact.account.avatar" class="avatar-modern" alt="Admin Avatar"
-                                        onerror="this.src='/storage/avatars/default.jpg';this.onerror=null;">
-                                    <div class="ml-3">
-                                        <p class="mb-0 text-white font-weight-bold">{{
-                                            config.contact.account.display_name }}</p>
-                                        <p class="mb-0 text-primary small">&commat;{{ config.contact.account.username }}
-                                        </p>
-                                    </div>
-                                </a>
-                            </div>
-                            <div v-if="config.contact.email" class="contact-info mt-3 mt-md-0">
-                                <span class="label-small text-uppercase text-muted d-block"
-                                    style="font-size: 0.7rem;">{{ $t('site.contact') }}</span>
-                                <a :href="`mailto:${config.contact.email}`" class="text-white-50 small">{{
-                                    config.contact.email }}</a>
+                            <div class="admin-contact-flex">
+                                <div v-if="config.contact.account" class="admin-info">
+                                    <span class="label-small text-uppercase text-muted" style="font-size: 0.7rem;">{{ $t('site.managedBy') }}</span>
+                                    <a :href="config.contact.account.url" class="d-flex align-items-center mt-2 text-decoration-none" target="_blank">
+                                        <img :src="config.contact.account.avatar" class="avatar-modern" alt="Admin Avatar" onerror="this.src='/storage/avatars/default.jpg';this.onerror=null;">
+                                        <div class="ml-3">
+                                            <p class="mb-0 text-white font-weight-bold">{{ config.contact.account.display_name }}</p>
+                                            <p class="mb-0 text-primary small">&commat;{{ config.contact.account.username }}</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div v-if="config.contact.email" class="contact-info ml-4 mt-3 mt-md-0">
+                                    <span class="label-small text-uppercase text-muted d-block" style="font-size: 0.7rem;">{{ $t('site.contact') }}</span>
+                                    <a :href="`mailto:${config.contact.email}`" class="text-white-50 small">{{ config.contact.email }}</a>
+                                </div>
                             </div>
                         </div>
 
@@ -151,6 +146,29 @@ export default {
 </script>
 
 <style scoped>
+/* Flexbox para admin-info e contact-info lado a lado */
+.admin-contact-flex {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+.admin-contact-flex .admin-info {
+    min-width: 220px;
+}
+.admin-contact-flex .contact-info {
+    min-width: 180px;
+}
+@media (max-width: 768px) {
+    .admin-contact-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .admin-contact-flex .contact-info {
+        margin-left: 0 !important;
+    }
+}
 /* Aqui você mantém os estilos que já possui no seu <style scoped> anterior */
 .custom-modern-theme {
     background: radial-gradient(circle at top right, #1a202c, #0d1117);
