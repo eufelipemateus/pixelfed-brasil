@@ -58,7 +58,16 @@
         "exploreTrending": "Explore trending posts",
         "followers": "Followers",
         "following": "Following",
-        "viewPost":"View Post"
+        "viewPost":"View Post",
+        "subtitle": "Discover the trends of independent photography in Brazil.",
+        "trendingSubtitle": "The most relevant posts on Pixelfed Brazil right now.",
+        "syncingFeed": "Syncing feed...",
+        "nothingNew": "Nothing new here today. How about being the first?",
+        "intro": "Meet the photographers and creators who are part of our Brazilian network.",
+        "locatingCreators": "Locating creators...",
+        "noProfileFound": "No profile found",
+        "beFirstToPopulate": "Be the first to populate our directory!"
+
     },
     "navmenu": {
         "search": "Search",

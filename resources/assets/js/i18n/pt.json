@@ -58,7 +58,16 @@
         "exploreTrending": "Explore publica\u00e7\u00f5es em tend\u00eancia",
         "followers": "Seguidores",
         "following": "Seguindo",
-        "viewPost": "Ver publica\u00e7\u00e3o"
+        "viewPost": "Ver publica\u00e7\u00e3o",
+        "subtitle": "Descubra as tendências da fotografia independente no Brasil.",
+        "trendingSubtitle": "As publicações mais relevantes do Pixelfed Brasil no momento.",
+        "syncingFeed": "Sincronizando feed...",
+        "nothingNew": "Nada novo por aqui hoje. Que tal ser o primeiro?",
+        "intro": "Conheça os fotógrafos e criadores que fazem parte da nossa rede brasileira.",
+        "locatingCreators": "Localizando criadores...",
+        "noProfileFound": "Nenhum perfil encontrado",
+        "beFirstToPopulate": "Seja o primeiro a popular nosso diretório!"
+
     },
     "navmenu": {
         "search": "Pesquisa",
