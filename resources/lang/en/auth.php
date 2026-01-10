@@ -8,6 +8,10 @@ return [
     'logged_in_as' => 'Logged in as:',
     'logout' => 'Logout',
 
+    'sudo_mode' => 'Sudo Mode',
+    'confirm_password_continue' => 'Confirm password to continue',
+    'trust_device' => "Trust this device and don't ask again",
+
     'verifyYourEmailAddress' => ' - Verify Your Email Address',
     'loginTitle'       =>   'Account Login',
     'failed'           =>   'These credentials do not match our records.',

@@ -8,6 +8,9 @@ return [
     'logged_in_as' => 'Logado como:',
     'logout' => 'Sair',
 
+    'sudo_mode' => 'Modo Sudo',
+    'confirm_password_continue' => 'Confirme a senha para continuar',
+    'trust_device' => 'Confiar neste dispositivo e não perguntar novamente',
     /*
     |--------------------------------------------------------------------------
     | Authentication Language Lines
