@@ -82,7 +82,7 @@ return [
             'driver' => 's3',
             'key' => env('R2_ACCESS_KEY_ID'),
             'secret' => env('R2_SECRET_ACCESS_KEY'),
-            'region' => 'us-east-2',
+            'region' => env('R2_REGION', 'auto'),
             'bucket' => env('R2_BUCKET'),
             'endpoint' => env('R2_ENDPOINT'),
             'use_path_style_endpoint' => false,
