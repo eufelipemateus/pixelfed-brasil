@@ -85,7 +85,7 @@ return [
             'region' => 'us-east-2',
             'bucket' => env('R2_BUCKET'),
             'endpoint' => env('R2_ENDPOINT'),
-            'use_path_style_endpoint' => true,
+            'use_path_style_endpoint' => false,
         ],
 
         'alt-primary' => [
