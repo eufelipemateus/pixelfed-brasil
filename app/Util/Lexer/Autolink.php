@@ -728,10 +728,14 @@ class Autolink extends Regex
         }
         if (preg_match(self::$patterns['rtl_chars'], $linkText)) {
             $class[] = 'rtl';
+            $attributes['rel'] = 'ugc';
+
         }
         if (!empty($class)) {
             $attributes['class'] = implode(' ', $class);
         }
+
+        $attributes['rel'] = 'nofollow';
 
         return $this->linkToText($entity, $linkText, $attributes);
     }
@@ -769,6 +773,10 @@ class Autolink extends Regex
             $attributes['class'] = $class;
         }
         $attributes['href'] = $url;
+
+        if (isset($attributes['rel'])) {
+            unset($attributes['rel']);
+        }
 
         return $this->linkToText($entity, $linkText, $attributes);
     }
