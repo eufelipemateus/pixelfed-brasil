@@ -1,6 +1,12 @@
 <?php
 
 return [
+    '2fa_checkpoint' => '2FA Checkpoint',
+    'enter_2fa_code' => 'Enter the 2FA code from your device.',
+    'lost_2fa_device' => 'If you lose access to your 2FA device, contact the admins.',
+    '2fa_code' => '2FA Code',
+    'logged_in_as' => 'Logged in as:',
+    'logout' => 'Logout',
 
     'verifyYourEmailAddress' => ' - Verify Your Email Address',
     'loginTitle'       =>   'Account Login',

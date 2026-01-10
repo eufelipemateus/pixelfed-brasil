@@ -1,6 +1,12 @@
 <?php
 
 return [
+    '2fa_checkpoint' => 'Verificação em duas etapas',
+    'enter_2fa_code' => 'Digite o código 2FA do seu dispositivo.',
+    'lost_2fa_device' => 'Se você perder o acesso ao seu dispositivo 2FA, entre em contato com os administradores.',
+    '2fa_code' => 'Código 2FA',
+    'logged_in_as' => 'Logado como:',
+    'logout' => 'Sair',
 
     /*
     |--------------------------------------------------------------------------
