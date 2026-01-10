@@ -48,8 +48,10 @@ class NodeinfoService
         if (is_array($json['links'])) {
             if (isset($json['links']['href'])) {
                 $href = $json['links']['href'];
-            } else {
+            } elseif (isset($json['links'][0]) && isset($json['links'][0]['href'])) {
                 $href = $json['links'][0]['href'];
+            } else {
+                return false;
             }
         } else {
             return false;
