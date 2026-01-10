@@ -8,6 +8,7 @@ use Illuminate\View\Component;
 use App\Services\StatusService;
 use DateTime;
 use App\Status;
+use Exception;
 
 class ForumSchemaGenerator extends Component
 {
@@ -34,6 +35,10 @@ class ForumSchemaGenerator extends Component
         //
 
         $original = $status['in_reply_to_id'] ?  StatusService::get($status['in_reply_to_id'])  :  $status;
+
+        if (empty($original)) {
+            throw new Exception('Status original não encontrado');
+        }
 
         $this->datePublished = ($status['created_at'] ?? (new \DateTime())->format(DATE_ATOM));
         $this->mainEntityOfPage = $original['url'];
