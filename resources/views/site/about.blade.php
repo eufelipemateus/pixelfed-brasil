@@ -10,17 +10,31 @@
     <meta name="description" content="Conheça a jornada do Pixelfed Brasil: Iniciada em 2022 e reconstruída em 2023. Soberania digital, LGPD e fotografia ética.">
 
     <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "WebPage",
-      "name": "Sobre o Pixelfed Brasil",
-      "description": "História e compromisso com a privacidade da instância Pixelfed Brasil.",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "Felipe Mateus",
-        "location": "Brasil"
-      }
-    }
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Pixelfed Brasil",
+            "alternateName": "Pixelfed.com.br",
+            "url": "https://pixelfed.com.br",
+            "logo": "https://pixelfed.com.br/img/pixelfed.png",
+            "description": "A maior instância brasileira do Pixelfed. Uma rede social de compartilhamento de fotos federada, ética e sem algoritmos de manipulação, parte do Fediverso.",
+            "foundingDate": "2023",
+            "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "BR"
+            },
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "suporte@felipemateus.com",
+                "contactType": "customer support",
+                "url": "https://pixelfed.com.br/contact"
+            },
+            "sameAs": [
+                "https://apoia.se/pixelfedbrasil",
+                "https://pixelfed.com.br/PixelfedBrasil",
+                "https://github.com/eufelipemateus/pixelfed-brasil"
+            ]
+        }
     </script>
 
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
