@@ -117,6 +117,13 @@ return [
     'apoie_apoia' => 'Apoia.se',
     'apoie_perfil' => 'Official Profile',
     'apoie_github' => 'Project GitHub',
+    'not_what_we_are_title' => 'What we are not',
+    'not_what_we_are_text' => '<strong>Pixelfed Brasil</strong> is an independent instance of the Pixelfed software. <strong>We are NOT the official project website</strong>, <a href="https://pixelfed.org">Pixelfed (pixelfed.org)</a>, nor do we represent the global development of the software.',
+    'about_section_pixelfedbr_title' => 'About Pixelfed Brasil',
+    'about_section_pixelfed_title' => 'What is Pixelfed',
+    'about_section_pixelfed_text' => 'Pixelfed is free and open source software that enables the creation of federated social networks. Unlike centralized platforms, it works through independent instances that can communicate with each other, allowing users from different servers to interact freely. The project is maintained internationally, with public, open, and collaborative development.',
+    'about_section_pixelfedbr_text' => '<strong>Pixelfed Brasil</strong> is an instance operated in Brazil, created to specifically serve the Brazilian community, respecting the language, local culture, and the General Data Protection Law (LGPD). Although it uses the Pixelfed software, it is not the official project nor does it replace the pixelfed.org website. We are an independent community, integrated into the Fediverse, with our own identity and management. Users of <strong>Pixelfed Brasil</strong> can follow, like, and interact with accounts from other Pixelfed instances and other platforms compatible with ActivityPub, such as Mastodon and PeerTube.',
+    'about_description' => 'Pixelfed Brasil: independent, ethical, ad-free instance aligned with LGPD and part of the Fediverse. Learn more about our mission, history, and how to join.',
 
     // site/donate
     'donate_title' => 'Support this Community',

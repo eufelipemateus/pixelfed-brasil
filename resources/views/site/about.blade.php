@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="mobile-web-app-capable" content="yes">
+
     <title>{{ __('site.about_title') }}</title>
-    <meta name="description" content="{{ __('site.about_journey') }}">
-    <meta name="author" content="Felipe Mateus">
+    <meta name="description" content="{{ __('site.about_description') }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pixelfed.com.br/about">
     <meta property="og:title" content="Pixelfed Brasil - A Maior Instância Brasileira do Fediverso">
@@ -29,7 +30,7 @@
             "alternateName": ["Pixelfed.com.br", "Pixelfed BR"],
             "url": "https://pixelfed.com.br",
             "logo": "https://pixelfed.com.br/img/pixelfed.png",
-            "description": "A maior instância brasileira do Pixelfed. Uma rede social de compartilhamento de fotos federada, ética e sem algoritmos de manipulação, parte do Fediverso.",
+            "description": "Pixelfed Brasil é uma instância brasileira independente do Pixelfed, uma rede social federada de compartilhamento de fotos e vídeos, sem anúncios e sem algoritmos de manipulação, parte do Fediverso.",
             "foundingDate": "2022",
             "founder": {
                 "@@type": "Person",
@@ -46,18 +47,40 @@
             },
             "contactPoint": {
                 "@@type": "ContactPoint",
-                "email": "suporte@felipemateus.com",
                 "contactType": "customer support",
+                "email": "suporte@felipemateus.com",
                 "url": "https://pixelfed.com.br/contact"
             },
             "sameAs": [
                 "https://apoia.se/pixelfedbrasil",
                 "https://pixelfed.com.br/PixelfedBrasil",
                 "https://github.com/eufelipemateus/pixelfed-brasil"
+            ],
+            "mainEntityOfPage": {
+                "@@type": "WebPage",
+                "@@id": "https://pixelfed.com.br/about"
+            },
+            "knowsAbout": [
+                "Fediverso",
+                "ActivityPub",
+                "Pixelfed",
+                "Redes sociais descentralizadas",
+                "LGPD"
             ]
         }
     </script>
-
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@type": "WebSite",
+            "@@id": "https://pixelfed.com.br/#website",
+            "url": "https://pixelfed.com.br",
+            "name": "Pixelfed Brasil",
+            "publisher": {
+                "@@id": "https://pixelfed.com.br/#organization"
+            }
+        }
+    </script>
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
     <style type="text/css">
         .section-spacer { height: 10vh; }
@@ -67,28 +90,49 @@
         .local-badge { background: #10c5f8; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; display: inline-block; margin-bottom: 15px; }
     </style>
 </head>
+
 <body>
     <main id="content">
         <div class="container">
             <p class="text-right mt-3">
                 <a href="/" class="font-weight-bold text-dark">{{ __('site.home') }}</a>
+                <a href="{{route('newsroom.index')}}" class="ml-4 font-weight-bold text-dark">{{ __('site.newsroom') }}</a>
             </p>
         </div>
 
-        <div class="px-4 py-5 my-5 text-center">
+        <section class="px-4 py-5 my-5 text-center">
             <a href="/">
-                <img class="d-block mx-auto mb-4" src="/img/pixelfed_transparent.png" alt="Logo Pixelfed Brasil" width="120" style="filter: drop-shadow(0 2px 8px #10c5f855);">
+                <img class="d-block mx-auto mb-4" src="/img/pixelfed_transparent.png" alt="Logo Pixelfed Brasil"  width="120"  style="filter: drop-shadow(0 2px 8px #10c5f855);">
             </a>
             <div class="local-badge">Pixelfed Brasil</div>
             <h1 class="display-4 font-weight-bold py-3">{{ __('site.about_title') }}</h1>
             <div class="col-lg-7 mx-auto">
-                <p class="lead mb-4 font-weight-light" style="font-size: 22px; line-height: 1.5;">
+                <p class="lead mb-4 font-weight-light" style="font-size: 22px; line-height: 1.6;">
                     {!! __('site.about_intro') !!}
                 </p>
             </div>
-        </div>
+        </section>
 
-        <div class="container mb-4">
+        <section class="container mb-5">
+            <div class="row align-items-stretch">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-lg history-card p-4">
+                        <h2 class="h4 font-weight-bold mb-3">{{ __('site.about_section_pixelfed_title') }}</h2>
+                        <p class="mb-0" style="font-size:1.08rem;">
+                            {{ __('site.about_section_pixelfed_text') }}
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-lg history-card p-4 border-primary" style="border-width: 2px !important;">
+                        <h2 class="h4 font-weight-bold mb-3">{{ __('site.about_section_pixelfedbr_title') }}</h2>
+                        <p class="mb-0" style="font-size:1.08rem;">
+                            {!! __('site.about_section_pixelfedbr_text') !!}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div class="row align-items-stretch">
                 <div class="col-md-12 mb-4">
                     <div class="card h-100 shadow-lg history-card p-4">
@@ -110,6 +154,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="row align-items-stretch">
                 <div class="col-md-6 mb-4">
                     <div class="card h-100 shadow-lg history-card p-4">
@@ -117,7 +162,7 @@
                         <p class="mb-0" style="font-size:1.08rem;">
                             {{ __('site.founder_intro') }}
 
-                            <ul class="list-unstyled mt-3">
+                        <ul class="list-unstyled mt-3">
                             <li>{!! __('site.founder_name') !!} (<a href="https://pixelfed.com.br/eufelipemateus" target="_blank">Perfil</a>)</li>
                             <li><b>Links:</b> <a href="https://github.com/eufelipemateus" target="_blank">GitHub</a> | <a href="https://felipemateus.com" target="_blank">Site pessoal</a></li>
                         </ul>
@@ -139,9 +184,20 @@
                         </ul>
                     </div>
                 </div>
+            </div>
 
-        </div>
-        <div class="section-spacer"></div>
+
+            <div class="row align-items-stretch">
+                <div class="col-md-12 mb-4">
+                    <div class="card h-100 shadow-lg history-card p-4">
+                        <h2 class="font-weight-bold mb-3"><i class="fas fa-bullseye icon-bullet"></i> {{ __('site.not_what_we_are_title') }}</h2>
+                        <p class="mb-0" style="font-size:1.08rem;">
+                            {!! __('site.not_what_we_are_text') !!}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="container">
             <div class="row align-items-stretch">
@@ -177,8 +233,6 @@
             </div>
         </div>
 
-
-
         <div class="section-spacer"></div>
 
         <div class="container">
@@ -207,7 +261,6 @@
 
         <div class="section-spacer"></div>
 
-
         <div class="container ">
             <div class="row align-items-stretch">
                 <div class="col-md-12 mb-4">
@@ -224,7 +277,6 @@
                 </div>
             </div>
         </div>
-
         <div class="section-spacer"></div>
 
         <div id="stats" class="container py-5">
@@ -247,4 +299,5 @@
     </main>
     @include('layouts.partial.footer')
 </body>
+
 </html>
