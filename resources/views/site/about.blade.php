@@ -7,6 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>{{ __('site.about_title') }}</title>
     <meta name="description" content="{{ __('site.about_journey') }}">
+    <meta name="author" content="Felipe Mateus">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://pixelfed.com.br/about">
     <meta property="og:title" content="Pixelfed Brasil - A Maior Instância Brasileira do Fediverso">
