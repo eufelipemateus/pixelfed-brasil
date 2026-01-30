@@ -164,6 +164,7 @@ trait HomeSettings
         $settings['send_email_on_share'] = (bool) $cachedSettings['send_email_on_share'];
         $settings['send_email_on_like'] = (bool) $cachedSettings['send_email_on_like'];
         $settings['send_email_on_mention'] = (bool) $cachedSettings['send_email_on_mention'];
+        $settings['send_weekly_email'] = (bool) $cachedSettings['send_weekly_email'];
         $settings['felipemateus_wants_updates'] = (bool) $cachedSettings['felipemateus_wants_updates'];
 
         return view('settings.email',  compact('settings'));
@@ -240,6 +241,7 @@ trait HomeSettings
                 'send_email_on_share' => 'sometimes',
                 'send_email_on_like' => 'sometimes',
                 'send_email_on_mention' => 'sometimes',
+                'send_weekly_email' => 'sometimes',
                 'felipemateus_wants_updates' => 'sometimes',
             ]
         );
@@ -263,6 +265,9 @@ trait HomeSettings
                     'send_email_on_mention' => (bool) $request->has(
                         'send_email_on_mention'
                     ),
+                    'send_weekly_email' => (bool) $request->has(
+                        'send_weekly_email'
+                    ),  
                     'felipemateus_wants_updates' => (bool) $request->has(
                         'felipemateus_wants_updates'
                     ),
