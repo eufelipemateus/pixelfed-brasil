@@ -67,6 +67,7 @@ return [
     'email.send_email_on_share' =>                                      'Send email when someone shares your post',
     'email.send_email_on_like' =>                                       'Send email when someone likes your post',
     'email.send_email_on_mention' =>                                    'Send email when someone mentions you',
+    'email.send_weekly_email' =>                                        'Receive weekly email with popular posts.',
 
     'media.default_license' =>                                          'Default License',
     'media.set_a_default_license_for_new_posts' =>                      'Set a default license for new posts.',

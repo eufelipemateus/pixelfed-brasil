@@ -72,6 +72,7 @@ return [
 'email.send_email_on_share' =>                                      'Enviar email quando alguém compartilhar sua postagem',
 'email.send_email_on_like' =>                                       'Enviar email quando alguém curtir sua postagem',
 'email.send_email_on_mention' =>                                    'Enviar email quando alguém mencionar você',
+'email.send_weekly_email' =>                                        'Receber email semanal com posts populares.',
 
 'media.default_license' =>                                          'Licença Padrão',
 'media.set_a_default_license_for_new_posts' =>                      'Defina uma licença padrão para novas postagens.',

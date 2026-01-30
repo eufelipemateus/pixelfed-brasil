@@ -15,6 +15,7 @@ use App\Status;
 use App\Mail\WeeklyPopularPostsMail;
 use Carbon\Carbon;
 use App\Profile;
+use App\Enums\StatusEnums;
 
 class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
 {
@@ -129,6 +130,9 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             ->whereNull('deleted_at')
             ->whereNotNull('last_active_at')
             ->whereNotNull("email_verified_at")
+            ->whereHas('settings', function ($query) {
+                $query->where('send_weekly_email', true);
+            })
             ->chunk(
                 100,
                 function ($users) use ($popularPosts, $promoters) {
