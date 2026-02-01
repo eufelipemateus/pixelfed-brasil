@@ -54,33 +54,15 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 		}
 
 		$profile = $status->profile;
-
 		// Verify profile exists
 		if (!$profile) {
 			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
 			return;
 		}
-
-		// ignore group posts
-		// if($status->group_id != null) {
-		//     return;
-		// }
 
 		if($status->local == false || $status->url || $status->uri) {
 			return;
 		}
-
-		$profile = $status->profile;
-		// Verify profile exists
-		if (!$profile) {
-			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
-			return;
-		}
-
-
-        if ($status->local == false || $status->url || $status->uri) {
-            return;
-        }
 
         $audience = $status->profile->getAudienceInbox($status->scope);
 
