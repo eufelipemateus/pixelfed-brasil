@@ -13,7 +13,7 @@
       <form method="post">
         @csrf
         <div class="custom-control custom-switch mb-3">
-          <input type="checkbox" class="custom-control-input" id="confirm-check">
+          <input type="checkbox" class="custom-control-input" id="confirm-check" name="confirm">
           <label class="custom-control-label font-weight-bold" for="confirm-check">{{ __("settings.remove.permanent.confirm_check") }}</label>
         </div>
         <button type="submit" class="btn btn-danger font-weight-bold py-0 delete-btn" disabled="">{{ __("settings.remove.permanent.confirm_button") }}</button>
