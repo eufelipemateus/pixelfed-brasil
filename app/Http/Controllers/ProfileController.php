@@ -161,7 +161,7 @@ class ProfileController extends Controller
                     ->first();
             } else {
                 return Profile::withTrashed()
-                    ->whereNull('domain')
+                    ->whereNull(['domain', 'status'])
                     ->whereUsername($username)
                     ->first();
             }
