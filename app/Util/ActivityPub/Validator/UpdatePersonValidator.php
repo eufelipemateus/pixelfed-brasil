@@ -56,9 +56,9 @@ class UpdatePersonValidator
                     self::sameHost($attribute, $value, $fail, $payload['actor']);
                 },
             ],
-            'object.summary' => 'required|string|nullable',
+            'object.summary' => 'present|string|nullable',
             'object.preferredUsername' => 'required|string',
-            'object.name' => 'required|string|nullable',
+            'object.name' => 'present|string|nullable',
             'object.inbox' => [
                 'required',
                 'url',

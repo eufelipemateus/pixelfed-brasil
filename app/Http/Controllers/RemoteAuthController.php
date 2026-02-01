@@ -542,7 +542,7 @@ class RemoteAuthController extends Controller
         abort_unless($request->session()->exists('oauth_remasto_id'), 403);
 
         $this->validate($request, [
-            'bio' => 'required|nullable|max:500',
+            'bio' => 'present|nullable|max:500',
         ]);
 
         $profile = $request->user()->profile;
