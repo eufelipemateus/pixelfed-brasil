@@ -52,7 +52,6 @@ use Jenssegers\Agent\Agent;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
-use Purify;
 use App\Util\Lexer\Autolink;
 use App\Enums\StatusEnums;
 

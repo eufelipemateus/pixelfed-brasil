@@ -17,38 +17,56 @@ use App\Jobs\ActivityPub\PubDeliver;
 
 class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $status;
+	protected $status;
 
-    /**
-     * Delete the job if its models no longer exist.
-     *
-     * @var bool
-     */
-    public $deleteWhenMissingModels = true;
+	/**
+	 * Delete the job if its models no longer exist.
+	 *
+	 * @var bool
+	 */
+	public $deleteWhenMissingModels = true;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
-    public function __construct(Status $status)
-    {
-        $this->status = $status;
-    }
+	/**
+	 * Create a new job instance.
+	 *
+	 * @return void
+	 */
+	public function __construct(Status $status)
+	{
+		$this->status = $status;
+	}
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
-    {
-        $status = $this->status;
+	/**
+	 * Execute the job.
+	 *
+	 * @return void
+	 */
+	public function handle()
+	{
+		$status = $this->status;
+
 		// Verify status exists
 		if (!$status) {
 			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Status no longer exists, skipping job");
+			return;
+		}
+
+		$profile = $status->profile;
+
+		// Verify profile exists
+		if (!$profile) {
+			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
+			return;
+		}
+
+		// ignore group posts
+		// if($status->group_id != null) {
+		//     return;
+		// }
+
+		if($status->local == false || $status->url || $status->uri) {
 			return;
 		}
 
@@ -59,10 +77,6 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 			return;
 		}
 
-        // ignore group posts
-        // if($status->group_id != null) {
-        //     return;
-        // }
 
         if ($status->local == false || $status->url || $status->uri) {
             return;
@@ -79,7 +93,6 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
             case 'poll':
                 // Polls not yet supported
                 return;
-                break;
 
             default:
                 $activitypubObject = new UpdateNote();

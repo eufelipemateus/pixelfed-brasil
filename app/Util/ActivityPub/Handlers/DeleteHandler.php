@@ -11,6 +11,7 @@ use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Jobs\HomeFeedPipeline\FeedRemoveRemotePipeline;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Util\ActivityPub\Helpers;
+use App\Notification;
 
 class DeleteHandler implements ActivityHandler
 {
@@ -19,12 +20,10 @@ class DeleteHandler implements ActivityHandler
 
     public function handle(): void
     {
-        if (
-            !isset(
-                $this->payload['actor'],
-                $this->payload['object']
-            )
-        ) {
+            if (! isset(
+            $this->payload['actor'],
+            $this->payload['object']
+        )) {
             return;
         }
         $actor = $this->payload['actor'];
@@ -38,14 +37,12 @@ class DeleteHandler implements ActivityHandler
 
             return;
         } else {
-            if (
-                !isset(
-                    $obj['id'],
-                    $this->payload['object'],
-                    $this->payload['object']['id'],
-                    $this->payload['object']['type']
-                )
-            ) {
+            if (! isset(
+                $obj['id'],
+                $this->payload['object'],
+                $this->payload['object']['id'],
+                $this->payload['object']['type']
+            )) {
                 return;
             }
             $type = $this->payload['object']['type'];
@@ -63,10 +60,16 @@ class DeleteHandler implements ActivityHandler
                     if (! $profile || $profile->private_key != null) {
                         return;
                     }
+
+                    Notification::whereActorId($profile->id)
+                        ->chunkById(100, function ($notifications) {
+                            foreach ($notifications as $notification) {
+                                $notification->forceDelete();
+                            }
+                        });
                     DeleteRemoteProfilePipeline::dispatch($profile)->onQueue('inbox');
 
                     return;
-                    break;
 
                 case 'Tombstone':
                     $profile = Profile::whereRemoteUrl($actor)->first();
@@ -84,6 +87,14 @@ class DeleteHandler implements ActivityHandler
                     if ($status->profile_id != $profile->id) {
                         return;
                     }
+                    $notifications = Notification::whereActorId($status->profile_id)
+                        ->whereItemId($status->id)
+                        ->whereItemType('App\Status')
+                        ->get();
+                    foreach ($notifications as $notification) {
+                        $notification->forceDelete();
+                    }
+
                     if ($status->scope && in_array($status->scope, ['public', 'unlisted', 'private'])) {
                         if ($status->type && ! in_array($status->type, ['story:reaction', 'story:reply', 'reply'])) {
                             FeedRemoveRemotePipeline::dispatch($status->id, $status->profile_id)->onQueue('feed');
@@ -92,7 +103,6 @@ class DeleteHandler implements ActivityHandler
                     RemoteStatusDelete::dispatch($status)->onQueue('high');
 
                     return;
-                    break;
 
                 case 'Story':
                     $story = Story::whereObjectId($id)
@@ -102,11 +112,9 @@ class DeleteHandler implements ActivityHandler
                     }
 
                     return;
-                    break;
 
                 default:
                     return;
-                    break;
             }
         }
     }

@@ -146,7 +146,6 @@ class StoryComposeController extends Controller
 
             if ($localFs) {
                 $fpath = storage_path('app/'.$path);
-
                 $img = $this->imageManager->read($fpath);
                 $quality = config_cache('pixelfed.image_quality');
                 $encoder = in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg']) ?
