@@ -101,9 +101,9 @@ class SharePipeline implements ShouldQueue
         $status = $this->status;
         $profile = $status->profile;
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
-        $resource = new Fractal\Resource\Item($status, new Announce());
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
+        $resource = new Fractal\Resource\Item($status, new Announce);
         $activity = $fractal->createData($resource)->toArray();
 
         $audience = $status->profile->getAudienceInbox($status->scope);

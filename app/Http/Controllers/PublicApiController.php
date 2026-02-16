@@ -191,7 +191,7 @@ class PublicApiController extends Controller
                 if (! $user) {
                     abort(403);
                 } else {
-                    $follows = FollowerService::follows($profile->id, $user->profile_id);
+                    $follows = FollowerService::follows($user->profile_id, $profile->id);
                     if ($follows == false && $profile->id !== $user->profile_id && $user->is_admin == false) {
                         abort(404);
                     }
@@ -673,6 +673,8 @@ class PublicApiController extends Controller
             'pinned' => 'nullable',
             'exclude_replies' => 'nullable',
             'limit' => 'nullable|integer|min:1|max:24',
+            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
             'cursor' => 'nullable',
         ]);
 
@@ -718,6 +720,8 @@ class PublicApiController extends Controller
             ->when($pinned, function ($query) {
                 return $query->whereNull('pinned_order');
             })
+            ->when($request->max_id, fn ($query, $max_id) => $query->where('id', '<', $max_id))
+            ->when($request->min_id, fn ($query, $min_id) => $query->where('id', '>', $min_id))
             ->whereIn('type', $scope)
             ->whereIn('scope', $visibility)
             ->orderByDesc('created_at')

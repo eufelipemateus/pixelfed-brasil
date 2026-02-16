@@ -166,7 +166,7 @@ class ConfigCacheService
                     }
                 }
 
-                if (! $v) {
+                if ($v === null) {
                     return;
                 }
 

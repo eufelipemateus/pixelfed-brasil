@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-class EmailService {
+class EmailService
+{
+    public static function isBanned($email)
+    {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
+            return true;
+        }
 
-	public static function isBanned($email)
-	{
-		if(filter_var($email, FILTER_VALIDATE_EMAIL) == false) {
-			return true;
-		}
-
-		$parts = explode('@', $email);
+        $parts = explode('@', $email);
 
 		return in_array(strtolower(last($parts)), array_map('strtolower', self::bannedDomains()));
 	}

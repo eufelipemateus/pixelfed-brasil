@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\{Profile, User};
-use DB;
+use App\Profile;
+use App\User;
 use App\Util\Lexer\RestrictedNames;
 use App\Enums\StatusEnums;
+use DB;
+use Illuminate\Console\Command;
 
 class FixUsernames extends Command
 {
@@ -58,12 +59,12 @@ class FixUsernames extends Command
                 if($user->is_admin || $user->status == StatusEnums::DELETED) {
                     continue;
                 }
-                if(in_array(strtolower($user->username), array_map('strtolower', $restricted))) {
+                if (in_array(strtolower($user->username), array_map('strtolower', $restricted))) {
                     $affected->push($user);
                 }
                 $val = str_replace(['-', '_', '.'], '', $user->username);
-                if(!ctype_alnum($val)) {
-                    $this->info('Found invalid username: ' . $user->username);
+                if (! ctype_alnum($val)) {
+                    $this->info('Found invalid username: '.$user->username);
                     $affected->push($user);
                 }
             }
@@ -76,31 +77,31 @@ class FixUsernames extends Command
                 'Random replace (assigns random username)',
                 'Best try replace (assigns alpha numeric username)',
                 'Manual replace (manually set username)',
-                'Skip (do not replace. Use at your own risk)'
+                'Skip (do not replace. Use at your own risk)',
             ];
 
-            foreach($affected as $u) {
+            foreach ($affected as $u) {
                 $old = $u->username;
                 $this->info("Found user: {$old}");
                 $opt = $this->choice('Select fix method:', $opts, 3);
 
                 switch ($opt) {
                     case $opts[0]:
-                        $new = "user_" . str_random(6);
-                        $this->info('New username: ' . $new);
+                        $new = 'user_'.str_random(6);
+                        $this->info('New username: '.$new);
                         break;
 
                     case $opts[1]:
                         $new = htmlspecialchars($old, ENT_QUOTES, 'UTF-8');
-                        if(strlen($new) < 6) {
-                            $new = $new . '_' . str_random(4);
+                        if (strlen($new) < 6) {
+                            $new = $new.'_'.str_random(4);
                         }
-                        $this->info('New username: ' . $new);
+                        $this->info('New username: '.$new);
                         break;
 
                     case $opts[2]:
                         $new = $this->ask('Enter new username:');
-                        $this->info('New username: ' . $new);
+                        $this->info('New username: '.$new);
                         break;
 
                     case $opts[3]:
@@ -108,12 +109,12 @@ class FixUsernames extends Command
                         break;
 
                     default:
-                        $new = "user_" . str_random(6);
+                        $new = 'user_'.str_random(6);
                         break;
                 }
 
-                if($new) {
-                    DB::transaction(function() use($u, $new) {
+                if ($new) {
+                    DB::transaction(function () use ($u, $new) {
                         $profile = $u->profile;
                         $profile->username = $new;
                         $u->username = $new;
@@ -121,10 +122,10 @@ class FixUsernames extends Command
                         $profile->save();
                     });
                 }
-                $this->info('Selected: ' . $opt);
+                $this->info('Selected: '.$opt);
             }
 
-            $this->info('Fixed ' . $affected->count() . ' usernames!');
+            $this->info('Fixed '.$affected->count().' usernames!');
         } else {
             $this->info('No restricted usernames found!');
         }
@@ -141,23 +142,24 @@ class FixUsernames extends Command
 
         $count = $profiles->count();
 
-        if($count > 0) {
+        if ($count > 0) {
             $this->info("Found {$count} remote usernames to fix ...");
             $this->line(' ');
         } else {
             $this->info('No remote fixes found!');
             $this->line(' ');
+
             return;
         }
-        foreach($profiles as $p) {
+        foreach ($profiles as $p) {
             $this->info("Fixed $p->username => $p->webfinger");
             $p->username = $p->webfinger ?? "@{$p->username}@{$p->domain}";
-            if(Profile::whereUsername($p->username)->exists()) {
+            if (Profile::whereUsername($p->username)->exists()) {
                 return;
             }
             $p->save();
         }
-        if($count > 0) {
+        if ($count > 0) {
             $this->line(' ');
         }
 
