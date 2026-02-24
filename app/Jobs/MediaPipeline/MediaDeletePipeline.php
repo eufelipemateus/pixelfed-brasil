@@ -65,8 +65,9 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
         $media = $this->media;
 
         // Verify media exists
-        if (!$media) {
-            Log::info("MediaDeletePipeline: Media no longer exists, skipping job");
+        if (! $media) {
+            Log::info('MediaDeletePipeline: Media no longer exists, skipping job');
+
             return 1;
         }
 
@@ -116,7 +117,7 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 
             $media->delete();
         } catch (\Exception $e) {
-            Log::warning("MediaDeletePipeline: Failed to delete media {$media->id}: " . $e->getMessage());
+            Log::warning("MediaDeletePipeline: Failed to delete media {$media->id}: ".$e->getMessage());
             throw $e;
         }
 

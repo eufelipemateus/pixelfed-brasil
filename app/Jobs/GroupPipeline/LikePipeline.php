@@ -1,107 +1,151 @@
 <?php
 
-namespace App\Jobs\GroupPipeline;
+namespace App\Jobs\LikePipeline;
 
-use Cache, Log;
-use Illuminate\Support\Facades\Redis;
-use App\{Like, Notification};
+use App\Jobs\PushNotificationPipeline\LikePushNotifyPipeline;
+use App\Like;
+use App\Notification;
+use App\Notifications\LikeNotification;
+use App\Services\AccountService;
+use App\Services\NotificationAppGatewayService;
+use App\Services\PushNotificationService;
+use App\Services\StatusService;
+use App\Transformer\ActivityPub\Verb\Like as LikeTransformer;
+use App\User;
+use App\Util\ActivityPub\Helpers;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use App\Util\ActivityPub\Helpers;
+use Illuminate\Support\Facades\DB;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Transformer\ActivityPub\Verb\Like as LikeTransformer;
-use App\Services\StatusService;
 
 class LikePipeline implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	protected $like;
+    protected $like;
 
-	/**
-	 * Delete the job if its models no longer exist.
-	 *
-	 * @var bool
-	 */
-	public $deleteWhenMissingModels = true;
+    public $deleteWhenMissingModels = true;
 
-	public $timeout = 5;
-	public $tries = 1;
+    public $timeout = 30;
 
-	/**
-	 * Create a new job instance.
-	 *
-	 * @return void
-	 */
-	public function __construct(Like $like)
-	{
-		$this->like = $like;
-	}
+    public $tries = 3;
 
-	/**
-	 * Execute the job.
-	 *
-	 * @return void
-	 */
-	public function handle()
-	{
-		$like = $this->like;
+    public $maxExceptions = 2;
 
-		$status = $this->like->status;
-		$actor = $this->like->actor;
+    public $backoff = [3, 10];
 
-		if (!$status) {
-			// Ignore notifications to deleted statuses
-			return;
-		}
+    public function __construct(Like $like)
+    {
+        $this->like = $like;
+    }
 
-		StatusService::refresh($status->id);
+    /**
+     * Middleware para evitar processamento duplicado do mesmo like simultaneamente.
+     */
+    public function middleware()
+    {
+        return [
+            (new WithoutOverlapping("like:{$this->like->status_id}:{$this->like->profile_id}"))
+                ->releaseAfter(10)
+                ->expireAfter(60),
+        ];
+    }
 
-		if($status->url && $actor->domain == null) {
-			return $this->remoteLikeDeliver();
-		}
+    public function uniqueId()
+    {
+        return "like:{$this->like->status_id}:{$this->like->profile_id}";
+    }
 
-		$exists = Notification::whereProfileId($status->profile_id)
-				  ->whereActorId($actor->id)
-				  ->whereAction('group:like')
-				  ->whereItemId($status->id)
-				  ->whereItemType('App\Status')
-				  ->count();
+    public function handle()
+    {
+        $like = $this->like;
+        $status = $like->status;
+        $actor = $like->actor;
 
-		if ($actor->id === $status->profile_id || $exists !== 0) {
-			return true;
-		}
+        if (! $status) {
+            return;
+        }
 
-		try {
-			$notification = new Notification();
-			$notification->profile_id = $status->profile_id;
-			$notification->actor_id = $actor->id;
-			$notification->action = 'group:like';
-			$notification->item_id = $status->id;
-			$notification->item_type = "App\Status";
-			$notification->save();
+        // Se for um status remoto sendo curtido por um usuário local
+        if ($status->url && $actor->domain == null) {
+            $this->remoteLikeDeliver();
+            StatusService::refresh($status->id);
 
-		} catch (\Exception $e) {
-		}
-	}
+            return;
+        }
 
-	public function remoteLikeDeliver()
-	{
-		$like = $this->like;
-		$status = $this->like->status;
-		$actor = $this->like->actor;
+        // Evita notificar se o usuário curtir o próprio post
+        if ($actor->id === $status->profile_id) {
+            StatusService::refresh($status->id);
 
-		$fractal = new Fractal\Manager();
-		$fractal->setSerializer(new ArraySerializer());
-		$resource = new Fractal\Resource\Item($like, new LikeTransformer());
-		$activity = $fractal->createData($resource)->toArray();
+            return;
+        }
 
-		$url = $status->profile->sharedInbox ?? $status->profile->inbox_url;
+        // Lógica de Notificações Locais (Preservando sua implementação de E-mail e Push)
+        if ($status->uri === null && $status->object_url === null && $status->url === null) {
+            DB::transaction(function () use ($status, $actor) {
+                $notification = Notification::firstOrCreate(
+                    [
+                        'profile_id' => $status->profile_id,
+                        'actor_id'   => $actor->id,
+                        'action'     => 'like',
+                        'item_id'    => $status->id,
+                        'item_type'  => 'App\Status',
+                    ]
+                );
 
-		Helpers::sendSignedObject($actor, $url, $activity);
-	}
+                // Sua lógica customizada de E-mail baseada nas configurações da conta
+                $settings = AccountService::getAccountSettings($status->profile_id);
+                if (isset($settings['send_email_on_like']) && $settings['send_email_on_like']) {
+                    $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
+                }
+
+                // Disparo de Push Notification se a notificação acabou de ser criada
+                if ($notification->wasRecentlyCreated) {
+                    $this->sendPushNotification($status, $actor);
+                }
+            });
+        }
+
+        StatusService::refresh($status->id);
+    }
+
+    protected function sendPushNotification($status, $actor)
+    {
+        if (! NotificationAppGatewayService::enabled()) {
+            return;
+        }
+
+        if (! PushNotificationService::check('like', $status->profile_id)) {
+            return;
+        }
+
+        $user = User::whereProfileId($status->profile_id)->first();
+
+        if ($user && $user->expo_token && $user->notify_enabled) {
+            // Despacha para a fila de Push de forma síncrona dentro do Job de Like
+            LikePushNotifyPipeline::dispatchSync($user->expo_token, $actor->username);
+        }
+    }
+
+    public function remoteLikeDeliver()
+    {
+        $like = $this->like;
+        $status = $like->status;
+        $actor = $like->actor;
+
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
+        $resource = new Fractal\Resource\Item($like, new LikeTransformer);
+        $activity = $fractal->createData($resource)->toArray();
+
+        $url = $status->profile->sharedInbox ?? $status->profile->inbox_url;
+
+        Helpers::sendSignedObject($actor, $url, $activity);
+    }
 }

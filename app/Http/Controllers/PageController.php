@@ -2,119 +2,132 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Auth, Cache;
 use App\Page;
 use App\Services\ConfigCacheService;
+use Auth;
+use Cache;
+use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
-	public function __construct()
-	{
-		$this->middleware(['auth', 'admin']);
-	}
+    public function __construct()
+    {
+        $this->middleware(['auth', 'admin']);
+    }
 
-	protected function cacheKeys() {
-		return [
-			'/about' => 'site:about',
-			'/privacy' => 'site:privacy',
-			'/terms' => 'site:terms',
-			'/kb/community-guidelines' => 'site:help:community-guidelines',
-			'/legal-notice' => 'site:legal-notice'
-		];
-	}
+    protected function cacheKeys()
+    {
+        // Resolução: Mantido os Slugs originais do seu fork,
+        // mas adotado o padrão de array com vírgula no final (estilo upstream).
+        return [
+            '/about' => 'site:about',
+            '/privacy' => 'site:privacy',
+            '/terms' => 'site:terms',
+            '/kb/community-guidelines' => 'site:help:community-guidelines',
+            '/legal-notice' => 'site:legal-notice',
+        ];
+    }
 
-	protected function authCheck($admin_only = false)
-	{
-		$auth = $admin_only ?
-			Auth::check() && Auth::user()->is_admin == true :
-			Auth::check();
-		if($auth == false) {
-			abort(403);
-		}
-	}
+    protected function authCheck($admin_only = false)
+    {
+        $auth = $admin_only ?
+            Auth::check() && Auth::user()->is_admin == true :
+            Auth::check();
 
-	public function edit(Request $request)
-	{
-		$this->authCheck(true);
-		$this->validate($request, [
-			'page'	=> 'required|string'
-		]);
-		$slug = urldecode($request->page);
-		if(in_array($slug, array_keys($this->cacheKeys())) == false) {
-			return redirect(route('admin.settings.pages'));
-		}
-		$page = Page::firstOrCreate(['slug' => $slug]);
-		return view('admin.pages.edit', compact('page'));
-	}
+        // Estilo: Adicionado espaço após o 'if' (Padrão Laravel/Upstream)
+        if ($auth == false) {
+            abort(403);
+        }
+    }
 
-	public function store(Request $request)
-	{
-		$this->validate($request, [
-			'slug' => 'required|string',
-			'content' => 'required|string',
-			'title' => 'nullable|string',
-			'active'  => 'required|boolean'
-		]);
-		$slug = urldecode($request->input('slug'));
-		$page = Page::firstOrCreate(['slug' => $slug]);
-		$page->content = $request->input('content');
-		$page->title = $request->input('title');
-		$page->active = (bool) $request->input('active');
-		$page->save();
-		$keys = $this->cacheKeys();
-		$key = $keys[$page->slug];
-		Cache::forget($key);
-		if($page->slug === '/legal-notice') {
-			ConfigCacheService::put('instance.has_legal_notice', $page->active);
-		}
-		return response()->json(['msg' => 200]);
-	}
+    public function edit(Request $request)
+    {
+        $this->authCheck(true);
+        $this->validate($request, [
+            'page' => 'required|string',
+        ]);
+        $slug = urldecode($request->page);
+        if (in_array($slug, array_keys($this->cacheKeys())) == false) {
+            return redirect(route('admin.settings.pages'));
+        }
+        $page = Page::firstOrCreate(['slug' => $slug]);
 
-	public function delete(Request $request)
-	{
-		$this->validate($request, [
-			'id' => 'required|integer|min:1|exists:pages,id'
-		]);
+        return view('admin.pages.edit', compact('page'));
+    }
 
-		$page = Page::findOrFail($request->input('id'));
-		$keys = $this->cacheKeys();
-		$key = $keys[$page->slug];
-		$page->delete();
-		Cache::forget($key);
-		return redirect(route('admin.settings.pages'));
-	}
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'slug' => 'required|string',
+            'content' => 'required|string',
+            'title' => 'nullable|string',
+            'active' => 'required|boolean',
+        ]);
+        $slug = urldecode($request->input('slug'));
+        $page = Page::firstOrCreate(['slug' => $slug]);
+        $page->content = $request->input('content');
+        $page->title = $request->input('title');
+        $page->active = (bool) $request->input('active');
+        $page->save();
 
-	public function generatePage(Request $request)
-	{
-		$this->validate($request, [
-			'page' => 'required|string|in:about,terms,privacy,community_guidelines,legal_notice',
-		]);
+        $keys = $this->cacheKeys();
+        $key = $keys[$page->slug];
+        Cache::forget($key);
 
-		$page = $request->input('page');
+        // Resolução: Mantido o slug '/legal-notice' para compatibilidade com seu fork
+        if ($page->slug === '/legal-notice') {
+            ConfigCacheService::put('instance.has_legal_notice', $page->active);
+        }
 
-		switch ($page) {
-			case 'about':
-				Page::firstOrCreate(['slug' => '/about']);
-				break;
+        return response()->json(['msg' => 200]);
+    }
 
-			case 'privacy':
-				Page::firstOrCreate(['slug' => '/privacy']);
-				break;
+    public function delete(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|integer|min:1|exists:pages,id',
+        ]);
 
-			case 'terms':
-				Page::firstOrCreate(['slug' => '/terms']);
-				break;
+        $page = Page::findOrFail($request->input('id'));
+        $keys = $this->cacheKeys();
+        $key = $keys[$page->slug];
+        $page->delete();
+        Cache::forget($key);
 
-			case 'community_guidelines':
-				Page::firstOrCreate(['slug' => '/kb/community-guidelines']);
-				break;
+        return redirect(route('admin.settings.pages'));
+    }
 
-			case 'legal_notice':
-				Page::firstOrCreate(['slug' => '/legal-notice']);
-				break;
-		}
+    public function generatePage(Request $request)
+    {
+        $this->validate($request, [
+            'page' => 'required|string|in:about,terms,privacy,community_guidelines,legal_notice',
+        ]);
 
-		return redirect(route('admin.settings.pages'));
-	}
+        $page = $request->input('page');
+
+        // Resolução: Mantido todos os slugs curtos do seu fork
+        switch ($page) {
+            case 'about':
+                Page::firstOrCreate(['slug' => '/about']);
+                break;
+
+            case 'privacy':
+                Page::firstOrCreate(['slug' => '/privacy']);
+                break;
+
+            case 'terms':
+                Page::firstOrCreate(['slug' => '/terms']);
+                break;
+
+            case 'community_guidelines':
+                Page::firstOrCreate(['slug' => '/kb/community-guidelines']);
+                break;
+
+            case 'legal_notice':
+                Page::firstOrCreate(['slug' => '/legal-notice']);
+                break;
+        }
+
+        return redirect(route('admin.settings.pages'));
+    }
 }

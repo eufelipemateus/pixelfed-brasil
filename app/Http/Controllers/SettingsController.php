@@ -137,7 +137,7 @@ class SettingsController extends Controller
         $this->validate($request, [
             'confirm' => 'required|accepted',
         ]);
-    
+
         $profile = $user->profile;
         $ts = Carbon::now()->addMonth();
         $user->email = $user->id;

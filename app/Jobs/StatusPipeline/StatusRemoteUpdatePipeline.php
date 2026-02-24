@@ -81,7 +81,7 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
                 ]);
             }
         } catch (\Exception $e) {
-            Log::warning("StatusRemoteUpdatePipeline: Failed to create previous edit for status {$status->id}: " . $e->getMessage());
+            Log::warning("StatusRemoteUpdatePipeline: Failed to create previous edit for status {$status->id}: ".$e->getMessage());
             throw $e;
         }
     }

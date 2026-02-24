@@ -62,13 +62,12 @@ return [
 		'compose' => 'Neu erstellen:',
 		'logout' => 'Ausloggen',
 
-        // Nav footer
-        'about' => 'Über uns',
-        'help' => 'Hilfe',
-        'language' => 'Sprache',
-        'privacy' => 'Privatsphäre',
-        'terms' => 'AGB',
-        'legalNotice' => 'Impressum',
+		// Nav footer
+		'about' => 'Über uns',
+		'help' => 'Hilfe',
+		'language' => 'Sprache',
+		'privacy' => 'Privatsphäre',
+		'terms' => 'AGB',
 
 		// Temporary links
 		'backToPreviousDesign' => 'Zurück zum vorherigen Design'

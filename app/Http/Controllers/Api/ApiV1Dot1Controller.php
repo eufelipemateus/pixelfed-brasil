@@ -52,8 +52,6 @@ use Jenssegers\Agent\Agent;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
-use App\Util\Lexer\Autolink;
-use App\Enums\StatusEnums;
 
 class ApiV1Dot1Controller extends Controller
 {

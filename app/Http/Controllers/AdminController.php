@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Instance;
+use App\Jobs\AdminPipeline\AdminProfileActionPipeline;
 use App\Mail\AdminMessageResponse;
 use App\Models\CustomEmoji;
 use App\Newsroom;
@@ -40,9 +41,11 @@ class AdminController extends Controller
         AdminDiscoverController,
         AdminHashtagsController,
         AdminInstanceController,
+        // AdminGroupsController,
         AdminMediaController,
         AdminReportController,
         AdminSettingsController,
+        // AdminStorageController,
         AdminUserController;
 
     public function __construct()
@@ -247,9 +250,10 @@ class AdminController extends Controller
     {
         $message = Contact::findOrFail($id);
         $user = User::whereNull('status')->find($message->user_id);
-        if(!$user) {
+        if (! $user) {
             $message->read_at = now();
             $message->save();
+
             return redirect('/i/admin/messages/home')->with('status', 'Redirected from message sent from a deleted account');
         }
 
@@ -262,15 +266,16 @@ class AdminController extends Controller
             'message' => 'required|string|min:1|max:500',
         ]);
 
-        if(config('mail.default') === 'log') {
-            return redirect('/i/admin/messages/home')->with('error', 'Mail driver not configured, please setup before you can sent email.');
-        }
+        // if(config('mail.default') === 'log') {
+        //     return redirect('/i/admin/messages/home')->with('error', 'Mail driver not configured, please setup before you can sent email.');
+        // }
 
         $message = Contact::whereNull('responded_at')->findOrFail($id);
         $user = User::whereNull('status')->find($message->user_id);
-        if(!$user) {
+        if (! $user) {
             $message->read_at = now();
             $message->save();
+
             return redirect('/i/admin/messages/home')->with('status', 'Redirected from message sent from a deleted account');
         }
         $message->response = $request->input('message');
@@ -289,17 +294,19 @@ class AdminController extends Controller
             'message' => 'required|string|min:1|max:500',
         ]);
 
-        if(config('mail.default') === 'log') {
-            return redirect('/i/admin/messages/home')->with('error', 'Mail driver not configured, please setup before you can sent email.');
-        }
+        // if(config('mail.default') === 'log') {
+        //     return redirect('/i/admin/messages/home')->with('error', 'Mail driver not configured, please setup before you can sent email.');
+        // }
 
         $message = Contact::whereNull('read_at')->findOrFail($id);
         $user = User::whereNull('status')->find($message->user_id);
-        if(!$user) {
+        if (! $user) {
             $message->read_at = now();
             $message->save();
+
             return redirect('/i/admin/messages/home')->with('error', 'Redirected from message sent from a deleted account');
         }
+
         return new AdminMessageResponse($message);
     }
 
@@ -312,9 +319,10 @@ class AdminController extends Controller
         $message = Contact::findOrFail($id);
 
         $user = User::whereNull('status')->find($message->user_id);
-        if(!$user) {
+        if (! $user) {
             $message->read_at = now();
             $message->save();
+
             return redirect('/i/admin/messages/home')->with('error', 'Redirected from message sent from a deleted account');
         }
         if ($message->read_at) {
@@ -665,5 +673,56 @@ class AdminController extends Controller
         $emojis = CustomEmoji::whereShortcode($id)->where('id', '!=', $emoji->id)->cursorPaginate(10);
 
         return view('admin.custom-emoji.duplicates', compact('emoji', 'emojis'));
+    }
+
+    public function rolesHome(Request $request)
+    {
+        return view('admin.roles.index');
+    }
+
+    public function rolesBrowse(Request $request)
+    {
+        return view('admin.roles.browse');
+    }
+
+    public function profilesApiList(Request $request)
+    {
+        $this->validate($request, [
+            'filter' => 'sometimes|in:all,cw,unlisted,banned,newest',
+        ]);
+        $filter = $request->input('filter');
+
+        $res = Profile::whereNull('user_id')
+            ->when($filter, function ($q, $filter) {
+                if ($filter === 'cw') {
+                    return $q->where('cw', true);
+                } elseif ($filter === 'unlisted') {
+                    return $q->where('unlisted', true);
+                } elseif ($filter === 'banned') {
+                    return $q->where('status', 'banned');
+                } elseif ($filter === 'newest') {
+                    return $q->orderByDesc('id');
+                } else {
+                    return $q;
+                }
+            })
+            ->cursorPaginate(10)
+            ->withQueryString();
+
+        return AdminProfile::collection($res);
+    }
+
+    public function profilesHandleAction(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|exists:profiles',
+            'action' => 'required|in:mark-all-cw,unlist-all,refetch,purge',
+        ]);
+
+        $profile = Profile::findOrFail($request->input('id'));
+        $action = $request->input('action');
+        AdminProfileActionPipeline::dispatch($profile, $action);
+
+        return [200];
     }
 }
