@@ -4,6 +4,7 @@ namespace App\Jobs\StatusPipeline;
 
 use Illuminate\Support\Facades\Log;
 use App\Status;
+use App\Transformer\ActivityPub\Verb\UpdateNote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,9 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Transformer\ActivityPub\Verb\UpdateNote;
 use App\Jobs\ActivityPub\PubDeliver;
-
 
 class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 {
@@ -77,13 +76,12 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
                 return;
 
             default:
-                $activitypubObject = new UpdateNote();
+                $activitypubObject = new UpdateNote;
                 break;
         }
 
-
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
         $resource = new Fractal\Resource\Item($status, $activitypubObject);
         $activity = $fractal->createData($resource)->toArray();
 

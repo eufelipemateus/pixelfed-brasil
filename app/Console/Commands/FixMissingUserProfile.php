@@ -2,18 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Jobs\AvatarPipeline\CreateAvatar;
 use App\Follower;
+use App\Jobs\AvatarPipeline\CreateAvatar;
+use App\Jobs\FollowPipeline\FollowPipeline;
+use App\Models\DefaultDomainBlock;
+use App\Models\UserDomainBlock;
 use App\Profile;
 use App\User;
 use App\UserSetting;
-use App\Services\UserFilterService;
-use App\Models\DefaultDomainBlock;
-use App\Models\UserDomainBlock;
-use App\Jobs\FollowPipeline\FollowPipeline;
 use DB;
-use App\Services\FollowerService;
+use Illuminate\Console\Command;
+
 use function Laravel\Prompts\search;
 USE App\Enums\StatusEnums;
 
@@ -45,35 +44,38 @@ class FixMissingUserProfile extends Command
                 : []
         );
 
-        if(!$id) {
+        if (! $id) {
             $this->error('Found none');
         }
 
         $user = User::find($id);
 
-        if($user->profile) {
+        if ($user->profile) {
             $this->error('Already has profile');
+
             return;
         }
 
         if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             $this->error('User has deleted account');
+
             return;
         }
 
-        if(Profile::whereUsername($user->username)->exists()) {
+        if (Profile::whereUsername($user->username)->exists()) {
             $this->error('Already has profile');
+
             return;
         }
 
         if (empty($user->profile)) {
-            $profile = DB::transaction(function() use($user) {
-                $profile = new Profile();
+            $profile = DB::transaction(function () use ($user) {
+                $profile = new Profile;
                 $profile->user_id = $user->id;
                 $profile->username = $user->username;
                 $profile->name = $user->name;
                 $pkiConfig = [
-                    'digest_alg'       => 'sha512',
+                    'digest_alg' => 'sha512',
                     'private_key_bits' => 2048,
                     'private_key_type' => OPENSSL_KEYTYPE_RSA,
                 ];
@@ -86,11 +88,11 @@ class FixMissingUserProfile extends Command
                 $profile->public_key = $pki_public;
                 $profile->save();
                 $this->applyDefaultDomainBlocks($user);
+
                 return $profile;
             });
 
-
-            DB::transaction(function() use($user, $profile) {
+            DB::transaction(function () use ($user, $profile) {
                 $user = User::findOrFail($user->id);
                 $user->profile_id = $profile->id;
                 $user->save();
@@ -98,18 +100,18 @@ class FixMissingUserProfile extends Command
                 CreateAvatar::dispatch($profile);
             });
 
-            if((bool) config_cache('account.autofollow') == true) {
+            if ((bool) config_cache('account.autofollow') == true) {
                 $names = config_cache('account.autofollow_usernames');
                 $names = explode(',', $names);
 
-                if(!$names || !last($names)) {
+                if (! $names || ! last($names)) {
                     return;
                 }
 
                 $profiles = Profile::whereIn('username', $names)->get();
 
-                if($profiles) {
-                    foreach($profiles as $p) {
+                if ($profiles) {
+                    foreach ($profiles as $p) {
                         $follower = new Follower;
                         $follower->profile_id = $profile->id;
                         $follower->following_id = $p->id;
@@ -122,9 +124,9 @@ class FixMissingUserProfile extends Command
         }
 
         if (empty($user->settings)) {
-            DB::transaction(function() use($user) {
+            DB::transaction(function () use ($user) {
                 UserSetting::firstOrCreate([
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
                 ]);
             });
         }
@@ -132,19 +134,19 @@ class FixMissingUserProfile extends Command
 
     protected function applyDefaultDomainBlocks($user)
     {
-        if($user->profile_id == null) {
+        if ($user->profile_id == null) {
             return;
         }
         $defaultDomainBlocks = DefaultDomainBlock::pluck('domain')->toArray();
 
-        if(!$defaultDomainBlocks || !count($defaultDomainBlocks)) {
+        if (! $defaultDomainBlocks || ! count($defaultDomainBlocks)) {
             return;
         }
 
-        foreach($defaultDomainBlocks as $domain) {
+        foreach ($defaultDomainBlocks as $domain) {
             UserDomainBlock::updateOrCreate([
                 'profile_id' => $user->profile_id,
-                'domain' => strtolower(trim($domain))
+                'domain' => strtolower(trim($domain)),
             ]);
         }
     }

@@ -20,7 +20,6 @@
                             <li v-if="config.show_directory" class="nav-item">
                                 <router-link to="/web/directory" class="nav-link text-white" >{{ $t('site.directory') }}</router-link>
                             </li>
-
                         </ul>
                     </div>
 
@@ -90,10 +89,12 @@ export default {
         init() {
             axios.get('/api/pixelfed/v2/discover/posts/trending?range=daily')
                 .then(res => {
+                    // Se encontrar mais de 3 posts no diário, carrega imediatamente
                     if (res && res.data.length > 3) {
                         this.feed = res.data;
                         this.loading = false;
                     } else {
+                        // Caso contrário, inicia a busca em ranges maiores
                         this.rangeIndex++;
                         this.fetchTrending();
                     }
@@ -111,22 +112,21 @@ export default {
                     range: this.ranges[this.rangeIndex]
                 }
             })
-                .then(res => {
-                    if (res && res.data.length) {
-                        if (this.rangeIndex == 2 && res.data.length > 3) {
-                            this.feed = res.data;
-                            this.loading = false;
-                        } else {
-                            this.rangeIndex++;
-                            this.isFetching = false;
-                            this.fetchTrending();
-                        }
-                    } else {
-                        this.rangeIndex++;
-                        this.isFetching = false;
-                        this.fetchTrending();
-                    }
-                })
+            .then(res => {
+                if (res && res.data.length > 3) {
+                    // Encontrou resultados suficientes no range atual
+                    this.feed = res.data;
+                    this.loading = false;
+                } else {
+                    // Tenta o próximo range (mensal -> anual)
+                    this.rangeIndex++;
+                    this.isFetching = false;
+                    this.fetchTrending();
+                }
+            })
+            .catch(() => {
+                this.isFetching = false;
+            });
         }
     }
 }
@@ -175,7 +175,7 @@ export default {
     font-size: 0.95rem;
 }
 
-/* Feed List - Transformando em Grid se possível */
+/* Grid de Feed Moderno */
 .feed-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -209,7 +209,6 @@ export default {
     font-size: 0.8rem;
 }
 
-/* Transição nos Cards */
 .modern-post-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border-radius: 15px;
@@ -222,13 +221,8 @@ export default {
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 576px) {

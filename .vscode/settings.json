@@ -17,5 +17,7 @@
     "files.associations": {
         ".env": "shellscript",
         ".env.*": "shellscript"
-    }
+    },
+    "snyk.advanced.organization": "66f17e70-b48d-4ba9-a7f1-01b9546d80f3",
+    "snyk.advanced.autoSelectOrganization": true
 }

@@ -25,7 +25,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
-use Intervention\Image\ImageManager;
 use Storage;
 
 class StoryComposeController extends Controller
@@ -146,6 +145,7 @@ class StoryComposeController extends Controller
 
             if ($localFs) {
                 $fpath = storage_path('app/'.$path);
+
                 $img = $this->imageManager->read($fpath);
                 $quality = config_cache('pixelfed.image_quality');
                 $encoder = in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg']) ?

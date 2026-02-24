@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Cache;
 use App\Page;
+use Cache;
+use Illuminate\Http\Request;
 use View;
 
 class MobileController extends Controller
@@ -15,6 +15,7 @@ class MobileController extends Controller
             $slug = '/terms';
             return Page::whereSlug($slug)->whereActive(true)->first();
         });
+
         return View::make('mobile.terms')->with(compact('page'))->render();
     }
 
@@ -24,6 +25,7 @@ class MobileController extends Controller
             $slug = '/privacy';
             return Page::whereSlug($slug)->whereActive(true)->first();
         });
+
         return View::make('mobile.privacy')->with(compact('page'))->render();
     }
 }

@@ -5,12 +5,13 @@ Vue.use(VueI18n);
 
 import en from './i18n/en.json';
 import pt from './i18n/pt.json';
+import ja from './i18n/ja.json';
 let locale = document.querySelector('html').getAttribute('lang');
 
 const i18n = new VueI18n({
     locale: locale, // set locale
     fallbackLocale: 'en',
-    messages: { en, pt }
+messages: { en, pt, ja }
 });
 
 new Vue({

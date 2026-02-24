@@ -25,8 +25,8 @@
 
             <form method="post">
                 @csrf
-                <input type="hidden" name="sid" value={{request()->input('sid')}}>
-                <input type="hidden" name="code" value={{request()->input('code')}}>
+                <input type="hidden" name="sid" value="{{request()->input('sid')}}">
+                <input type="hidden" name="code" value="{{request()->input('code')}}">
                 @if(config('instance.curated_registration.captcha_enabled'))
                 <div class="d-flex justify-content-center my-3">
                     {!! Captcha::display() !!}

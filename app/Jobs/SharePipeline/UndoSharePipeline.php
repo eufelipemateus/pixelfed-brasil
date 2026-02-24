@@ -8,9 +8,6 @@ use App\Services\ReblogService;
 use App\Services\StatusService;
 use App\Status;
 use App\Transformer\ActivityPub\Verb\UndoAnnounce;
-use App\Util\ActivityPub\HttpSignature;
-use GuzzleHttp\Client;
-use GuzzleHttp\Pool;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -84,9 +81,9 @@ class UndoSharePipeline implements ShouldQueue
         $status = $this->status;
         $profile = $status->profile;
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
-        $resource = new Fractal\Resource\Item($status, new UndoAnnounce());
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
+        $resource = new Fractal\Resource\Item($status, new UndoAnnounce);
         $activity = $fractal->createData($resource)->toArray();
 
         $audience = $status->profile->getAudienceInbox($status->scope);

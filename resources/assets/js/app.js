@@ -38,6 +38,7 @@ window.App.boot = function() {
     let i18nMessages = {
         en: require('./i18n/en.json'),
         pt: require('./i18n/pt.json'),
+        ja: require('./i18n/ja.json'),
     };
     let locale = document.querySelector('html').getAttribute('lang');
 

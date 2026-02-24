@@ -2,15 +2,13 @@
 
 namespace App\Services;
 
-use App\Profile;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use App\Enums\StatusEnums;
 
 class ActivityPubDeliveryService
 {
-
-	public $sender;
+    public $sender;
 	public $to;
 	public $payload;
 
