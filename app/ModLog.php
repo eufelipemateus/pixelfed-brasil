@@ -47,7 +47,7 @@ class ModLog extends Model
             case 'system.user.unpopular':
                 $msg = "[System] Removed from Popular Users";
                 break;
-                
+
             case 'system.user.popular':
                 $msg = "[System] Added to Popular Users";
                 break;

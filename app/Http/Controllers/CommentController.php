@@ -55,12 +55,27 @@ class CommentController extends Controller
         }
 
         $reply = DB::transaction(function () use ($comment, $status, $profile, $nsfw) {
-            $scope = $profile->is_private == true ? 'private' : 'public';
+            // Determine the replier's preferred scope
+            $replierScope = $profile->is_private == true ? 'private' : 'public';
+
+            // Enforce that reply cannot be more visible than parent
+            $parentScope = $status->scope ?? $status->visibility;
+
+            // Apply visibility constraint: reply should be at most as visible as parent
+            if ($parentScope === 'private' || $parentScope === 'direct') {
+                $scope = 'private';
+            } elseif ($parentScope === 'unlisted') {
+                $scope = $replierScope === 'private' ? 'private' : 'unlisted';
+            } else {
+                // Parent is public, use replier's preference
+                $scope = $replierScope;
+            }
+
             $reply = new Status;
             $reply->profile_id = $profile->id;
             $reply->is_nsfw = $nsfw;
             $reply->caption = Purify::clean($comment);
-            $reply->rendered = "";
+            $reply->rendered = '';
             $reply->in_reply_to_id = $status->id;
             $reply->in_reply_to_profile_id = $status->profile_id;
             $reply->scope = $scope;

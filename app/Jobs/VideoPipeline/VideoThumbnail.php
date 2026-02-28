@@ -10,26 +10,30 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Cache;
 use FFMpeg;
 use Illuminate\Support\Facades\Storage;
-use App\Media;
 use App\Jobs\MediaPipeline\MediaStoragePipeline;
-use App\Util\Media\Blurhash;
+use App\Media;
 use App\Services\MediaService;
 use App\Services\StatusService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Exception;
+use App\Util\Media\Blurhash;
 
-class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
+class VideoThumbnail implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $media;
 
     public $timeout = 900;
+
     public $tries = 3;
+
     public $maxExceptions = 1;
+
     public $failOnTimeout = true;
+
     public $deleteWhenMissingModels = true;
 
     /**
@@ -44,7 +48,7 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
      */
     public function uniqueId(): string
     {
-        return 'media:video-thumb:id-' . $this->media->id;
+        return 'media:video-thumb:id-'.$this->media->id;
     }
 
     /**
@@ -101,12 +105,12 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             $media->save();
 
             $blurhash = Blurhash::generate($media);
-            if($blurhash) {
+            if ($blurhash) {
                 $media->blurhash = $blurhash;
                 $media->save();
             }
 
-            if(config('media.hls.enabled')) {
+            if (config('media.hls.enabled')) {
                 VideoHlsPipeline::dispatch($media)->onQueue('mmo');
             }
 
@@ -114,12 +118,12 @@ class VideoThumbnail implements ShouldQueue, ShouldBeUniqueUntilProcessing
             Log::error("VideoThumbnail: Failed to generate thumbnail for media {$media->id}: " . $e->getMessage());
         }
 
-        if($media->status_id) {
-            Cache::forget('status:transformer:media:attachments:' . $media->status_id);
+        if ($media->status_id) {
+            Cache::forget('status:transformer:media:attachments:'.$media->status_id);
             MediaService::del($media->status_id);
-            Cache::forget('status:thumb:nsfw0' . $media->status_id);
-            Cache::forget('status:thumb:nsfw1' . $media->status_id);
-            Cache::forget('pf:services:sh:id:' . $media->status_id);
+            Cache::forget('status:thumb:nsfw0'.$media->status_id);
+            Cache::forget('status:thumb:nsfw1'.$media->status_id);
+            Cache::forget('pf:services:sh:id:'.$media->status_id);
             StatusService::del($media->status_id);
         }
 

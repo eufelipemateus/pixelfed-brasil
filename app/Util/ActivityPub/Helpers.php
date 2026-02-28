@@ -23,12 +23,13 @@ use App\Services\SanitizeService;
 use App\Services\UserFilterService;
 use App\Status;
 use App\Util\Media\License;
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
 use Validator;
+use Purify;
 
 class Helpers
 {
@@ -695,9 +696,7 @@ class Helpers
                 'is_nsfw' => $cw,
                 'scope' => $scope,
                 'visibility' => $scope,
-                'cw_summary' => ($cw && isset($activity['summary'])) ?
-                    app(SanitizeService::class)->html($activity['summary'])
-                    : null,
+                'cw_summary' => $cwSummary ? strip_tags($cwSummary) : null,
                 'comments_disabled' => $commentsDisabled,
             ]
         );
@@ -845,8 +844,8 @@ class Helpers
         $status->url = isset($res['url']) ? $res['url'] : $url;
         $status->uri = isset($res['url']) ? $res['url'] : $url;
         $status->object_url = $id;
-        $status->caption = strip_tags(app(SanitizeService::class)->html($res['content'])) ?? $defaultCaption;
-        $status->rendered = app(SanitizeService::class)->html($res['content'] ?? $defaultCaption);
+        $status->caption = $cleanedCaption ? strip_tags($cleanedCaption) : $defaultCaption;
+        $status->rendered = Purify::clean($res['content'] ?? $defaultCaption);
         $status->created_at = Carbon::parse($ts)->tz('UTC');
         $status->in_reply_to_id = null;
         $status->local = false;
@@ -1299,7 +1298,7 @@ class Helpers
             'webfinger' => app(SanitizeService::class)->html($webfinger),
             'key_id' => $res['publicKey']['id'],
             'remote_url' => $res['id'],
-            'name' => isset($res['name']) ? app(SanitizeService::class)->html($res['name']) : 'user',
+            'name' => isset($res['name']) ? Purify::clean($res['name']) : 'user',
             'bio' => isset($res['summary']) ? app(SanitizeService::class)->html($res['summary']) : null,
             'sharedInbox' => $res['endpoints']['sharedInbox'] ?? null,
             'inbox_url' => $res['inbox'],

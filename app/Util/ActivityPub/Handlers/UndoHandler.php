@@ -63,12 +63,15 @@ class UndoHandler implements ActivityHandler
                     ->whereReblogOfId($status->id)
                     ->delete();
                 ReblogService::removePostReblog($profile->id, $status->id);
-                Notification::whereProfileId($status->profile_id)
+                $notifications = Notification::whereProfileId($status->profile_id)
                     ->whereActorId($profile->id)
                     ->whereAction('share')
                     ->whereItemId($status->reblog_of_id)
                     ->whereItemType('App\Status')
-                    ->forceDelete();
+                    ->get();
+                foreach ($notifications as $notification) {
+                    $notification->forceDelete();
+                }
                 break;
 
             case 'Block':
@@ -88,12 +91,15 @@ class UndoHandler implements ActivityHandler
                 FollowRequest::whereFollowingId($following->id)
                     ->whereFollowerId($profile->id)
                     ->forceDelete();
-                Notification::whereProfileId($following->id)
+                $notifications = Notification::whereProfileId($following->id)
                     ->whereActorId($profile->id)
                     ->whereAction('follow')
                     ->whereItemId($following->id)
                     ->whereItemType('App\Profile')
-                    ->forceDelete();
+                    ->get();
+                foreach ($notifications as $notification) {
+                    $notification->forceDelete();
+                }
                 FollowerService::remove($profile->id, $following->id);
                 RelationshipService::refresh($following->id, $profile->id);
                 AccountService::del($profile->id);
@@ -119,12 +125,16 @@ class UndoHandler implements ActivityHandler
                 Like::whereProfileId($profile->id)
                     ->whereStatusId($status->id)
                     ->forceDelete();
-                Notification::whereProfileId($status->profile_id)
+                $notifications = Notification::whereProfileId($status->profile_id)
                     ->whereActorId($profile->id)
                     ->whereAction('like')
                     ->whereItemId($status->id)
                     ->whereItemType('App\Status')
-                    ->forceDelete();
+                    ->get();
+
+                foreach ($notifications as $notification) {
+                    $notification->forceDelete();
+                }
                 break;
         }
     }

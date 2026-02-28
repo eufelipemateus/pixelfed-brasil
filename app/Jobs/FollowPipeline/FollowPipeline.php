@@ -10,15 +10,15 @@ use App\Services\FollowerService;
 use App\Services\NotificationAppGatewayService;
 use App\Services\PushNotificationService;
 use App\User;
-use Cache;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Log;
 use App\Notifications\FollowNotification;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Exception;
 
 class FollowPipeline implements ShouldQueue
 {

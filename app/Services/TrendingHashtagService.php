@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 use App\Hashtag;
 use App\StatusHashtag;
+use Illuminate\Support\Facades\Cache;
 
 class TrendingHashtagService
 {
@@ -13,7 +12,7 @@ class TrendingHashtagService
 
     public static function key($k = null)
     {
-        return self::CACHE_KEY . $k;
+        return self::CACHE_KEY.$k;
     }
 
     public static function getBannedHashtags()
@@ -48,9 +47,10 @@ class TrendingHashtagService
     {
         return Cache::remember(self::key('-min-id'), 86400, function () {
             $minId = StatusHashtag::where('created_at', '>', now()->subMinutes(config('trending.hashtags.recency_mins')))->first();
-            if (!$minId) {
+            if (! $minId) {
                 return 0;
             }
+
             return $minId->id;
         });
     }
@@ -62,26 +62,25 @@ class TrendingHashtagService
         $skipIds = array_merge(self::getBannedHashtags(), self::getNonTrendingHashtags(), self::getNsfwHashtags());
 
         return Cache::remember(self::CACHE_KEY, config('trending.hashtags.ttl'), function () use ($minId, $skipIds) {
-            return StatusHashtag::select('status_hashtags.hashtag_id', \DB::raw('count(*) as total'))
-                ->leftJoin('statuses', 'status_hashtags.status_id', '=', 'statuses.id')
-                ->whereNotIn('status_hashtags.hashtag_id', $skipIds)
-                ->where('status_hashtags.id', '>', $minId)
-                ->where('statuses.local', true)
-                ->groupBy('status_hashtags.hashtag_id')
+            return StatusHashtag::select('hashtag_id', \DB::raw('count(*) as total'))
+                ->whereNotIn('hashtag_id', $skipIds)
+                ->where('id', '>', $minId)
+                ->groupBy('hashtag_id')
                 ->orderBy('total', 'desc')
                 ->take(config('trending.hashtags.limit'))
                 ->get()
                 ->map(function ($h) {
                     $hashtag = Hashtag::find($h->hashtag_id);
-                    if (!$hashtag) {
+                    if (! $hashtag) {
                         return;
                     }
+
                     return [
                         'id' => $h->hashtag_id,
                         'total' => $h->total,
                         'name' => '#' . $hashtag->name,
                         'hashtag' => $hashtag->name,
-                        'url' => $hashtag->url()
+                        'url' => $hashtag->url(),
                     ];
                 })
                 ->filter()

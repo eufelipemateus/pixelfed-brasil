@@ -6,6 +6,8 @@ use App\Instance;
 use Illuminate\Support\Facades\Log;
 use App\Profile;
 use App\Status;
+use App\Transformer\ActivityPub\Verb\CreateNote;
+use App\Transformer\ActivityPub\Verb\CreateQuestion;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,8 +15,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Transformer\ActivityPub\Verb\CreateNote;
-use App\Transformer\ActivityPub\Verb\CreateQuestion;
 use App\Jobs\ActivityPub\PubDeliver;
 
 class StatusActivityPubDeliver implements ShouldQueue
