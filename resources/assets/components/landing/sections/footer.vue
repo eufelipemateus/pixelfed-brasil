@@ -1,6 +1,8 @@
 <template>
 	<div class="footer-component">
 		<div class="footer-component-links">
+            <a href="/about">{{ $t('navmenu.about') }}</a>
+            <div class="spacer">·</div>
 			<a href="/help">{{ $t('navmenu.help') }}</a>
 			<div class="spacer">·</div>
 			<a href="/terms">{{ $t('navmenu.terms') }}</a>
