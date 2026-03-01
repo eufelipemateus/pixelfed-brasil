@@ -73,6 +73,7 @@ class User extends Authenticatable
         'notify_follow',
         'notify_mention',
         'notify_comment',
+        'has_interstitial'
     ];
 
     /**
