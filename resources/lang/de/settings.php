@@ -16,13 +16,13 @@ return [
     'import' =>                 'Import',
     'export' =>                 'Export',
     'parental_controls' =>      'Elterliche Kontrolle',
-    
+
     'submit' =>                 'Absenden',
     'error' =>                  'Fehler',
     'cancel' =>                 'Abbrechen',
     'save' =>                   'Speichern',
     'download' =>               'Herunterladen',
-    
+
     'home.account_settings' =>                                          'Konto-Einstellungen',
     'home.change_profile_photo' =>                                      'Profilfoto ändern',
     'home.select_a_profile_photo' =>                                    'Wähle dein Profilfoto',
@@ -48,21 +48,21 @@ return [
     'home.storage_used' =>                                              'Belegter Speicher',
     'home.are_you_sure_you_want_to_delete_your_profile_photo' =>        'Bist du sicher, dass du dein Profilfoto löschen möchtest?',
     'home.an_error_occured_please_try_again_later' =>                   'Es ist ein Fehler aufgetreten, versuche es bitte später noch einmal',
-    
+
     'accessibility.reduce_motion' =>                                    'Bewegung verringern',
     'accessibility.prevent_animation_effects' =>                        'Animationseffekte verhindern.',
     'accessibility.high_contrast_mode' =>                               'Hochkontrastmodus',
     'accessibility.high_contrast_mode_for_the_visually_impaired' =>     'Hoher Kontrast für bessere Sichtbarkeit',
     'accessibility.disable_video_autoplay' =>                           'Automatisches Abspielen deaktivieren',
     'accessibility.prevent_videos_from_autoplaying' =>                  'Verhindert, dass Videos automatisch abgespielt werden.',
-    
+
     'email.email_settings' =>                                           'Email-Einstellungen',
     'email.email_address' =>                                            'Email-Adresse',
     'email.verified' =>                                                 'Verifiziert',
     'email.unverified' =>                                               'Unverifiziert',
     'email.you_need_to' =>                                              'Du musst',
     'email.verify_your_email' =>                                        'deine E-Mail verifizieren',
-    
+
     'media.default_license' =>                                          'Standardlizenz',
     'media.set_a_default_license_for_new_posts' =>                      'Lege eine Standardlizenz für neue Beiträge fest.',
     'media.sync_licenses' =>                                            'Lizenzen synchronisieren',
@@ -71,7 +71,7 @@ return [
     'media.require_media_descriptions' =>                               'Medienbeschreibungen erzwingen',
     'media.briefly_describe_your_media_to_improve_etc' =>               'Beschreibe deine Medien für die Verwendung mit Screenreadern (z.B. für sehbehinderte Menschen)',
     'media.not_available_for_mobile_or_3rd_party_apps_etc' =>           'Derzeit nicht berücksichtigt in mobilen Apps und Apps von Dritten.',
-    
+
     'password.update_password' =>                                       'Passwort aktualisieren',
     'password.current' =>                                               'Aktuell',
     'password.your_current_password' =>                                 'Dein derzeitiges Passwort',
@@ -79,9 +79,10 @@ return [
     'password.enter_new_password_here' =>                               'Gib hier dein neues Passwort ein',
     'password.confirm' =>                                               'Bestätigung',
     'password.confirm_new_password' =>                                  'Bestätige dein neues Passwort hier',
-    
+
     'privacy.privacy_settings' =>                                       'Privatsphäre-Einstellungen',
     'privacy.private_account' =>                                        'Privates Konto',
+        'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => 'Wenn dein Konto privat ist, können nur Personen, denen du folgst, deine Beiträge sehen.',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'Wenn dein Konto privat ist, können nur Leute die du genehmigt hast deine Fotos und Videos auf Pixelfed sehen. Deine bestehenden Follower sind nicht betroffen.',
     'privacy.disable_search_engine_indexing' =>                         'Suchmaschinen-Indexierung deaktivieren',
     'privacy.when_your_account_is_visible_to_search_engines_etc' =>     'Wenn dein Konto für Suchmaschinen sichtbar ist, können deine Informationen von Suchmaschinen besucht und gespeichert werden.',
@@ -121,7 +122,7 @@ return [
     'privacy.allow_new_follow_requests' =>                              'Ermögliche neue Folgeanfragen',
     'privacy.block_notifications_from_accounts_i_dont_follow' =>        'Blockiere Benachrichtigungen von Konten, denen ich nicht folge',
     'privacy.an_error_occured_please_try_again' =>                      'Es ist ein Fehler aufgetreten, versuche es bitte noch einmal',
-    
+
     'relationships' =>                                                          'Beziehungen',
     'relationships.followers' =>                                                'Follower',
     'relationships.following' =>                                                'Folge ich',
@@ -140,7 +141,7 @@ return [
     'relationships.you_have_successfully_unfollowed_that_user' =>               'Du hast den Benutzer erfolgreich entfolgt',
     'relationships.an_error_occured_when_attempting_to_unfollow_this_user' =>   'Beim Versuch den Benutzer zu entfolgen ist ein Fehler aufgetreten',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'Du hast den Hashtag erfolgreich entfolgt',
-    
+
     'security.two_factor_authentication' =>                                     'Zwei-Faktor-Authentifizierung',
     'security.enabled' =>                                                       'Aktiviert',
     'security.danger_zone' =>                                                   'Gefahrenbereich',
@@ -171,16 +172,16 @@ return [
     'security.see_reblogs_from_accounts_you_follow_in_your_home_etc' =>         'Zeige Reblogs von Konten, denen du folgst. (nur auf der Startseite)',
     'security.photo_reblogs_only' =>                                            'Ausschließlich Foto-Reblogs',
     'security.only_see_reblogs_of_photos_or_photo_albums_home_etc' =>           'Nur Reblogs von Fotos oder Foto-Alben anzeigen. (nur auf der Startseite)',
-    
+
     'developers.oauth_has_not_been_enabled_on_this_instance' =>                 'OAuth ist auf dieser Instanz nicht aktiv.',
-    
+
     'import.import_from_instagram' =>                                           'Importieren von Instagram',
-    
+
     'export.data_export' =>                                                     'Daten-Export',
     'export.we_generate_data_exports_once_per_hour_and_they_may_etc' =>         'Datenexporte werden stündlich erzeugt und enthalten möglicherweise nicht die neusten Daten, wenn du vor kurzem bereits einmal einen Export angefordert hast.',
     'export.statuses' =>                                                        'Beiträge',
     'export.mute_block_lists' =>                                                'Stumm/Block-Listen',
-    
+
     'labs' =>                                                                   'Labs',
 	'labs.experimental_features' =>                                             'Experimentelle Funktionen',
     'labs.use_dark_mode_theme' =>                                               'Das Dark Mode-Theme verwenden.',

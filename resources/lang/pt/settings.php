@@ -137,6 +137,7 @@ return [
     'privacy.allow_new_follow_requests'                                 => 'Permitir novas solicitações de seguimento',
     'privacy.block_notifications_from_accounts_i_dont_follow'           => 'Bloquear notificações de contas que eu não sigo',
     'privacy.an_error_occured_please_try_again'                         => 'Ocorreu um erro. Por favor, tente novamente.',
+    'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => 'Quando sua conta é privada, apenas as pessoas que você segue podem ver suas postagens.',
 
     // Relationships
     'relationships.followers'                                       => 'Seguidores',
