@@ -86,6 +86,7 @@ return [
     'password.confirm_new_password' =>                                  'Confirm new password',
     'privacy.privacy_settings' =>                                       'Privacy Settings',
     'privacy.private_account' =>                                        'Private Account',
+    'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => 'When your account is private, only people you follow can see your posts.',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'When your account is private, only people you approve can see your photos and videos on pixelfed. Your existing followers won\'t be affected.',
     'privacy.disable_search_engine_indexing' =>                         'Disable Search Engine indexing',
     'privacy.when_your_account_is_visible_to_search_engines_etc' =>     'When your account is visible to search engines, your information can be crawled and stored by search engines.',

@@ -83,6 +83,7 @@ return [
 
     'privacy.privacy_settings' =>                                       'プライバシー設定',
     'privacy.private_account' =>                                        '非公開アカウント',
+        'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => '非公開アカウントの場合、あなたがフォローしている人だけがあなたの投稿を見ることができます。',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       '非公開アカウントに設定すると、あなたが承認したアカウントだけが投稿を見ることができます。既にフォローされているアカウントは承認済と見なされます。',
     'privacy.disable_search_engine_indexing' =>                         '検索エンジンからのアクセスを許可する',
     'privacy.when_your_account_is_visible_to_search_engines_etc' =>     'チェックを入れると、あなたの公開投稿がGoogleやBingなどの検索結果にヒットするようになります。また、写真や動画も含め、あなたの投稿内容はGoogleやBingなどにも保管されるようになります。',
