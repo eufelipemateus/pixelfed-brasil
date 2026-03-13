@@ -189,7 +189,7 @@ class InternalApiController extends Controller
                     ]);
                     $ai->save();
 
-                    $u = $status->profile->user;
+                    $u = User::find($status->profile_id);
                     $u->has_interstitial = true;
                     $u->save();
                 }
@@ -260,7 +260,7 @@ class InternalApiController extends Controller
                     ]);
                     $ai->save();
 
-                    $u = $status->profile->user;
+                    $u = User::find($status->profile_id);
                     $u->has_interstitial = true;
                     $u->save();
                 }
