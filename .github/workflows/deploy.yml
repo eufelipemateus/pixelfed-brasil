@@ -114,7 +114,7 @@ jobs:
             echo "ACCOUNT_DELETION=true" >> .env
             echo "GROUPS_ENABLED=true" >> .env
 
-            echo "PF_LOGIN_WITH_MASTODON_ENABLED=true" >> .env
+            echo "PF_LOGIN_WITH_MASTODON_ENABLED=false" >> .env
             echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
             echo "PF_LOGIN_WITH_MASTODON_DOMAINS=mastodon.com.br,masto.donte.com.br,mastodon.social,mastodon.online,mstdn.social,mas.to" >> .env
 
