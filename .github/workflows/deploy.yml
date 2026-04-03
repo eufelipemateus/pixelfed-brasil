@@ -15,6 +15,7 @@ jobs:
 
 
   release:
+    needs: test
     name: Release Pixelfed Docker Image
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'DEV' }}
