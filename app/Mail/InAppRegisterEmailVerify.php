@@ -28,7 +28,7 @@ class InAppRegisterEmailVerify extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: config('app.name'). ' - Verifique seu Email',
+            subject: config('pixelfed.domain.app').__('auth.verifyYourEmailAddress'),
         );
     }
 

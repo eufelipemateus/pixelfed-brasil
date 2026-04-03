@@ -4,12 +4,12 @@ namespace App\Util\Media;
 
 use App\Media;
 use App\Services\StatusService;
+use Cache;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
+use Log;
+use Storage;
 
 class Image
 {
@@ -292,8 +292,6 @@ class Image
             }
 
         } catch (\Exception $e) {
-            $media->processed_at = now();
-            $media->save();
             if (config('app.dev_log')) {
                 Log::info('MediaResizeException: '.$e->getMessage().' | Could not process media id: '.$media->id);
             }
@@ -307,7 +305,6 @@ class Image
         $filename = $pathInfo['filename'];
         $name = ($thumbnail == true) ? $filename . '_thumb' : $filename;
         $basePath = $dir . $name . '.' . $extension;
-
         return ['path' => $basePath, 'png' => false];
     }
 

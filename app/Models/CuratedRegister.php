@@ -13,18 +13,21 @@ class CuratedRegister extends Model
         'user_has_responded',
     ];
 
-    protected $casts = [
-        'autofollow_account_ids' => 'array',
-        'admin_notes' => 'array',
-        'email_verified_at' => 'datetime',
-        'admin_notified_at' => 'datetime',
-        'action_taken_at' => 'datetime',
-        'user_has_responded' => 'boolean',
-        'is_awaiting_more_info' => 'boolean',
-        'is_accepted' => 'boolean',
-        'is_rejected' => 'boolean',
-        'is_closed' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'autofollow_account_ids' => 'array',
+            'admin_notes' => 'array',
+            'email_verified_at' => 'datetime',
+            'admin_notified_at' => 'datetime',
+            'action_taken_at' => 'datetime',
+            'user_has_responded' => 'boolean',
+            'is_awaiting_more_info' => 'boolean',
+            'is_accepted' => 'boolean',
+            'is_rejected' => 'boolean',
+            'is_closed' => 'boolean',
+        ];
+    }
 
     public function adminStatusLabel()
     {

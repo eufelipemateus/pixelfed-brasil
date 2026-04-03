@@ -33,8 +33,6 @@ class PageController extends Controller
         $auth = $admin_only ?
             Auth::check() && Auth::user()->is_admin == true :
             Auth::check();
-
-        // Estilo: Adicionado espaço após o 'if' (Padrão Laravel/Upstream)
         if ($auth == false) {
             abort(403);
         }
@@ -74,7 +72,6 @@ class PageController extends Controller
         $key = $keys[$page->slug];
         Cache::forget($key);
 
-        // Resolução: Mantido o slug '/legal-notice' para compatibilidade com seu fork
         if ($page->slug === '/legal-notice') {
             ConfigCacheService::put('instance.has_legal_notice', $page->active);
         }

@@ -434,13 +434,11 @@ class DirectMessageController extends Controller
     public function mediaUpload(Request $request)
     {
         $this->validate($request, [
-            'file' => function () {
-                return [
-                    'required',
-                    'mimetypes:'.config_cache('pixelfed.media_types'),
-                    'max:'.config_cache('pixelfed.max_photo_size'),
-                ];
-            },
+            'file' => [
+                'required',
+                'mimetypes:'.config_cache('pixelfed.media_types'),
+                'max:'.config_cache('pixelfed.max_photo_size'),
+            ],
             'to_id' => 'required',
         ]);
 

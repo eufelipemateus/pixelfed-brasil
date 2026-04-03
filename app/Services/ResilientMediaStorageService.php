@@ -9,7 +9,7 @@ use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Log;
 use League\Flysystem\UnableToWriteFile;
-use Illuminate\Support\Facades\Storage;
+use Storage;
 
 class ResilientMediaStorageService
 {

@@ -1,17 +1,11 @@
 <?php
 
-namespace App\Jobs\LikePipeline;
+namespace App\Jobs\GroupPipeline;
 
-use App\Jobs\PushNotificationPipeline\LikePushNotifyPipeline;
 use App\Like;
 use App\Notification;
-use App\Notifications\LikeNotification;
-use App\Services\AccountService;
-use App\Services\NotificationAppGatewayService;
-use App\Services\PushNotificationService;
 use App\Services\StatusService;
 use App\Transformer\ActivityPub\Verb\Like as LikeTransformer;
-use App\User;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,9 +13,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use App\Services\AccountService;
+use App\Notifications\LikeNotification;
 
 class LikePipeline implements ShouldQueue
 {
@@ -29,115 +24,80 @@ class LikePipeline implements ShouldQueue
 
     protected $like;
 
+    /**
+     * Delete the job if its models no longer exist.
+     *
+     * @var bool
+     */
     public $deleteWhenMissingModels = true;
 
-    public $timeout = 30;
+    public $timeout = 5;
 
-    public $tries = 3;
+    public $tries = 1;
 
-    public $maxExceptions = 2;
-
-    public $backoff = [3, 10];
-
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
     public function __construct(Like $like)
     {
         $this->like = $like;
     }
 
     /**
-     * Middleware para evitar processamento duplicado do mesmo like simultaneamente.
+     * Execute the job.
+     *
+     * @return void
      */
-    public function middleware()
-    {
-        return [
-            (new WithoutOverlapping("like:{$this->like->status_id}:{$this->like->profile_id}"))
-                ->releaseAfter(10)
-                ->expireAfter(60),
-        ];
-    }
-
-    public function uniqueId()
-    {
-        return "like:{$this->like->status_id}:{$this->like->profile_id}";
-    }
-
     public function handle()
     {
         $like = $this->like;
-        $status = $like->status;
-        $actor = $like->actor;
+
+        $status = $this->like->status;
+        $actor = $this->like->actor;
 
         if (! $status) {
+            // Ignore notifications to deleted statuses
             return;
-        }
-
-        // Se for um status remoto sendo curtido por um usuário local
-        if ($status->url && $actor->domain == null) {
-            $this->remoteLikeDeliver();
-            StatusService::refresh($status->id);
-
-            return;
-        }
-
-        // Evita notificar se o usuário curtir o próprio post
-        if ($actor->id === $status->profile_id) {
-            StatusService::refresh($status->id);
-
-            return;
-        }
-
-        // Lógica de Notificações Locais (Preservando sua implementação de E-mail e Push)
-        if ($status->uri === null && $status->object_url === null && $status->url === null) {
-            DB::transaction(function () use ($status, $actor) {
-                $notification = Notification::firstOrCreate(
-                    [
-                        'profile_id' => $status->profile_id,
-                        'actor_id'   => $actor->id,
-                        'action'     => 'like',
-                        'item_id'    => $status->id,
-                        'item_type'  => 'App\Status',
-                    ]
-                );
-
-                // Sua lógica customizada de E-mail baseada nas configurações da conta
-                $settings = AccountService::getAccountSettings($status->profile_id);
-                if (isset($settings['send_email_on_like']) && $settings['send_email_on_like']) {
-                    $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
-                }
-
-                // Disparo de Push Notification se a notificação acabou de ser criada
-                if ($notification->wasRecentlyCreated) {
-                    $this->sendPushNotification($status, $actor);
-                }
-            });
         }
 
         StatusService::refresh($status->id);
-    }
 
-    protected function sendPushNotification($status, $actor)
-    {
-        if (! NotificationAppGatewayService::enabled()) {
-            return;
+        if ($status->url && $actor->domain == null) {
+            return $this->remoteLikeDeliver();
         }
 
-        if (! PushNotificationService::check('like', $status->profile_id)) {
-            return;
+        $exists = Notification::whereProfileId($status->profile_id)
+            ->whereActorId($actor->id)
+            ->whereAction('group:like')
+            ->whereItemId($status->id)
+            ->whereItemType('App\Status')
+            ->count();
+
+        if ($actor->id === $status->profile_id || $exists !== 0) {
+            return true;
         }
 
-        $user = User::whereProfileId($status->profile_id)->first();
+        try {
+            $notification = new Notification;
+            $notification->profile_id = $status->profile_id;
+            $notification->actor_id = $actor->id;
+            $notification->action = 'group:like';
+            $notification->item_id = $status->id;
+            $notification->item_type = "App\Status";
+            $notification->save();
 
-        if ($user && $user->expo_token && $user->notify_enabled) {
-            // Despacha para a fila de Push de forma síncrona dentro do Job de Like
-            LikePushNotifyPipeline::dispatchSync($user->expo_token, $actor->username);
+
+        } catch (\Exception $e) {
         }
     }
 
     public function remoteLikeDeliver()
     {
         $like = $this->like;
-        $status = $like->status;
-        $actor = $like->actor;
+        $status = $this->like->status;
+        $actor = $this->like->actor;
 
         $fractal = new Fractal\Manager;
         $fractal->setSerializer(new ArraySerializer);

@@ -2,26 +2,28 @@
 
 namespace App\Providers;
 
-use App\Auth\BearerTokenResponse;
 use Laravel\Passport\Bridge;
+use Laravel\Passport\Passport;
 use League\OAuth2\Server\AuthorizationServer;
+use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 
 class PassportServiceProvider extends \Laravel\Passport\PassportServiceProvider
 {
     /**
      * Make the authorization service instance.
-     *
-     * @return \League\OAuth2\Server\AuthorizationServer
      */
-    public function makeAuthorizationServer()
+    public function makeAuthorizationServer(?ResponseTypeInterface $responseType = null): AuthorizationServer
     {
-        return new AuthorizationServer(
+        return tap(new AuthorizationServer(
             $this->app->make(Bridge\ClientRepository::class),
             $this->app->make(Bridge\AccessTokenRepository::class),
             $this->app->make(Bridge\ScopeRepository::class),
             $this->makeCryptKey('private'),
-            app('encrypter')->getKey(),
-            new BearerTokenResponse
-        );
+            Passport::tokenEncryptionKey($this->app->make('encrypter')),
+            $responseType ?? Passport::$authorizationServerResponseType
+        ), function (AuthorizationServer $server): void {
+            $server->setDefaultScope(Passport::$defaultScope);
+            $server->revokeRefreshTokens(Passport::$revokeRefreshTokenAfterUse);
+        });
     }
 }

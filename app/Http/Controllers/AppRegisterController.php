@@ -239,8 +239,7 @@ class AppRegisterController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        sleep(random_int(8, 10));
-        $user = User::findOrFail($user->id);
+        $user->refresh();
         $token = $user->createToken('Pixelfed App', ['read', 'write', 'follow', 'push']);
         $tokenModel = $token->token;
         $clientId = $tokenModel->client_id;

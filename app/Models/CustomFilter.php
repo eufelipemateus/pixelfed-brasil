@@ -14,14 +14,17 @@ class CustomFilter extends Model
         'title', 'phrase', 'context', 'expires_at', 'action', 'profile_id',
     ];
 
-    protected $casts = [
-        'id' => 'string',
-        'context' => 'array',
-        'expires_at' => 'datetime',
-        'action' => 'integer',
-    ];
-
     protected $guarded = ['shouldInvalidateCache'];
+
+    protected function casts(): array
+    {
+        return [
+            'id' => 'string',
+            'context' => 'array',
+            'expires_at' => 'datetime',
+            'action' => 'integer',
+        ];
+    }
 
     const VALID_CONTEXTS = [
         'home',

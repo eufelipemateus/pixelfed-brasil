@@ -46,7 +46,7 @@ return [
 		// Timelines
 		'homeFeed' => 'Flux principal',
 		'localFeed' => 'Flux local',
-		'globalFeed' => 'Fil global',
+		'globalFeed' => 'Flux global',
 
 		// Core features
 		'discover' => 'Descobrir',

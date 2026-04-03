@@ -301,6 +301,28 @@
                         </label>
                     </div>
                 </div>
+                <div class="pl-2 d-flex justify-content-center">
+                    <div class="btn-group btn-group-sm">
+                    <button
+                        class="btn"
+                        :class="[ uiColorScheme == 'system' ? 'btn-primary' : 'btn-outline-primary']"
+                        @click="toggleUi('system')">
+                        {{ $t('appearance.auto') }}
+                    </button>
+                    <button
+                        class="btn"
+                        :class="[ uiColorScheme == 'light' ? 'btn-primary' : 'btn-outline-primary']"
+                        @click="toggleUi('light')">
+                        {{ $t('appearance.lightMode') }}
+                    </button>
+                    <button
+                        class="btn"
+                        :class="[ uiColorScheme == 'dark' ? 'btn-primary' : 'btn-outline-primary']"
+                        @click="toggleUi('dark')">
+                        {{ $t('appearance.darkMode') }}
+                    </button>
+                </div>
+                </div>
                 <hr>
                 <button :class="copiedEmbed ? 'btn btn-primary btn-block btn-sm py-1 font-weight-bold disabed': 'btn btn-primary btn-block btn-sm py-1 font-weight-bold'" @click="ctxCopyEmbed" :disabled="copiedEmbed">{{copiedEmbed ? 'Embed Code Copied!' : 'Copy Embed Code'}}</button>
                 <p class="mb-0 px-2 small text-muted">{{ $t('menu.embedConfirmText') }} <a href="/terms">{{ $t('site.terms') }}</a></p>
@@ -391,7 +413,8 @@
                 confirmModalTitle: 'Are you sure?',
                 confirmModalIdentifer: null,
                 confirmModalType: false,
-                isDeleting: false
+                isDeleting: false,
+                uiColorScheme: "system"
             }
         },
 
@@ -401,14 +424,14 @@
                     this.ctxEmbedCompactMode = false;
                 }
                 let mode = this.ctxEmbedCompactMode ? 'compact' : 'full';
-                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode);
+                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode, this.uiColorScheme);
             },
             ctxEmbedShowLikes: function (n,o) {
                 if(n == true) {
                     this.ctxEmbedCompactMode = false;
                 }
                 let mode = this.ctxEmbedCompactMode ? 'compact' : 'full';
-                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode);
+                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode, this.uiColorScheme);
             },
             ctxEmbedCompactMode: function (n,o) {
                 if(n == true) {
@@ -416,8 +439,13 @@
                     this.ctxEmbedShowLikes = false;
                 }
                 let mode = this.ctxEmbedCompactMode ? 'compact' : 'full';
-                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode);
+                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode, this.uiColorScheme);
+            },
+            uiColorScheme: function () {
+                let mode = this.ctxEmbedCompactMode ? 'compact' : 'full';
+                this.ctxEmbedPayload = window.App.util.embed.post(this.ctxMenuStatus.url, this.ctxEmbedShowCaption, this.ctxEmbedShowLikes, mode, this.uiColorScheme);
             }
+            
         },
 
         methods: {
@@ -1041,6 +1069,10 @@
                         window.location.reload()
                     }
                 });
+            },
+            toggleUi(ui) {
+                event.currentTarget.blur();
+                this.uiColorScheme = ui;
             },
         }
     }

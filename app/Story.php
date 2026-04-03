@@ -32,17 +32,20 @@ class Story extends Model
      */
     public $incrementing = false;
 
-    protected $casts = [
-        'story' => 'json',
-        'expires_at' => 'datetime',
-        'view_count' => 'integer',
-    ];
-
     protected $fillable = ['profile_id', 'view_count'];
 
     protected $visible = ['id'];
 
     protected $hidden = ['json'];
+
+    protected function casts(): array
+    {
+        return [
+            'story' => 'json',
+            'expires_at' => 'datetime',
+            'view_count' => 'integer',
+        ];
+    }
 
     public function profile()
     {

@@ -1,6 +1,23 @@
 # Release Notes
 
 ## [Unreleased](https://github.com/pixelfed/pixelfed/compare/v0.12.5...dev)
+- Update mail.php to allow SMTP to bypass STARTTLS on email server with broken TLS ([b5ce7a8](https://github.com/pixelfed/pixelfed/commit/b5ce7a8))
+- Update passport. Fixes #6480 ([a78a02228](https://github.com/pixelfed/pixelfed/commit/a78a02228))
+-  ([](https://github.com/pixelfed/pixelfed/commit/))
+
+## [v0.12.7 (2026-02-17)](https://github.com/pixelfed/pixelfed/compare/v0.12.7...dev)
+
+- Update Status storage, add SanitizerService to fix spacing in html stripped content ([3686c9212](https://github.com/pixelfed/pixelfed/commit/3686c9212))
+- Update app config, add description and rule env variables ([0980519a9](https://github.com/pixelfed/pixelfed/commit/0980519a9))
+- Update InstanceService, fix total post count when config_cache is disabled ([f0bc9d66e](https://github.com/pixelfed/pixelfed/commit/f0bc9d66e))
+- Update media storage pipeline, improve support for non-local filesystems ([2e719bd00](https://github.com/pixelfed/pixelfed/commit/2e719bd00))
+- Update partial status updates nullify omitted caption/CW causing data loss) ([416c02e](https://github.com/pixelfed/pixelfed/commit/416c02e))
+- Update compose, improve validation ([f1af72e](https://github.com/pixelfed/pixelfed/commit/f1af72e))
+- Update ImportMediaToCloudPipeline to handle multiple files being uploaded ([bff9aae](https://github.com/pixelfed/pixelfed/commit/bff9aae))
+- InboxWorker and InboxValidator moved lock after the signature validation ([4b923ed](https://github.com/pixelfed/pixelfed/commit/4b923ed))
+- Update sendmail security ([5bc768b](https://github.com/pixelfed/pixelfed/commit/5bc768b))
+
+## [v0.12.6 (2025-09-03)](https://github.com/pixelfed/pixelfed/compare/v0.12.6...dev)
 
 - Update Status storage, add SanitizerService to fix spacing in html stripped content ([3686c9212](https://github.com/pixelfed/pixelfed/commit/3686c9212))
 - Update app config, add description and rule env variables ([0980519a9](https://github.com/pixelfed/pixelfed/commit/0980519a9))

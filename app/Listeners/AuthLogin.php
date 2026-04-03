@@ -3,7 +3,6 @@
 namespace App\Listeners;
 
 use App\Jobs\AvatarPipeline\CreateAvatar;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Enums\StatusEnums;
 use App\Profile;
 use App\UserDevice;

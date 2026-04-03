@@ -7,11 +7,6 @@ use Illuminate\Support\Str;
 
 class AdminInvite extends Model
 {
-    protected $casts = [
-        'used_by' => 'array',
-        'expires_at' => 'datetime',
-    ];
-
     protected $fillable = [
         'name',
         'description',
@@ -22,6 +17,14 @@ class AdminInvite extends Model
         'expires_at',
         'admin_user_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'used_by' => 'array',
+            'expires_at' => 'datetime',
+        ];
+    }
 
     protected static function booted(): void
     {

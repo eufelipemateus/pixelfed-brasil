@@ -865,11 +865,13 @@ window.App.util = {
   emoji: ['😂','💯','❤️','🙌','👏','👌','😍','😯','😢','😅','😁','🙂','😎','😀','🤣','😃','😄','😆','😉','😊','😋','😘','😗','😙','😚','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','🙁','😖','😞','😟','😤','😭','😦','😧','😨','😩','🤯','😬','😰','😱','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','🤧','😇','🤠','🤡','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🤲','👐','🤝','👍','👎','👊','✊','🤛','🤜','🤞','✌️','🤟','🤘','👈','👉','👆','👇','☝️','✋','🤚','🖐','🖖','👋','🤙','💪','🖕','✍️','🙏','💍','💄','💋','👄','👅','👂','👃','👣','👁','👀','🧠','🗣','👤','👥'
   ],
   embed: {
-    post: (function(url, caption = true, likes = false, layout = 'full') {
+    post: (function (url, caption = true, likes = false, layout = 'full', uiMode = 'system') {
       let u = url + '/embed?';
       u += caption ? 'caption=true&' : 'caption=false&';
       u += likes ? 'likes=true&' : 'likes=false&';
-      u += layout == 'compact' ? 'layout=compact' : 'layout=full';
+      u += layout == 'compact' ? 'layout=compact&' : 'layout=full&';
+      u += uiMode == 'system' ? 'ui-mode=system' : uiMode === 'light'  ? 'ui-mode=light' : 
+      'ui-mode=dark';
       return '<iframe title="Pixelfed Post Embed" src="'+u+'" class="pixelfed__embed" style="max-width: 100%; border: 0" width="400" allowfullscreen="allowfullscreen"></iframe><script async defer src="'+window.location.origin +'/embed.js"><\/script>';
     }),
     profile: (function(url) {
