@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Activity extends Model
 {
-    protected $casts = [
-        'processed_at' => 'datetime',
-    ];
-
     protected $fillable = ['data', 'to_id', 'from_id', 'object_type'];
+
+    protected function casts(): array
+    {
+        return [
+            'processed_at' => 'datetime',
+        ];
+    }
 
     public function toProfile()
     {

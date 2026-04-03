@@ -92,18 +92,8 @@ class InstanceActor extends Model
                 'owner' => $this->permalink(),
                 'publicKeyPem' => $this->public_key,
             ],
-			'id' => $this->permalink(),
-			'type' => 'Application',
-			'inbox' => $this->permalink('/inbox'),
-			'outbox' => $this->permalink('/outbox'),
-			'preferredUsername' => config('pixelfed.domain.app'),
-			'publicKey' => [
-				'id' => $this->permalink('#main-key'),
-				'owner' => $this->permalink(),
-				'publicKeyPem' => $this->public_key
-			],
-			'manuallyApprovesFollowers' => true,
-			'url' => url('/kb/instance-actor')
-		];
-	}
+            'manuallyApprovesFollowers' => true,
+            'url' => url('/site/kb/instance-actor'),
+        ];
+    }
 }

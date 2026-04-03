@@ -25,16 +25,14 @@ class StoryItem extends Model
      */
     public $incrementing = false;
 
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'expires_at' => 'datetime',
-    ];
-
     protected $visible = ['id'];
+
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+        ];
+    }
 
     public function story()
     {

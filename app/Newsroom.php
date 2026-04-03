@@ -10,9 +10,12 @@ class Newsroom extends Model
 
     protected $fillable = ['title'];
 
-    protected $casts = [
-        'published_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'published_at' => 'datetime',
+        ];
+    }
 
     public function permalink()
     {

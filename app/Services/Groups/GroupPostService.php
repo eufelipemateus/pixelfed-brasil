@@ -5,7 +5,7 @@ namespace App\Services\Groups;
 use App\Models\Group;
 use App\Models\GroupPost;
 use App\Transformer\Api\GroupPostTransformer;
-use Illuminate\Support\Facades\Cache;
+use Cache;
 use Illuminate\Http\Request;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;

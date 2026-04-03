@@ -2,23 +2,21 @@
 
 namespace App\Jobs\VideoPipeline;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Cache;
-use FFMpeg;
-use Illuminate\Support\Facades\Storage;
 use App\Jobs\MediaPipeline\MediaStoragePipeline;
 use App\Media;
 use App\Services\MediaService;
 use App\Services\StatusService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
-use Exception;
 use App\Util\Media\Blurhash;
+use Cache;
+use FFMpeg;
+use Log;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 class VideoThumbnail implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
@@ -93,11 +91,10 @@ class VideoThumbnail implements ShouldBeUniqueUntilProcessing, ShouldQueue
             $i = count($path) - 1;
             $path[$i] = $t;
             $save = implode('/', $path);
-
-            $video = FFMpeg::openUrl($url)
+            $video = FFMpeg::open($base)
                 ->getFrameFromSeconds(1)
                 ->export()
-                ->toDisk(config('filesystems.cloud'))
+                ->toDisk('local')
                 ->save($save);
 
             $media->thumbnail_path = $save;
@@ -113,9 +110,12 @@ class VideoThumbnail implements ShouldBeUniqueUntilProcessing, ShouldQueue
             if (config('media.hls.enabled')) {
                 VideoHlsPipeline::dispatch($media)->onQueue('mmo');
             }
+        } catch (\Exception $e) {
+            if (config('app.dev_log')) {
+                Log::error('Video thumbnail generation failed: '.$e->getMessage());
+            }
 
-        } catch (Exception $e) {
-            Log::error("VideoThumbnail: Failed to generate thumbnail for media {$media->id}: " . $e->getMessage());
+            throw $e;
         }
 
         if ($media->status_id) {

@@ -10,11 +10,14 @@ class ImportPost extends Model
 {
     use HasFactory;
 
-    protected $casts = [
-        'media' => 'array',
-        'creation_date' => 'datetime',
-        'metadata' => 'json',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'media' => 'array',
+            'creation_date' => 'datetime',
+            'metadata' => 'json',
+        ];
+    }
 
     public function status()
     {

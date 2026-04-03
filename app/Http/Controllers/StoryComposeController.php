@@ -42,13 +42,11 @@ class StoryComposeController extends Controller
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
         $this->validate($request, [
-            'file' => function () {
-                return [
-                    'required',
-                    'mimetypes:image/jpeg,image/png,video/mp4,image/jpg',
-                    'max:'.config_cache('pixelfed.max_photo_size'),
-                ];
-            },
+            'file' => [
+                'required',
+                'mimetypes:image/jpeg,image/png,video/mp4,image/jpg',
+                'max:'.config_cache('pixelfed.max_photo_size'),
+            ],
         ]);
 
         $user = $request->user();

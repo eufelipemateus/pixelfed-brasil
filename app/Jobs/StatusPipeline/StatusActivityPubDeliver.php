@@ -2,8 +2,6 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use App\Instance;
-use Illuminate\Support\Facades\Log;
 use App\Profile;
 use App\Status;
 use App\Transformer\ActivityPub\Verb\CreateNote;
@@ -15,55 +13,58 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
+use Log;
 use App\Jobs\ActivityPub\PubDeliver;
 
 class StatusActivityPubDeliver implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	protected $status;
+    protected $status;
 
-	/**
-	 * Delete the job if its models no longer exist.
-	 *
-	 * @var bool
-	 */
-	public $deleteWhenMissingModels = true;
+    /**
+     * Delete the job if its models no longer exist.
+     *
+     * @var bool
+     */
+    public $deleteWhenMissingModels = true;
 
-	/**
-	 * Create a new job instance.
-	 *
-	 * @return void
-	 */
-	public function __construct(Status $status)
-	{
-		$this->status = $status;
-	}
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct(Status $status)
+    {
+        $this->status = $status;
+    }
 
-	/**
-	 * Execute the job.
-	 *
-	 * @return void
-	 */
-	public function handle()
-	{
-		$status = $this->status;
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $status = $this->status;
 
-		// Verify status exists
-		if (!$status) {
-			Log::info("StatusActivityPubDeliver: Status no longer exists, skipping job");
-			return;
-		}
+        // Verify status exists
+        if (! $status) {
+            Log::info('StatusActivityPubDeliver: Status no longer exists, skipping job');
 
-		$profile = $status->profile;
+            return;
+        }
 
-		// Verify profile exists
-		if (!$profile) {
-			Log::info("StatusActivityPubDeliver: Profile no longer exists for status {$status->id}, skipping job");
-			return;
-		}
+        $profile = $status->profile;
 
-		// ignore group posts
+        // Verify profile exists
+        if (! $profile) {
+            Log::info("StatusActivityPubDeliver: Profile no longer exists for status {$status->id}, skipping job");
+
+            return;
+        }
+
+        // ignore group posts
         // if($status->group_id != null) {
         //     return;
         // }

@@ -12,10 +12,13 @@ class UserRoles extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'roles' => 'array',
-        'meta' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'roles' => 'array',
+            'meta' => 'array',
+        ];
+    }
 
     public function user()
     {

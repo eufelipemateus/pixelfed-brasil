@@ -26,13 +26,16 @@ class ParentalControls extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $casts = [
-        'permissions' => 'array',
-        'email_sent_at' => 'datetime',
-        'email_verified_at' => 'datetime',
-    ];
-
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'permissions' => 'array',
+            'email_sent_at' => 'datetime',
+            'email_verified_at' => 'datetime',
+        ];
+    }
 
     public function parent()
     {

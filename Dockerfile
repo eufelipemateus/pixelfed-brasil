@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
 RUN install-php-extensions \
     bcmath \
     curl \
+    exif \
     gd \
     imagick \
     intl \

@@ -48,20 +48,20 @@ class Profile extends Model
      */
     public $incrementing = false;
 
-    protected $casts = [
-        'deleted_at' => 'datetime',
-        'last_fetched_at' => 'datetime',
-        'last_status_at' => 'datetime',
-        'status' => StatusEnumCast::class,
-    ];
-
     protected $hidden = ['private_key'];
 
-    protected $visible = ['id', 'user_id', 'username', 'name', 'label'];
+    protected $visible = ['id', 'user_id', 'username', 'name'];
 
     protected $guarded = [];
 
-    protected $appends = ['label'];
+    protected function casts(): array
+    {
+        return [
+            'deleted_at' => 'datetime',
+            'last_fetched_at' => 'datetime',
+            'last_status_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {
@@ -70,17 +70,17 @@ class Profile extends Model
 
     public function url($suffix = null)
     {
-        return $this->remote_url ?? url($this->username . $suffix);
+        return $this->remote_url ?? url($this->username.$suffix);
     }
 
     public function localUrl($suffix = null)
     {
-        return url($this->username . $suffix);
+        return url($this->username.$suffix);
     }
 
     public function permalink($suffix = null)
     {
-        return $this->remote_url ?? url('users/' . $this->username . $suffix);
+        return $this->remote_url ?? url('users/'.$this->username.$suffix);
     }
 
     public function emailUrl()
@@ -91,7 +91,7 @@ class Profile extends Model
 
         $domain = parse_url(config('app.url'), PHP_URL_HOST);
 
-        return $this->username . '@' . $domain;
+        return $this->username.'@'.$domain;
     }
 
     public function statuses()
@@ -101,7 +101,7 @@ class Profile extends Model
 
     public function followingCount($short = false)
     {
-        $count = Cache::remember('profile:following_count:' . $this->id, now()->addMonths(1), function () {
+        $count = Cache::remember('profile:following_count:'.$this->id, now()->addMonths(1), function () {
             if ($this->domain == null && $this->user->settings->show_profile_following_count == false) {
                 return 0;
             }
@@ -118,7 +118,7 @@ class Profile extends Model
 
     public function followerCount($short = false)
     {
-        $count = Cache::remember('profile:follower_count:' . $this->id, now()->addMonths(1), function () {
+        $count = Cache::remember('profile:follower_count:'.$this->id, now()->addMonths(1), function () {
             if ($this->domain == null && $this->user->settings->show_profile_follower_count == false) {
                 return 0;
             }
@@ -127,8 +127,10 @@ class Profile extends Model
                 $this->followers_count = $count;
                 $this->save();
             }
+
             return $count;
         });
+
         return $short ? PrettyNumber::convert($count) : $count;
     }
 
@@ -186,16 +188,16 @@ class Profile extends Model
     {
         return $this->hasOne(Avatar::class)->withDefault([
             'media_path' => 'public/avatars/default.jpg',
-            'change_count' => 0
+            'change_count' => 0,
         ]);
     }
 
     public function avatarUrl()
     {
-        $url = Cache::remember('avatar:' . $this->id, 1209600, function () {
+        $url = Cache::remember('avatar:'.$this->id, 1209600, function () {
             $avatar = $this->avatar;
 
-            if (!$avatar) {
+            if (! $avatar) {
                 return url('/storage/avatars/default.jpg');
             }
 
@@ -209,12 +211,11 @@ class Profile extends Model
 
             $path = $avatar->media_path;
 
-            if (!$path) {
+            if (! $path) {
                 return url('/storage/avatars/default.jpg');
             }
 
-            if (
-                $avatar->is_remote &&
+            if ($avatar->is_remote &&
                 $avatar->remote_url &&
                 boolval(config_cache('federation.avatars.store_local')) == true
             ) {
@@ -329,33 +330,36 @@ class Profile extends Model
             case 'public':
                 $audience = [
                     'to' => [
-                        'https://www.w3.org/ns/activitystreams#Public'
+                        'https://www.w3.org/ns/activitystreams#Public',
                     ],
                     'cc' => [
-                        $this->permalink('/followers')
-                    ]
+                        $this->permalink('/followers'),
+                    ],
                 ];
                 break;
 
             case 'unlisted':
                 $audience = [
-                    'to' => [],
+                    'to' => [
+                    ],
                     'cc' => [
                         'https://www.w3.org/ns/activitystreams#Public',
-                        $this->permalink('/followers')
-                    ]
+                        $this->permalink('/followers'),
+                    ],
                 ];
                 break;
 
             case 'private':
                 $audience = [
                     'to' => [
-                        $this->permalink('/followers')
+                        $this->permalink('/followers'),
                     ],
-                    'cc' => []
+                    'cc' => [
+                    ],
                 ];
                 break;
         }
+
         return $audience;
     }
 

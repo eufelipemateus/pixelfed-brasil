@@ -1,0 +1,28 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Follower;
+use App\Profile;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class FollowerFactory extends Factory
+{
+    protected $model = Follower::class;
+
+    public function definition(): array
+    {
+        return [
+            'profile_id' => Profile::factory(),
+            'following_id' => Profile::factory(),
+            'local_profile' => true,
+        ];
+    }
+
+    public function remote(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'local_profile' => false,
+        ]);
+    }
+}

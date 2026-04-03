@@ -12,7 +12,7 @@ return [
 		'share' => 'Teilen',
 		'shared' => 'Geteilt',
 		'shares' => 'Geteilt',
-		'unshare' => 'Teilen rückgängig machen',
+		'unshare' => 'Nicht mehr teilen',
 		'bookmark' => 'Lesezeichen',
 
 		'cancel' => 'Abbrechen',
@@ -22,12 +22,12 @@ return [
 		'errorMsg' => 'Etwas ist schief gelaufen. Bitter versuch es später nochmal.',
 		'oops' => 'Hoppla!',
 		'other' => 'Anderes',
-		'readMore' => 'Weiterlesen',
+		'readMore' => 'Mehr lesen',
 		'success' => 'Erfolg',
 		'proceed' => 'Fortfahren',
 		'next' => 'Weiter',
 		'close' => 'Schließen',
-		'clickHere' => 'hier klicken',
+		'clickHere' => 'Hier klicken',
 
 		'sensitive' => 'Sensibel',
 		'sensitiveContent' => 'Sensibler Inhalt',
@@ -60,10 +60,10 @@ return [
 		'drive' => 'Festplatte',
 		'settings' => 'Einstellungen',
 		'compose' => 'Neu erstellen:',
-		'logout' => 'Ausloggen',
+		'logout' => 'Abmelden',
 
 		// Nav footer
-		'about' => 'Über uns',
+		'about' => 'Über',
 		'help' => 'Hilfe',
 		'language' => 'Sprache',
 		'privacy' => 'Privatsphäre',
@@ -93,7 +93,7 @@ return [
 		'mentioned' => 'erwähnte',
 		'you' => 'dir',
 
-		'yourApplication' => 'Deine Bewerbung um beizutreten',
+		'yourApplication' => 'Deine Beitrittsanfrage',
 		'applicationApproved' => 'wurde genehmigt!',
 		'applicationRejected' => 'wurde abgelehnt. Du kannst dich in 6 Monaten erneut für den Beitritt bewerben.',
 
@@ -109,13 +109,13 @@ return [
 		'shareToFollowers' => 'Mit Folgenden teilen',
 		'shareToOther' => 'Mit anderen teilen',
 		'noLikes' => 'Gefällt bisher noch niemandem',
-		'uploading' => 'Lädt hoch',
+		'uploading' => 'Wird hochgeladen',
 	],
 
 	'profile' => [
 		'posts' => 'Beiträge',
 		'followers' => 'Folgende',
-		'following' => 'Folgend',
+		'following' => 'Folgt',
 		'admin' => 'Admin',
 		'collections' => 'Sammlungen',
 		'follow' => 'Folgen',
