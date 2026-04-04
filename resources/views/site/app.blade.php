@@ -58,7 +58,8 @@
             }
         }
     </script>
-
+    <link href="{{ mix('css/app.css') }}" rel="stylesheet">
+</head>
 <body>
     <div class="container py-5">
         <h1 class="mb-4 text-center">{{ __('site.app_title') }}</h1>
