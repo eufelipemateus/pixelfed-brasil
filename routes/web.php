@@ -431,6 +431,7 @@ Route::domain(config('pixelfed.domain.app'))->middleware(['validemail', 'twofact
         Route::get('newsroom', 'NewsroomController@index')->name('newsroom.index');
         Route::get('legal-notice', 'SiteController@legalNotice')->name('legal-notice');
         Route::get('donate', 'SiteController@donate')->name('site.donate');
+        Route::get('app', 'SiteController@app')->name('site.app');
     });
 
     Route::group(['prefix' => 'timeline'], function () {
