@@ -60,6 +60,7 @@ class Profile extends Model
             'deleted_at' => 'datetime',
             'last_fetched_at' => 'datetime',
             'last_status_at' => 'datetime',
+            'status' => StatusEnumCast::class,
         ];
     }
 
