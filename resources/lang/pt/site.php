@@ -1,19 +1,20 @@
 <?php
 
 return [
-	'title1'        => 'Partilha de foto',
+    'title1'        => 'Partilha de foto',
+
     'title2'        => 'Para todos',
-	'mainTitle'     => 'Partilha de foto. Para todos',
-	'about'			=> 'Sobre',
-	'help'			=> 'Ajuda',
-	'language'		=> 'Idioma',
-	'fediverse'		=> 'Fediverse',
-	'opensource'	=> 'Código Aberto',
-	'terms'			=> 'Termos',
-	'privacy'		=> 'Privacidade',
-	'l10nWip'		=> 'Ainda estamos a trabalhar na tradução',
-	'currentLocale' => 'Idioma atual',
-	'selectLocale'  => 'Escolha um dos idiomas disponíveis',
+    'mainTitle'     => 'Partilha de foto. Para todos',
+    'about'            => 'Sobre',
+    'help'            => 'Ajuda',
+    'language'        => 'Idioma',
+    'fediverse'        => 'Fediverse',
+    'opensource'    => 'Código Aberto',
+    'terms'            => 'Termos',
+    'privacy'        => 'Privacidade',
+    'l10nWip'        => 'Ainda estamos a trabalhar na tradução',
+    'currentLocale' => 'Idioma atual',
+    'selectLocale'  => 'Escolha um dos idiomas disponíveis',
     'contact'       => 'Contacto',
     'contact-us'    => 'Contacte-nos',
     'places'        => 'Locais',
@@ -45,7 +46,7 @@ return [
     'sign_up_today'                                         => 'Inscreva-se hoje',
     'and_join_our_community_of_photographers_from_etc'      => 'e junte-se à nossa comunidade de fotógrafos de todo o mundo.',
 
- // site/contact
+    // site/contact
     'you_can_contact_the_admins'                            => 'Você pode contatar os administradores',
     'by_using_the_form_below'                               => 'usando o formulário abaixo',
     'or'                                                    => 'ou',
@@ -141,4 +142,29 @@ return [
     'donate_maintenance_title' => 'Manutenção',
     'donate_maintenance_desc' => 'Desenvolvimento de nossos <strong>forks exclusivos</strong> e atualizações de segurança.',
 
+
+    // site/app
+    'app_title' => 'Baixe o Aplicativo do Pixelfed Brasil',
+    'app_description' => 'Baixe o app Pixelfed Brasil para Web, Linux, Windows e Android. Compartilhe momentos, conecte-se ao Fediverso e aproveite uma experiência 100% em português, com privacidade e foco na fotografia.',
+    'app_og_title' => 'Pixelfed Brasil - Baixe o App Oficial',
+    'app_og_description' => 'Compartilhe momentos, conecte-se ao Fediverso e aproveite uma experiência 100% em português, com privacidade e foco na fotografia.',
+    'app_features_title' => 'Compartilhe momentos e interaja com a comunidade, este app foi feito para você!',
+    'app_feature_fediverse' => 'Conecte-se ao Fediverso: Acesse um feed global e interaja com publicações de diversos servidores ao redor do mundo. Expanda seus horizontes e descubra conteúdos autênticos além das fronteiras tradicionais.',
+    'app_feature_portuguese' => '100% em Português: Aproveite uma interface totalmente localizada para o nosso idioma, facilitando a navegação e o engajamento com a comunidade brasileira.',
+    'app_feature_privacy' => 'Privacidade e Liberdade: Diferente das redes sociais convencionais, o Pixelfed faz parte de uma rede descentralizada e sem algoritmos invasivos, garantindo que você tenha o controle total sobre sua experiência digital.',
+    'app_feature_photography' => 'Foco na Fotografia: Uma plataforma limpa e elegante, onde a arte e o registro do cotidiano são os protagonistas, livre de anúncios excessivos.',
+    'app_download_web' => 'Versão Web',
+    'app_download_web_desc' => 'Acesse de qualquer navegador, sem instalar nada.',
+    'app_download_linux' => 'Linux (Snapcraft)',
+    'app_download_linux_desc' => 'Instale facilmente no seu desktop Linux via Snap.',
+    'app_download_windows' => 'Windows',
+    'app_download_windows_desc' => 'Disponível na Microsoft Store para Windows 10/11.',
+    'app_download_android' => 'Android',
+    'app_download_android_desc' => 'Baixe o app oficial na Google Play Store.',
+    'app_download_button' => 'Baixar',
+    'app_schema_name' => 'Aplicativo Pixelfed Brasil',
+    'app_schema_category' => 'Aplicativo de Rede Social',
+    'app_schema_rating' => 'Avaliação',
+    'app_schema_review_count' => '100 avaliações',
+    'app_schema_publisher' => 'Pixelfed Brasil',
 ];

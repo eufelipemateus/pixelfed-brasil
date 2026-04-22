@@ -70,7 +70,7 @@ class UserObserver
 
         if (empty($user->profile)) {
             $profile = DB::transaction(function () use ($user) {
-                $profile = new Profile();
+                $profile = new Profile;
                 $profile->user_id = $user->id;
                 $profile->username = $user->username;
                 $profile->name = $user->name;

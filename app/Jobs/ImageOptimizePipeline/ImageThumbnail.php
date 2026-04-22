@@ -69,6 +69,8 @@ class ImageThumbnail implements ShouldQueue
             if (config('app.dev_log')) {
                 Log::error('Thumbnail generation failed: '.$e->getMessage());
             }
+
+            return;
         }
 
         $media->processed_at = Carbon::now();

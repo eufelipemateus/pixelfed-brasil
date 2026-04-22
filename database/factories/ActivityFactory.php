@@ -1,0 +1,30 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Activity;
+use App\Profile;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+class ActivityFactory extends Factory
+{
+    protected $model = Activity::class;
+
+    public function definition(): array
+    {
+        return [
+            'data' => json_encode(['type' => 'Create']),
+            'to_id' => Profile::factory(),
+            'from_id' => Profile::factory(),
+            'object_type' => 'status',
+            'processed_at' => null,
+        ];
+    }
+
+    public function processed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'processed_at' => now(),
+        ]);
+    }
+}

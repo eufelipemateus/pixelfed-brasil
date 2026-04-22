@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $casts = [
-        'admin_seen' => 'datetime',
-    ];
-
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'admin_seen' => 'datetime',
+        ];
+    }
 
     public function url()
     {

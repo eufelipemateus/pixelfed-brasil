@@ -3,7 +3,6 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Profile;
 
 /**
  * @property int $id
@@ -22,9 +21,12 @@ class FollowRequest extends Model
 {
     protected $fillable = ['follower_id', 'following_id', 'activity', 'handled_at'];
 
-    protected $casts = [
-        'activity' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'activity' => 'array',
+        ];
+    }
 
     public function actor()
     {

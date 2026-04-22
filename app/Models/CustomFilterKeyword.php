@@ -11,9 +11,12 @@ class CustomFilterKeyword extends Model
         'keyword', 'whole_word', 'custom_filter_id',
     ];
 
-    protected $casts = [
-        'whole_word' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'whole_word' => 'boolean',
+        ];
+    }
 
     public function customFilter()
     {

@@ -56,6 +56,7 @@ class LandingService
             'open_registration' => (bool) $openReg,
             'curated_onboarding' => (bool) config_cache('instance.curated_registration.enabled'),
             'version' => config('pixelfed.version'),
+            'logo' => config('app.logo'),
             'about' => [
                 'banner_image' => config_cache('app.banner_image') ?? url('/storage/headers/default.jpg'),
                 'short_description' => config_cache('app.short_description'),

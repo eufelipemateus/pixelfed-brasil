@@ -56,80 +56,79 @@
 </template>
 
 <script type="text/javascript">
-import PostCard from './partials/PostCard';
+	import PostCard from './partials/PostCard';
 
-export default {
-    components: {
-        "post-card": PostCard
-    },
+	export default {
+		components: {
+			"post-card": PostCard
+		},
 
-    data() {
-        return {
-            loading: true,
-            config: window.pfl,
-            isFetching: false,
-            range: 'daily',
-            ranges: ['daily', 'monthly', 'yearly'],
-            rangeIndex: 0,
-            feed: [],
-        }
-    },
+		data() {
+			return {
+				loading: true,
+				config: window.pfl,
+				isFetching: false,
+				range: 'daily',
+				ranges: ['daily', 'monthly', 'yearly'],
+				rangeIndex: 0,
+				feed: [],
+			}
+		},
 
-    beforeMount() {
-        if (this.config.show_explore_feed == false) {
-            this.$router.push('/');
-        }
-    },
+		beforeMount() {
+			if(this.config.show_explore_feed == false) {
+				this.$router.push('/');
+			}
+		},
 
-    mounted() {
-        this.init();
-    },
+		mounted() {
+			this.init();
+		},
 
-    methods: {
-        init() {
-            axios.get('/api/pixelfed/v2/discover/posts/trending?range=daily')
-                .then(res => {
-                    // Se encontrar mais de 3 posts no diário, carrega imediatamente
-                    if (res && res.data.length > 3) {
-                        this.feed = res.data;
-                        this.loading = false;
-                    } else {
-                        // Caso contrário, inicia a busca em ranges maiores
-                        this.rangeIndex++;
-                        this.fetchTrending();
-                    }
-                })
-        },
+		methods: {
+			init() {
+				axios.get('/api/pixelfed/v2/discover/posts/trending?range=daily')
+				.then(res => {
+					if(res && res.data.length > 3) {
+						this.feed = res.data;
+						this.loading = false;
+					} else {
+						this.rangeIndex++;
+						this.fetchTrending();
+					}
+				})
+			},
 
-        fetchTrending() {
-            if (this.isFetching || this.rangeIndex >= 3) {
-                return;
-            }
-            this.isFetching = true;
+			fetchTrending() {
+				if(this.isFetching || this.rangeIndex >= 3) {
+					return;
+				}
+				this.isFetching = true;
 
-            axios.get('/api/pixelfed/v2/discover/posts/trending', {
-                params: {
-                    range: this.ranges[this.rangeIndex]
-                }
-            })
-            .then(res => {
-                if (res && res.data.length > 3) {
-                    // Encontrou resultados suficientes no range atual
-                    this.feed = res.data;
-                    this.loading = false;
-                } else {
-                    // Tenta o próximo range (mensal -> anual)
-                    this.rangeIndex++;
-                    this.isFetching = false;
-                    this.fetchTrending();
-                }
-            })
-            .catch(() => {
-                this.isFetching = false;
-            });
-        }
-    }
-}
+				axios.get('/api/pixelfed/v2/discover/posts/trending', {
+					params: {
+						range: this.ranges[this.rangeIndex]
+					}
+				})
+				.then(res => {
+					if(res && res.data.length) {
+						if(res.data.length > 3) {
+							this.feed = res.data;
+							this.loading = false;
+						} else {
+							this.rangeIndex++;
+							this.isFetching = false;
+							this.fetchTrending();
+						}
+					} else {
+						this.rangeIndex++;
+						this.isFetching = false;
+						this.fetchTrending();
+					}
+				})
+			}
+		}
+	}
 </script>
 
 <style scoped>

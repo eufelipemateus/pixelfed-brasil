@@ -5,24 +5,22 @@ namespace App\Http\Controllers\OAuth;
 use Illuminate\Http\Request;
 use Laravel\Passport\Http\Controllers\ApproveAuthorizationController;
 use League\OAuth2\Server\Exception\OAuthServerException;
-use Nyholm\Psr7\Response as Psr7Response;
+use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 class OobAuthorizationController extends ApproveAuthorizationController
 {
     /**
      * Approve the authorization request.
-     *
-     * @return \Illuminate\Http\Response
      */
-    public function approve(Request $request)
+    public function approve(Request $request, ResponseInterface $psrResponse): Response
     {
-        $this->assertValidAuthToken($request);
-
         $authRequest = $this->getAuthRequestFromSession($request);
         $authRequest->setAuthorizationApproved(true);
 
-        return $this->withErrorHandling(function () use ($authRequest) {
-            $response = $this->server->completeAuthorizationRequest($authRequest, new Psr7Response);
+        return $this->withErrorHandling(function () use ($authRequest, $psrResponse) {
+            $response = $this->server->completeAuthorizationRequest($authRequest, $psrResponse);
 
             if ($this->isOutOfBandRequest($authRequest)) {
                 $code = $this->extractAuthorizationCode($response);
@@ -34,13 +32,13 @@ class OobAuthorizationController extends ApproveAuthorizationController
             }
 
             return $this->convertResponse($response);
-        });
+        }, $authRequest->getGrantTypeId() === 'implicit');
     }
 
     /**
      * Check if the request is an out-of-band OAuth request.
      *
-     * @param  \League\OAuth2\Server\RequestTypes\AuthorizationRequest  $authRequest
+     * @param  AuthorizationRequest  $authRequest
      * @return bool
      */
     protected function isOutOfBandRequest($authRequest)
@@ -51,10 +49,10 @@ class OobAuthorizationController extends ApproveAuthorizationController
     /**
      * Extract the authorization code from the PSR-7 response.
      *
-     * @param  \Psr\Http\Message\ResponseInterface  $response
+     * @param  ResponseInterface  $response
      * @return string
      *
-     * @throws \League\OAuth2\Server\Exception\OAuthServerException
+     * @throws OAuthServerException
      */
     protected function extractAuthorizationCode($response)
     {
@@ -71,30 +69,5 @@ class OobAuthorizationController extends ApproveAuthorizationController
         }
 
         return $params['code'];
-    }
-
-    /**
-     * Handle OAuth errors for both redirect and OOB flows.
-     *
-     * @param  \Closure  $callback
-     * @return \Illuminate\Http\Response
-     */
-    protected function withErrorHandling($callback)
-    {
-        try {
-            return $callback();
-        } catch (OAuthServerException $e) {
-            if ($this->isOutOfBandRequest($this->getAuthRequestFromSession(request()))) {
-                return response()->json([
-                    'error' => $e->getErrorType(),
-                    'message' => $e->getMessage(),
-                    'hint' => $e->getHint(),
-                ], $e->getHttpStatusCode());
-            }
-
-            return $this->convertResponse(
-                $e->generateHttpResponse(new Psr7Response)
-            );
-        }
     }
 }

@@ -34,6 +34,7 @@
             "foundingDate": "2022",
             "founder": {
                 "@@type": "Person",
+                "@@id": "https://felipemateus.com/eufelipemateus/#person",
                 "name": "Felipe Mateus",
                 "url": "https://pixelfed.com.br/eufelipemateus",
                 "sameAs": [

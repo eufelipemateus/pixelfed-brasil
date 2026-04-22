@@ -36,7 +36,7 @@ class AddUserDomainBlock extends Command
         $domain = text('Enter domain you want to block');
         $domain = strtolower($domain);
         $domain = $this->validateDomain($domain);
-        if(!$domain) {
+        if (! $domain) {
             $this->error('Invalid domain');
 
             return;

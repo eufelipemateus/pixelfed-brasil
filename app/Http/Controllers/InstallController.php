@@ -200,6 +200,7 @@ class InstallController extends Controller
 
     public function precheckDatabase(Request $request)
     {
+        abort_if(file_exists(base_path('.env')), 404);
         $driver = $request->input('db_driver', 'mysql');
         $name = $request->input('db_name', 'pixelfed');
         $host = $request->input('db_host', 'localhost');

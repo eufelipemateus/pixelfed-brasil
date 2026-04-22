@@ -13,7 +13,7 @@ return [
 		'shared' => 'Delt',
 		'shares' => 'Delinger',
 		'unshare' => 'Fjern deling',
-		'bookmark' => 'Bookmerk',
+		'bookmark' => 'Bokmerk',
 
 		'cancel' => 'Avbryt',
 		'copyLink' => 'Kopier lenke',
@@ -173,7 +173,7 @@ return [
 		'embedConfirmText' => 'Ved å bruke denne innbakingen, godtar du vår',
 
 		'deletePostConfirm' => 'Er du sikker på at du vil slette dette innlegget?',
-		'archivePostConfirm' => 'Er du sikker på at du vil arkiveren dette innlegget?',
+		'archivePostConfirm' => 'Er du sikker på at du vil arkivere dette innlegget?',
 		'unarchivePostConfirm' => 'Er du sikker på at vil hente dette innlegget tilbake fra arkivet?',
 	],
 

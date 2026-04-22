@@ -86,7 +86,7 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
+use Laravel\Passport\Client;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Storage;
@@ -149,16 +149,18 @@ class ApiV1Controller extends Controller
             ->filter()
             ->join(',');
 
-        $client = Passport::client()->forceFill([
+        $secret = Str::random(40);
+
+        $client = new Client;
+        $client->forceFill([
             'user_id' => null,
             'name' => e($request->client_name),
-            'secret' => Str::random(40),
+            'secret' => $secret,
             'redirect' => $uris,
             'personal_access_client' => false,
             'password_client' => false,
             'revoked' => false,
         ]);
-
         $client->save();
 
         $res = [
@@ -167,7 +169,7 @@ class ApiV1Controller extends Controller
             'website' => null,
             'redirect_uri' => $client->redirect,
             'client_id' => (string) $client->id,
-            'client_secret' => $client->secret,
+            'client_secret' => $secret,
             'vapid_key' => null,
         ];
 

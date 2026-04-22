@@ -93,11 +93,10 @@ class LikePipeline implements ShouldQueue
                     ]
                 );
 
-                if (AccountService::getAccountSettings($status->profile_id)["send_email_on_like"]) {
-                    $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
-                }
-
                 if ($notification->wasRecentlyCreated) {
+                    if (AccountService::getAccountSettings($status->profile_id)["send_email_on_like"]) {
+                        $status->profile->user->notify(new LikeNotification($actor->id, $status->id));
+                    }
 
                     $this->sendPushNotification($status, $actor);
                 }
