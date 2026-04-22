@@ -1987,9 +1987,11 @@ class ApiV1Controller extends Controller
             abort(403, 'Invalid or unsupported mime type.');
         }
 
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
         $storagePath = MediaPathService::get($user, 2);
         $path = $photo->storePublicly($storagePath);
-        $hash = \hash_file('sha256', $photo);
         $license = null;
         $mime = $photo->getMimeType();
 
@@ -2012,8 +2014,6 @@ class ApiV1Controller extends Controller
                 $license = $compose['default_license'];
             }
         }
-
-        abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
         $media = new Media;
         $media->status_id = null;
@@ -2215,9 +2215,11 @@ class ApiV1Controller extends Controller
             abort(403, 'Invalid or unsupported mime type.');
         }
 
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
         $storagePath = MediaPathService::get($user, 2);
         $path = $photo->storePublicly($storagePath);
-        $hash = \hash_file('sha256', $photo);
         $license = null;
         $mime = $photo->getMimeType();
 
@@ -2230,8 +2232,6 @@ class ApiV1Controller extends Controller
                 $license = $compose['default_license'];
             }
         }
-
-        abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
         if ($request->has('replace_id')) {
             $rpid = $request->input('replace_id');
