@@ -214,12 +214,12 @@ jobs:
           script: |
             cp -TRv /tmp/pixelfed/ ${{secrets.WORK_DIR}}/
             sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
-            sudo chmod 775 -R ${{secrets.WORK_DIR}}
+            sudo chmod 777 -R ${{secrets.WORK_DIR}}
 
             sudo chmod 600 storage/oauth-private.key
             sudo chmod 600 storage/oauth-public.key
             sudo chown www-data:www-data storage/oauth-*.key
-            
+
             cd ${{secrets.WORK_DIR}}
             php artisan migrate --force
             php artisan storage:link
