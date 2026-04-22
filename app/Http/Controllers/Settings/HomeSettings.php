@@ -10,10 +10,10 @@ use App\Services\AccountService;
 use App\Services\PronounService;
 use App\Util\Lexer\Autolink;
 use App\Util\Lexer\PrettyNumber;
-use Auth;
 use Cache;
 use Illuminate\Http\Request;
-use Mail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Purify;
 use App\UserSetting;
 use App\Services\EmailService;
@@ -120,38 +120,48 @@ trait HomeSettings
     {
         $this->validate($request, [
             'current' => 'required|string',
-            'password' => 'required|string',
-            'password_confirmation' => 'required|string',
+            'password' => 'required|string|confirmed|min:8|different:current',
+            'revoke_sessions' => 'nullable|boolean',
         ]);
 
         $current = $request->input('current');
         $new = $request->input('password');
-        $confirm = $request->input('password_confirmation');
+        $revokeSessions = $request->boolean('revoke_sessions');
 
-        $user = Auth::user();
+        $user = $request->user();
 
-        if (password_verify($current, $user->password) && $new === $confirm) {
-            $user->password = bcrypt($new);
-            $user->save();
-
-            $log = new AccountLog;
-            $log->user_id = $user->id;
-            $log->item_id = $user->id;
-            $log->item_type = 'App\User';
-            $log->action = 'account.edit.password';
-            $log->message = 'Password changed';
-            $log->link = null;
-            $log->ip_address = $request->ip();
-            $log->user_agent = $request->userAgent();
-            $log->save();
-
-            Mail::to($request->user())->send(new PasswordChange($user));
-
-            return redirect('/settings/home')->with('status', 'Password successfully updated!');
-        } else {
+        if (!password_verify($current, $user->password)) {
             return redirect()->back()->with('error', 'There was an error with your request! Please try again.');
         }
 
+        $user->password = bcrypt($new);
+        $user->save();
+
+        $log = new AccountLog;
+        $log->user_id = $user->id;
+        $log->item_id = $user->id;
+        $log->item_type = 'App\User';
+        $log->action = 'account.edit.password';
+        $log->message = $revokeSessions
+            ? 'Password changed and all sessions revoked'
+            : 'Password changed';
+        $log->link = null;
+        $log->ip_address = $request->ip();
+        $log->user_agent = $request->userAgent();
+        $log->save();
+
+        Mail::to($request->user())->send(new PasswordChange($user));
+
+        if ($revokeSessions) {
+            $user->tokens->each(function ($token) {
+                $token->revoke();
+                $token->refreshToken?->revoke();
+            });
+
+            Auth::logoutOtherDevices($new);
+        }
+
+        return redirect('/settings/home')->with('status', 'Password successfully updated!');
     }
 
     public function email()
