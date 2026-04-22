@@ -324,7 +324,6 @@ class GroupsAdminController extends Controller
             })
             ->latest()
             ->simplePaginate(10)
-            ->orderByDesc('created_at')
             ->map(function ($report) use ($group) {
                 $res = [
                     'id' => (string) $report->id,

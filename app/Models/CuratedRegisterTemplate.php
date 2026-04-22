@@ -13,7 +13,10 @@ class CuratedRegisterTemplate extends Model
         'name', 'description', 'content', 'is_active', 'order',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 }

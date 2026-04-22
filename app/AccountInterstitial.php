@@ -6,17 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class AccountInterstitial extends Model
 {
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'read_at' => 'datetime',
-        'appeal_requested_at' => 'datetime',
-    ];
-
     public const JSON_MESSAGE = 'Please use web browser to proceed.';
+
+    protected function casts(): array
+    {
+        return [
+            'read_at' => 'datetime',
+            'appeal_requested_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {

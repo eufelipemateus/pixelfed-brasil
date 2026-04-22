@@ -42,8 +42,8 @@ class FixLikes extends Command
         $chunk = 100;
         $limit = Like::select('status_id')->groupBy('status_id')->count();
 
-        if($limit > 1000) {
-            if($this->confirm('We have found more than 1000 records to update, this may take a few moments. Are you sure you want to continue?') == false) {
+        if ($limit > 1000) {
+            if ($this->confirm('We have found more than 1000 records to update, this may take a few moments. Are you sure you want to continue?') == false) {
                 $this->error('Cancelling command...');
 
                 return;

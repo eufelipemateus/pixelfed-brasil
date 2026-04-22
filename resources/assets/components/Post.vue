@@ -81,7 +81,7 @@
         <context-menu
             v-if="isLoaded"
             ref="contextMenu"
-            :status="post"
+            :status="shadowStatus"
             :profile="user"
             @report-modal="handleReport()"
             @delete="deletePost()"
@@ -93,21 +93,21 @@
         <likes-modal
             v-if="showLikesModal"
             ref="likesModal"
-            :status="post"
+            :status="shadowStatus"
             :profile="user"
         />
 
         <shares-modal
             v-if="showSharesModal"
             ref="sharesModal"
-            :status="post"
+            :status="shadowStatus"
             :profile="profile"
         />
 
         <report-modal
             v-if="post"
             ref="reportModal"
-            :status="post"
+            :status="shadowStatus"
         />
 
         <post-edit-modal
@@ -175,6 +175,14 @@
 
         created() {
             this.init();
+        },
+
+        computed: {
+            shadowStatus: {
+                get() {
+                    return this.post.reblog ? this.post.reblog : this.post;
+                }
+            }
         },
 
         watch: {

@@ -34,11 +34,6 @@ class FanoutDeletePipeline implements ShouldQueue
         $this->profile = $profile;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle()
     {
         $profile = $this->profile;
@@ -109,7 +104,7 @@ class FanoutDeletePipeline implements ShouldQueue
 
             $promise->wait();
         } catch (\Exception $e) {
-            Log::warning("FanoutDeletePipeline: Failed to fanout delete for profile {$profile->id}: " . $e->getMessage());
+            Log::warning("FanoutDeletePipeline: Failed to fanout delete for profile {$profile->id}: ".$e->getMessage());
             throw $e;
         }
 

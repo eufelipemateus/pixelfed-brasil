@@ -87,8 +87,6 @@ class UpdateStatusService
         }
         if (isset($attributes['spoiler_text'])) {
             $status->cw_summary = Purify::clean($attributes['spoiler_text']);
-        } else {
-            $status->cw_summary = null;
         }
         if (isset($attributes['location'])) {
             if (isset($attributes['location']['id'])) {
@@ -122,8 +120,8 @@ class UpdateStatusService
 
     public static function createEdit(Status $status, $attributes)
     {
-        $cleaned = isset($attributes['status']) ? Purify::clean($attributes['status']) : null;
-        $spoiler_text = isset($attributes['spoiler_text']) ? Purify::clean($attributes['spoiler_text']) : null;
+        $cleaned = isset($attributes['status']) ? Purify::clean($attributes['status']) : $status->caption;
+        $spoiler_text = isset($attributes['spoiler_text']) ? Purify::clean($attributes['spoiler_text']) : $status->cw_summary;
         $sensitive = isset($attributes['sensitive']) ? $attributes['sensitive'] : null;
         $mids = $status->media()->count() ? $status->media()->orderBy('order')->pluck('id')->toArray() : null;
         StatusEdit::create([

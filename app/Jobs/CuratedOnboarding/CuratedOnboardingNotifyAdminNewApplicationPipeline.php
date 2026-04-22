@@ -18,7 +18,9 @@ class CuratedOnboardingNotifyAdminNewApplicationPipeline implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $cr;
+    public bool $deleteWhenMissingModels = true;
+
+    protected $cr;
 
     /**
      * Create a new job instance.
@@ -65,11 +67,31 @@ class CuratedOnboardingNotifyAdminNewApplicationPipeline implements ShouldQueue
     protected function handleUnbundled()
     {
         $cr = $this->cr;
-        if ($aid = config_cache('instance.admin.pid')) {
-            $admin = User::whereProfileId($aid)->first();
+
+        $adminUsernames = config('instance.curated_registration.notify.admin.on_verify_email.to_usernames');
+        $ccAddresses = config('instance.curated_registration.notify.admin.on_verify_email.cc_addresses');
+
+        if (empty($adminUsernames)) {
+            return;
+        }
+
+        $usernames = array_filter(array_map('trim', explode(',', $adminUsernames)));
+
+        $ccEmails = ! empty($ccAddresses) ? array_filter(array_map('trim', explode(',', $ccAddresses))) : [];
+
+        $admins = User::where('is_admin', true)->whereIn('username', $usernames)->get();
+        $hasIncludedCC = false;
+
+        foreach ($admins as $admin) {
             if ($admin && $admin->email) {
-                Mail::to($admin->email)->send(new CuratedRegisterNotifyAdmin($cr));
+                $mailer = Mail::to($admin->email);
+                if ($ccEmails && ! $hasIncludedCC) {
+                    $mailer->cc($ccEmails);
+                    $hasIncludedCC = true;
+                }
+                $mailer->send(new CuratedRegisterNotifyAdmin($cr));
             }
         }
+
     }
 }

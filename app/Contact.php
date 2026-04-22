@@ -7,9 +7,12 @@ use Illuminate\Support\Str;
 
 class Contact extends Model
 {
-    protected $casts = [
-        'responded_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'responded_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {

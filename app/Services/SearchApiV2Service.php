@@ -236,11 +236,16 @@ class SearchApiV2Service
                 return $this->resolveLocalProfile();
             }
         } else {
-            if (! Helpers::validateUrl($query) && strpos($query, '@') == -1) {
+            if (! Helpers::validateUrl($query) && strpos($query, '@') === false) {
                 return $default;
             }
 
-            if (! Str::startsWith($query, 'http') && Str::substrCount($query, '@') == 1 && strpos($query, '@') !== 0) {
+            if (
+                ! Str::startsWith($query, 'http') &&
+                Str::substrCount($query, '@') == 1 &&
+                strpos($query, '@') !== false &&
+                strpos($query, '@') !== 0
+            ) {
                 try {
                     $res = WebfingerService::lookup('@'.$query, $mastodonMode);
                 } catch (\Exception $e) {

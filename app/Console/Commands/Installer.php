@@ -124,8 +124,18 @@ class Installer extends Command
         $this->info('Checking for Required PHP Extensions...');
 
         $extensions = [
-            'bcmath', 'ctype', 'curl', 'json', 'mbstring',
-            'openssl', 'gd', 'intl', 'xml', 'zip', 'redis', 'vips',
+            'bcmath',
+            'ctype',
+            'curl',
+            'json',
+            'mbstring',
+            'openssl',
+            'gd',
+            'intl',
+            'xml',
+            'zip',
+            'redis',
+            'vips',
         ];
 
         $missing = [];
@@ -240,7 +250,7 @@ class Installer extends Command
         $dsn = "{$database}:dbname={$database_db};host={$database_host};port={$database_port};";
         try {
             $dbh = new PDO($dsn, $database_username, $database_password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-            $dbh = null;
+            $dbh = null; // Close connection
         } catch (\PDOException $e) {
             $this->error('Cannot connect to database, check your details and try again');
             $this->error('Error: '.$e->getMessage());
@@ -300,13 +310,15 @@ class Installer extends Command
             if (str_starts_with($domain, 'http://') || str_starts_with($domain, 'https://')) {
                 $this->error('The site domain cannot start with http:// or https://, you must use the FQDN (eg: example.org)');
                 $domain = '';
+
                 continue;
             }
 
-            // Manter validação aprimorada da HEAD
+            // Better domain validation
             if (! preg_match('/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $domain)) {
                 $this->error('Invalid domain format. Please enter a valid domain (eg: example.org)');
                 $domain = '';
+
                 continue;
             }
         }
@@ -428,17 +440,22 @@ class Installer extends Command
 
         if ($confirm === 'Yes') {
             sleep(3);
+
+            // Clear any cached config
             $this->call('config:clear');
 
+            // Force reload environment variables
             $app = app();
             $app->bootstrapWith([
                 \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
             ]);
 
+            // Purge database connections to force reconnect with new credentials
             $app->forgetInstance('db');
             $app->forgetInstance('db.connection');
             \Illuminate\Support\Facades\DB::purge();
 
+            // Rebuild config cache
             $this->call('config:cache');
 
             $this->line('');
@@ -513,6 +530,7 @@ class Installer extends Command
         $envPath = app()->environmentFilePath();
         $payload = file_get_contents($envPath);
 
+        // Escape special characters for .env format
         $value = str_replace(['\\', '"', "\n", "\r"], ['\\\\', '\\"', '\\n', '\\r'], $value);
 
         if ($existing = $this->existingEnv($key, $payload)) {
@@ -539,6 +557,7 @@ class Installer extends Command
         $envPath = app()->environmentFilePath();
         $tempPath = $envPath.'.tmp';
 
+        // Write to temp file first
         $file = fopen($tempPath, 'w');
         if ($file === false) {
             throw new \RuntimeException("Cannot write to {$tempPath}");
@@ -547,6 +566,7 @@ class Installer extends Command
         fwrite($file, $payload);
         fclose($file);
 
+        // Atomic rename
         if (! rename($tempPath, $envPath)) {
             @unlink($tempPath);
             throw new \RuntimeException('Cannot update .env file');

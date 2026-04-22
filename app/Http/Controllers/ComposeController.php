@@ -175,13 +175,11 @@ class ComposeController extends Controller
     {
         $this->validate($request, [
             'id' => 'required',
-            'file' => function () {
-                return [
-                    'required',
-                    'mimetypes:'.config_cache('pixelfed.media_types'),
-                    'max:'.config_cache('pixelfed.max_photo_size'),
-                ];
-            },
+            'file' => [
+                'required',
+                'mimetypes:'.config_cache('pixelfed.media_types'),
+                'max:'.config_cache('pixelfed.max_photo_size'),
+            ],
         ]);
 
         $user = Auth::user();

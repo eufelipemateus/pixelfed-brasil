@@ -33,9 +33,12 @@ class Group extends Model
      */
     public $incrementing = false;
 
-    protected $casts = [
-        'metadata' => 'json',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'metadata' => 'json',
+        ];
+    }
 
     public function url()
     {

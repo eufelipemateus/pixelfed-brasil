@@ -9,7 +9,6 @@ use App\UserInvite;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class UserInviteController extends Controller
 {
@@ -43,7 +42,6 @@ class UserInviteController extends Controller
     {
         abort_if(! config('pixelfed.user_invites.enabled'), 404);
         abort_unless(Auth::check(), 403);
-
         $this->validate($request, [
             'email' => 'required|email|unique:users|unique:user_invites',
             'message' => 'nullable|string|max:500',
@@ -51,10 +49,10 @@ class UserInviteController extends Controller
         ]);
 
         $email = $request->input('email');
+
         $userCount = UserInvite::whereUserId(Auth::id())->count();
         $userLimit = config('pixelfed.user_invites.limit.total');
 
-        // Validações de segurança essenciais do Upstream
         abort_if($userCount >= $userLimit, 400);
         abort_if(EmailService::isBanned($email), 400);
         abort_if(User::whereEmail($email)->exists(), 400);
@@ -64,8 +62,6 @@ class UserInviteController extends Controller
         $invite->profile_id = Auth::user()->profile_id;
         $invite->email = $email;
         $invite->message = $request->input('message');
-
-        // Mantemos o novo padrão de chaves do Upstream para evitar colisões
         $invite->key = str_random(random_int(6, 9)).'_'.str_random(random_int(14, 20)).'_'.str_random(random_int(32, 64));
         $invite->token = str_random(random_int(32, 69));
         $invite->save();
@@ -75,16 +71,22 @@ class UserInviteController extends Controller
         return redirect(route('settings.invites'));
     }
 
-    // Métodos obrigatórios para o fluxo de registo via convite (Upstream)
     public function redeem(Request $request, $key, $token)
     {
         abort_if(! config('pixelfed.user_invites.enabled'), 404);
-
+        // if($request->user()) {
+        //  return redirect('/');
+        // }
         $invite = UserInvite::where('key', $key)
             ->where('token', $token)
             ->first();
 
         return view('invite.landing', compact('invite'));
+        // return response()->json([
+        //  'key' => $key,
+        //  'token' => $token,
+        //  'invite' => $invite->url()
+        // ], 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
     }
 
     public function redeemVerify(Request $request, $key, $token)

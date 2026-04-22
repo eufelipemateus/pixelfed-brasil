@@ -62,7 +62,7 @@ trait HomeSettings
         $enforceEmailVerification = config_cache('pixelfed.enforce_email_verification');
 
         // Only allow email to be updated if not yet verified
-        if (! $enforceEmailVerification || ! $changes && $user->email_verified_at) {
+        if (! $enforceEmailVerification || $user->email_verified_at) {
             if ($profile->name != $name) {
                 $changes = true;
                 $user->name = $name;
@@ -94,6 +94,8 @@ trait HomeSettings
                     PronounService::put($profile->id, $pronouns);
                 }
             }
+        } else {
+            return redirect('/settings/home')->with('status', 'Verify your email address before you can update your profile!');
         }
 
         if ($changes === true) {

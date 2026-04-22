@@ -6,6 +6,7 @@ use App\Avatar;
 use App\Follower;
 use App\HashtagFollow;
 use App\Like;
+use App\Models\OAuthToken;
 use App\ModLog;
 use App\Notification;
 use App\Observers\AvatarObserver;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 use Laravel\Pulse\Facades\Pulse;
 use URL;
 use App\Util\ActivityPub\Inbox;
@@ -53,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
         if (config('instance.force_https_urls', true)) {
             URL::forceScheme('https');
         }
+
+        Passport::$clientUuids = false;
+        Passport::authorizationView('auth.oauth.authorize');
 
         Schema::defaultStringLength(191);
         Paginator::useBootstrap();
@@ -124,6 +129,31 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perDay(50)->by($request->ip());
         });
 
+        Passport::useTokenModel(OAuthToken::class);
+        Passport::tokensExpireIn(now()->addDays(config('instance.oauth.token_expiration', 356)));
+        Passport::refreshTokensExpireIn(now()->addDays(config('instance.oauth.refresh_expiration', 400)));
+        Passport::enableImplicitGrant();
+        if (config('instance.oauth.pat.enabled')) {
+            Passport::personalAccessClientId(config('instance.oauth.pat.id'));
+        }
+
+        Passport::tokensCan([
+            'read' => 'Full read access to your account',
+            'write' => 'Full write access to your account',
+            'follow' => 'Ability to follow other profiles',
+            'admin:read' => 'Read all data on the server',
+            'admin:read:domain_blocks' => 'Read sensitive information of all domain blocks',
+            'admin:write' => 'Modify all data on the server',
+            'admin:write:domain_blocks' => 'Perform moderation actions on domain blocks',
+            'push' => 'Receive your push notifications',
+        ]);
+
+        Passport::setDefaultScope([
+            'read',
+            'write',
+            'follow',
+        ]);
+
         // Model::preventLazyLoading(true);
     }
 
@@ -134,6 +164,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        Passport::ignoreRoutes();
+
         $this->app->bind(UserOidcService::class, function () {
             return UserOidcService::build();
         });

@@ -85,8 +85,9 @@ class FollowAcceptPipeline implements ShouldQueue
 
             $follow->delete();
         } catch (\Exception $e) {
-            Log::warning("FollowAcceptPipeline: Failed to process follow request {$follow->id}: " . $e->getMessage());
+            Log::warning("FollowAcceptPipeline: Failed to process follow request {$follow->id}: ".$e->getMessage());
             throw $e;
         }
+
     }
 }

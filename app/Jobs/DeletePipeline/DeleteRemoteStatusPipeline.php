@@ -75,33 +75,26 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             AccountStatService::decrementPostCount($status->profile_id);
             NetworkTimelineService::del($status->id);
             StatusService::del($status->id, true);
-
             Bookmark::whereStatusId($status->id)->delete();
-
             Notification::whereItemType('App\Status')
                 ->whereItemId($status->id)
                 ->forceDelete();
-
             DirectMessage::whereStatusId($status->id)->delete();
             Like::whereStatusId($status->id)->forceDelete();
             MediaTag::whereStatusId($status->id)->delete();
-
             Media::whereStatusId($status->id)
                 ->get()
                 ->each(function ($media) {
                     MediaDeletePipeline::dispatch($media)->onQueue('mmo');
                 });
-
             Mention::whereStatusId($status->id)->forceDelete();
             Report::whereObjectType('App\Status')->whereObjectId($status->id)->delete();
             StatusHashtag::whereStatusId($status->id)->delete();
             StatusView::whereStatusId($status->id)->delete();
             Status::whereReblogOfId($status->id)->forceDelete();
-
             $status->forceDelete();
-
         } catch (\Exception $e) {
-            Log::warning("DeleteRemoteStatusPipeline: Failed to delete status {$status->id}: " . $e->getMessage());
+            Log::warning("DeleteRemoteStatusPipeline: Failed to delete status {$status->id}: ".$e->getMessage());
             throw $e;
         }
 
