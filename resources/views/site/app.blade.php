@@ -110,7 +110,7 @@
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <a href="https://play.google.com/store/apps/details?id=br.com.pixefed.app" class="text-decoration-none" target="_blank">
+                    <a href="https://play.google.com/store/apps/details?id=br.com.pixelfed.app" class="text-decoration-none" target="_blank">
                         <div class="card h-100 text-center shadow-sm p-4">
                             <div style="font-size:2.5em;">🤳</div>
                             <h3 class="h5 mt-3 mb-2">{{ __('site.app_download_android') }}</h3>
