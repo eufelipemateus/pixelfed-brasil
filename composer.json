@@ -24,7 +24,7 @@
         "jenssegers/agent": "^2.6",
         "laravel-notification-channels/expo": "^2.0.0",
         "laravel-notification-channels/webpush": "^10.2",
-        "laravel/framework": "^13.0",
+        "laravel/framework": "^12",
         "laravel/helpers": "^1.1",
         "laravel/horizon": "^5.0",
         "laravel/passport": "^13.4.4",
