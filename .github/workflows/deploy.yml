@@ -183,6 +183,9 @@ jobs:
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
 
+            echo "SERPRO_CONSUMER_KEY=${{secrets.SERPRO_CONSUMER_KEY}}" >> .env
+            echo "SERPRO_CONSUMER_SECRET=${{secrets.SERPRO_CONSUMER_SECRET}}" >> .env
+
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
