@@ -117,20 +117,41 @@ class ActivityPubFetchService
             return;
         }
 
-        $acceptedTypes = [
-            'application/activity+json; charset=utf-8',
-            'application/activity+json',
-            'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-        ];
-
         $contentType = $res->getHeader('Content-Type')[0];
 
         if (! $contentType) {
             return;
         }
 
-        if (! in_array($contentType, $acceptedTypes)) {
+        // Parse Content-Type: extract media type (case-insensitive) and parameters
+        $contentTypeParts = array_map('trim', explode(';', $contentType));
+        $mediaType = strtolower($contentTypeParts[0]);
+
+        $acceptedMediaTypes = [
+            'application/activity+json',
+            'application/ld+json',
+        ];
+
+        if (! in_array($mediaType, $acceptedMediaTypes)) {
             return;
+        }
+
+        //// For application/ld+json, verify the ActivityStreams profile parameter
+        if ($mediaType === 'application/ld+json') {
+            $hasActivityStreamsProfile = false;
+            foreach (array_slice($contentTypeParts, 1) as $param) {
+                $param = trim($param);
+                if (stripos($param, 'profile=') === 0) {
+                    $profile = trim(substr($param, strlen('profile=')), ' "\'');
+                    if ($profile === 'https://www.w3.org/ns/activitystreams') {
+                        $hasActivityStreamsProfile = true;
+                        break;
+                    }
+                }
+            }
+            if (! $hasActivityStreamsProfile) {
+                return;
+            }
         }
 
         return $returnJsonFormat ? $res->json() : $res->body();

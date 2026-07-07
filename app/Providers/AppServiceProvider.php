@@ -129,6 +129,36 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perDay(50)->by($request->ip());
         });
 
+        RateLimiter::for('oauth-pat', function (Request $request) {
+            $user = $request->user('web');
+
+            $actor = $user
+                ? 'u:'.$user->getAuthIdentifier()
+                : 'ip:'.$request->ip();
+
+            $tooMany = function (Request $request, array $headers) {
+                return response()->json([
+                    'message' => 'Too many requests',
+                    'retry_after' => isset($headers['Retry-After'])
+                        ? (int) $headers['Retry-After']
+                        : null,
+                    'debug' => 'oauth-pat limiter hit',
+                    'headers' => $headers,
+                ], 429)->withHeaders($headers)->header('X-Debug-Limiter', 'oauth-pat');
+            };
+
+            return [
+                Limit::perMinute(3)
+                    ->by("minute:{$actor}"),
+
+                Limit::perHour(15)
+                    ->by("hour:{$actor}"),
+
+                Limit::perDay(20)
+                    ->by("day:{$actor}"),
+            ];
+        });
+
         Passport::useTokenModel(OAuthToken::class);
         Passport::tokensExpireIn(now()->addDays(config('instance.oauth.token_expiration', 356)));
         Passport::refreshTokensExpireIn(now()->addDays(config('instance.oauth.refresh_expiration', 400)));
