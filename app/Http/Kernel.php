@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use AndreasElia\Analytics\Http\Middleware\Analytics;
 use App\Http\Middleware\AccountInterstitial;
 use App\Http\Middleware\Admin;
 use App\Http\Middleware\DangerZone;
@@ -10,6 +11,7 @@ use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\FrameGuard;
 use App\Http\Middleware\Localization;
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\RefreshSessionActivity;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\TwoFactorAuth;
@@ -68,6 +70,8 @@ class Kernel extends HttpKernel
             VerifyCsrfToken::class,
             SubstituteBindings::class,
             CreateFreshApiToken::class,
+            Analytics::class,
+            RefreshSessionActivity::class,
             // 'restricted',
         ],
 
