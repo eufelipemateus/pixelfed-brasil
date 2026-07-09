@@ -62,4 +62,6 @@ return [
     ],
 
     'migration' => env('PF_ACCT_MIGRATION_ENABLED', true),
+
+    'purge_inactive_after_years' => env('PURGE_INACTIVE_INSTANCES_AFTER_YEARS', 2),
 ];

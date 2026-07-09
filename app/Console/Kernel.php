@@ -50,7 +50,7 @@ class Kernel extends ConsoleKernel
         }
 
         $schedule->command('app:notification-epoch-update')->weeklyOn(1, '2:21')->onOneServer();
-        $schedule->command('instances:purge-inactive')->monthlyOn(20, '04:00')->onOneServer();
+        $schedule->command('instances:purge-inactive')->monthlyOn(20, '04:00')->withoutOverlapping()->onOneServer();
         $schedule->command('app:hashtag-cached-count-update')->hourlyAt(25)->onOneServer();
         $schedule->command('app:account-post-count-stat-update')->everySixHours(25)->onOneServer();
         $schedule->command('app:instance-update-total-local-posts')->twiceDailyAt(1, 13, 45)->onOneServer();
@@ -62,7 +62,7 @@ class Kernel extends ConsoleKernel
         if (app()->environment('production')) {
            // $schedule->command('app:send-weekly-inactive-users')->weeklyOn(0, '10:00')->onOneServer();
            // $schedule->command('app:send-weekly-popular-posts')->weeklyOn(1, '08:00')->onOneServer();
-           // $schedule->command('app:send-popular-in-month')->monthlyOn(1, '08:00')->onOneServer();
+                $schedule->command('app:send-popular-in-month')->monthlyOn(1, '08:00')->onOneServer();
         }
     }
 

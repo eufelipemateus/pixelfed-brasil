@@ -106,7 +106,9 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 		Poll::whereProfileId($pid)->delete();
 
 		// Delete Avatar
-		$profile->avatar->forceDelete();
+		if ($profile->avatar && $profile->avatar->exists) {
+			$profile->avatar->forceDelete();
+		}
 
 		// Delete media tags
 		MediaTag::whereProfileId($pid)->delete();
@@ -155,7 +157,7 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 			});
 
 		// Delete reports
-		Report::whereProfileId($profile->id)->orWhere('reported_profile_id')->forceDelete();
+		Report::whereProfileId($profile->id)->orWhere('reported_profile_id', $profile->id)->forceDelete();
 
 		// Delete profile
 		Profile::findOrFail($profile->id)->delete();
