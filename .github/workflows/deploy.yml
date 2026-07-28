@@ -1,22 +1,27 @@
 name: Deploy
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - dev
+    workflow_dispatch:
+    push:
+      branches:
+        - main
+        - dev
 
 permissions:
-  contents: read
+  actions: write
+  contents: write
+  deployments: write
 
 jobs:
   test:
     uses: ./.github/workflows/laravel.yml
+    secrets: inherit
+
+
 
   release:
     needs: test
-    name: Build, test and deploy immutable artifact
+    name: Release Pixelfed Docker Image
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'DEV' }}
     env:
@@ -24,78 +29,132 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+        with:
+            set-safe-directory: false
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv
-          coverage: none
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.node-version'
-          cache: npm
+      - name: Install Composer dependencies
+        run: composer install
 
-      - name: Build public dependencies
+
+      - name: Install Private GitHub Package
         run: |
-          composer install --no-interaction --prefer-dist
-          npm ci
-          npm audit --omit=dev --audit-level=high
-          npm run production
-
-      # This package remains private for licensing reasons and is intentionally
-      # installed only in the deployment artifact.
-      - name: Install licensed package into artifact
-        env:
-          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.CUSTOM_TOKEN }}"}}'
-        run: |
+          touch .env
+          echo "CACHE_DRIVER=file" >> .env
+          echo "SESSION_DRIVER=file" >> .env
+          composer config --global github-oauth.github.com ${{ secrets.CUSTOM_TOKEN }}
           composer config repositories.pixelfed-lib vcs https://github.com/eufelipemateus/pixelfed-lib
-          composer require "felipemateus/pixelfed-lib:dev-${{ vars.PIXELFED_LIB_VERSION }}" --prefer-source --no-interaction
-
-      - name: Test final artifact
-        run: |
-          cp .env.testing .env
-          php artisan key:generate
-          php artisan test
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
+          composer require felipemateus/pixelfed-lib:${{ vars.PIXELFED_LIB_VERSION }} --prefer-source
           rm .env
 
-      - name: Configure verified SSH host identity
-        env:
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Generate .env
         run: |
-          install -m 700 -d ~/.ssh
-          install -m 600 /dev/null ~/.ssh/id_rsa
-          install -m 600 /dev/null ~/.ssh/known_hosts
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh-keygen -F "${{ secrets.SSH_HOST }}" -f ~/.ssh/known_hosts
+            cp .env.example .env
 
-      - name: Deploy tested artifact
+            # Exemplo: sed -i "s/^DB_HOST=.*/DB_HOST=${{ secrets.DATABASE_HOST }}/" .env
+            sed -i "s/^APP_NAME=.*/APP_NAME=\"Pixelfed Brasil\"/" .env
+            sed -i "s/^APP_ENV=.*/APP_ENV=\"${APP_ENV}\"/" .env
+            sed -i "s|^APP_KEY=.*|APP_KEY=${{secrets.APP_KEY}}|" .env
+            sed -i "s/^APP_DEBUG=.*/APP_DEBUG=\"false\"/" .env
+
+            sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=\"pgsql\"/" .env
+            sed -i "s/^DB_HOST=.*/DB_HOST=\"127.0.0.1\"/" .env
+            sed -i "s/^DB_PORT=.*/DB_PORT=\"5432\"/" .env
+            sed -i "s|^DB_DATABASE=.*|DB_DATABASE=\"${{secrets.DB_DATABASE}}\"|" .env
+            sed -i "s|^DB_USERNAME=.*|DB_USERNAME=\"${{secrets.DB_USERNAME}}\"|" .env
+            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"|" .env
+
+            sed -i "s/^REDIS_HOST=.*/REDIS_HOST=\"127.0.0.1\"/" .env
+            sed -i "s/^REDIS_PORT=.*/REDIS_PORT=\"6379\"/" .env
+            sed -i "s/^REDIS_PASSWORD=.*/REDIS_PASSWORD=\"null\"/" .env
+
+            sed -i "s/^OPEN_REGISTRATION=.*/OPEN_REGISTRATION=\"true\"/" .env
+            sed -i "s/^ENFORCE_EMAIL_VERIFICATION=.*/ENFORCE_EMAIL_VERIFICATION=\"true\"/" .env
+            sed -i "s/^PF_MAX_USERS=.*/PF_MAX_USERS=\"5000\"/" .env
+            sed -i "s/^OAUTH_ENABLED=.*/OAUTH_ENABLED=\"true\"/" .env
+            sed -i "s/^PF_OPTIMIZE_IMAGES=.*/PF_OPTIMIZE_IMAGES=\"false\"/" .env
+
+            sed -i "s|^APP_URL=.*|APP_URL=\"https://${{vars.DOMAIN}}\"|" .env
+            sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
+            sed -i "s|^ADMIN_DOMAIN=.*|ADMIN_DOMAIN=\"${{vars.ADMIN_DOMAIN}}\"|" .env
+            sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
+            sed -i "s/^TRUST_PROXIES=.*/TRUST_PROXIES=\"*\"/" .env
+
+            sed -i "s/^ACTIVITY_PUB=.*/ACTIVITY_PUB=\"true\"/" .env
+            sed -i "s/^AP_REMOTE_FOLLOW=.*/AP_REMOTE_FOLLOW=\"true\"/" .env
+            sed -i "s/^AP_INBOX=.*/AP_INBOX=\"true\"/" .env
+            sed -i "s/^AP_OUTBOX=.*/AP_OUTBOX=\"true\"/" .env
+            sed -i "s/^AP_SHAREDINBOX=.*/AP_SHAREDINBOX=\"true\"/" .env
+
+            sed -i "s|^MAIL_HOST=.*|MAIL_HOST=\"${{secrets.MAIL_HOST}}\"|" .env
+            sed -i "s/^MAIL_PORT=.*/MAIL_PORT=\"465\"/" .env
+            sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=\"${{secrets.MAIL_USER}}\"|" .env
+            sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"|" .env
+            sed -i "s/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=\"tls\"/" .env
+            sed -i "s/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=\"noreply@pixelfed.com.br\"/" .env
+            sed -i "s/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME=\"Pixelfed Brasil\"/" .env
+
+            # Acrescenta variaveis que nao existem no .env.example original
+            grep -q '^MAIL_MAILER=' .env || echo 'MAIL_MAILER="smtp"' >> .env
+            grep -q '^APP_LOCALE=' .env || echo 'APP_LOCALE="pt"' >> .env
+            grep -q '^APP_FALLBACK_LOCALE=' .env || echo 'APP_FALLBACK_LOCALE="pt"' >> .env
+            grep -q '^PF_ALLOW_APP_REGISTRATION=' .env || echo 'PF_ALLOW_APP_REGISTRATION="false"' >> .env
+            grep -q '^PF_IMPORT_FROM_INSTAGRAM=' .env || echo 'PF_IMPORT_FROM_INSTAGRAM="${{vars.PF_IMPORT_FROM_INSTAGRAM}}"' >> .env
+            grep -q '^HORIZON_MEMORY_LIMIT=' .env || echo 'HORIZON_MEMORY_LIMIT="${{vars.HORIZON_MEMORY_LIMIT}}"' >> .env
+            grep -q '^HORIZON_MAX_PROCESSES=' .env || echo 'HORIZON_MAX_PROCESSES="${{vars.HORIZON_MAX_PROCESSES}}"' >> .env
+            grep -q '^CAPTCHA_SECRET=' .env || echo 'CAPTCHA_SECRET="${{secrets.CAPTCHA_SECRET}}"' >> .env
+            grep -q '^CAPTCHA_SITEKEY=' .env || echo 'CAPTCHA_SITEKEY="${{secrets.CAPTCHA_SITEKEY}}"' >> .env
+            grep -q '^VAPID_PUBLIC_KEY=' .env || echo 'VAPID_PUBLIC_KEY="${{secrets.VAPID_PUBLIC_KEY}}"' >> .env
+            grep -q '^VAPID_PRIVATE_KEY=' .env || echo 'VAPID_PRIVATE_KEY="${{secrets.VAPID_PRIVATE_KEY}}"' >> .env
+
+
+      - name: Encrypt .env
+        run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
+
+      - name: Remove .git
+        run: rm -rf .git
+
+      - name: Write SSH keys
         run: |
-          rsync -a --delete \
-            --exclude='.git' \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/pixelfed/"
-          ssh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "sudo cp -aT /tmp/pixelfed '${{ secrets.WORK_DIR }}' &&
-             sudo chown -R www-data:www-data '${{ secrets.WORK_DIR }}' &&
-             sudo find '${{ secrets.WORK_DIR }}' -type d -exec chmod 755 {} + &&
-             sudo find '${{ secrets.WORK_DIR }}' -type f -exec chmod 644 {} + &&
-             sudo chmod 750 '${{ secrets.WORK_DIR }}/storage' '${{ secrets.WORK_DIR }}/bootstrap/cache' &&
-             sudo find '${{ secrets.WORK_DIR }}/storage' '${{ secrets.WORK_DIR }}/bootstrap/cache' -type d -exec chmod 750 {} + &&
-             sudo find '${{ secrets.WORK_DIR }}/storage' '${{ secrets.WORK_DIR }}/bootstrap/cache' -type f -exec chmod 640 {} + &&
-             sudo test ! -f '${{ secrets.WORK_DIR }}/.env' || sudo chmod 640 '${{ secrets.WORK_DIR }}/.env' &&
-             sudo test ! -f '${{ secrets.WORK_DIR }}/storage/oauth-private.key' || sudo chmod 600 '${{ secrets.WORK_DIR }}/storage/oauth-private.key' &&
-             sudo test ! -f '${{ secrets.WORK_DIR }}/storage/oauth-public.key' || sudo chmod 600 '${{ secrets.WORK_DIR }}/storage/oauth-public.key' &&
-             cd '${{ secrets.WORK_DIR }}' &&
-             php artisan migrate --force &&
-             php artisan storage:link &&
-             php artisan optimize"
+            install -m 600 -D /dev/null ~/.ssh/id_rsa
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+            ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
+
+
+     # - name: Down  App
+     #  uses: appleboy/ssh-action@v1.0.0
+     #   with:
+     #     host: ${{ secrets.SSH_HOST }}
+     #     username: ${{ secrets.SSH_USER }}
+     #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+     #     script: |
+     #       cd ${{secrets.WORK_DIR}}
+     #       php artisan down
+
+      - name: 📂 Deploy with rsync
+        run: rsync -rav --delete ./  ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}:/tmp/pixelfed   #${{secrets.WORK_DIR}}
+
+      - name: Restart Apps
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cp -TRv /tmp/pixelfed/ ${{secrets.WORK_DIR}}/
+            sudo chmod 777 -R ${{secrets.WORK_DIR}}
+            sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
+            cd ${{secrets.WORK_DIR}}
+            php artisan migrate --force
+            php artisan storage:link
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan optimize
+            php artisan up
