@@ -2,6 +2,9 @@
 
 use App\Services\HashtagFollowService;
 use Illuminate\Support\Facades\Redis;
+use Tests\TestCase;
+
+uses(TestCase::class);
 
 it('reports a populated hashtag follow cache as warm', function () {
     Redis::shouldReceive('zcard')
