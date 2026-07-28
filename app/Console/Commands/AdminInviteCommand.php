@@ -182,6 +182,12 @@ class AdminInviteCommand extends Command
 
     protected function expireAll(): int
     {
+        if (! $this->confirm('Expire all invites? This cannot be undone.', false)) {
+            $this->info('No invites were expired.');
+
+            return Command::SUCCESS;
+        }
+
         $count = AdminInvite::query()->delete();
         $this->info('Deleted '.$count.' invites');
 
