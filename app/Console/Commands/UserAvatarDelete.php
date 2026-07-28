@@ -47,12 +47,12 @@ class UserAvatarDelete extends Command implements PromptsForMissingInput
 
         if (! $user) {
             $this->error('Could not find any user with that username');
-            exit;
+            return Command::FAILURE;
         }
 
         if (! $user->profile_id) {
             $this->error('Could not find the profile with that username');
-            exit;
+            return Command::FAILURE;
         }
 
         $pid = $user->profile_id;
@@ -62,34 +62,51 @@ class UserAvatarDelete extends Command implements PromptsForMissingInput
         if (! $avatarModel) {
             $this->error('No avatar model found');
             Cache::forget('avatar:'.$pid);
-            exit;
+            return Command::FAILURE;
         }
 
         $defaultPaths = ['public/avatars/default.jpg', 'public/avatars/default.png'];
         $mediaPath = $avatarModel->media_path;
 
-        if (in_array($mediaPath, $defaultPaths)) {
+        if (in_array($mediaPath, $defaultPaths, true)) {
             $this->info('Default avatar already used, aborting...');
             Cache::forget('avatar:'.$pid);
-            exit;
+            return Command::SUCCESS;
         }
 
-        if (Storage::disk(config('filesystems.cloud'))->exists($mediaPath)) {
-            if ($this->confirm('Found a S3 avatar at '.$mediaPath.'! Are you sure you want to delete this?')) {
-                Storage::disk(config('filesystems.cloud'))->delete($mediaPath);
-                $this->info('Deleting S3 copy');
-            } else {
-                exit;
-            }
+        if (! $this->isAllowedAvatarPath($mediaPath)) {
+            $this->error('Refusing to delete an avatar outside the allowed storage prefix.');
+
+            return Command::FAILURE;
         }
 
-        if (Storage::disk('local')->exists($mediaPath)) {
-            if ($this->confirm('Found a local avatar at '.$mediaPath.'! Are you sure you want to delete this?')) {
-                Storage::disk('local')->delete($mediaPath);
-                $this->info('Deleting local copy');
-            } else {
-                exit;
+        $disks = array_values(array_unique(array_filter([
+            config('filesystems.cloud'),
+            'local',
+        ])));
+        $existing = collect($disks)
+            ->filter(fn (string $disk): bool => Storage::disk($disk)->exists($mediaPath));
+
+        if ($existing->isNotEmpty() && ! $this->confirm('Delete all stored copies of '.$mediaPath.'?', false)) {
+            return Command::SUCCESS;
+        }
+
+        $backups = [];
+        foreach ($existing as $disk) {
+            $backups[$disk] = Storage::disk($disk)->get($mediaPath);
+        }
+
+        $deleted = [];
+        foreach ($existing as $disk) {
+            if (! Storage::disk($disk)->delete($mediaPath)) {
+                foreach ($deleted as $deletedDisk) {
+                    Storage::disk($deletedDisk)->put($mediaPath, $backups[$deletedDisk]);
+                }
+                $this->error('Avatar deletion failed; previously removed copies were restored.');
+
+                return Command::FAILURE;
             }
+            $deleted[] = $disk;
         }
 
         $avatarModel->media_path = 'public/avatars/default.jpg';
@@ -99,5 +116,16 @@ class UserAvatarDelete extends Command implements PromptsForMissingInput
         AccountService::del($pid);
 
         $this->info('Successfully deleted user avatar!');
+
+        return Command::SUCCESS;
+    }
+
+    private function isAllowedAvatarPath(?string $path): bool
+    {
+        return is_string($path)
+            && str_starts_with($path, 'public/avatars/')
+            && ! str_contains($path, '..')
+            && ! str_contains($path, '\\')
+            && ! str_contains($path, "\0");
     }
 }
