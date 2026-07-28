@@ -85,10 +85,10 @@ if($displayName && $captionPreview) {
 
 @endsection
 
-@push('meta')@if($mediaCount && !$s['sensitive'] && $s['pf_type'] === "photo" || $s['pf_type'] === "photo:album")
+@push('meta')@if($mediaCount && ! $s['sensitive'] && in_array($s['pf_type'], ['photo', 'photo:album'], true))
 <meta property="og:image" content="{{$s['media_attachments'][0]['url']}}">
     <meta name="twitter:card" content="summary_large_image">
-    @elseif($mediaCount && !$s['sensitive'] && $s['pf_type'] === "video" || $s['pf_type'] === "video:album")<meta property="og:video" content="{{$s['media_attachments'][0]['url']}}">
+    @elseif($mediaCount && ! $s['sensitive'] && in_array($s['pf_type'], ['video', 'video:album'], true))<meta property="og:video" content="{{$s['media_attachments'][0]['url']}}">
     <meta property="og:image" content="{{$s['media_attachments'][0]['preview_url']}}">
     <meta name="twitter:card" content="summary">
     @else
