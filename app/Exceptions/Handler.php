@@ -85,6 +85,12 @@ class Handler extends ExceptionHandler
 
             $isHttp = $this->isHttpException($exception);
 
+            if (! $isHttp && ! config('app.debug')) {
+                return response()->json([
+                    'error' => 'An unexpected error occurred.',
+                ], 500);
+            }
+
             return response()->json(
                 ['error' => $exception->getMessage()],
                 $isHttp ? $exception->getStatusCode() : 500,
