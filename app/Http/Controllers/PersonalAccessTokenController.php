@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Laravel\Passport\Passport;
 use Laravel\Passport\Token;
@@ -80,29 +81,33 @@ class PersonalAccessTokenController extends Controller
 
     public function renew(Request $request, string $token_id): JsonResponse
     {
-        $oldToken = $request->user()
-            ->tokens()
-            ->with('client')
-            ->whereKey($token_id)
-            ->firstOrFail();
+        $result = DB::transaction(function () use ($request, $token_id) {
+            $oldToken = $request->user()
+                ->tokens()
+                ->with('client')
+                ->whereKey($token_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        abort_unless($this->isPersonalAccessToken($oldToken), 404);
+            abort_unless($this->isPersonalAccessToken($oldToken), 404);
+            abort_if($oldToken->revoked, 422, 'This token has already been revoked.');
+            abort_if(
+                $oldToken->expires_at && $oldToken->expires_at->isPast(),
+                422,
+                'This token has expired.'
+            );
 
-        abort_if($oldToken->revoked, 422, 'This token has already been revoked.');
+            $scopes = array_values(array_unique($oldToken->scopes ?? []));
+            $newToken = $request->user()->createToken($oldToken->name, $scopes);
+            $oldToken->revoke();
 
-        $scopes = array_values(array_unique($oldToken->scopes ?? []));
-
-        $result = $request->user()->createToken(
-            $oldToken->name,
-            $scopes
-        );
-
-        $oldToken->revoke();
+            return [$newToken, $oldToken->id];
+        }, 3);
 
         return response()->json([
-            'accessToken' => $result->accessToken,
-            'token' => $this->serializeToken($result->token),
-            'renewedTokenId' => $oldToken->id,
+            'accessToken' => $result[0]->accessToken,
+            'token' => $this->serializeToken($result[0]->token),
+            'renewedTokenId' => $result[1],
         ]);
     }
 

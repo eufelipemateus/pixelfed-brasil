@@ -136,17 +136,6 @@ class AppServiceProvider extends ServiceProvider
                 ? 'u:'.$user->getAuthIdentifier()
                 : 'ip:'.$request->ip();
 
-            $tooMany = function (Request $request, array $headers) {
-                return response()->json([
-                    'message' => 'Too many requests',
-                    'retry_after' => isset($headers['Retry-After'])
-                        ? (int) $headers['Retry-After']
-                        : null,
-                    'debug' => 'oauth-pat limiter hit',
-                    'headers' => $headers,
-                ], 429)->withHeaders($headers)->header('X-Debug-Limiter', 'oauth-pat');
-            };
-
             return [
                 Limit::perMinute(3)
                     ->by("minute:{$actor}"),
@@ -163,10 +152,6 @@ class AppServiceProvider extends ServiceProvider
         Passport::tokensExpireIn(now()->addDays(config('instance.oauth.token_expiration', 356)));
         Passport::refreshTokensExpireIn(now()->addDays(config('instance.oauth.refresh_expiration', 400)));
         Passport::enableImplicitGrant();
-        if (config('instance.oauth.pat.enabled')) {
-            Passport::personalAccessClientId(config('instance.oauth.pat.id'));
-        }
-
         Passport::tokensCan([
             'read' => 'Full read access to your account',
             'write' => 'Full write access to your account',
