@@ -150,9 +150,6 @@
                                     </p>
                                     <p class="d-flex small text-muted align-items-center">
                                         <span v-if="profile.label" class="btn  btn-sm py-0 mr-3"   :class="'btn-outline'" :style="'border: 1px solid '+profile.label.text_color+'; color:'+ profile.label.text_color +';'" :title="profile.label.description" v-html="profile.label.label"></span>
-                                        <span v-if="profile.is_admin" class="btn btn-outline-danger btn-sm py-0 mr-3" title="Admin Account" data-toggle="tooltip">
-                                            {{ $t("profile.admin") }}
-                                        </span>
                                         <span v-if="relationship && relationship.followed_by" class="btn btn-outline-muted btn-sm py-0 mr-3">{{ $t("profile.followYou") }}</span>
                                         <span>
                                             {{$t("profile.joined")}} {{joinedAtFormat(profile.created_at)}}
