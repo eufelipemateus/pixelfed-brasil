@@ -54,64 +54,134 @@ jobs:
 
       - name: Generate .env
         run: |
-            cp .env.example .env
+            touch .env
+            echo "APP_NAME=\"Pixelfed Brasil\"" >> .env
+            echo "APP_ENV=${APP_ENV}" >> .env
+            echo "APP_KEY=${{secrets.APP_KEY}}" >> .env
+            echo "APP_DEBUG=false" >> .env
 
-            # Exemplo: sed -i "s/^DB_HOST=.*/DB_HOST=${{ secrets.DATABASE_HOST }}/" .env
-            sed -i "s/^APP_NAME=.*/APP_NAME=\"Pixelfed Brasil\"/" .env
-            sed -i "s/^APP_ENV=.*/APP_ENV=\"${APP_ENV}\"/" .env
-            sed -i "s|^APP_KEY=.*|APP_KEY=${{secrets.APP_KEY}}|" .env
-            sed -i "s/^APP_DEBUG=.*/APP_DEBUG=\"false\"/" .env
+            echo "DB_CONNECTION=pgsql" >> .env
+            echo "DB_HOST=127.0.0.1" >> .env
+            echo "DB_PORT=5432" >> .env
+            echo "DB_DATABASE=\"${{secrets.DB_DATABASE}}\"" >> .env
+            echo "DB_USERNAME=\"${{secrets.DB_USERNAME}}\"" >> .env
+            echo "DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"" >> .env
 
-            sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=\"pgsql\"/" .env
-            sed -i "s/^DB_HOST=.*/DB_HOST=\"127.0.0.1\"/" .env
-            sed -i "s/^DB_PORT=.*/DB_PORT=\"5432\"/" .env
-            sed -i "s|^DB_DATABASE=.*|DB_DATABASE=\"${{secrets.DB_DATABASE}}\"|" .env
-            sed -i "s|^DB_USERNAME=.*|DB_USERNAME=\"${{secrets.DB_USERNAME}}\"|" .env
-            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"|" .env
+            echo "REDIS_HOST=127.0.0.1" >> .env
+            echo "REDIS_PORT=6379" >> .env
+            echo "REDIS_PASSWORD=null" >> .env
 
-            sed -i "s/^REDIS_HOST=.*/REDIS_HOST=\"127.0.0.1\"/" .env
-            sed -i "s/^REDIS_PORT=.*/REDIS_PORT=\"6379\"/" .env
-            sed -i "s/^REDIS_PASSWORD=.*/REDIS_PASSWORD=\"null\"/" .env
+            echo "MAIL_MAILER=smtp" >> .env
+            echo "MAIL_HOST=${{secrets.MAIL_HOST}}" >> .env
+            echo "MAIL_PORT=587" >> .env
+            echo "MAIL_USERNAME=${{secrets.MAIL_USER}}" >> .env
+            echo "MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"" >> .env
+            echo "MAIL_ENCRYPTION=tls" >> .env
+            echo "MAIL_FROM_ADDRESS=\"noreply@pixelfed.com.br\"" >> .env
+            echo "MAIL_FROM_NAME=\"Pixelfed Brasil\"" >> .env
 
-            sed -i "s/^OPEN_REGISTRATION=.*/OPEN_REGISTRATION=\"true\"/" .env
-            sed -i "s/^ENFORCE_EMAIL_VERIFICATION=.*/ENFORCE_EMAIL_VERIFICATION=\"true\"/" .env
-            sed -i "s/^PF_MAX_USERS=.*/PF_MAX_USERS=\"5000\"/" .env
-            sed -i "s/^OAUTH_ENABLED=.*/OAUTH_ENABLED=\"true\"/" .env
-            sed -i "s/^PF_OPTIMIZE_IMAGES=.*/PF_OPTIMIZE_IMAGES=\"false\"/" .env
+            echo "APP_LOCALE=pt" >> .env
+            echo "APP_FALLBACK_LOCALE=pt" >> .env
+            echo "APP_URL=https://${{vars.DOMAIN}}" >> .env
+            echo "APP_DOMAIN=${{vars.DOMAIN}}" >> .env
+            echo "ADMIN_DOMAIN=${{vars.ADMIN_DOMAIN}}"  >> .env
+            echo "SESSION_DOMAIN=${{vars.DOMAIN}}" >> .env
+            echo "TRUST_PROXIES=*" >> .env
+            echo "HORIZON_MEMORY_LIMIT=${{vars.HORIZON_MEMORY_LIMIT}}" >> .env
+            echo "HORIZON_MAX_PROCESSES=${{vars.HORIZON_MAX_PROCESSES}}" >> .env
 
-            sed -i "s|^APP_URL=.*|APP_URL=\"https://${{vars.DOMAIN}}\"|" .env
-            sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
-            sed -i "s|^ADMIN_DOMAIN=.*|ADMIN_DOMAIN=\"${{vars.ADMIN_DOMAIN}}\"|" .env
-            sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
-            sed -i "s/^TRUST_PROXIES=.*/TRUST_PROXIES=\"*\"/" .env
+            echo "OPEN_REGISTRATION=true" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=true" >> .env
+            echo "ENFORCE_EMAIL_VERIFICATION=true" >> .env
+            echo "PF_MAX_USERS=5000" >> .env
+            echo "OAUTH_ENABLED=true" >> .env
+            echo "INSTANCE_PUBLIC_HASHTAGS=false"  >> .env
+            echo "INSTANCE_DISCOVER_PUBLIC=true" >> .env
+            echo "INSTANCE_DESCRIPTION=\"Pixelfed é uma plataforma de compartilhamento de imagens, uma alternativa ética às plataformas centralizadas.\"" >> .env
+            echo "INSTANCE_PUBLIC_LOCAL_TIMELINE=true" >> .env
+            echo "INSTANCE_PUBLIC_TIMELINE_CACHED=false" >> .env
+            echo "PF_NETWORK_TIMELINE=true" >> .env
+            echo "INSTANCE_NETWORK_TIMELINE_CACHED=false" >> .env
+            echo "ENABLE_COVID_LABEL=false" >> .env
+            echo "PF_IMPORT_FROM_INSTAGRAM=false" >> .env
+            echo "INSTANCE_CONTACT_FORM=true" >> .env
+            echo "INSTANCE_CONTACT_EMAIL=suporte@felipemateus.com"  >> .env
+            echo "INSTANCE_NOTIFY_AUTO_GC=true" >> .env
+            echo "REMOTE_AVATARS=false" >> .env
+            echo "PF_ENABLE_GEOLOCATION=false" >> .env
+            echo "ACCOUNT_DELETE_AFTER=30" >> .env
+            echo "PF_OPTIMIZE_IMAGES=false" >> .env
+            echo "PF_OPTIMIZE_VIDEOS=false" >> .env
+            echo "INSTANCE_SHOW_PEERS=true" >> .env
+            echo "INSTANCE_POLLS=true" >> .env
+            echo "ACTIVITY_PUB=true" >> .env
+            echo "ACTIVITYPUB_DELIVERY_CONCURRENCY=100" >> .env
+            echo "AP_REMOTE_FOLLOW=true" >> .env
+            echo "AP_INBOX=true" >> .env
+            echo "AP_OUTBOX=true" >> .env
+            echo "AP_SHAREDINBOX=true" >> .env
+            echo "INSTANCE_DISCOVER_BEAGLE_API=true" >> .env
+            echo "INSTANCE_LANDING_SHOW_EXPLORE=false" >> .env
+            echo "INSTANCE_LANDING_SHOW_DIRECTORY=false" >> .env
+            echo "ACCOUNT_DELETION=true" >> .env
+            echo "GROUPS_ENABLED=true" >> .env
 
-            sed -i "s/^ACTIVITY_PUB=.*/ACTIVITY_PUB=\"true\"/" .env
-            sed -i "s/^AP_REMOTE_FOLLOW=.*/AP_REMOTE_FOLLOW=\"true\"/" .env
-            sed -i "s/^AP_INBOX=.*/AP_INBOX=\"true\"/" .env
-            sed -i "s/^AP_OUTBOX=.*/AP_OUTBOX=\"true\"/" .env
-            sed -i "s/^AP_SHAREDINBOX=.*/AP_SHAREDINBOX=\"true\"/" .env
+            echo "PF_LOGIN_WITH_MASTODON_ENABLED=false" >> .env
+            echo "PF_LOGIN_WITH_MASTODON_ENABLED_SKIP_CLOSED=true" >> .env
+            echo "PF_LOGIN_WITH_MASTODON_DOMAINS=mastodon.com.br,masto.donte.com.br,mastodon.social,mastodon.online,mstdn.social,mas.to" >> .env
 
-            sed -i "s|^MAIL_HOST=.*|MAIL_HOST=\"${{secrets.MAIL_HOST}}\"|" .env
-            sed -i "s/^MAIL_PORT=.*/MAIL_PORT=\"465\"/" .env
-            sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=\"${{secrets.MAIL_USER}}\"|" .env
-            sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"|" .env
-            sed -i "s/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=\"tls\"/" .env
-            sed -i "s/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=\"noreply@pixelfed.com.br\"/" .env
-            sed -i "s/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME=\"Pixelfed Brasil\"/" .env
+            echo "PF_HIDE_NSFW_ON_PUBLIC_FEEDS=true" >> .env
+            echo "PF_HIDE_REMOTE_INSTANCE=true" >> .env
+            echo "AP_ALLOW_SHARE_ALL=true" >> .env
 
-            # Acrescenta variaveis que nao existem no .env.example original
-            grep -q '^MAIL_MAILER=' .env || echo 'MAIL_MAILER="smtp"' >> .env
-            grep -q '^APP_LOCALE=' .env || echo 'APP_LOCALE="pt"' >> .env
-            grep -q '^APP_FALLBACK_LOCALE=' .env || echo 'APP_FALLBACK_LOCALE="pt"' >> .env
-            grep -q '^PF_ALLOW_APP_REGISTRATION=' .env || echo 'PF_ALLOW_APP_REGISTRATION="false"' >> .env
-            grep -q '^PF_IMPORT_FROM_INSTAGRAM=' .env || echo 'PF_IMPORT_FROM_INSTAGRAM="${{vars.PF_IMPORT_FROM_INSTAGRAM}}"' >> .env
-            grep -q '^HORIZON_MEMORY_LIMIT=' .env || echo 'HORIZON_MEMORY_LIMIT="${{vars.HORIZON_MEMORY_LIMIT}}"' >> .env
-            grep -q '^HORIZON_MAX_PROCESSES=' .env || echo 'HORIZON_MAX_PROCESSES="${{vars.HORIZON_MAX_PROCESSES}}"' >> .env
-            grep -q '^CAPTCHA_SECRET=' .env || echo 'CAPTCHA_SECRET="${{secrets.CAPTCHA_SECRET}}"' >> .env
-            grep -q '^CAPTCHA_SITEKEY=' .env || echo 'CAPTCHA_SITEKEY="${{secrets.CAPTCHA_SITEKEY}}"' >> .env
-            grep -q '^VAPID_PUBLIC_KEY=' .env || echo 'VAPID_PUBLIC_KEY="${{secrets.VAPID_PUBLIC_KEY}}"' >> .env
-            grep -q '^VAPID_PRIVATE_KEY=' .env || echo 'VAPID_PRIVATE_KEY="${{secrets.VAPID_PRIVATE_KEY}}"' >> .env
+            echo "APP_REGISTER=true" >> .env
 
+            echo "PAGE_503_HEADER=\"Em Manutenção\"" >> .env
+            echo "PAGE_503_BODY=\"Estamos em manutenção, voltaremos em algumas horas.\"" >> .env
+            echo "PAGE_404_HEADER=\"Desculpe, esta página não está disponível.\"" >> .env
+            echo "PAGE_404_BODY=\"O link que você seguiu pode estar quebrado ou a página pode ter sido removida. <a href='/'>Voltar para o Pixelfed</a>.\"" >> .env
+
+            echo "CAPTCHA_ENABLED=true" >> .env
+            echo "CAPTCHA_ENABLED_ON_LOGIN=true" >> .env
+            echo "CAPTCHA_ENABLED_ON_REGISTER=true" >> .env
+            echo "CAPTCHA_SECRET=${{secrets.CAPTCHA_SECRET}}" >> .env
+            echo "CAPTCHA_SITEKEY=${{secrets.CAPTCHA_SITEKEY}}" >> .env
+            echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
+
+            echo "PF_ENABLE_CLOUD=true" >> .env
+            echo "FILESYSTEM_CLOUD=spaces" >> .env
+            echo "DANGEROUSLY_SET_FILESYSTEM_DRIVER=${{secrets.FILESYSTEM_CLOUD}}" >> .env
+            echo "PORTFOLIO_DOMAIN=portifolio.${{vars.DOMAIN}}" >> .env
+            echo "PORTFOLIO_PATH=" >> .env
+            echo "DO_SPACES_KEY=${{secrets.DO_SPACES_KEY}}" >> .env
+            echo "DO_SPACES_SECRET=${{secrets.DO_SPACES_SECRET}}" >> .env
+            echo "DO_SPACES_REGION=${{secrets.DO_SPACES_REGION}}" >> .env
+            echo "DO_SPACES_BUCKET=${{secrets.DO_SPACES_BUCKET}}" >> .env
+            echo "DO_SPACES_ENDPOINT=${{secrets.DO_SPACES_ENDPOINT}}" >> .env
+            echo "AWS_URL=${{secrets.DO_SPACES_URL}}" >> .env
+
+            echo "R2_ACCESS_KEY_ID=${{secrets.S3_ACCESS_KEY_ID}}" >> .env
+            echo "R2_SECRET_ACCESS_KEY=${{secrets.S3_SECRET_ACCESS_KEY}}" >> .env
+            echo "R2_BUCKET=${{secrets.S3_BUCKET}}" >> .env
+            echo "R2_ENDPOINT=https://${{secrets.R2_ACCOUNT_ID}}.r2.cloudflarestorage.com" >> .env
+
+            echo "FELIPEMATEUS_SENDPORTAL_TOKEN=${{secrets.FELIPEMATEUS_SENDPORTAL_TOKEN}}" >> .env
+            echo "TRANSLATION_ENABLED=true" >> .env
+            echo "TRANSLATION_PROVIDER=${{secrets.TRANSLATE_PROVIDER}}" >> .env
+            echo "GOOGLE_API_KEY=${{secrets.GOOGLE_API_KEY}}" >> .env
+            echo "DEEPL_API_KEY=${{secrets.DEEPL_API_KEY}}" >> .env
+
+            echo "PF_LIMIT_DAILY_POSTS_ENABLED=true" >> .env
+            echo "PF_LIMIT_DAILY_POSTS_LIMIT=6" >> .env
+            echo "PF_LIMIT_DAILY_POSTS_USER_EXCEPTIONS=false" >> .env
+            echo "PF_DEFAULT_NO_AUTOLINK=false" >> .env
+            echo "PF_IMPORT_FROM_INSTAGRAM=${{vars.PF_IMPORT_FROM_INSTAGRAM}}" >> .env
+
+            echo "PF_USER_INVITES=false" >> .env
+            echo "PF_ALLOW_APP_REGISTRATION=false" >> .env
+
+            echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
+            echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
