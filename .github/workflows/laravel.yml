@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: testing
-      CACHE_STORE: array
+      CACHE_DRIVER: array
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
       FILESYSTEM_DISK: local
-      QUEUE_CONNECTION: sync
+      QUEUE_DRIVER: sync
       SESSION_DRIVER: array
 
     steps:
