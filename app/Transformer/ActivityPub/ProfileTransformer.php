@@ -58,7 +58,7 @@ class ProfileTransformer extends Fractal\TransformerAbstract
             ],
         ];
 
-        if (in_array($profile->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::SUSPENDED, StatusEnums::DISABLED], true) || $profile->deleted_at != null) {
+        if (in_array($profile->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::SUSPENDED, StatusEnums::DISABLED, StatusEnums::BANNED], true) || $profile->deleted_at != null) {
             $res['suspended'] = true;
             $res['name'] = '';
             unset($res['icon']);

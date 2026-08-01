@@ -416,7 +416,7 @@ class StoryFetch implements ShouldQueue
             }
 
             // Check if profile is blocked or suspended
-            if (in_array($profile->status, [StatusEnums::SUSPENDED, StatusEnums::DELETED], true)) {
+            if (in_array($profile->status, [StatusEnums::SUSPENDED, StatusEnums::DELETED, StatusEnums::BANNED], true)) {
                 if (config('app.dev_log')) {
                     Log::info('Profile is suspended/deleted', ['profile_id' => $profile->id]);
                 }

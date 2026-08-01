@@ -212,6 +212,7 @@ class ProfileController extends Controller
             case StatusEnums::SUSPENDED:
             case StatusEnums::DELETE_QUEUE:
             case StatusEnums::DELETED:
+            case StatusEnums::BANNED:
                 return view('profile.disabled');
 
             default:

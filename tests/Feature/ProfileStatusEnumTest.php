@@ -68,8 +68,10 @@ class ProfileStatusEnumTest extends TestCase
         $profile = $this->createProfile(['status' => null]);
 
         $this->assertSame(StatusEnums::ACTIVE, $profile->fresh()->status);
+        $this->assertSame('banned', StatusEnums::BANNED->value());
+        $this->assertSame(StatusEnums::BANNED, StatusEnums::fromValue('banned'));
 
-        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::ACTIVE] as $status) {
+        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::BANNED, StatusEnums::ACTIVE] as $status) {
             $profile->status = $status;
             $profile->save();
 
@@ -92,7 +94,7 @@ class ProfileStatusEnumTest extends TestCase
 
     public function test_inactive_local_profiles_cannot_queue_activitypub_delivery(): void
     {
-        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED] as $status) {
+        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::BANNED] as $status) {
             $profile = $this->createProfile(['status' => $status]);
 
             try {
@@ -126,7 +128,7 @@ class ProfileStatusEnumTest extends TestCase
         $this->getJson(route('well-known.webfinger', ['resource' => 'https://pixelfed.test/users/'.$active->username]))
             ->assertOk();
 
-        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED] as $index => $status) {
+        foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::BANNED] as $index => $status) {
             $profile = $this->createProfile(['username' => 'blocked_'.$index, 'status' => $status]);
             $this->getJson(route('well-known.webfinger', ['resource' => 'https://pixelfed.test/users/'.$profile->username]))
                 ->assertStatus(400);
