@@ -27,7 +27,7 @@ if($displayName && $captionPreview) {
 @endphp
 
 @section('schema')
-    @if($mediaCount && ($s['pf_type'] === "photo" || $s['pf_type'] === "photo:album"))
+    @if($mediaCount && ! $s['sensitive'] && ($s['pf_type'] === "photo" || $s['pf_type'] === "photo:album"))
     <x-status-schema-generator
         type="image"
         :url="$s['media_attachments'][0]['url']"
@@ -43,7 +43,7 @@ if($displayName && $captionPreview) {
         :copyright-notice="'Felipe Mateus <suporte@felipemateus.com>'"
         :location-name="$s['place']['name'] ?? null"
         />
-    @elseif($mediaCount && ($s['pf_type'] === "video" || $s['pf_type'] === "video:album"))
+    @elseif($mediaCount && ! $s['sensitive'] && ($s['pf_type'] === "video" || $s['pf_type'] === "video:album"))
     <x-status-schema-generator
         type="video"
         :url="$s['url']"

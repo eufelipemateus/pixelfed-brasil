@@ -1,5 +1,6 @@
 <?php
 
+use App\View\Components\ForumSchemaGenerator;
 use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
@@ -44,3 +45,31 @@ it('only exposes metadata for non-sensitive media', function (
     'sensitive video album' => ['video:album', true, [['url' => 'https://media.example/first']], null],
     'album without attachments' => ['photo:album', false, [], null],
 ]);
+
+it('never exposes sensitive media through forum schema helpers', function (string $type) {
+    $status = [
+        'id' => null,
+        'in_reply_to_id' => null,
+        'created_at' => now()->toAtomString(),
+        'url' => 'https://pixelfed.test/p/1',
+        'content_text' => 'Sensitive post',
+        'sensitive' => true,
+        'pf_type' => $type,
+        'media_attachments' => [[
+            'url' => 'https://media.example/original-secret',
+            'preview_url' => 'https://media.example/preview-secret',
+        ]],
+        'account' => [
+            'username' => 'alice',
+            'display_name' => 'Alice',
+            'url' => 'https://pixelfed.test/alice',
+        ],
+    ];
+
+    $component = new ForumSchemaGenerator($status);
+    $component->getImage($status);
+    $component->getVideo($status);
+
+    expect($component->image)->toBeNull()
+        ->and($component->video)->toBeNull();
+})->with(['photo', 'video']);
