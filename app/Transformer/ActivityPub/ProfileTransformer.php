@@ -2,6 +2,7 @@
 
 namespace App\Transformer\ActivityPub;
 
+use App\Enums\StatusEnums;
 use App\Profile;
 use App\Services\AccountService;
 use League\Fractal;
@@ -57,7 +58,7 @@ class ProfileTransformer extends Fractal\TransformerAbstract
             ],
         ];
 
-        if ($profile->status === 'delete' || $profile->deleted_at != null) {
+        if (in_array($profile->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::SUSPENDED, StatusEnums::DISABLED], true) || $profile->deleted_at != null) {
             $res['suspended'] = true;
             $res['name'] = '';
             unset($res['icon']);

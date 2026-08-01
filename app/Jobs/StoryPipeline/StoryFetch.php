@@ -2,6 +2,7 @@
 
 namespace App\Jobs\StoryPipeline;
 
+use App\Enums\StatusEnums;
 use App\Services\MediaPathService;
 use App\Services\StoryIndexService;
 use App\Services\StoryService;
@@ -415,7 +416,7 @@ class StoryFetch implements ShouldQueue
             }
 
             // Check if profile is blocked or suspended
-            if ($profile->status !== null && in_array($profile->status, ['suspended', 'deleted'])) {
+            if (in_array($profile->status, [StatusEnums::SUSPENDED, StatusEnums::DELETED], true)) {
                 if (config('app.dev_log')) {
                     Log::info('Profile is suspended/deleted', ['profile_id' => $profile->id]);
                 }

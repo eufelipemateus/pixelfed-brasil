@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\AccountInterstitial;
 use App\Follower;
 use App\FollowRequest;
@@ -207,9 +208,10 @@ class ProfileController extends Controller
     public static function accountCheck(Profile $profile)
     {
         switch ($profile->status) {
-            case 'disabled':
-            case 'suspended':
-            case 'delete':
+            case StatusEnums::DISABLED:
+            case StatusEnums::SUSPENDED:
+            case StatusEnums::DELETE_QUEUE:
+            case StatusEnums::DELETED:
                 return view('profile.disabled');
 
             default:
