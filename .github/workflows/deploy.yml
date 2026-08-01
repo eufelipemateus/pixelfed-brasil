@@ -52,66 +52,47 @@ jobs:
           composer require felipemateus/pixelfed-lib:${{ vars.PIXELFED_LIB_VERSION }} --prefer-source
           rm .env
 
-      - name: Generate .env
+      - name: Generate complete production .env
+        env:
+          DEPLOY_APP_ENV: ${{ env.APP_ENV }}
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DOMAIN: ${{ vars.DOMAIN }}
+          ADMIN_DOMAIN: ${{ vars.ADMIN_DOMAIN }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USER }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          HORIZON_MEMORY_LIMIT: ${{ vars.HORIZON_MEMORY_LIMIT }}
+          HORIZON_MAX_PROCESSES: ${{ vars.HORIZON_MAX_PROCESSES }}
+          CAPTCHA_SECRET: ${{ secrets.CAPTCHA_SECRET }}
+          CAPTCHA_SITEKEY: ${{ secrets.CAPTCHA_SITEKEY }}
+          BANNED_USERNAMES: ${{ secrets.BANNED_USERNAMES }}
+          DANGEROUSLY_SET_FILESYSTEM_DRIVER: ${{ secrets.FILESYSTEM_CLOUD }}
+          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
+          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          DO_SPACES_REGION: ${{ secrets.DO_SPACES_REGION }}
+          DO_SPACES_BUCKET: ${{ secrets.DO_SPACES_BUCKET }}
+          DO_SPACES_ENDPOINT: ${{ secrets.DO_SPACES_ENDPOINT }}
+          AWS_URL: ${{ secrets.DO_SPACES_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.S3_BUCKET }}
+          R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          FELIPEMATEUS_SENDPORTAL_TOKEN: ${{ secrets.FELIPEMATEUS_SENDPORTAL_TOKEN }}
+          TRANSLATION_PROVIDER: ${{ secrets.TRANSLATE_PROVIDER }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          PF_IMPORT_FROM_INSTAGRAM: ${{ vars.PF_IMPORT_FROM_INSTAGRAM }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
         run: |
-            cp .env.example .env
-
-            # Exemplo: sed -i "s/^DB_HOST=.*/DB_HOST=${{ secrets.DATABASE_HOST }}/" .env
-            sed -i "s/^APP_NAME=.*/APP_NAME=\"Pixelfed Brasil\"/" .env
-            sed -i "s/^APP_ENV=.*/APP_ENV=\"${APP_ENV}\"/" .env
-            sed -i "s|^APP_KEY=.*|APP_KEY=${{secrets.APP_KEY}}|" .env
-            sed -i "s/^APP_DEBUG=.*/APP_DEBUG=\"false\"/" .env
-
-            sed -i "s/^DB_CONNECTION=.*/DB_CONNECTION=\"pgsql\"/" .env
-            sed -i "s/^DB_HOST=.*/DB_HOST=\"127.0.0.1\"/" .env
-            sed -i "s/^DB_PORT=.*/DB_PORT=\"5432\"/" .env
-            sed -i "s|^DB_DATABASE=.*|DB_DATABASE=\"${{secrets.DB_DATABASE}}\"|" .env
-            sed -i "s|^DB_USERNAME=.*|DB_USERNAME=\"${{secrets.DB_USERNAME}}\"|" .env
-            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=\"${{secrets.DB_PASSWORD}}\"|" .env
-
-            sed -i "s/^REDIS_HOST=.*/REDIS_HOST=\"127.0.0.1\"/" .env
-            sed -i "s/^REDIS_PORT=.*/REDIS_PORT=\"6379\"/" .env
-            sed -i "s/^REDIS_PASSWORD=.*/REDIS_PASSWORD=\"null\"/" .env
-
-            sed -i "s/^OPEN_REGISTRATION=.*/OPEN_REGISTRATION=\"true\"/" .env
-            sed -i "s/^ENFORCE_EMAIL_VERIFICATION=.*/ENFORCE_EMAIL_VERIFICATION=\"true\"/" .env
-            sed -i "s/^PF_MAX_USERS=.*/PF_MAX_USERS=\"5000\"/" .env
-            sed -i "s/^OAUTH_ENABLED=.*/OAUTH_ENABLED=\"true\"/" .env
-            sed -i "s/^PF_OPTIMIZE_IMAGES=.*/PF_OPTIMIZE_IMAGES=\"false\"/" .env
-
-            sed -i "s|^APP_URL=.*|APP_URL=\"https://${{vars.DOMAIN}}\"|" .env
-            sed -i "s|^APP_DOMAIN=.*|APP_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
-            sed -i "s|^ADMIN_DOMAIN=.*|ADMIN_DOMAIN=\"${{vars.ADMIN_DOMAIN}}\"|" .env
-            sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=\"${{vars.DOMAIN}}\"|" .env
-            sed -i "s/^TRUST_PROXIES=.*/TRUST_PROXIES=\"*\"/" .env
-
-            sed -i "s/^ACTIVITY_PUB=.*/ACTIVITY_PUB=\"true\"/" .env
-            sed -i "s/^AP_REMOTE_FOLLOW=.*/AP_REMOTE_FOLLOW=\"true\"/" .env
-            sed -i "s/^AP_INBOX=.*/AP_INBOX=\"true\"/" .env
-            sed -i "s/^AP_OUTBOX=.*/AP_OUTBOX=\"true\"/" .env
-            sed -i "s/^AP_SHAREDINBOX=.*/AP_SHAREDINBOX=\"true\"/" .env
-
-            sed -i "s|^MAIL_HOST=.*|MAIL_HOST=\"${{secrets.MAIL_HOST}}\"|" .env
-            sed -i "s/^MAIL_PORT=.*/MAIL_PORT=\"465\"/" .env
-            sed -i "s|^MAIL_USERNAME=.*|MAIL_USERNAME=\"${{secrets.MAIL_USER}}\"|" .env
-            sed -i "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=\"${{secrets.MAIL_PASSWORD}}\"|" .env
-            sed -i "s/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=\"tls\"/" .env
-            sed -i "s/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=\"noreply@pixelfed.com.br\"/" .env
-            sed -i "s/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME=\"Pixelfed Brasil\"/" .env
-
-            # Acrescenta variaveis que nao existem no .env.example original
-            grep -q '^MAIL_MAILER=' .env || echo 'MAIL_MAILER="smtp"' >> .env
-            grep -q '^APP_LOCALE=' .env || echo 'APP_LOCALE="pt"' >> .env
-            grep -q '^APP_FALLBACK_LOCALE=' .env || echo 'APP_FALLBACK_LOCALE="pt"' >> .env
-            grep -q '^PF_ALLOW_APP_REGISTRATION=' .env || echo 'PF_ALLOW_APP_REGISTRATION="false"' >> .env
-            grep -q '^PF_IMPORT_FROM_INSTAGRAM=' .env || echo 'PF_IMPORT_FROM_INSTAGRAM="${{vars.PF_IMPORT_FROM_INSTAGRAM}}"' >> .env
-            grep -q '^HORIZON_MEMORY_LIMIT=' .env || echo 'HORIZON_MEMORY_LIMIT="${{vars.HORIZON_MEMORY_LIMIT}}"' >> .env
-            grep -q '^HORIZON_MAX_PROCESSES=' .env || echo 'HORIZON_MAX_PROCESSES="${{vars.HORIZON_MAX_PROCESSES}}"' >> .env
-            grep -q '^CAPTCHA_SECRET=' .env || echo 'CAPTCHA_SECRET="${{secrets.CAPTCHA_SECRET}}"' >> .env
-            grep -q '^CAPTCHA_SITEKEY=' .env || echo 'CAPTCHA_SITEKEY="${{secrets.CAPTCHA_SITEKEY}}"' >> .env
-            grep -q '^VAPID_PUBLIC_KEY=' .env || echo 'VAPID_PUBLIC_KEY="${{secrets.VAPID_PUBLIC_KEY}}"' >> .env
-            grep -q '^VAPID_PRIVATE_KEY=' .env || echo 'VAPID_PRIVATE_KEY="${{secrets.VAPID_PRIVATE_KEY}}"' >> .env
-
+          php .github/scripts/generate-production-env.php
+          test "$(cut -d= -f1 .env | sort | uniq -d | wc -l)" -eq 0
+          grep -q '^MAIL_DRIVER="smtp"$' .env
+          grep -q '^MAIL_PORT="587"$' .env
+          grep -q '^PF_ENABLE_CLOUD="true"$' .env
 
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
@@ -146,15 +127,22 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cp -TRv /tmp/pixelfed/ ${{secrets.WORK_DIR}}/
-            sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
-            sudo chmod 777 -R ${{secrets.WORK_DIR}}
-
-            sudo chmod 600 storage/oauth-private.key
-            sudo chmod 600 storage/oauth-public.key
-            sudo chown www-data:www-data storage/oauth-*.key
-
-            cd ${{secrets.WORK_DIR}}
+            WORK_DIR='${{ secrets.WORK_DIR }}'
+            sudo cp -aT /tmp/pixelfed "$WORK_DIR"
+            sudo chown -R www-data:www-data "$WORK_DIR"
+            sudo find "$WORK_DIR" -type d -exec chmod 755 {} +
+            sudo find "$WORK_DIR" -type f -exec chmod 644 {} +
+            sudo find "$WORK_DIR/storage" "$WORK_DIR/bootstrap/cache" -type d -exec chmod 750 {} +
+            sudo find "$WORK_DIR/storage" "$WORK_DIR/bootstrap/cache" -type f -exec chmod 640 {} +
+            if [ -f "$WORK_DIR/storage/oauth-private.key" ]; then
+              sudo chown www-data:www-data "$WORK_DIR/storage/oauth-private.key"
+              sudo chmod 600 "$WORK_DIR/storage/oauth-private.key"
+            fi
+            if [ -f "$WORK_DIR/storage/oauth-public.key" ]; then
+              sudo chown www-data:www-data "$WORK_DIR/storage/oauth-public.key"
+              sudo chmod 644 "$WORK_DIR/storage/oauth-public.key"
+            fi
+            cd "$WORK_DIR"
             php artisan migrate --force
             php artisan storage:link
             php artisan optimize:clear
