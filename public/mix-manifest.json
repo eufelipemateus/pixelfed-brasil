@@ -20,7 +20,7 @@
     "/js/spa.js": "/js/spa.js?id=fca3a6c68777f4bc5d72a761d5210632",
     "/js/stories.js": "/js/stories.js?id=b25e203152277d6e79025a15e390ffb8",
     "/js/portfolio.js": "/js/portfolio.js?id=2dfd35982335ad4eca174b70bc0e9bb4",
-    "/js/account-import.js": "/js/account-import.js?id=bbfa4ae6382f7b734eb2b46b07a73806",
+    "/js/account-import.js": "/js/account-import.js?id=8de8a2cbf311781ff0a324bf54ac1902",
     "/js/admin_invite.js": "/js/admin_invite.js?id=c84e20f6d2633afb5dbd071f86840fd8",
     "/js/landing.js": "/js/landing.js?id=d272b87a9e0d303d87b525bf2984e004",
     "/js/remote_auth.js": "/js/remote_auth.js?id=b04e921cdb52cc60fcfa48cdbaf1ab5c",
@@ -65,5 +65,5 @@
     "/css/landing.css": "/css/landing.css?id=fb78389492f56a927d3d9bbb3ebd8204",
     "/css/profile.css": "/css/profile.css?id=ae4f5db9bb1a89db2ae293d6bde812e3",
     "/css/spa.css": "/css/spa.css?id=041aed9a146db0e74b2cfe3ad8eaf96c",
-    "/js/vendor.js": "/js/vendor.js?id=3117c97c1ffd8c5a3acc7eaddb1ee8ac"
+    "/js/vendor.js": "/js/vendor.js?id=87f87f4b4abfffc60ce8440ac13e11ff"
 }
