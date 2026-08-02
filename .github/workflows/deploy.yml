@@ -7,6 +7,11 @@ on:
         - main
         - dev
 
+permissions:
+  actions: write
+  contents: write
+  deployments: write
+
 jobs:
   test:
     uses: ./.github/workflows/laravel.yml
@@ -44,7 +49,7 @@ jobs:
           echo "SESSION_DRIVER=file" >> .env
           composer config --global github-oauth.github.com ${{ secrets.CUSTOM_TOKEN }}
           composer config repositories.pixelfed-lib vcs https://github.com/eufelipemateus/pixelfed-lib
-          composer require felipemateus/pixelfed-lib:dev-master --prefer-source
+          composer require felipemateus/pixelfed-lib:${{ vars.PIXELFED_LIB_VERSION }} --prefer-source
           rm .env
 
       - name: Generate .env
@@ -178,7 +183,6 @@ jobs:
             echo  "VAPID_PUBLIC_KEY=${{secrets.VAPID_PUBLIC_KEY}}" >> .env
             echo  "VAPID_PRIVATE_KEY=${{secrets.VAPID_PRIVATE_KEY}}" >> .env
 
-
       - name: Encrypt .env
         run: php artisan env:encrypt --key="${{secrets.ENV_KEY}}"
 
@@ -192,15 +196,15 @@ jobs:
             ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
 
 
-      - name: Down  App
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{secrets.WORK_DIR}}
-            php artisan down
+     # - name: Down  App
+     #  uses: appleboy/ssh-action@v1.0.0
+     #   with:
+     #     host: ${{ secrets.SSH_HOST }}
+     #     username: ${{ secrets.SSH_USER }}
+     #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+     #     script: |
+     #       cd ${{secrets.WORK_DIR}}
+     #       php artisan down
 
       - name: 📂 Deploy with rsync
         run: rsync -rav --delete ./  ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}}:/tmp/pixelfed   #${{secrets.WORK_DIR}}
@@ -216,9 +220,9 @@ jobs:
             sudo chown www-data:www-data -R ${{secrets.WORK_DIR}}
             sudo chmod 777 -R ${{secrets.WORK_DIR}}
 
-            sudo chmod 600 storage/oauth-private.key
-            sudo chmod 600 storage/oauth-public.key
-            sudo chown www-data:www-data storage/oauth-*.key
+            sudo chmod 600 ${{secrets.WORK_DIR}}/storage/oauth-private.key
+            sudo chmod 600 ${{secrets.WORK_DIR}}/storage/oauth-public.key
+            sudo chown www-data:www-data ${{secrets.WORK_DIR}}/storage/oauth-*.key
 
             cd ${{secrets.WORK_DIR}}
             php artisan migrate --force

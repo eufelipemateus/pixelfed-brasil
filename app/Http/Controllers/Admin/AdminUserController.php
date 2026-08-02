@@ -249,7 +249,7 @@ trait AdminUserController
 
         $ts = now()->addMonth();
         $user->status = 'delete';
-        $profile->status = 'delete';
+        $profile->status = \App\Enums\StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $profile->delete_after = $ts;
         $user->save();

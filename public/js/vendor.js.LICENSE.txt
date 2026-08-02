@@ -51,14 +51,6 @@ see: http://github.com/greggman/twgl.js for details */
  */
 
 /*!
- * JavaScript Cookie v2.2.1
- * https://github.com/js-cookie/js-cookie
- *
- * Copyright 2006, 2015 Klaus Hartl & Fagner Brack
- * Released under the MIT license
- */
-
-/*!
  * Scroll Lock v3.1.3
  * https://github.com/MohammadYounes/jquery-scrollLock
  *
@@ -158,7 +150,7 @@ See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
 
-/*! Axios v1.8.4 Copyright (c) 2025 Matt Zabriskie and contributors */
+/*! Axios v1.16.0 Copyright (c) 2026 Matt Zabriskie and contributors */
 
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 

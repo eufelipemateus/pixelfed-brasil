@@ -56,7 +56,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 mix.options({
     processCssUrls: false,
     terser: {
-        parallel: true,
+        parallel: false,
         terserOptions: {
             compress: true,
             output: {
@@ -68,6 +68,9 @@ mix.options({
 mix.alias({
     '@': path.join(__dirname, 'resources/assets/components'),
     '~': path.join(__dirname, 'resources/assets/js/components'),
+    // The ESM entry embeds import.meta.url as a build-machine file:// URL.
+    // The CommonJS entry provides the same browser API without leaking cwd.
+    '@zip.js/zip.js$': path.join(__dirname, 'node_modules/@zip.js/zip.js/index.cjs'),
 });
 mix.webpackConfig({
     optimization: {
@@ -77,6 +80,7 @@ mix.webpackConfig({
         minimize: true,
         minimizer: [ new TerserPlugin({
             extractComments: false,
+            parallel: false,
         })]
     },
     output: {
