@@ -36,7 +36,3 @@
 
 /resources/lang/pt
 /resources/assets/js/i18n/pt.json
-
-**/caddy
-frankenphp
-frankenphp-worker.php
