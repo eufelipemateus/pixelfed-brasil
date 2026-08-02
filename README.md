@@ -16,7 +16,7 @@
 <a href="https://fedidb.org/software/pixelfed"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.fedidb.org%2Fv1%2Fsoftware%2Fpixelfed&query=%24.user_count&logo=pixelfed&logoColor=white&label=Total%20Users" alt="Total Pixelfed users from FediDB" /></a>
 </p>
 
-# Pixelfed Branch Workflow
+# Pixelfed Brasil Branch Workflow
 
 This repository follows a branch flow to keep upstream updates, integration, development, and production separated and stable.
 
@@ -29,7 +29,7 @@ This repository follows a branch flow to keep upstream updates, integration, dev
 - `feat/<feature-name>`: Branch for local updates that do not come from upstream. It must be merged into `dev`.
 - `hotfix/<name>`: Branch for urgent production fixes. Direct merge to `main` is allowed only for this case.
 
-## Pixelfed Update Flow
+## Pixelfed Brasil Update Flow
 
 ```mermaid
 flowchart LR
