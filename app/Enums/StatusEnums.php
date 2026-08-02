@@ -9,6 +9,7 @@ case DELETED;
 case ACTIVE;
 case DELETE_QUEUE;
 case SUSPENDED;
+case BANNED;
 
     public function value(): ?string
     {
@@ -17,6 +18,7 @@ case SUSPENDED;
             self::DELETED => 'deleted',
             self::DELETE_QUEUE => 'delete',
             self::SUSPENDED => 'suspended',
+            self::BANNED => 'banned',
             self::ACTIVE => null,
         };
     }
@@ -28,6 +30,7 @@ case SUSPENDED;
             'deleted' => self::DELETED,
             'delete' => self::DELETE_QUEUE,
             'suspended' => self::SUSPENDED,
+            'banned' => self::BANNED,
             null => self::ACTIVE,
             default => null,
         };

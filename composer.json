@@ -24,7 +24,7 @@
         "jenssegers/agent": "^2.6",
         "laravel-notification-channels/expo": "^2.0.0",
         "laravel-notification-channels/webpush": "^10.2",
-        "laravel/framework": "^12.0",
+        "laravel/framework": "^12",
         "laravel/helpers": "^1.1",
         "laravel/horizon": "^5.0",
         "laravel/passport": "^13.4.4",
@@ -48,7 +48,7 @@
         "spatie/laravel-image-optimizer": "^1.8.2",
         "stevebauman/purify": "^6.2.0",
         "symfony/http-client": "^7.3",
-        "symfony/http-foundation": "7.3.7",
+        "symfony/http-foundation": "^7.4.13",
         "symfony/mailgun-mailer": "^7.3"
     },
     "require-dev": {

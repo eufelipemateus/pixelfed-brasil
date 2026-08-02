@@ -65,7 +65,7 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
             return;
         }
 
-        $profile->status = 'delete';
+        $profile->status = \App\Enums\StatusEnums::DELETE_QUEUE;
         $profile->save();
 
         AccountService::del($pid);

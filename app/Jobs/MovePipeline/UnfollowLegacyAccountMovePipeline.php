@@ -97,10 +97,11 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             ->where('followers.following_id', $actorAccount['id'])
             ->whereNotNull('profiles.user_id')
             ->whereNull('profiles.deleted_at')
+            ->whereNull('profiles.status')
             ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
             ->chunkById(100, function ($followers) use ($actor, $targetInbox, $targetPid) {
                 foreach ($followers as $follower) {
-                    if (! $follower->id || ! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                    if (! $follower->id || ! $follower->private_key || ! $follower->username || ! $follower->user_id) {
                         continue;
                     }
 
