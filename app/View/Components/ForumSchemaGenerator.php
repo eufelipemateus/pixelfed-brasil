@@ -56,9 +56,9 @@ class ForumSchemaGenerator extends Component
 
         $mediaCount = isset($original['media_attachments']) && is_array($original['media_attachments']) && count($original['media_attachments']) ? count($original['media_attachments']) : 0;
 
-        if ($mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "photo" || $original['pf_type'] === "photo:album"))) {
+        if (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "photo" || $original['pf_type'] === "photo:album"))) {
             $this->getImage($original);
-        } elseif ($mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album"))) {
+        } elseif (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album"))) {
             $this->getVideo($original);
             $this->getImage($original, true);
         }
@@ -73,6 +73,12 @@ class ForumSchemaGenerator extends Component
 
     public function getVideo($status)
     {
+        if ($status['sensitive'] ?? false) {
+            $this->video = null;
+
+            return;
+        }
+
         $this->video = count($status['media_attachments']) ?  [
             "@type" => "VideoObject",
             "contentUrl" => $status['media_attachments'][0]['url'],
@@ -85,6 +91,12 @@ class ForumSchemaGenerator extends Component
 
     public function getImage($status, $forceThumbnail = false)
     {
+        if ($status['sensitive'] ?? false) {
+            $this->image = null;
+
+            return;
+        }
+
         $this->image = count($status['media_attachments']) ?  [
             "@type" => "ImageObject",
             "contentUrl" => $forceThumbnail ? $status['media_attachments'][0]['preview_url'] : $status['media_attachments'][0]['url'],

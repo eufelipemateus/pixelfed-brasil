@@ -1053,7 +1053,7 @@ trait AdminReportController
                     AccountService::del($profile->id);
                     DeleteAccountPipeline::dispatch($user)->onQueue('high');
                 } else {
-                    $profile->status = 'delete';
+                    $profile->status = StatusEnums::DELETE_QUEUE;
                     $profile->delete_after = now()->addMonth();
                     $profile->save();
                     AccountService::del($profile->id);

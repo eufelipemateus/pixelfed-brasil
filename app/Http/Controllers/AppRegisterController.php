@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Laravel\Passport\RefreshTokenRepository;
+use Laravel\Passport\RefreshToken;
 use Purify;
 
 class AppRegisterController extends Controller
@@ -244,8 +244,7 @@ class AppRegisterController extends Controller
         $tokenModel = $token->token;
         $clientId = $tokenModel->client_id;
         $clientSecret = DB::table('oauth_clients')->where('id', $clientId)->value('secret');
-        $refreshTokenRepo = app(RefreshTokenRepository::class);
-        $refreshToken = $refreshTokenRepo->create([
+        $refreshToken = RefreshToken::create([
             'id' => Str::random(80),
             'access_token_id' => $tokenModel->id,
             'revoked' => false,

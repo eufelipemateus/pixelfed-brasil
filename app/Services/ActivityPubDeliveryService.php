@@ -49,7 +49,7 @@ class ActivityPubDeliveryService
     {
         abort_if(! $this->sender || ! $this->to || ! $this->payload, 400);
         abort_if(! Helpers::validateUrl($this->to), 400);
-        abort_if($this->sender->domain != null || $this->sender->status != null, 400);
+        abort_if($this->sender->domain != null || $this->sender->status !== StatusEnums::ACTIVE, 400);
 
         if (config('app.env') !== 'production') {
             \Log::info('Skipped delivery to '.$this->to);

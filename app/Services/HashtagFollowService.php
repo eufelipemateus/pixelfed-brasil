@@ -62,7 +62,8 @@ class HashtagFollowService
 
     public static function isWarm($hid)
     {
-        return Redis::zscore(self::CACHE_WARMED, $hid) !== null;
+        return Redis::zcard(self::CACHE_KEY.$hid) > 0
+            || Redis::zscore(self::CACHE_WARMED, $hid) !== null;
     }
 
     public static function setWarm($hid)
