@@ -7,6 +7,7 @@
           <a href="{{route('site.terms')}}" class="text-dark p-2">{{__('site.terms')}}</a>
           <a href="{{route('site.privacy')}}" class="text-dark p-2">{{__('site.privacy')}}</a>
           <a href="{{route('site.language')}}" class="text-dark p-2">{{__('site.language')}}</a>
+          <a href="{{route('site.app')}}" class="text-dark p-2">App</a>
           <a href="{{route('site.donate')}}"  class="p-2" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 18px;" >{{__('site.donate')}}</a>
           @if(config_cache('instance.has_legal_notice'))
             <a href="{{route('legal-notice')}}" class="text-dark p-2">Legal Notice</a>
