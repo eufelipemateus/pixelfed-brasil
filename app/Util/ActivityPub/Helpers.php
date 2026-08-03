@@ -735,6 +735,17 @@ class Helpers
         ) {
             FeedInsertRemotePipeline::dispatch($status->id, $profileId)
                 ->onQueue('feed');
+
+            return;
+        }
+
+        if (
+            $status->in_reply_to_id === null &&
+            $status->type === 'text' &&
+            self::isArticleObjectStatus($status)
+        ) {
+            FeedInsertRemotePipeline::dispatch($status->id, $profileId)
+                ->onQueue('feed');
         }
     }
 
@@ -762,6 +773,18 @@ class Helpers
             ->toArray();
     }
 
+    public static function isArticleObjectStatus(Status $status): bool
+    {
+        $entities = $status->entities;
+
+        if (is_string($entities)) {
+            $decoded = json_decode($entities, true);
+            $entities = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        return is_array($entities) && (($entities['ap_object_type'] ?? null) === 'article');
+    }
+
     public static function getSensitive($activity, $url)
     {
         if (! $url || ! strlen($url)) {
@@ -776,6 +799,22 @@ class Helpers
         }
 
         return $cw;
+    }
+
+    public static function mergeStatusEntities(Status $status, array $extra): array
+    {
+        $current = $status->entities;
+
+        if (is_string($current)) {
+            $decoded = json_decode($current, true);
+            $current = json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : [];
+        }
+
+        if (! is_array($current)) {
+            $current = [];
+        }
+
+        return array_merge($current, $extra);
     }
 
     public static function getReplyTo($activity)
@@ -1013,7 +1052,6 @@ class Helpers
         $mimeTypes = explode(',', config_cache('pixelfed.media_types'));
         $supportsImages = false;
         $supportsVideo = false;
-        $supportsAudio = false;
 
         foreach ($mimeTypes as $mimeType) {
             $mimeType = trim((string) $mimeType);
@@ -1026,9 +1064,6 @@ class Helpers
                 $supportsVideo = true;
             }
 
-            if (! $supportsAudio && str_starts_with($mimeType, 'audio/')) {
-                $supportsAudio = true;
-            }
         }
 
         $mediaTypes = ['Document'];

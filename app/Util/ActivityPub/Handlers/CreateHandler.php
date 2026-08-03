@@ -49,13 +49,15 @@ class CreateHandler implements ActivityHandler
         }
 
         $objectType = strtolower((string) ($activity['type'] ?? ''));
-        if (! in_array($objectType, ['note', 'article', 'video'])) {
-            return;
-        }
 
         if (config('autospam.live_filters.enabled')) {
             $filters = config('autospam.live_filters.filters');
-            if (! empty($filters) && isset($activity['content']) && ! empty($activity['content']) && strlen($filters) > 3) {
+            if (
+                ! empty($filters) &&
+                isset($activity['content']) &&
+                ! empty($activity['content']) &&
+                strlen($filters) > 3
+            ) {
                 $filters = array_map('trim', explode(',', $filters));
                 $content = $activity['content'];
                 foreach ($filters as $filter) {
@@ -77,6 +79,10 @@ class CreateHandler implements ActivityHandler
         if ($objectType === 'article' || $objectType === 'video') {
             $this->createObjectProcessor->process($actor, $this->payload);
 
+            return;
+        }
+
+        if ($objectType !== 'note' && ($activity['type'] ?? null) !== 'Question') {
             return;
         }
 
@@ -110,8 +116,6 @@ class CreateHandler implements ActivityHandler
             if (! $this->verifyNoteAttachment()) {
                 return;
             }
-            $this->handleNoteCreate();
-        } elseif ($activity['type'] == 'Note') {
             $this->handleNoteCreate();
         }
     }
@@ -247,7 +251,11 @@ class CreateHandler implements ActivityHandler
             $photos = 0;
             $videos = 0;
             $allowed = explode(',', config_cache('pixelfed.media_types'));
-            $activity['attachment'] = array_slice($activity['attachment'], 0, config_cache('pixelfed.max_album_length'));
+            $activity['attachment'] = array_slice(
+                $activity['attachment'],
+                0,
+                config_cache('pixelfed.max_album_length')
+            );
             foreach ($activity['attachment'] as $a) {
                 $type = $a['mediaType'];
                 $url = $a['url'];

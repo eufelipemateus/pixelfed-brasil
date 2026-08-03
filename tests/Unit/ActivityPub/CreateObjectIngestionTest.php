@@ -7,6 +7,7 @@ use App\Jobs\StatusPipeline\StatusRemoteUpdatePipeline;
 use App\Profile;
 use App\Services\InstanceService;
 use App\Status;
+use App\Util\ActivityPub\ActivityObjectNormalizer;
 use App\Util\ActivityPub\Handlers\CreateHandler;
 use App\Util\ActivityPub\Handlers\DeleteHandler;
 use App\Util\ActivityPub\Handlers\UpdateHandler;
@@ -178,6 +179,7 @@ class CreateObjectIngestionTest extends TestCase
         $this->assertSame('text', $status->type);
         $this->assertSame('unlisted', $status->visibility);
         $this->assertStringContainsString('Resumo', $status->caption);
+        $this->assertSame('article', $this->entityValue($status, 'ap_object_type'));
         $this->assertCount(0, $status->media);
     }
 
@@ -490,6 +492,144 @@ class CreateObjectIngestionTest extends TestCase
         $this->assertNotNull(Status::where('id', $status->id)->first());
     }
 
+    #[Test]
+    public function it_updates_article_and_keeps_article_marker_for_feed_selection(): void
+    {
+        $createPayload = $this->makeCreatePayload([
+            'object' => [
+                'id' => 'https://video.example/articles/update-me',
+                'type' => 'Article',
+                'attributedTo' => 'https://video.example/users/alice',
+                'published' => '2026-08-01T12:00:00Z',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'content' => 'versao 1',
+                'url' => [
+                    [
+                        'type' => 'Link',
+                        'mediaType' => 'text/html',
+                        'href' => 'https://video.example/articles/update-me/read',
+                    ],
+                ],
+            ],
+        ]);
+
+        (new CreateHandler([], null, $createPayload))->handle();
+
+        $status = Status::where('object_url', 'https://video.example/articles/update-me')->first();
+        $this->assertNotNull($status);
+        $this->assertSame('text', $status->type);
+        $this->assertSame('article', $this->entityValue($status, 'ap_object_type'));
+
+        $updatePayload = [
+            'type' => 'Update',
+            'actor' => 'https://video.example/users/alice',
+            'object' => [
+                'id' => 'https://video.example/articles/update-me',
+                'type' => 'Article',
+                'attributedTo' => 'https://video.example/users/alice',
+                'published' => '2026-08-01T13:00:00Z',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'content' => 'versao 2',
+                'summary' => 'resumo 2',
+                'url' => [
+                    [
+                        'type' => 'Link',
+                        'mediaType' => 'text/html',
+                        'href' => 'https://video.example/articles/update-me/read-v2',
+                    ],
+                ],
+            ],
+        ];
+
+        (new UpdateHandler([], null, $updatePayload))->handle();
+        (new StatusRemoteUpdatePipeline([
+            'actor' => $updatePayload['actor'],
+            'object' => $updatePayload['object'],
+            'normalized' => app(ActivityObjectNormalizer::class)
+                ->normalizeForIngest($this->actor, $updatePayload['object']),
+        ]))->handle();
+
+        $status->refresh();
+        $this->assertSame('text', $status->type);
+        $this->assertSame('article', $this->entityValue($status, 'ap_object_type'));
+        $this->assertStringContainsString('versao 2', $status->caption);
+    }
+
+    #[Test]
+    public function it_rejects_update_when_actor_host_or_actor_identity_do_not_match_status_owner(): void
+    {
+        $createPayload = $this->makeCreatePayload([
+            'object' => [
+                'id' => 'https://video.example/videos/update-blocked',
+                'type' => 'Video',
+                'attributedTo' => 'https://video.example/users/alice',
+                'published' => '2026-08-01T12:00:00Z',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'attachment' => [
+                    [
+                        'type' => 'Video',
+                        'mediaType' => 'video/mp4',
+                        'url' => 'https://cdn.video.example/media/update-blocked-v1.mp4',
+                    ],
+                ],
+            ],
+        ]);
+
+        (new CreateHandler([], null, $createPayload))->handle();
+
+        $status = Status::where('object_url', 'https://video.example/videos/update-blocked')->first();
+        $this->assertNotNull($status);
+        $originalCaption = $status->caption;
+
+        $badActorPayload = [
+            'type' => 'Update',
+            'actor' => 'https://video.example/users/bob',
+            'object' => [
+                'id' => 'https://video.example/videos/update-blocked',
+                'type' => 'Video',
+                'attributedTo' => 'https://video.example/users/bob',
+                'published' => '2026-08-01T14:00:00Z',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'content' => 'deve falhar',
+                'attachment' => [
+                    [
+                        'type' => 'Video',
+                        'mediaType' => 'video/mp4',
+                        'url' => 'https://cdn.video.example/media/update-blocked-v2.mp4',
+                    ],
+                ],
+            ],
+        ];
+
+        (new UpdateHandler([], null, $badActorPayload))->handle();
+
+        $badHostPayload = [
+            'type' => 'Update',
+            'actor' => 'https://video.example/users/alice',
+            'object' => [
+                'id' => 'https://evil.example/videos/update-blocked',
+                'type' => 'Video',
+                'attributedTo' => 'https://video.example/users/alice',
+                'published' => '2026-08-01T14:00:00Z',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'content' => 'deve falhar host',
+                'attachment' => [
+                    [
+                        'type' => 'Video',
+                        'mediaType' => 'video/mp4',
+                        'url' => 'https://cdn.video.example/media/update-blocked-v2.mp4',
+                    ],
+                ],
+            ],
+        ];
+
+        (new UpdateHandler([], null, $badHostPayload))->handle();
+
+        $status->refresh();
+        $this->assertSame($originalCaption, $status->caption);
+        $this->assertSame('video', $status->type);
+    }
+
     private function makeCreatePayload(array $override = []): array
     {
         $base = [
@@ -517,5 +657,17 @@ class CreateObjectIngestionTest extends TestCase
         ];
 
         return array_replace_recursive($base, $override);
+    }
+
+    private function entityValue(Status $status, string $key): mixed
+    {
+        $entities = $status->entities;
+
+        if (is_string($entities)) {
+            $decoded = json_decode($entities, true);
+            $entities = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        return is_array($entities) ? ($entities[$key] ?? null) : null;
     }
 }

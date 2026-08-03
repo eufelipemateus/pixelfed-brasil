@@ -9,18 +9,21 @@ use App\Profile;
 use App\Services\SanitizeService;
 use App\Services\StatusService;
 use App\Status;
+use App\Util\ActivityPub\Helpers;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Purify;
 
 class StatusRemoteUpdatePipeline implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $activity;
 
@@ -37,7 +40,9 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
      */
     public function handle(): void
     {
-        $activity = $this->activity;
+        $payload = $this->activity;
+        $activity = isset($payload['object']) && is_array($payload['object']) ? $payload['object'] : null;
+        $normalized = isset($payload['normalized']) && is_array($payload['normalized']) ? $payload['normalized'] : null;
 
         // Verify activity exists and has required fields
         if (! $activity) {
@@ -53,17 +58,24 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
 
         $status = Status::with('media')->whereObjectUrl($activity['id'])->first();
         if (! $status) {
+            $status = Status::with('media')->where('url', $activity['id'])->first();
+        }
+        if (! $status) {
             Log::info("StatusRemoteUpdatePipeline: Status not found for activity {$activity['id']}, skipping job");
+
             return;
         }
 
         try {
             $this->createPreviousEdit($status);
-            $this->updateMedia($status, $activity);
+            $this->updateMedia($status, $activity, $normalized);
             $this->updateImmediateAttributes($status, $activity);
+            $this->updateStatusType($status, $normalized);
             $this->createEdit($status, $activity);
         } catch (\Exception $e) {
-            Log::warning("StatusRemoteUpdatePipeline: Failed to update status {$status->id}: ".$e->getMessage());
+            Log::warning(
+                "StatusRemoteUpdatePipeline: Failed to update status {$status->id}: ".$e->getMessage()
+            );
             throw $e;
         }
     }
@@ -83,68 +95,90 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
                 ]);
             }
         } catch (\Exception $e) {
-            Log::warning("StatusRemoteUpdatePipeline: Failed to create previous edit for status {$status->id}: ".$e->getMessage());
+            Log::warning(
+                'StatusRemoteUpdatePipeline: Failed to create previous edit for status '.
+                $status->id.': '.
+                $e->getMessage()
+            );
             throw $e;
         }
     }
 
-    protected function updateMedia($status, $activity)
+    protected function updateMedia($status, $activity, ?array $normalized)
     {
-        if (! isset($activity['attachment'])) {
+        if (! isset($activity['attachment']) && ! isset($normalized['attachment'])) {
             return;
         }
+
+        $attachments = $normalized['attachment'] ?? $activity['attachment'] ?? [];
+        if (! is_array($attachments)) {
+            return;
+        }
+
+        $nm = collect($attachments)
+            ->filter(function ($item) {
+                return isset($item['type'], $item['mediaType'], $item['url']) &&
+                    in_array($item['type'], ['Document', 'Image', 'Video']) &&
+                    in_array($item['mediaType'], explode(',', config_cache('pixelfed.media_types')));
+            })
+            ->values();
+
         $ogm = $status->media->count() ? $status->media()->orderBy('order')->get() : collect([]);
-        $nm = collect($activity['attachment'])->filter(function ($nm) {
-            return isset(
-                $nm['type'],
-                $nm['mediaType'],
-                $nm['url']
-            ) &&
-            in_array($nm['type'], ['Document', 'Image', 'Video']) &&
-            in_array($nm['mediaType'], explode(',', config_cache('pixelfed.media_types')));
-        });
 
         // Skip when no media
         if (! $ogm->count() && ! $nm->count()) {
             return;
         }
 
-        Media::whereProfileId($status->profile_id)
-            ->whereStatusId($status->id)
-            ->update([
-                'status_id' => null,
-            ]);
-
-        $nm->each(function ($n, $key) use ($status) {
-            $res = Http::withOptions(['allow_redirects' => false])->retry(3, 100, throw: false)->head($n['url']);
-
-            if (! $res->successful()) {
-                return;
+        DB::transaction(function () use ($status, $nm, $ogm) {
+            if ($ogm->count()) {
+                $status->media()->update(['status_id' => null]);
             }
 
-            if (! in_array($res->header('content-type'), explode(',', config_cache('pixelfed.media_types')))) {
-                return;
+            $newMedia = [];
+            foreach ($nm as $key => $n) {
+                $newMedia[] = $this->persistRemoteMedia($status, $n, $key + 1);
             }
 
-            $m = new Media;
-            $m->status_id = $status->id;
-            $m->profile_id = $status->profile_id;
-            $m->remote_media = true;
-            $m->media_path = $n['url'];
-            $m->mime = $res->header('content-type');
-            $m->size = $res->hasHeader('content-length') ? $res->header('content-length') : null;
-            $m->caption = isset($n['name']) && ! empty($n['name']) ? Purify::clean($n['name']) : null;
-            $m->remote_url = $n['url'];
-            $m->blurhash = isset($n['blurhash']) && (strlen($n['blurhash']) < 50) ? $n['blurhash'] : null;
-            $m->width = isset($n['width']) && ! empty($n['width']) ? $n['width'] : null;
-            $m->height = isset($n['height']) && ! empty($n['height']) ? $n['height'] : null;
-            $m->skip_optimize = true;
-            $m->order = $key + 1;
-            $m->save();
+            foreach ($newMedia as $media) {
+                if ($media instanceof Media) {
+                    $media->save();
+                }
+            }
         });
     }
 
-    static function htmlToPlainTextWithLineBreaks(string $html): string
+    protected function persistRemoteMedia(Status $status, array $attachment, int $order): Media
+    {
+        $m = new Media;
+        $m->status_id = $status->id;
+        $m->profile_id = $status->profile_id;
+        $m->remote_media = true;
+        $m->media_path = $attachment['url'];
+        $m->mime = $attachment['mediaType'];
+        $m->size = null;
+        $m->caption = isset($attachment['name']) && ! empty($attachment['name'])
+            ? app(SanitizeService::class)->html($attachment['name'])
+            : null;
+        $m->remote_url = $attachment['url'];
+        $m->blurhash = isset($attachment['blurhash']) && (strlen($attachment['blurhash']) < 50)
+            ? $attachment['blurhash']
+            : null;
+        $m->width = isset($attachment['width']) && ! empty($attachment['width']) ? (int) $attachment['width'] : null;
+        $m->height = isset($attachment['height']) && ! empty($attachment['height'])
+            ? (int) $attachment['height']
+            : null;
+        $m->skip_optimize = true;
+        $m->order = $order;
+
+        if (isset($attachment['thumbnail_url']) && is_string($attachment['thumbnail_url'])) {
+            $m->thumbnail_url = $attachment['thumbnail_url'];
+        }
+
+        return $m;
+    }
+
+    public static function htmlToPlainTextWithLineBreaks(string $html): string
     {
         // Força UTF-8 e normaliza quebras
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -196,6 +230,25 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         $status->edited_at = now();
         $status->save();
         StatusService::del($status->id);
+    }
+
+    protected function updateStatusType(Status $status, ?array $normalized): void
+    {
+        if (! $normalized) {
+            return;
+        }
+
+        if (isset($normalized['status_type']) && $status->type !== $normalized['status_type']) {
+            $status->type = $normalized['status_type'];
+        }
+
+        if (isset($normalized['object_type'])) {
+            $status->entities = Helpers::mergeStatusEntities($status, [
+                'ap_object_type' => $normalized['object_type'],
+            ]);
+        }
+
+        $status->save();
     }
 
     protected function createEdit($status, $activity)

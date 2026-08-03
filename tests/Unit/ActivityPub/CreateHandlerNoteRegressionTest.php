@@ -133,4 +133,28 @@ class CreateHandlerNoteRegressionTest extends TestCase
         $this->assertNotNull(Status::where('object_url', $replyUri)->first());
         $this->assertSame($existingReply->id, Status::where('object_url', $replyUri)->first()->id);
     }
+
+    #[Test]
+    public function it_keeps_note_text_only_create_ignored(): void
+    {
+        $payload = [
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => 'https://mastodon.example/activities/note-create-text-only',
+            'type' => 'Create',
+            'actor' => 'https://mastodon.example/users/note_remote',
+            'object' => [
+                'id' => 'https://mastodon.example/statuses/text-only',
+                'type' => 'Note',
+                'published' => '2026-08-01T12:00:00Z',
+                'attributedTo' => 'https://mastodon.example/users/note_remote',
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'cc' => ['https://mastodon.example/users/note_remote/followers'],
+                'content' => 'nota textual sem anexo e sem reply',
+            ],
+        ];
+
+        (new CreateHandler([], null, $payload))->handle();
+
+        $this->assertNull(Status::where('object_url', 'https://mastodon.example/statuses/text-only')->first());
+    }
 }
