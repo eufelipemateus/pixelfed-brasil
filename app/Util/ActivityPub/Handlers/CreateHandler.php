@@ -2,33 +2,57 @@
 
 namespace App\Util\ActivityPub\Handlers;
 
-use App\Models\Conversation;
 use App\DirectMessage;
 use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
 use App\Media;
+use App\Models\Conversation;
+use App\Models\PollVote;
 use App\Notification;
+use App\Profile;
+use App\Services\AccountService;
 use App\Services\FollowerService;
 use App\Services\NotificationAppGatewayService;
 use App\Services\PollService;
 use App\Services\PushNotificationService;
+use App\Services\SanitizeService;
 use App\Status;
 use App\User;
 use App\UserFilter;
 use App\Util\ActivityPub\Contracts\ActivityHandler;
+use App\Util\ActivityPub\CreateObjectProcessor;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Support\Str;
-use App\Services\SanitizeService;
-use App\Profile;
-use App\Services\AccountService;
-use App\Models\PollVote;
 
 class CreateHandler implements ActivityHandler
 {
-    public function __construct(protected array $headers, protected $profile, protected array $payload) {}
+    protected CreateObjectProcessor $createObjectProcessor;
+
+    public function __construct(protected array $headers, protected $profile, protected array $payload)
+    {
+        $this->createObjectProcessor = app(CreateObjectProcessor::class);
+    }
 
     public function handle(): void
     {
-        $activity = $this->payload['object'];
+        if (($this->payload['type'] ?? null) !== 'Create') {
+            return;
+        }
+
+        $actorUrl = $this->payload['actor'] ?? null;
+        if (! is_string($actorUrl) || ! Helpers::validateUrl($actorUrl)) {
+            return;
+        }
+
+        $activity = $this->payload['object'] ?? null;
+        if (! is_array($activity)) {
+            return;
+        }
+
+        $objectType = strtolower((string) ($activity['type'] ?? ''));
+        if (! in_array($objectType, ['note', 'article', 'video'])) {
+            return;
+        }
+
         if (config('autospam.live_filters.enabled')) {
             $filters = config('autospam.live_filters.filters');
             if (! empty($filters) && isset($activity['content']) && ! empty($activity['content']) && strlen($filters) > 3) {
@@ -45,8 +69,14 @@ class CreateHandler implements ActivityHandler
                 }
             }
         }
-        $actor = Helpers::profileFetch($this->payload['actor']);
+        $actor = Helpers::profileFetch($actorUrl);
         if (! $actor || $actor->domain == null) {
+            return;
+        }
+
+        if ($objectType === 'article' || $objectType === 'video') {
+            $this->createObjectProcessor->process($actor, $this->payload);
+
             return;
         }
 
@@ -81,9 +111,10 @@ class CreateHandler implements ActivityHandler
                 return;
             }
             $this->handleNoteCreate();
+        } elseif ($activity['type'] == 'Note') {
+            $this->handleNoteCreate();
         }
     }
-
 
     public function handleNoteCreate()
     {
@@ -132,7 +163,6 @@ class CreateHandler implements ActivityHandler
         );
     }
 
-
     public function handleNoteReply()
     {
         $activity = $this->payload['object'];
@@ -146,7 +176,6 @@ class CreateHandler implements ActivityHandler
 
         Helpers::statusFirstOrFetch($url, true);
     }
-
 
     public function handleDirectMessage()
     {
@@ -167,8 +196,8 @@ class CreateHandler implements ActivityHandler
         $msg = app(SanitizeService::class)->html($activity['content']);
         $msgText = strip_tags($msg);
 
-        if (Str::startsWith($msgText, '@' . $profile->username)) {
-            $len = strlen('@' . $profile->username);
+        if (Str::startsWith($msgText, '@'.$profile->username)) {
+            $len = strlen('@'.$profile->username);
             $msgText = substr($msgText, $len + 1);
         }
 
@@ -182,7 +211,7 @@ class CreateHandler implements ActivityHandler
             $hidden = false;
         }
 
-        $status = new Status();
+        $status = new Status;
         $status->profile_id = $actor->id;
         $status->caption = $msgText;
         $status->visibility = 'direct';
@@ -193,7 +222,7 @@ class CreateHandler implements ActivityHandler
         $status->in_reply_to_profile_id = $profile->id;
         $status->save();
 
-        $dm = new DirectMessage();
+        $dm = new DirectMessage;
         $dm->to_id = $profile->id;
         $dm->from_id = $actor->id;
         $dm->status_id = $status->id;
@@ -227,7 +256,7 @@ class CreateHandler implements ActivityHandler
                     continue;
                 }
 
-                $media = new Media();
+                $media = new Media;
                 $media->remote_media = true;
                 $media->status_id = $status->id;
                 $media->profile_id = $status->profile_id;
@@ -273,7 +302,7 @@ class CreateHandler implements ActivityHandler
             ->exists();
 
         if ($profile->domain == null && $hidden == false && ! $nf) {
-            $notification = new Notification();
+            $notification = new Notification;
             $notification->profile_id = $profile->id;
             $notification->actor_id = $actor->id;
             $notification->action = 'dm';
@@ -291,8 +320,6 @@ class CreateHandler implements ActivityHandler
             }
         }
     }
-
-
 
     public function handlePollVote()
     {
@@ -330,7 +357,7 @@ class CreateHandler implements ActivityHandler
             return;
         }
 
-        $vote = new PollVote();
+        $vote = new PollVote;
         $vote->status_id = $status->id;
         $vote->profile_id = $actor->id;
         $vote->poll_id = $poll->id;
@@ -346,7 +373,6 @@ class CreateHandler implements ActivityHandler
 
         PollService::del($status->id);
     }
-
 
     public function verifyNoteAttachment()
     {

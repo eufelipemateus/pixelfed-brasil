@@ -27,6 +27,21 @@ use App\Status;
 use App\StatusHashtag;
 use App\User;
 use App\UserFilter;
+use App\Util\ActivityPub\Handlers\AcceptHandler;
+use App\Util\ActivityPub\Handlers\AddHandler;
+use App\Util\ActivityPub\Handlers\AnnounceHandler;
+use App\Util\ActivityPub\Handlers\CreateHandler;
+use App\Util\ActivityPub\Handlers\DeleteHandler;
+use App\Util\ActivityPub\Handlers\FlagHandler;
+use App\Util\ActivityPub\Handlers\FollowHandler;
+use App\Util\ActivityPub\Handlers\LikeHandler;
+use App\Util\ActivityPub\Handlers\MoveHandler;
+use App\Util\ActivityPub\Handlers\RejectHandler;
+use App\Util\ActivityPub\Handlers\StoryReactionHandler;
+use App\Util\ActivityPub\Handlers\StoryReplyHandler;
+use App\Util\ActivityPub\Handlers\UndoHandler;
+use App\Util\ActivityPub\Handlers\UpdateHandler;
+use App\Util\ActivityPub\Inbox;
 use Auth;
 use Horizon;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -41,7 +56,6 @@ use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use Laravel\Pulse\Facades\Pulse;
 use URL;
-use App\Util\ActivityPub\Inbox;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -110,24 +124,20 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Inbox::registerHandlers([
-            'Add' => \App\Util\ActivityPub\Handlers\AddHandler::class,
-            'Create' => \App\Util\ActivityPub\Handlers\CreateHandler::class,
-            'Follow' => \App\Util\ActivityPub\Handlers\FollowHandler::class,
-            'Announce' => \App\Util\ActivityPub\Handlers\AnnounceHandler::class,
-            'Accept' => \App\Util\ActivityPub\Handlers\AcceptHandler::class,
-            'Delete' => \App\Util\ActivityPub\Handlers\DeleteHandler::class,
-            'Like' => \App\Util\ActivityPub\Handlers\LikeHandler::class,
-            'Reject' => \App\Util\ActivityPub\Handlers\RejectHandler::class,
-            'Undo' => \App\Util\ActivityPub\Handlers\UndoHandler::class,
-            'Story:Reaction' => \App\Util\ActivityPub\Handlers\StoryReactionHandler::class,
-            'Story:Reply' => \App\Util\ActivityPub\Handlers\StoryReplyHandler::class,
-            'Flag' => \App\Util\ActivityPub\Handlers\FlagHandler::class,
-            'Update' => \App\Util\ActivityPub\Handlers\UpdateHandler::class,
-            'Move' => \App\Util\ActivityPub\Handlers\MoveHandler::class,
-            // Novos tipos ActivityStreams
-            'Article' => \App\Util\ActivityPub\Handlers\ArticleHandler::class,
-            'Audio' => \App\Util\ActivityPub\Handlers\AudioHandler::class,
-            'Video' => \App\Util\ActivityPub\Handlers\VideoHandler::class,
+            'Add' => AddHandler::class,
+            'Create' => CreateHandler::class,
+            'Follow' => FollowHandler::class,
+            'Announce' => AnnounceHandler::class,
+            'Accept' => AcceptHandler::class,
+            'Delete' => DeleteHandler::class,
+            'Like' => LikeHandler::class,
+            'Reject' => RejectHandler::class,
+            'Undo' => UndoHandler::class,
+            'Story:Reaction' => StoryReactionHandler::class,
+            'Story:Reply' => StoryReplyHandler::class,
+            'Flag' => FlagHandler::class,
+            'Update' => UpdateHandler::class,
+            'Move' => MoveHandler::class,
         ]);
         RateLimiter::for('account-lookup', function (Request $request) {
             return Limit::perDay(50)->by($request->ip());

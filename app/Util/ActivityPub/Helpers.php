@@ -5,6 +5,7 @@ namespace App\Util\ActivityPub;
 use App\Instance;
 use App\Jobs\AvatarPipeline\RemoteAvatarFetch;
 use App\Jobs\HomeFeedPipeline\FeedInsertRemotePipeline;
+use App\Jobs\InstancePipeline\FetchNodeinfoPipeline;
 use App\Jobs\MediaPipeline\MediaStoragePipeline;
 use App\Jobs\StatusPipeline\StatusReplyPipeline;
 use App\Jobs\StatusPipeline\StatusTagsPipeline;
@@ -23,13 +24,13 @@ use App\Services\SanitizeService;
 use App\Services\UserFilterService;
 use App\Status;
 use App\Util\Media\License;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
-use Validator;
 use Purify;
+use Validator;
 
 class Helpers
 {
@@ -79,15 +80,21 @@ class Helpers
 
         $activity = $data['object'];
         $mimeTypes = explode(',', config_cache('pixelfed.media_types'));
-        $mediaTypes = in_array('video/mp4', $mimeTypes) ?
-            ['Document', 'Image', 'Video'] :
-            ['Document', 'Image'];
+        $mediaTypes = self::getSupportedMediaTypes();
 
         if (! isset($activity['attachment']) || empty($activity['attachment'])) {
             return false;
         }
 
-        return Validator::make($activity['attachment'], [
+        return self::validateAttachmentCollection($activity['attachment'], $mediaTypes, $mimeTypes);
+    }
+
+    /**
+     * Validate attachment collection
+     */
+    public static function validateAttachmentCollection(array $attachments, array $mediaTypes, array $mimeTypes): bool
+    {
+        return Validator::make($attachments, [
             '*.type' => ['required', 'string', Rule::in($mediaTypes)],
             '*.url' => 'required|url',
             '*.mediaType' => ['required', 'string', Rule::in($mimeTypes)],
@@ -265,7 +272,7 @@ class Helpers
     public static function hasValidDNS(string $host): bool
     {
         $hash = hash('sha256', $host);
-        $key = self::URL_CACHE_PREFIX . "valid-dns:sha256-{$hash}";
+        $key = self::URL_CACHE_PREFIX."valid-dns:sha256-{$hash}";
 
         return Cache::remember($key, self::CACHE_TTL, function () use ($host) {
             return DomainService::hasValidDns($host);
@@ -534,7 +541,7 @@ class Helpers
 
         if (is_array($attributedTo)) {
             return collect($attributedTo)
-                ->filter(fn($o) => $o && isset($o['type']) && $o['type'] == 'Person')
+                ->filter(fn ($o) => $o && isset($o['type']) && $o['type'] == 'Person')
                 ->pluck('id')
                 ->first();
         }
@@ -652,12 +659,13 @@ class Helpers
         return self::validateUrl($id) && self::validateUrl($url);
     }
 
-    static function htmlToPlainTextWithLineBreaks(string $html): string
+    public static function htmlToPlainTextWithLineBreaks(string $html): string
     {
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $html = preg_replace(['/<br\s*\/?>/i', '/<\/p>/i'], "\n", $html);
         $text = strip_tags($html);
         $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
         return trim($text);
     }
 
@@ -970,6 +978,10 @@ class Helpers
             app(SanitizeService::class)->html($data['name']) :
             null;
 
+        if (isset($data['thumbnail_url'])) {
+            $media->thumbnail_url = $data['thumbnail_url'];
+        }
+
         if (isset($data['width'])) {
             $media->width = $data['width'];
         }
@@ -994,39 +1006,42 @@ class Helpers
     }
 
     /**
-     * Validate attachment collection
-     */
-    public static function validateAttachmentCollection(array $attachments, array $mediaTypes, array $mimeTypes): bool
-    {
-        return Validator::make($attachments, [
-            '*.type' => [
-                'required',
-                'string',
-                Rule::in($mediaTypes),
-            ],
-            '*.url' => 'required|url',
-            '*.mediaType' => [
-                'required',
-                'string',
-                Rule::in($mimeTypes),
-            ],
-            '*.name' => 'sometimes|nullable|string',
-            '*.blurhash' => 'sometimes|nullable|string|min:6|max:164',
-            '*.width' => 'sometimes|nullable|integer|min:1|max:5000',
-            '*.height' => 'sometimes|nullable|integer|min:1|max:5000',
-        ])->passes();
-    }
-
-    /**
      * Get supported media types
      */
     public static function getSupportedMediaTypes(): array
     {
         $mimeTypes = explode(',', config_cache('pixelfed.media_types'));
+        $supportsImages = false;
+        $supportsVideo = false;
+        $supportsAudio = false;
 
-        return in_array('video/mp4', $mimeTypes) ?
-            ['Document', 'Image', 'Video'] :
-            ['Document', 'Image'];
+        foreach ($mimeTypes as $mimeType) {
+            $mimeType = trim((string) $mimeType);
+
+            if (! $supportsImages && str_starts_with($mimeType, 'image/')) {
+                $supportsImages = true;
+            }
+
+            if (! $supportsVideo && str_starts_with($mimeType, 'video/')) {
+                $supportsVideo = true;
+            }
+
+            if (! $supportsAudio && str_starts_with($mimeType, 'audio/')) {
+                $supportsAudio = true;
+            }
+        }
+
+        $mediaTypes = ['Document'];
+
+        if ($supportsImages) {
+            $mediaTypes[] = 'Image';
+        }
+
+        if ($supportsVideo) {
+            $mediaTypes[] = 'Video';
+        }
+
+        return $mediaTypes;
     }
 
     /**
@@ -1180,14 +1195,13 @@ class Helpers
 
         $webfinger = "@{$username}@{$domain}";
         $instance = self::getOrCreateInstance($domain);
-        if (!empty($instance->shared_inbox)) {
+        if (! empty($instance->shared_inbox)) {
             $sharedInbox = data_get($res, 'endpoints.sharedInbox');
 
             if (filter_var($sharedInbox, FILTER_VALIDATE_URL)) {
                 $instance->shared_inbox = $sharedInbox;
             }
         }
-
 
         $movedToPid = $movedToCheck ? null : self::handleMovedTo($res);
 
@@ -1262,18 +1276,17 @@ class Helpers
                     'unlisted' => config('pixelfed.hide_remote_instance'),
                     'updated_at' => $now,
                     'created_at' => $now,
-                ]
+                ],
             ],
             ['domain'],
             ['updated_at' /* ,'unlisted' */]
         );
 
         $instance = Instance::where('domain', $domain)->first();
-        \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
+        FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
 
         return $instance;
     }
-
 
     /**
      * Handle moved profile references
