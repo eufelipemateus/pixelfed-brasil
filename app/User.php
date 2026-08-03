@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 use App\Casts\StatusEnumCast;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Enums\StatusEnums;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable
+class User extends Authenticatable implements OAuthenticatable
 {
     use HasApiTokens;
     use HasFactory;
@@ -73,6 +74,7 @@ class User extends Authenticatable
         'notify_follow',
         'notify_mention',
         'notify_comment',
+        'has_interstitial'
     ];
 
     /**

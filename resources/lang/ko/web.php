@@ -4,7 +4,7 @@ return [
 
 	'common' => [
 		'comment' => '댓글',
-		'commented' => '댓글 씀',
+		'commented' => '댓글을 남겼습니다',
 		'comments' => '댓글',
 		'like' => '좋아요',
 		'liked' => '좋아함',
@@ -74,7 +74,7 @@ return [
 	],
 
 	'directMessages' => [
-		'inbox' => '받은쪽지함',
+		'inbox' => '받은 쪽지함',
 		'sent' => '보냄',
 		'requests' => '요청 내역'
 	],
@@ -98,15 +98,15 @@ return [
 		'applicationRejected' => '이 반려되었습니다. 6개월 후에 다시 재신청할 수 있습니다.',
 
 		'dm' => 'DM',
-		'groupPost' => '묶어 발행',
+		'groupPost' => '함께 게시',
 		'modlog' => '모드로그',
-		'post' => '발행',
+		'post' => '게시',
 		'story' => '이야기',
 		'noneFound' => '알림을 찾을 수 없음',
 	],
 
 	'post' => [
-		'shareToFollowers' => '팔로워에게 공유하기',
+		'shareToFollowers' => '팔로워들에게 공유하기',
 		'shareToOther' => '다른 곳에 공유하기',
 		'noLikes' => '아직 좋아요 없음',
 		'uploading' => '업로드 중',
@@ -125,7 +125,7 @@ return [
 		'joined' => '가입함',
 
 		'emptyCollections' => '아무 컬렉션도 보이지 않습니다.',
-		'emptyPosts' => '아무 발행물도 보이지 않습니다.',
+		'emptyPosts' => '아무 게시물도 보이지 않습니다.',
 	],
 
 	'menu' => [
@@ -142,27 +142,27 @@ return [
 		'addCW' => '내용 경고 붙이기',
 		'removeCW' => '내용 경고 떼기',
 		'markAsSpammer' => '스패머로 표시',
-		'markAsSpammerText' => '현존 및 미래 발행물에 미등재 및 내용 경고',
+		'markAsSpammerText' => '이후 게시물에 일부공개 + 콘텐츠 경고 표시',
 		'spam' => '스팸',
 		'sensitive' => '민감한 내용',
 		'abusive' => '가학 또는 유해',
 		'underageAccount' => '미성년 계정',
 		'copyrightInfringement' => '저작권 위반',
 		'impersonation' => '사칭',
-		'scamOrFraud' => '스팸 또는 사기',
+		'scamOrFraud' => '사기',
 		'confirmReport' => '신고 확인',
-		'confirmReportText' => '이 게시물을 제보할까요?',
+		'confirmReportText' => '이 게시물을 신고할까요?',
 		'reportSent' => '신고 발송!',
 		'reportSentText' => '제보를 잘 수령하였습니다.',
-		'reportSentError' => 'There was an issue reporting this post.',
+		'reportSentError' => '이 게시물을 신고하는데 문제가 발생했습니다.',
 
 		'modAddCWConfirm' => '이 게시물이 내용 경고를 붙일까요?',
 		'modCWSuccess' => '내용경고를 붙임',
-		'modRemoveCWConfirm' => 'Are you sure you want to remove the content warning on this post?',
+		'modRemoveCWConfirm' => '정말로 이 게시물의 콘텐츠 경고를 해제하시겠습니까?',
 		'modRemoveCWSuccess' => '내용경고를 뗌',
-		'modUnlistConfirm' => 'Are you sure you want to unlist this post?',
-		'modUnlistSuccess' => '발행물 미등재 처리를 마쳤습니다.',
-		'modMarkAsSpammerConfirm' => '해당 이용자를 정말 스패머로 표시할까요?
+		'modUnlistConfirm' => '정말로 이 게시물을 일부공개로 설정할까요?',
+		'modUnlistSuccess' => '게시물 일부공개 처리를 마쳤습니다.',
+		'modMarkAsSpammerConfirm' => '해당 이용자를 정말 스팸 이용자로 표시할까요?
 내용 경고가 적용되며 이전과 이후의 모든 발행물이 타임라인에 미등재됩니다.',
 		'modMarkAsSpammerSuccess' => '스패머 계정으로 표시함',
 
@@ -171,11 +171,11 @@ return [
 		'showCaption' => '자막 보이기',
 		'showLikes' => '좋아요 보기',
 		'compactMode' => '콤팩트 모드',
-		'embedConfirmText' => 'By using this embed, you agree to our',
+		'embedConfirmText' => '이 임베드를 사용함으로서 저희의 약관에 동의하는걸로 간주합니다.',
 
-		'deletePostConfirm' => 'Are you sure you want to delete this post?',
-		'archivePostConfirm' => '이 발행물을 정말 보관할까요?',
-		'unarchivePostConfirm' => '이 발행물을 정말 보관 취소할까요?',
+		'deletePostConfirm' => '정말로 이 게시물을 삭제할까요?',
+		'archivePostConfirm' => '이 게시물을 정말 보관할까요?',
+		'unarchivePostConfirm' => '이 게시물을 정말 보관 취소할까요?',
 	],
 
 	'story' => [
@@ -187,23 +187,23 @@ return [
 
 		'onboarding' => [
 			'welcome' => '반가워요',
-			'thisIsYourHomeFeed' => '이곳은 팔로우 한 게시물을 시간 순으로 보여주는 홈 피드예요.',
-			'letUsHelpYouFind' => 'Let us help you find some interesting people to follow',
+			'thisIsYourHomeFeed' => '이곳은 당신의 홈 피드이며, 당신이 팔로우한 계정들을 시간순으로 정렬해서 표시합니다.',
+			'letUsHelpYouFind' => '당신이 팔로우 할 만한 사람들을 찾는 것을 도와드리겠습니다.',
 			'refreshFeed' => '내 피드 새로 고침',
 		],
 	],
 
 	'hashtags' => [
-		'emptyFeed' => 'We can\'t seem to find any posts for this hashtag'
+		'emptyFeed' => '해당 해시태그와 관련된 게시물을 찾을 수 없습니다.'
 	],
 
 	'report' => [
 		'report' => '신고',
-		'selectReason' => '이유 고르기',
-		'reported' => '신고 마침',
+		'selectReason' => '신고사유를 선택하세요',
+		'reported' => '신고 완료',
 		'sendingReport' => '신고 보내는 중',
-		'thanksMsg' => 'Thanks for the report, people like you help keep our community safe!',
-		'contactAdminMsg' => 'If you\'d like to contact an administrator about this post or report',
+		'thanksMsg' => '신고 감사합니다, 당신과 같은 사람들 덕분에 우리의 커뮤니티가 안전합니다!',
+		'contactAdminMsg' => '만약 이 게시물 혹은 신고에 대해 관리자에게 문의하고 싶으시다면',
 	],
 
 ];

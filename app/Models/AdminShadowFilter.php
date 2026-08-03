@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Profile;
+use App\Services\AccountService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Services\AccountService;
-use App\Profile;
 
 class AdminShadowFilter extends Model
 {
@@ -13,17 +13,19 @@ class AdminShadowFilter extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'created_at' => 'datetime'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime',
+        ];
+    }
 
     public function account()
     {
-        if($this->item_type === 'App\Profile') {
+        if ($this->item_type === 'App\Profile') {
             return AccountService::get($this->item_id, true);
         }
 
-        return;
     }
 
     public function profile()

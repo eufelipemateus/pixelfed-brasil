@@ -69,16 +69,18 @@ class StatusDelete implements ShouldQueue
         $status = $this->status;
 
         // Verify status exists
-        if (!$status) {
-            Log::info("StatusDelete: Status no longer exists, skipping job");
+        if (! $status) {
+            Log::info('StatusDelete: Status no longer exists, skipping job');
+
             return;
         }
 
-        $profile = $status->profile;
+        $profile = $status->profile()->withTrashed()->first();
 
         // Verify profile exists
-        if (!$profile) {
+        if (! $profile) {
             Log::info("StatusDelete: Profile no longer exists for status {$status->id}, skipping job");
+
             return;
         }
 
@@ -174,7 +176,7 @@ class StatusDelete implements ShouldQueue
 
     public function fanoutDelete($status)
     {
-        $profile = $status->profile;
+        $profile = $status->profile()->withTrashed()->first();
 
         if (! $profile) {
             return;
@@ -182,9 +184,9 @@ class StatusDelete implements ShouldQueue
 
         $audience = $status->profile->getAudienceInbox();
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
-        $resource = new Fractal\Resource\Item($status, new DeleteNote());
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
+        $resource = new Fractal\Resource\Item($status, new DeleteNote);
         $activity = $fractal->createData($resource)->toArray();
 
         $this->unlinkRemoveMedia($status);

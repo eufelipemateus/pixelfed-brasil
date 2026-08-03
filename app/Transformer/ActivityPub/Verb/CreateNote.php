@@ -38,7 +38,7 @@ class CreateNote extends Fractal\TransformerAbstract
                     'href' => $parent->permalink(),
                     'name' => $name,
                 ];
-                $mentions = array_merge($reply, $mentions);
+                array_push($mentions, $reply);
             }
         }
 

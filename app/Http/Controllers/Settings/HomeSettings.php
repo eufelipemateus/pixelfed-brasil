@@ -10,10 +10,10 @@ use App\Services\AccountService;
 use App\Services\PronounService;
 use App\Util\Lexer\Autolink;
 use App\Util\Lexer\PrettyNumber;
-use Auth;
 use Cache;
 use Illuminate\Http\Request;
-use Mail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Purify;
 use App\UserSetting;
 use App\Services\EmailService;
@@ -62,7 +62,7 @@ trait HomeSettings
         $enforceEmailVerification = config_cache('pixelfed.enforce_email_verification');
 
         // Only allow email to be updated if not yet verified
-        if (! $enforceEmailVerification || ! $changes && $user->email_verified_at) {
+        if (! $enforceEmailVerification || $user->email_verified_at) {
             if ($profile->name != $name) {
                 $changes = true;
                 $user->name = $name;
@@ -94,6 +94,8 @@ trait HomeSettings
                     PronounService::put($profile->id, $pronouns);
                 }
             }
+        } else {
+            return redirect('/settings/home')->with('status', 'Verify your email address before you can update your profile!');
         }
 
         if ($changes === true) {
@@ -118,38 +120,48 @@ trait HomeSettings
     {
         $this->validate($request, [
             'current' => 'required|string',
-            'password' => 'required|string',
-            'password_confirmation' => 'required|string',
+            'password' => 'required|string|confirmed|min:8|different:current',
+            'revoke_sessions' => 'nullable|boolean',
         ]);
 
         $current = $request->input('current');
         $new = $request->input('password');
-        $confirm = $request->input('password_confirmation');
+        $revokeSessions = $request->boolean('revoke_sessions');
 
-        $user = Auth::user();
+        $user = $request->user();
 
-        if (password_verify($current, $user->password) && $new === $confirm) {
-            $user->password = bcrypt($new);
-            $user->save();
-
-            $log = new AccountLog;
-            $log->user_id = $user->id;
-            $log->item_id = $user->id;
-            $log->item_type = 'App\User';
-            $log->action = 'account.edit.password';
-            $log->message = 'Password changed';
-            $log->link = null;
-            $log->ip_address = $request->ip();
-            $log->user_agent = $request->userAgent();
-            $log->save();
-
-            Mail::to($request->user())->send(new PasswordChange($user));
-
-            return redirect('/settings/home')->with('status', 'Password successfully updated!');
-        } else {
+        if (!password_verify($current, $user->password)) {
             return redirect()->back()->with('error', 'There was an error with your request! Please try again.');
         }
 
+        $user->password = bcrypt($new);
+        $user->save();
+
+        $log = new AccountLog;
+        $log->user_id = $user->id;
+        $log->item_id = $user->id;
+        $log->item_type = 'App\User';
+        $log->action = 'account.edit.password';
+        $log->message = $revokeSessions
+            ? 'Password changed and all sessions revoked'
+            : 'Password changed';
+        $log->link = null;
+        $log->ip_address = $request->ip();
+        $log->user_agent = $request->userAgent();
+        $log->save();
+
+        Mail::to($request->user())->send(new PasswordChange($user));
+
+        if ($revokeSessions) {
+            $user->tokens->each(function ($token) {
+                $token->revoke();
+                $token->refreshToken?->revoke();
+            });
+
+            Auth::logoutOtherDevices($new);
+        }
+
+        return redirect('/settings/home')->with('status', 'Password successfully updated!');
     }
 
     public function email()
@@ -164,6 +176,7 @@ trait HomeSettings
         $settings['send_email_on_share'] = (bool) $cachedSettings['send_email_on_share'];
         $settings['send_email_on_like'] = (bool) $cachedSettings['send_email_on_like'];
         $settings['send_email_on_mention'] = (bool) $cachedSettings['send_email_on_mention'];
+        $settings['send_weekly_email'] = (bool) $cachedSettings['send_weekly_email'];
         $settings['felipemateus_wants_updates'] = (bool) $cachedSettings['felipemateus_wants_updates'];
 
         return view('settings.email',  compact('settings'));
@@ -240,6 +253,7 @@ trait HomeSettings
                 'send_email_on_share' => 'sometimes',
                 'send_email_on_like' => 'sometimes',
                 'send_email_on_mention' => 'sometimes',
+                'send_weekly_email' => 'sometimes',
                 'felipemateus_wants_updates' => 'sometimes',
             ]
         );
@@ -263,6 +277,9 @@ trait HomeSettings
                     'send_email_on_mention' => (bool) $request->has(
                         'send_email_on_mention'
                     ),
+                    'send_weekly_email' => (bool) $request->has(
+                        'send_weekly_email'
+                    ),  
                     'felipemateus_wants_updates' => (bool) $request->has(
                         'felipemateus_wants_updates'
                     ),

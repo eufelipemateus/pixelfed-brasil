@@ -2,7 +2,6 @@
 
 namespace App;
 
-use App\HasSnowflakePrimary;
 use App\Http\Controllers\StatusController;
 use App\Models\Conversation;
 use App\Models\Poll;
@@ -52,17 +51,15 @@ class Status extends Model
      */
     public $incrementing = false;
 
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'deleted_at' => 'datetime',
-        'edited_at' => 'datetime',
-    ];
-
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'deleted_at' => 'datetime',
+            'edited_at' => 'datetime',
+        ];
+    }
 
     const STATUS_TYPES = [
         'text',

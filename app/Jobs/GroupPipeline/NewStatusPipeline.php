@@ -3,6 +3,7 @@
 namespace App\Jobs\GroupPipeline;
 
 use App\Hashtag;
+use App\Jobs\MentionPipeline\MentionPipeline;
 use App\Mention;
 use App\Models\GroupPost;
 use App\Models\GroupPostHashtag;

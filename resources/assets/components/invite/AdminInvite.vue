@@ -38,7 +38,7 @@
                                 class="form-control form-control-lg"
                                 placeholder="What should everyone call you?"
                                 minlength="2"
-                                maxlength="15"
+u                                maxlength="30"
                                 v-model="form.username" />
 
                             <p v-if="errors.username" class="form-text text-danger">
@@ -368,11 +368,15 @@
             },
 
             validateEmail() {
-                if(!this.form.email || !this.form.email.length) {
+                const email = this.form?.email?.trim();
+
+                if (!email || email.length > 254) {
                     return false;
                 }
 
-                return /^[a-zA-Z]+[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+[a-zA-Z]$/i.test(this.form.email);
+                const pattern = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+                return pattern.test(email);
             },
 
             handleRegistration() {

@@ -89,10 +89,10 @@ class ProfileMigrationDeliverMoveActivityPipeline implements ShouldBeUniqueUntil
         }
 
         $audience = $profile->getAudienceInbox();
-        $activitypubObject = new Move();
+        $activitypubObject = new Move;
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
+        $fractal = new Fractal\Manager;
+        $fractal->setSerializer(new ArraySerializer);
         $resource = new Fractal\Resource\Item($migration, $activitypubObject);
         $activity = $fractal->createData($resource)->toArray();
 
@@ -118,8 +118,6 @@ class ProfileMigrationDeliverMoveActivityPipeline implements ShouldBeUniqueUntil
                             CURLOPT_HTTPHEADER => $headers,
                             CURLOPT_POSTFIELDS => $payload,
                             CURLOPT_HEADER => true,
-                            CURLOPT_SSL_VERIFYPEER => true,
-                            CURLOPT_SSL_VERIFYHOST => false,
                         ],
                     ]);
                 };
@@ -128,8 +126,7 @@ class ProfileMigrationDeliverMoveActivityPipeline implements ShouldBeUniqueUntil
 
         $pool = new Pool($client, $requests($audience), [
             'concurrency' => config('federation.activitypub.delivery.concurrency'),
-            'fulfilled' => function ($response, $index) {
-            }, 'rejected' => function ($reason, $index) {
+            'fulfilled' => function ($response, $index) {}, 'rejected' => function ($reason, $index) {
                 Log::error($reason);
             },
         ]);

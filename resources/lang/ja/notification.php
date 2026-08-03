@@ -2,11 +2,11 @@
 
 return [
 
-  'likedPhoto'          => '写真がお気に入りに登録されました。',
-  'likedComment'        => 'コメントがお気に入りに登録されました。',
+  'likedPhoto'          => '写真がいいねされました。',
+  'likedComment'        => 'コメントがいいねされました。',
   'startedFollowingYou' => 'フォローされました。',
   'commented'           => '投稿にコメントされました。',
   'mentionedYou'        => 'メンションされました。',
-  'shared'              => '投稿が再共有されました。',
+  'shared'              => '投稿がリブログされました。',
 
 ];

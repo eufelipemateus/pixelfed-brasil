@@ -257,8 +257,13 @@ class FollowerService
         $key = self::FOLLOWERS_INTER_KEY.$actorId.':'.$profileId;
         $res = Redis::zinterstore($key, [$actorKey, $profileKey]);
         if ($res) {
-            return Redis::zrange($key, 0, -1);
+            $ids = Redis::zrange($key, 0, -1);
+            Redis::expire($key, 3600);
+
+            return $ids;
         } else {
+            Redis::expire($key, 3600);
+
             return [];
         }
     }

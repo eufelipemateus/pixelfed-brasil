@@ -14,7 +14,7 @@ class ProfileSchemaGenerator extends Component
     /**
      * Create a new component instance.
      */
-    public function __construct(public Profile $profile, public $settings) {}
+    public function __construct(public Profile $profile, public bool $indexable) {}
 
     /**
      * Get the view / contents that represent the component.

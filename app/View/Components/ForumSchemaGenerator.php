@@ -8,6 +8,7 @@ use Illuminate\View\Component;
 use App\Services\StatusService;
 use DateTime;
 use App\Status;
+use Exception;
 
 class ForumSchemaGenerator extends Component
 {
@@ -33,15 +34,15 @@ class ForumSchemaGenerator extends Component
     ) {
         //
 
-        $original = $status['in_reply_to_id'] ?  StatusService::get($status['in_reply_to_id'])  :  $status;
+        $original = $status['in_reply_to_id'] ? StatusService::get($status['in_reply_to_id']) : $status;
 
         $this->datePublished = ($status['created_at'] ?? (new \DateTime())->format(DATE_ATOM));
-        $this->mainEntityOfPage = $original['url'];
-        $this->url = $status['url'];
+        $this->mainEntityOfPage = $original['url'] ?? '';
+        $this->url = $status['url'] ?? '';
 
         $domain = '';
-        if (isset($original['account']) && isset($original['account']['url'])) {
-            $domain =  '@' . parse_url($original['account']['url'], PHP_URL_HOST);
+        if (isset($original['account']['url'])) {
+            $domain = '@' . parse_url($original['account']['url'], PHP_URL_HOST);
         }
 
         $username = $original['account']['username'] ?? 'desconhecido';
@@ -53,26 +54,31 @@ class ForumSchemaGenerator extends Component
             'url' => $original['account']['url'] ?? null,
         ];
 
-        $mediaCount = $original['media_attachments'] && count($original['media_attachments']) ? count($original['media_attachments']) : 0;
+        $mediaCount = isset($original['media_attachments']) && is_array($original['media_attachments']) && count($original['media_attachments']) ? count($original['media_attachments']) : 0;
 
-        if ($mediaCount && ($original['pf_type'] === "photo" || $original['pf_type'] === "photo:album")) {
+        if (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "photo" || $original['pf_type'] === "photo:album"))) {
             $this->getImage($original);
-        } elseif ($mediaCount && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album")) {
+        } elseif (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album"))) {
             $this->getVideo($original);
             $this->getImage($original, true);
         }
 
+        $this->totalShares = $original['reblogs_count'] ?? 0;
+        $this->totalLikes = $original['favourites_count'] ?? 0;
+        $this->totalComments = $original['reply_count'] ?? 0;
 
-        $this->totalShares = $original['reblogs_count'];
-        $this->totalLikes = $original['favourites_count'];
-        $this->totalComments = $original['reply_count'];
-
-        $this->getComments($original['id'], $status['id']);
+        $this->getComments($original['id'] ?? null, $status['id'] ?? null);
     }
 
 
     public function getVideo($status)
     {
+        if ($status['sensitive'] ?? false) {
+            $this->video = null;
+
+            return;
+        }
+
         $this->video = count($status['media_attachments']) ?  [
             "@type" => "VideoObject",
             "contentUrl" => $status['media_attachments'][0]['url'],
@@ -85,6 +91,12 @@ class ForumSchemaGenerator extends Component
 
     public function getImage($status, $forceThumbnail = false)
     {
+        if ($status['sensitive'] ?? false) {
+            $this->image = null;
+
+            return;
+        }
+
         $this->image = count($status['media_attachments']) ?  [
             "@type" => "ImageObject",
             "contentUrl" => $forceThumbnail ? $status['media_attachments'][0]['preview_url'] : $status['media_attachments'][0]['url'],
@@ -96,7 +108,14 @@ class ForumSchemaGenerator extends Component
 
     public function getComments($originalID, $statusID)
     {
-        $commentIds = Status::find($originalID)
+
+        $statusObj = $originalID ? Status::find($originalID) : null;
+        if (!$statusObj) {
+            $this->comments = [];
+            return;
+        }
+
+        $commentIds = $statusObj
             ->comments()
             ->limit(10)
             ->pluck('id');

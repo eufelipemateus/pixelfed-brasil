@@ -14,6 +14,7 @@ use App\Util\Site\Nodeinfo;
 use App\Util\Webfinger\Webfinger;
 use Cache;
 use Illuminate\Http\Request;
+use App\Enums\StatusEnums;
 
 class FederationController extends Controller
 {
@@ -91,7 +92,7 @@ class FederationController extends Controller
                     return response()->json($cached, 200, [], JSON_UNESCAPED_SLASHES);
                 }
                 $profile = Profile::whereUsername($username)->first();
-                if (! $profile || $profile->status !== null || $profile->domain) {
+                if (! $profile || $profile->status !== StatusEnums::ACTIVE || $profile->domain) {
                     return response('', 400);
                 }
                 $webfinger = (new Webfinger($profile))->generate();
@@ -117,7 +118,7 @@ class FederationController extends Controller
         }
         $username = $parsed['username'];
         $profile = Profile::whereUsername($username)->first();
-        if (! $profile || $profile->status !== null || $profile->domain) {
+        if (! $profile || $profile->status !== StatusEnums::ACTIVE || $profile->domain) {
             return response('', 400);
         }
         $webfinger = (new Webfinger($profile))->generate();

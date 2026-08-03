@@ -2,29 +2,31 @@
 
 namespace App\Jobs\ImportPipeline;
 
+use App\Jobs\VideoPipeline\VideoThumbnailToCloudPipeline;
+use App\Media;
+use App\Models\ImportPost;
+use App\Services\MediaStorageService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
-use App\Models\ImportPost;
-use App\Media;
-use App\Services\MediaStorageService;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\VideoPipeline\VideoThumbnailToCloudPipeline;
 
-class ImportMediaToCloudPipeline implements ShouldQueue, ShouldBeUniqueUntilProcessing
+class ImportMediaToCloudPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $importPost;
 
     public $timeout = 900;
+
     public $tries = 3;
+
     public $maxExceptions = 1;
+
     public $failOnTimeout = true;
 
     /**
@@ -39,7 +41,7 @@ class ImportMediaToCloudPipeline implements ShouldQueue, ShouldBeUniqueUntilProc
      */
     public function uniqueId(): string
     {
-        return 'import-media-to-cloud-pipeline:ip-id:' . $this->importPost->id;
+        return 'import-media-to-cloud-pipeline:ip-id:'.$this->importPost->id;
     }
 
     /**
@@ -53,10 +55,10 @@ class ImportMediaToCloudPipeline implements ShouldQueue, ShouldBeUniqueUntilProc
     }
 
     /**
-    * Delete the job if its models no longer exist.
-    *
-    * @var bool
-    */
+     * Delete the job if its models no longer exist.
+     *
+     * @var bool
+     */
     public $deleteWhenMissingModels = true;
 
     /**
@@ -74,7 +76,7 @@ class ImportMediaToCloudPipeline implements ShouldQueue, ShouldBeUniqueUntilProc
     {
         $ip = $this->importPost;
 
-        if(
+        if (
             $ip->status_id === null ||
             $ip->uploaded_to_s3 === true ||
             (bool) config_cache('pixelfed.cloud_storage') === false) {
@@ -83,47 +85,66 @@ class ImportMediaToCloudPipeline implements ShouldQueue, ShouldBeUniqueUntilProc
 
         $media = Media::whereStatusId($ip->status_id)->get();
 
-        if(!$media || !$media->count()) {
+        if (! $media || ! $media->count()) {
             $importPost = ImportPost::find($ip->id);
             $importPost->uploaded_to_s3 = true;
             $importPost->save();
+
             return;
         }
 
-        foreach($media as $mediaPart) {
-            $this->handleMedia($mediaPart);
+        $allSucceeded = true;
+
+        foreach ($media as $mediaPart) {
+            if (! $this->handleMedia($mediaPart)) {
+                $allSucceeded = false;
+            }
+        }
+
+        if ($allSucceeded) {
+            $importPost = ImportPost::find($ip->id);
+            if ($importPost) {
+                $importPost->uploaded_to_s3 = true;
+                $importPost->save();
+            }
         }
     }
 
     protected function handleMedia($media)
     {
+        // Skip media already uploaded to cloud storage
+        if ($media->cdn_url) {
+            return true;
+        }
+
         $ip = $this->importPost;
 
         $importPost = ImportPost::find($ip->id);
 
-        if(!$importPost) {
-            return;
+        if (! $importPost) {
+            return false;
         }
 
         $res = MediaStorageService::move($media);
 
-        $importPost->uploaded_to_s3 = true;
-        $importPost->save();
-
-        if(!$res) {
-            return;
+        if (! $res) {
+            return false;
         }
 
-        if($res === 'invalid file') {
-            return;
+        if ($res === 'invalid file') {
+            return false;
         }
 
-        if($res === 'success') {
-            if($media->mime === 'video/mp4') {
+        if ($res === 'success') {
+            if ($media->mime === 'video/mp4') {
                 VideoThumbnailToCloudPipeline::dispatch($media)->onQueue('low');
             } else {
                 Storage::disk('local')->delete($media->media_path);
             }
+
+            return true;
         }
+
+        return false;
     }
 }

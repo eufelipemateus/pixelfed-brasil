@@ -5,7 +5,7 @@
     <div class="row justify-content-center align-items-center">
         <div class="col-12 col-md-7">
             <div class="logo">
-                <img src="/img/pixelfed-icon-color.svg" width="40" height="40" alt="Pixelfed Logo">
+                <img src="{{ config('app.logo') }}" width="40" height="40" alt="Pixelfed Logo">
                 <p class="font-weight-bold mb-0">Pixelfed</p>
             </div>
 
@@ -25,8 +25,8 @@
 
             <form method="post">
                 @csrf
-                <input type="hidden" name="sid" value={{request()->input('sid')}}>
-                <input type="hidden" name="code" value={{request()->input('code')}}>
+                <input type="hidden" name="sid" value="{{request()->input('sid')}}">
+                <input type="hidden" name="code" value="{{request()->input('code')}}">
                 @if(config('instance.curated_registration.captcha_enabled'))
                 <div class="d-flex justify-content-center my-3">
                     {!! Captcha::display() !!}

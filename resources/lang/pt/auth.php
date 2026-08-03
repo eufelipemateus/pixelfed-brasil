@@ -1,7 +1,16 @@
 <?php
 
 return [
+    '2fa_checkpoint' => 'Verificação em duas etapas',
+    'enter_2fa_code' => 'Digite o código 2FA do seu dispositivo.',
+    'lost_2fa_device' => 'Se você perder o acesso ao seu dispositivo 2FA, entre em contato com os administradores.',
+    '2fa_code' => 'Código 2FA',
+    'logged_in_as' => 'Logado como:',
+    'logout' => 'Sair',
 
+    'sudo_mode' => 'Modo Sudo',
+    'confirm_password_continue' => 'Confirme a senha para continuar',
+    'trust_device' => 'Confiar neste dispositivo e não perguntar novamente',
     /*
     |--------------------------------------------------------------------------
     | Authentication Language Lines

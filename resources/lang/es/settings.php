@@ -16,13 +16,13 @@ return [
     'import' =>                 'Importar',
     'export' =>                 'Exportar',
     'parental_controls' =>      'Control Parental',
-  
+
     'submit' =>                 'Enviar',
     'error' =>                  'Error',
     'cancel' =>                 'Cancelar',
     'save' =>                   'Guardar',
     'download' =>               'Descargar',
-    
+
     'home.account_settings' =>                                          'Configuración de Cuenta',
     'home.change_profile_photo' =>                                      'Cambiar Foto de Perfil',
     'home.select_a_profile_photo' =>                                    'Seleccionar una foto de perfil',
@@ -48,21 +48,21 @@ return [
     'home.storage_used' =>                                              'Almacenamiento Usado',
     'home.are_you_sure_you_want_to_delete_your_profile_photo' =>        '¿Seguro que quieres eliminar tu foto de perfil?',
     'home.an_error_occured_please_try_again_later' =>                   'Ocurrió un error, por favor, intentalo de nuevo más tarde',
-    
+
     'accessibility.reduce_motion' =>                                    'Reduce Movimiento',
     'accessibility.prevent_animation_effects' =>                        'Evita efectos de animación.',
     'accessibility.high_contrast_mode' =>                               'Modo de Alto Contraste',
     'accessibility.high_contrast_mode_for_the_visually_impaired' =>     'Modo de alto contraste para diversidades funcionales.',
     'accessibility.disable_video_autoplay' =>                           'Deshabilitar reproducción automática de video',
     'accessibility.prevent_videos_from_autoplaying' =>                  'Evitar que los videos se reproduzcan automáticamente.',
-    
+
     'email.email_settings' =>                                           'Configuración de Correo',
     'email.email_address' =>                                            'Dirección de Correo',
     'email.verified' =>                                                 'Verificado',
     'email.unverified' =>                                               'No verificado',
     'email.you_need_to' =>                                              'Debes',
     'email.verify_your_email' =>                                        'verificar tu cuenta de correo',
-    
+
     'media.default_license' =>                                          'Licencia por Defecto',
     'media.set_a_default_license_for_new_posts' =>                      'Define una licencia por defecto para nuevas publicaciones.',
     'media.sync_licenses' =>                                            'Sincroniza Licencias',
@@ -71,7 +71,7 @@ return [
     'media.require_media_descriptions' =>                               'Requerir Descripción de Media',
     'media.briefly_describe_your_media_to_improve_etc' =>               'Describe brevemente tu media para mejorar la accesibilidad.',
     'media.not_available_for_mobile_or_3rd_party_apps_etc' =>           'No disponible para móvil o aplicaciones de terceros en este momento.',
-    
+
     'password.update_password' =>                                       'Actualizar Contraseña',
     'password.current' =>                                               'Actual',
     'password.your_current_password' =>                                 'Tu contraseña actual',
@@ -79,7 +79,7 @@ return [
     'password.enter_new_password_here' =>                               'Introduce la nueva contraseña aquí',
     'password.confirm' =>                                               'Confirmar',
     'password.confirm_new_password' =>                                  'Confirmar nueva contraseña',
-    
+
     'privacy.privacy_settings' =>                                       'Configuración de Privacidad',
     'privacy.private_account' =>                                        'Cuenta Privada',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'Cuando tu cuenta es privada, sólo la gente que apruebes podrá ver tus fotos y videos en pixelfed. Tus seguidores actuales no se verán afectadas.',
@@ -121,7 +121,7 @@ return [
     'privacy.allow_new_follow_requests' =>                              'Permitir nuevas solicitudes de seguimiento',
     'privacy.block_notifications_from_accounts_i_dont_follow' =>        'Bloquear notificaciones de cuentas que no sigo',
     'privacy.an_error_occured_please_try_again' =>                      'Ocurrió un error. Por favor, prueba de nuevo.',
-  
+
     'relationships' =>                                                          'Relaciones',
     'relationships.followers' =>                                                'Seguidoras',
     'relationships.following' =>                                                'Siguiendo',
@@ -140,7 +140,7 @@ return [
     'relationships.you_have_successfully_unfollowed_that_user' =>               'Has dejado de seguir con éxito esa cuenta',
     'relationships.an_error_occured_when_attempting_to_unfollow_this_user' =>   'Un error ocurrió al intentar dejar de seguir esa cuenta',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'Has dejado de seguir con éxito esa etiqueta',
-    
+
     'security.two_factor_authentication' =>                                     'Autentificación de Dos Factores',
     'security.enabled' =>                                                       'Activo',
     'security.danger_zone' =>                                                   'Zona Peligrosa',
@@ -171,20 +171,20 @@ return [
     'security.see_reblogs_from_accounts_you_follow_in_your_home_etc' =>         'Mostrar impulsos de las cuentas que sigues en tu línea temporal principal. (Sólo en la línia temporal Principal)',
     'security.photo_reblogs_only' =>                                            'Impulsos de publicaciones de foto sólamente',
     'security.only_see_reblogs_of_photos_or_photo_albums_home_etc' =>           'Sólo mostrar impulsos de fotos o álbumes de foto. (Sólo en la línia temporal Principal)',
-    
+
     // incomplete
-    // the oauth panel is loaded from elsewhere 
+    // the oauth panel is loaded from elsewhere
     'developers.oauth_has_not_been_enabled_on_this_instance' =>                 'No está OAuth activado en esta instancia.',
-    
+
     // incomplete
     // import/ig.blade.php seems not in use anymore
     'import.import_from_instagram' =>                                           'Importar de Instagram',
-    
+
     'export.data_export' =>                                                     'Exportar Datos',
     'export.we_generate_data_exports_once_per_hour_and_they_may_etc' =>         'Generamos exportaciones de datos una vez cada hora, y pueden no contener los datos más actualizados si los has solicitado recientemente.',
     'export.statuses' =>                                                        'Estados',
     'export.mute_block_lists' =>                                                'Lista de Silenciadas/Bloqueos',
-    
+
     // incomplete
     // some language outside the blades (in app/Http/Controllers/Settings/LabsSettings.php)
     'labs' =>                                                                   'Labs',

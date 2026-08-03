@@ -72,13 +72,15 @@
             </label>
         </div>
 
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_weekly_email" id="send_weekly_email" {{$settings['send_weekly_email'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_weekly_email">
+                {{__('settings.email.send_weekly_email')}}
+            </label>
+        </div>
+
         @if(config('pixelfed.app_felipemateus'))
-            <div class="form-check pb-3">
-                <input class="form-check-input" type="checkbox" name="felipemateus_wants_updates" id="felipemateus_wants_updates" {{$settings['felipemateus_wants_updates'] ? 'checked=""':''}}>
-                <label class="form-check-label font-weight-bold" for="felipemateus_wants_updates">
-                    Receba atualizações sobre produtos Felipe Mateus.
-                </label>
-            </div>
+            <!-- COnfigurações exclusivas pixelfed brasil -->
         @endif
 
 

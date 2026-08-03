@@ -264,13 +264,11 @@ class StoryApiV1Controller extends Controller
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
         $this->validate($request, [
-            'file' => function () {
-                return [
-                    'required',
-                    'mimetypes:image/jpeg,image/jpg,image/png,video/mp4',
-                    'max:'.config_cache('pixelfed.max_photo_size'),
-                ];
-            },
+            'file' => [
+                'required',
+                'mimetypes:image/jpeg,image/jpg,image/png,video/mp4',
+                'max:'.config_cache('pixelfed.max_photo_size'),
+            ],
             'duration' => 'sometimes|integer|min:0|max:30',
         ]);
 

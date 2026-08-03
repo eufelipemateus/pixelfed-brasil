@@ -20,7 +20,6 @@
                             <li v-if="config.show_directory" class="nav-item">
                                 <router-link to="/web/directory" class="nav-link text-white" >{{ $t('site.directory') }}</router-link>
                             </li>
-
                         </ul>
                     </div>
 
@@ -57,79 +56,79 @@
 </template>
 
 <script type="text/javascript">
-import PostCard from './partials/PostCard';
+	import PostCard from './partials/PostCard';
 
-export default {
-    components: {
-        "post-card": PostCard
-    },
+	export default {
+		components: {
+			"post-card": PostCard
+		},
 
-    data() {
-        return {
-            loading: true,
-            config: window.pfl,
-            isFetching: false,
-            range: 'daily',
-            ranges: ['daily', 'monthly', 'yearly'],
-            rangeIndex: 0,
-            feed: [],
-        }
-    },
+		data() {
+			return {
+				loading: true,
+				config: window.pfl,
+				isFetching: false,
+				range: 'daily',
+				ranges: ['daily', 'monthly', 'yearly'],
+				rangeIndex: 0,
+				feed: [],
+			}
+		},
 
-    beforeMount() {
-        if (this.config.show_explore_feed == false) {
-            this.$router.push('/');
-        }
-    },
+		beforeMount() {
+			if(this.config.show_explore_feed == false) {
+				this.$router.push('/');
+			}
+		},
 
-    mounted() {
-        this.init();
-    },
+		mounted() {
+			this.init();
+		},
 
-    methods: {
-        init() {
-            axios.get('/api/pixelfed/v2/discover/posts/trending?range=daily')
-                .then(res => {
-                    if (res && res.data.length > 3) {
-                        this.feed = res.data;
-                        this.loading = false;
-                    } else {
-                        this.rangeIndex++;
-                        this.fetchTrending();
-                    }
-                })
-        },
+		methods: {
+			init() {
+				axios.get('/api/pixelfed/v2/discover/posts/trending?range=daily')
+				.then(res => {
+					if(res && res.data.length > 3) {
+						this.feed = res.data;
+						this.loading = false;
+					} else {
+						this.rangeIndex++;
+						this.fetchTrending();
+					}
+				})
+			},
 
-        fetchTrending() {
-            if (this.isFetching || this.rangeIndex >= 3) {
-                return;
-            }
-            this.isFetching = true;
+			fetchTrending() {
+				if(this.isFetching || this.rangeIndex >= 3) {
+					return;
+				}
+				this.isFetching = true;
 
-            axios.get('/api/pixelfed/v2/discover/posts/trending', {
-                params: {
-                    range: this.ranges[this.rangeIndex]
-                }
-            })
-                .then(res => {
-                    if (res && res.data.length) {
-                        if (this.rangeIndex == 2 && res.data.length > 3) {
-                            this.feed = res.data;
-                            this.loading = false;
-                        } else {
-                            this.rangeIndex++;
-                            this.isFetching = false;
-                            this.fetchTrending();
-                        }
-                    } else {
-                        this.rangeIndex++;
-                        this.isFetching = false;
-                        this.fetchTrending();
-                    }
-                })
-        }
-    }
-}
+				axios.get('/api/pixelfed/v2/discover/posts/trending', {
+					params: {
+						range: this.ranges[this.rangeIndex]
+					}
+				})
+				.then(res => {
+					if(res && res.data.length) {
+						if(res.data.length > 3) {
+							this.feed = res.data;
+							this.loading = false;
+						} else {
+							this.rangeIndex++;
+							this.isFetching = false;
+							this.fetchTrending();
+						}
+					} else {
+						this.rangeIndex++;
+						this.isFetching = false;
+						this.fetchTrending();
+					}
+				})
+			}
+		}
+	}
 </script>
 
 <style scoped>
@@ -175,7 +174,7 @@ export default {
     font-size: 0.95rem;
 }
 
-/* Feed List - Transformando em Grid se possível */
+/* Grid de Feed Moderno */
 .feed-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -209,7 +208,6 @@ export default {
     font-size: 0.8rem;
 }
 
-/* Transição nos Cards */
 .modern-post-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border-radius: 15px;
@@ -222,13 +220,8 @@ export default {
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 576px) {

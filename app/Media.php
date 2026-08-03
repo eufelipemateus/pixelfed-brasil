@@ -11,18 +11,16 @@ class Media extends Model
 {
     use SoftDeletes;
 
-    /**
-     * The attributes that should be mutated to dates.
-     *
-     * @var array
-     */
     protected $guarded = [];
 
-    protected $casts = [
-        'srcset' => 'array',
-        'deleted_at' => 'datetime',
-        'skip_optimize' => 'boolean'
-    ];
+    protected function casts(): array
+    {
+        return [
+            'srcset' => 'array',
+            'deleted_at' => 'datetime',
+            'skip_optimize' => 'boolean',
+        ];
+    }
 
     public function status()
     {

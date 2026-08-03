@@ -13,6 +13,8 @@ use Auth;
 use Cache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Laravel\Pulse\Livewire\Cache as LivewireCache;
+use Symfony\Component\HttpKernel\Attribute\Cache as AttributeCache;
 use View;
 
 class SiteController extends Controller
@@ -204,6 +206,12 @@ class SiteController extends Controller
     {
         return Cache::remember('site.donate', now()->addMinutes(15), function () {
             return view('site.donate')->render();
+        });
+    }
+
+    public function app(){
+        return Cache::remember('site.app', now()->addMinutes(15), function () {
+            return view('site.app')->render();
         });
     }
 }

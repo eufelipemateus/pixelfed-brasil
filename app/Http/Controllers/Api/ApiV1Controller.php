@@ -86,7 +86,7 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Laravel\Passport\Passport;
+use Laravel\Passport\Client;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Storage;
@@ -149,16 +149,18 @@ class ApiV1Controller extends Controller
             ->filter()
             ->join(',');
 
-        $client = Passport::client()->forceFill([
+        $secret = Str::random(40);
+
+        $client = new Client;
+        $client->forceFill([
             'user_id' => null,
             'name' => e($request->client_name),
-            'secret' => Str::random(40),
+            'secret' => $secret,
             'redirect' => $uris,
             'personal_access_client' => false,
             'password_client' => false,
             'revoked' => false,
         ]);
-
         $client->save();
 
         $res = [
@@ -167,7 +169,7 @@ class ApiV1Controller extends Controller
             'website' => null,
             'redirect_uri' => $client->redirect,
             'client_id' => (string) $client->id,
-            'client_secret' => $client->secret,
+            'client_secret' => $secret,
             'vapid_key' => null,
         ];
 
@@ -222,6 +224,52 @@ class ApiV1Controller extends Controller
 
         $withInstanceMeta = $request->has('_wim');
         $res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($id, true) : AccountService::getMastodon($id, true);
+        if (! $res) {
+            return response()->json(['error' => 'Record not found'], 404);
+        }
+        if ($res && strpos($res['acct'], '@') != -1) {
+            $domain = parse_url($res['url'], PHP_URL_HOST);
+            abort_if(in_array($domain, InstanceService::getBannedDomains()), 404);
+        }
+
+        return $this->json($res);
+    }
+
+    /**
+     * GET /api/v1/accounts/lookup
+     *
+     * @param  string  $acct
+     * @return \App\Transformer\Api\AccountTransformer
+     */
+    public function accountLookupById(Request $request)
+    {
+        $request->validate([
+            'acct' => 'required|string|min:3|max:100',
+        ]);
+
+        $acct = $request->acct;
+
+        if (str_contains($acct, '@')) {
+            $count = mb_substr_count($acct, '@');
+
+            if ($count === 1) {
+                if (str_starts_with($acct, '@')) {
+                    $acct = substr($acct, 1);
+                } else {
+                    $acct = '@'.$acct;
+                }
+            }
+            if ($count > 2) {
+                return $this->json(['error' => 'Record not found'], 400);
+            }
+        }
+        $profile = Profile::whereUsername($acct)->first();
+
+        if (! $profile) {
+            return $this->json(['error' => 'Record not found'], 400);
+        }
+
+        $res = $request->has(self::PF_API_ENTITY_KEY) ? AccountService::get($profile->id, true) : AccountService::getMastodon($profile->id, true);
         if (! $res) {
             return response()->json(['error' => 'Record not found'], 404);
         }
@@ -502,10 +550,18 @@ class ApiV1Controller extends Controller
         $pid = $request->user()->profile_id;
         $this->validate($request, [
             'limit' => 'sometimes|integer|min:1',
+            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
         ]);
         $limit = $request->input('limit', 10);
         if ($limit > 80) {
             $limit = 80;
+        }
+        $max_id = $request->max_id;
+        $min_id = $request->min_id;
+
+        if (! $max_id && ! $min_id) {
+            $min_id = 1;
         }
         $napi = $request->has(self::PF_API_ENTITY_KEY);
 
@@ -532,13 +588,15 @@ class ApiV1Controller extends Controller
                 }
             }
         }
+        $dir = $min_id ? '>' : '<';
+        $id = $min_id ?? $max_id;
         if ($request->has('page')) {
             $res = DB::table('followers')
                 ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
                 ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
                 ->whereFollowingId($account['id'])
-                ->whereNull('profiles.status')
-                ->orderByDesc('followers.id')
+                ->where('id', $dir, $id)
+                ->orderByDesc('id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->profile_id, true) : AccountService::getMastodon($follower->profile_id, true);
@@ -556,8 +614,8 @@ class ApiV1Controller extends Controller
             ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
             ->leftJoin('profiles', 'followers.profile_id', '=', 'profiles.id')
             ->whereFollowingId($account['id'])
-            ->whereNull('profiles.status')
-            ->orderByDesc('followers.id')
+            ->where('id', $dir, $id)
+            ->orderByDesc('id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -608,11 +666,20 @@ class ApiV1Controller extends Controller
         $pid = $request->user()->profile_id;
         $this->validate($request, [
             'limit' => 'sometimes|integer|min:1',
+            'max_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
+            'min_id' => 'nullable|integer|min:0|max:'.PHP_INT_MAX,
         ]);
         $limit = $request->input('limit', 10);
         if ($limit > 80) {
             $limit = 80;
         }
+        $max_id = $request->max_id;
+        $min_id = $request->min_id;
+
+        if (! $max_id && ! $min_id) {
+            $min_id = 1;
+        }
+
         $napi = $request->has(self::PF_API_ENTITY_KEY);
 
         if ($account && strpos($account['acct'], '@') != -1) {
@@ -639,13 +706,14 @@ class ApiV1Controller extends Controller
             }
         }
 
+        $dir = $min_id ? '>' : '<';
+        $id = $min_id ?? $max_id;
         if ($request->has('page')) {
             $res = DB::table('followers')
-                ->join('profiles', 'followers.following_id', '=', 'profiles.id')
-                ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
-                ->where('followers.profile_id', $account['id'])
-                ->whereNull('profiles.status')
-                ->orderByDesc('followers.id')
+                ->select('id', 'profile_id', 'following_id')
+                ->whereProfileId($account['id'])
+                ->where('id', $dir, $id)
+                ->orderByDesc('id')
                 ->simplePaginate($limit)
                 ->map(function ($follower) use ($napi) {
                     return $napi ? AccountService::get($follower->following_id, true) : AccountService::getMastodon($follower->following_id, true);
@@ -660,11 +728,10 @@ class ApiV1Controller extends Controller
         }
 
         $paginator = DB::table('followers')
-            ->join('profiles', 'followers.following_id', '=', 'profiles.id')
-            ->selectRaw('followers.id as id, followers.profile_id as profile_id, followers.following_id as following_id')
-            ->where('followers.profile_id', $account['id'])
-            ->whereNull('profiles.status')
-            ->orderByDesc('followers.id')
+            ->select('id', 'profile_id', 'following_id')
+            ->whereProfileId($account['id'])
+            ->where('id', $dir, $id)
+            ->orderByDesc('id')
             ->cursorPaginate($limit)
             ->withQueryString();
 
@@ -1445,10 +1512,10 @@ class ApiV1Controller extends Controller
             abort(422);
         }
 
-        $like = DB::transaction(function () use ($user, $status, $spid, $id) {
+        $like = DB::transaction(function () use ($user, $status, $spid) {
             $statusModel = Status::lockForUpdate()->find($status['id']);
 
-            if (!$statusModel) {
+            if (! $statusModel) {
                 abort(404, 'Status not found');
             }
 
@@ -1459,7 +1526,7 @@ class ApiV1Controller extends Controller
                 ],
                 [
                     'status_profile_id' => $spid,
-                    'is_comment' => !empty($status['in_reply_to_id']),
+                    'is_comment' => ! empty($status['in_reply_to_id']),
                 ]
             );
 
@@ -1536,7 +1603,7 @@ class ApiV1Controller extends Controller
                 ->whereStatusId($status['id'])
                 ->first();
 
-            if (!$like) {
+            if (! $like) {
                 return false;
             }
 
@@ -1920,9 +1987,11 @@ class ApiV1Controller extends Controller
             abort(403, 'Invalid or unsupported mime type.');
         }
 
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
         $storagePath = MediaPathService::get($user, 2);
         $path = $photo->storePublicly($storagePath);
-        $hash = \hash_file('sha256', $photo);
         $license = null;
         $mime = $photo->getMimeType();
 
@@ -1945,8 +2014,6 @@ class ApiV1Controller extends Controller
                 $license = $compose['default_license'];
             }
         }
-
-        abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
         $media = new Media;
         $media->status_id = null;
@@ -2148,9 +2215,11 @@ class ApiV1Controller extends Controller
             abort(403, 'Invalid or unsupported mime type.');
         }
 
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
         $storagePath = MediaPathService::get($user, 2);
         $path = $photo->storePublicly($storagePath);
-        $hash = \hash_file('sha256', $photo);
         $license = null;
         $mime = $photo->getMimeType();
 
@@ -2163,8 +2232,6 @@ class ApiV1Controller extends Controller
                 $license = $compose['default_license'];
             }
         }
-
-        abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
         if ($request->has('replace_id')) {
             $rpid = $request->input('replace_id');
@@ -2569,7 +2636,12 @@ class ApiV1Controller extends Controller
             $limit = 40;
         }
         $pid = $request->user()->profile_id;
-        $includeReblogs = $request->filled('include_reblogs') ? $request->boolean('include_reblogs') : false;
+        $userSettings = $request->user()->settings;
+        $other = $userSettings->other ?? [];
+
+        $userEnableReblogs = data_get($other, 'enable_reblogs', false);
+        $includeReblogs = $request->filled('include_reblogs') ? $request->boolean('include_reblogs') : $userEnableReblogs;
+
         $nullFields = $includeReblogs ?
             ['in_reply_to_id'] :
             ['in_reply_to_id', 'reblog_of_id'];

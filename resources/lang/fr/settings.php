@@ -82,6 +82,7 @@ return [
 
     'privacy.privacy_settings' =>                                       'Paramètres de confidentilité et vie privée',
     'privacy.private_account' =>                                        'Compte privé',
+        'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => 'Lorsque votre compte est privé, seules les personnes que vous suivez peuvent voir vos publications.',
     'privacy.when_your_account_is_private_only_people_you_etc' =>       'Quand votre compte est privé, seuls les personnes que vous approuvez peuvent voir vos photos et vidéos sur Pixelfed. Vos abonnés actuels ne seront pas affectés par le changement.',
     'privacy.disable_search_engine_indexing' =>                         'Désactiver l’indexation par les moteurs de recherche',
     'privacy.when_your_account_is_visible_to_search_engines_etc' =>     'Quand votre compte est visible par les moteurs de recherche, ils peuvent explorer et stocker vos informations.',

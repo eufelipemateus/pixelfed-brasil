@@ -33,6 +33,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('gc:sessions')->twiceDaily(13, 23)->onOneServer();
         $schedule->command('app:weekly-instance-scan')->weeklyOn(2, '4:20')->onOneServer();
         $schedule->command('app:cleanup-expired-app-registrations')->dailyAt(1)->onOneServer();
+        $schedule->command('passport:purge')->everyFourHours(20)->onOneServer();
 
         if ((bool) config_cache('pixelfed.cloud_storage') && (bool) config_cache('media.delete_local_after_cloud')) {
             $schedule->command('media:s3gc')->hourlyAt(15);
@@ -57,12 +58,6 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:update-pages-view-statitics')->everyTenMinutes(); // Analytic statistics for pages
         $schedule->command('app:desactive-inactive-account')->weeklyOn(6, '03:00')->onOneServer();
 
-
-        if (app()->environment('production')) {
-           // $schedule->command('app:send-weekly-inactive-users')->weeklyOn(0, '10:00')->onOneServer();
-           // $schedule->command('app:send-weekly-popular-posts')->weeklyOn(1, '08:00')->onOneServer();
-            $schedule->command('app:send-popular-in-month')->monthlyOn(1, '08:00')->onOneServer();
-        }
     }
 
     /**

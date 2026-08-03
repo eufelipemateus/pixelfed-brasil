@@ -52,8 +52,6 @@ use Jenssegers\Agent\Agent;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use Mail;
-use Purify;
-use App\Util\Lexer\Autolink;
 use App\Enums\StatusEnums;
 
 class ApiV1Dot1Controller extends Controller
@@ -1270,9 +1268,15 @@ class ApiV1Dot1Controller extends Controller
             abort(403, 'Invalid or unsupported mime type.');
         }
 
+        if ($user->last_active_at == null) {
+            return [];
+        }
+
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
+
         $storagePath = MediaPathService::get($user, 2);
         $path = $photo->storePublicly($storagePath);
-        $hash = \hash_file('sha256', $photo);
         $license = null;
         $mime = $photo->getMimeType();
 
@@ -1286,17 +1290,11 @@ class ApiV1Dot1Controller extends Controller
             }
         }
 
-        abort_if(MediaBlocklistService::exists($hash) == true, 451);
-
         $visibility = $profile->is_private ? 'private' : (
             $profile->unlisted == true &&
             $request->input('visibility', 'public') == 'public' ?
             'unlisted' :
             $request->input('visibility', 'public'));
-
-        if ($user->last_active_at == null) {
-            return [];
-        }
         $defaultCaption = '';
         $cleanedStatus = app(SanitizeService::class)->html($request->input('status', ''));
         $content = $request->filled('status') ? strip_tags($cleanedStatus) : $defaultCaption;

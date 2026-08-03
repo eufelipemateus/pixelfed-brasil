@@ -1053,7 +1053,7 @@ trait AdminReportController
                     AccountService::del($profile->id);
                     DeleteAccountPipeline::dispatch($user)->onQueue('high');
                 } else {
-                    $profile->status = 'delete';
+                    $profile->status = StatusEnums::DELETE_QUEUE;
                     $profile->delete_after = now()->addMonth();
                     $profile->save();
                     AccountService::del($profile->id);
@@ -1590,10 +1590,10 @@ trait AdminReportController
                     'origin' => config('pixelfed.domain.app'),
                     'date' => now()->format('c'),
                     'type' => 'moderated-profiles',
-                    'version' => "1.0"
+                    'version' => '1.0',
                 ],
-                'data' => $res
-            ], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+                'data' => $res,
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         }, 'data-export.json');
     }
 

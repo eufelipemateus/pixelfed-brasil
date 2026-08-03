@@ -77,15 +77,19 @@ return [
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => true,
+            'options' => [
+                'request_checksum_calculation' => env('AWS_REQUEST_CHECKSUM_CALCULATION', 'WHEN_SUPPORTED'),
+                'response_checksum_validation' => env('AWS_RESPONSE_CHECKSUM_VALIDATION', 'WHEN_SUPPORTED'),
+            ],
         ],
         'r2' => [
             'driver' => 's3',
             'key' => env('R2_ACCESS_KEY_ID'),
             'secret' => env('R2_SECRET_ACCESS_KEY'),
-            'region' => 'us-east-2',
+            'region' => env('R2_REGION', 'auto'),
             'bucket' => env('R2_BUCKET'),
             'endpoint' => env('R2_ENDPOINT'),
-            'use_path_style_endpoint' => true,
+            'use_path_style_endpoint' => false,
         ],
 
         'alt-primary' => [

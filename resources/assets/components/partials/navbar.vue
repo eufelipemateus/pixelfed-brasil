@@ -2,7 +2,7 @@
     <nav class="metro-nav navbar navbar-expand navbar-light navbar-laravel sticky-top shadow-none py-1">
         <div class="container-fluid">
                 <a class="navbar-brand d-flex align-items-center" href="/i/web" title="Logo">
-                    <img src="/img/pixelfed-icon-color.svg" height="30px" class="px-2" loading="eager" alt="Pixelfed logo">
+                    <img :src="config.logo" height="30px" class="px-2" loading="eager" alt="Pixelfed logo">
                     <span class="font-weight-bold mb-0 d-none d-sm-block" style="font-size:20px;">
                         {{ brandName }}
                     </span>
@@ -255,7 +255,7 @@
 
                                         <li v-if="user.is_admin" class="nav-item">
                                             <hr class="mt-n1" style="opacity: 0.4;margin-bottom: 0;" />
-                                            <a class="nav-link" href="https://www.paypal.com/donate/?business=J7HKMWTQL7E8L&no_recurring=0&item_name=Contribua+para+o+crescimento+do+Pixelfed+Brasil%21&currency_code=BRL"  target="_blank">
+                                            <a class="nav-link" href="/donate"  target="_blank">
                                                 <span class="icon text-lighter">
                                                     <i class="far fa-donate"></i>
                                                 </span>
@@ -393,6 +393,7 @@
                 user: window._sharedData.user,
                 profileLayoutModel: 'grid',
                 hasLocalTimeline: true,
+                config: window.App.config,
                 hasNetworkTimeline: false
             }
         },

@@ -18,7 +18,7 @@ class FetchCacheService
         $ar = $allowRedirects ? 'ar1:' : 'ar0';
         $key = self::CACHE_KEY.sha1($url).':'.$vc.$ar.$ttl;
         if (Cache::has($key)) {
-            return false;
+            return Cache::get($key);
         }
 
         if ($verifyCheck) {
@@ -70,10 +70,11 @@ class FetchCacheService
 
         if (! $res->ok()) {
             Cache::put($key, 1, $ttl);
-
             return false;
         }
 
-        return $res->json();
+        $result = $res->json();
+        Cache::put($key, $result, $ttl);
+        return $result;
     }
 }

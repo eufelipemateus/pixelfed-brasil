@@ -45,6 +45,7 @@ return [
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
             'verify_peer' => env('MAIL_SMTP_VERIFY_PEER', true),
+            'auto_tls' => env('MAIL_AUTO_TLS', true),
         ],
 
         'ses' => [
@@ -72,7 +73,7 @@ return [
 
         'sendmail' => [
             'transport' => 'sendmail',
-            'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
+            'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i --'),
         ],
 
         'log' => [

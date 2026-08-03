@@ -31,6 +31,7 @@ class Nodeinfo
                         'repo' => 'https://github.com/eufelipemateus/pixelfed-brasil',
                     ],
                     'config' => $features,
+                    "localBubbleInstances" => ["felipemateus.com"]
                 ],
                 'protocols' => [
                     'activitypub',

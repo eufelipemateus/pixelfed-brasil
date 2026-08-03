@@ -6,11 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Report extends Model
 {
-    protected $casts = [
-    	'admin_seen' => 'datetime'
-    ];
-
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'admin_seen' => 'datetime',
+        ];
+    }
 
     public function url()
     {
@@ -28,16 +31,16 @@ class Report extends Model
 
         switch ($class) {
             case 'App\Status':
-             $column = 'id';
-              break;
+                $column = 'id';
+                break;
 
             default:
-             $class = 'App\Status';
-             $column = 'id';
-              break;
+                $class = 'App\Status';
+                $column = 'id';
+                break;
         }
 
-        return (new $class())->where($column, $this->object_id)->first();
+        return (new $class)->where($column, $this->object_id)->first();
     }
 
     public function status()

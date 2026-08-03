@@ -2,6 +2,7 @@
 
 namespace App\Util\ActivityPub;
 
+use App\Enums\StatusEnums;
 use App\Http\Controllers\ProfileController;
 use App\Status;
 use App\Transformer\ActivityPub\Verb\CreateNote;
@@ -14,7 +15,7 @@ class Outbox
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
         abort_if(! config('federation.activitypub.outbox'), 404);
 
-        if ($profile->status != null) {
+        if ($profile->status !== StatusEnums::ACTIVE) {
             return ProfileController::accountCheck($profile);
         }
 
@@ -31,8 +32,8 @@ class Outbox
 
         $count = Status::whereProfileId($profile->id)->count();
 
-        $fractal = new Fractal\Manager();
-        $resource = new Fractal\Resource\Collection($timeline, new CreateNote());
+        $fractal = new Fractal\Manager;
+        $resource = new Fractal\Resource\Collection($timeline, new CreateNote);
         $res = $fractal->createData($resource)->toArray();
 
         $outbox = [

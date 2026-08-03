@@ -28,6 +28,7 @@ return [
 		'next' => 'Next',
 		'close' => 'Close',
 		'clickHere' => 'click here',
+        'show' => 'Show',
 
 		'sensitive' => 'Sensitive',
 		'sensitiveContent' => 'Sensitive Content',
@@ -35,6 +36,8 @@ return [
         'loading' => 'Loading...',
         'continue' => 'Continue',
         'translate' => 'Translate',
+        'status_not_viewable' => 'This status cannot be viewed at this time.',
+
 	],
 
 	'site' => [

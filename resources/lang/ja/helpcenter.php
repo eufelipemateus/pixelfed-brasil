@@ -10,17 +10,19 @@ return [
 	'profile' => 'プロフィール',
 	'stories' => 'ストーリー',
 	'hashtags' => 'ハッシュダグ',
-	'discover' => '発見',
+	'discover' => '探索',
 	'directMessages' => 'ダイレクトメッセージ',
 	'timelines' => 'タイムライン',
 
 	'embed'	=> '埋め込む',
 	'communityGuidelines' => 'コミュニティガイドライン',
-	'whatIsTheFediverse' => 'fediverseとは?',
-	'controllingVisibility' => '可視性制御',
+	'whatIsTheFediverse' => 'fediverseとは',
+	'controllingVisibility' => '公開範囲のコントロール',
 	'blockingAccounts' => 'ブロックしたアカウント',
 	'safetyTips' => '安全のためのヒント',
 	'reportSomething' => '報告する',
-	'dataPolicy' => 'データポリシー'
+	'dataPolicy' => 'データポリシー',
+
+	'taggingPeople' => 'タグ付けされた人物'
 
 ];

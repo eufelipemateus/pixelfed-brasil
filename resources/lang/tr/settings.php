@@ -17,13 +17,13 @@ return [
     'export' =>                 'Dışa Aktar',
     'labs' =>                   'Labs',
     'parental_controls' =>      'Ebeveyn Kontrolleri',
-  
+
     'submit' =>                 'Gönder',
     'error' =>                  'Hata',
     'cancel' =>                 'İptal',
     'save' =>                   'Kaydet',
     'download' =>               'İndir',
-    
+
     'home.account_settings' =>                                          'Hesap Ayarları',
     'home.change_profile_photo' =>                                      'Profil Fotoğrafını Değiştir',
     'home.select_a_profile_photo' =>                                    'Profil Fotoğrafı Seç',
@@ -40,15 +40,15 @@ return [
     'home.select_pronouns' =>                                           'Seçilen Zamirler',
     'home.storage_usage' =>                                             'Depolama Kullanımı',
     'home.storage_used' =>                                              'Depolama Kullanıldı',
-        
+
     'email.email_settings' =>                                           'Email Ayarları',
     'email.email_address' =>                                            'Email Adresi',
     'email.verified' =>                                                 'Doğrulandı',
     'email.unverified' =>                                               'Doğrulanmadı',
     'email.verify_your_email' =>                                        'mail adresin doğrulandı',
-    
+
     'media.default_license' =>                                          'Varsayılan Lisans',
-    
+
     'password.update_password' =>                                       'Parola Değiştir',
     'password.current' =>                                               'Mevcut',
     'password.your_current_password' =>                                 'Mevcut Parolan',
@@ -56,9 +56,10 @@ return [
     'password.enter_new_password_here' =>                               'Yeni parola gir',
     'password.confirm' =>                                               'Onayla',
     'password.confirm_new_password' =>                                  'Yeni parolayı onayla',
-    
+
     'privacy.privacy_settings' =>                                       'Gizlilik Ayarları',
     'privacy.private_account' =>                                        'Gizli Hesap',
+        'privacy.when_your_account_is_private_only_people_you_follow_can_see_your_posts' => 'Hesabınız gizli olduğunda, yalnızca takip ettiğiniz kişiler gönderilerinizi görebilir.',
     'privacy.show_on_directory' =>                                      'Dizinde göster',
     'privacy.show_follower_count' =>                                    'Takipçi Sayısını Göster',
     'privacy.disable_embeds' =>                                         'Atom Beslemesini Gayri Faal Kıl',
@@ -73,7 +74,7 @@ return [
     'privacy.remove_existing_followers' =>                              'Mevcut takipçileri kaldır',
     'privacy.allow_new_follow_requests' =>                              'Yeni takip isteklerine izin ver',
     'privacy.an_error_occured_please_try_again' =>                      'Bir hata oluştur. Lütfen yeniden deneyin.',
-  
+
     'relationships' =>                                                          'İlişkiler',
     'relationships.followers' =>                                                'Takipçiler',
     'relationships.following' =>                                                'Takipler',
@@ -90,7 +91,7 @@ return [
     'relationships.unfollow_successful' =>                                      'Takip Bırakıldı',
     'relationships.you_have_successfully_unfollowed_that_user' =>               'Kullanıcıyı başarıyla takip etmeyi bıraktınız',
     'relationships.you_have_successfully_unfollowed_that_hashtag' =>            'Bu etiketi başarıyla takip etmeyi bıraktınız',
-    
+
     'security.two_factor_authentication' =>                                     'Two-factor authentication',
     'security.enabled' =>                                                       'Faal',
     'security.danger_zone' =>                                                   'Tehlikeli Bölge',
@@ -115,11 +116,11 @@ return [
     // incomplete
     // import/ig.blade.php seems not in use anymore
     'import.import_from_instagram' =>                                           'İnstagram\'dan İçe Aktar',
-    
+
     'export.data_export' =>                                                     'Dışarı Veri Aktar',
     'export.statuses' =>                                                        'Durumlar',
     'export.mute_block_lists' =>                                                'Sessiz/Engel Listesi',
-    
+
     // incomplete
     // some language outside the blades (in app/Http/Controllers/Settings/LabsSettings.php)
     'labs.use_dark_mode_theme' =>                                               'Karanlık mod temasını kullan',
