@@ -110,7 +110,19 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
             return;
         }
 
-        $attachments = $normalized['attachment'] ?? $activity['attachment'] ?? [];
+        $hasAttachmentKey = array_key_exists('attachment', $activity);
+        $attachments = $normalized['attachment'] ?? null;
+
+        if ($attachments === null && $hasAttachmentKey) {
+            // Attachment foi enviado mas falhou na normalizacao/validacao.
+            // Preserva estado anterior integralmente.
+            return;
+        }
+
+        if ($attachments === null) {
+            $attachments = $activity['attachment'] ?? [];
+        }
+
         if (! is_array($attachments)) {
             return;
         }
@@ -137,7 +149,8 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
 
             $newMedia = [];
             foreach ($nm as $key => $n) {
-                $newMedia[] = $this->persistRemoteMedia($status, $n, $key + 1);
+                $existingMedia = $ogm->get($key);
+                $newMedia[] = $this->persistRemoteMedia($status, $n, $key + 1, $existingMedia);
             }
 
             foreach ($newMedia as $media) {
@@ -148,7 +161,7 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         });
     }
 
-    protected function persistRemoteMedia(Status $status, array $attachment, int $order): Media
+    protected function persistRemoteMedia(Status $status, array $attachment, int $order, ?Media $existingMedia = null): Media
     {
         $m = new Media;
         $m->status_id = $status->id;
@@ -173,6 +186,8 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
 
         if (isset($attachment['thumbnail_url']) && is_string($attachment['thumbnail_url'])) {
             $m->thumbnail_url = $attachment['thumbnail_url'];
+        } elseif ($existingMedia && is_string($existingMedia->thumbnail_url) && strlen($existingMedia->thumbnail_url) > 0) {
+            $m->thumbnail_url = $existingMedia->thumbnail_url;
         }
 
         return $m;

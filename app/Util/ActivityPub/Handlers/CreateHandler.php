@@ -165,6 +165,14 @@ class CreateHandler implements ActivityHandler
             $actor,
             $activity
         );
+
+        $status = Status::whereObjectUrl($activity['id'] ?? null)
+            ->orWhere('uri', $url)
+            ->first();
+
+        if ($status && isset($activity['attachment']) && ! empty($activity['attachment']) && ! $status->media()->exists()) {
+            $status->delete();
+        }
     }
 
     public function handleNoteReply()

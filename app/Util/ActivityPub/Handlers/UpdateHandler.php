@@ -77,7 +77,20 @@ class UpdateHandler implements ActivityHandler
         }
 
         $normalized = null;
-        if (in_array($activity['type'], ['Article', 'Video'])) {
+        if ($activity['type'] === 'Note') {
+            if (! $this->isValidAttributedTo($actorUrl, $activity['attributedTo'] ?? null)) {
+                return;
+            }
+
+            $normalizedAttachment = Helpers::normalizeNoteAttachmentsForUpdate($activity);
+            if (array_key_exists('attachment', $activity) && $normalizedAttachment === null) {
+                return;
+            }
+
+            $normalized = [
+                'attachment' => $normalizedAttachment,
+            ];
+        } elseif (in_array($activity['type'], ['Article', 'Video'])) {
             $normalized = $this->normalizer->normalizeForIngest($actor, $activity);
             if (! $normalized) {
                 return;
@@ -92,5 +105,34 @@ class UpdateHandler implements ActivityHandler
             'object' => $activity,
             'normalized' => $normalized,
         ]);
+    }
+
+    protected function isValidAttributedTo(string $actorUrl, mixed $attributedTo): bool
+    {
+        if (! $attributedTo) {
+            return true;
+        }
+
+        $candidates = [];
+
+        if (is_string($attributedTo)) {
+            $candidates[] = $attributedTo;
+        } elseif (is_array($attributedTo)) {
+            foreach ($attributedTo as $item) {
+                if (is_string($item)) {
+                    $candidates[] = $item;
+                } elseif (is_array($item) && isset($item['id']) && is_string($item['id'])) {
+                    $candidates[] = $item['id'];
+                }
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if (Helpers::validateUrl($candidate) === $actorUrl) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

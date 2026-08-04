@@ -937,7 +937,9 @@ class Helpers
             return;
         }
 
+        $object = isset($data['object']) && is_array($data['object']) ? $data['object'] : $data;
         $attachments = self::getAttachments($data);
+        $attachments = self::applyLoopsPreviewToAttachments($object, $attachments);
         $profile = $status->profile;
         $storagePath = MediaPathService::get($profile, 2);
         $allowedTypes = explode(',', config_cache('pixelfed.media_types'));
@@ -952,6 +954,184 @@ class Helpers
         }
 
         $status->viewType();
+    }
+
+    public static function normalizeNoteAttachmentsForUpdate(array $activity): ?array
+    {
+        if (! isset($activity['attachment']) || ! is_array($activity['attachment']) || ! count($activity['attachment'])) {
+            return null;
+        }
+
+        if (! self::verifyAttachments($activity)) {
+            return null;
+        }
+
+        $attachments = self::applyLoopsPreviewToAttachments($activity, $activity['attachment']);
+        $normalized = [];
+
+        foreach ($attachments as $attachment) {
+            if (! is_array($attachment)) {
+                continue;
+            }
+
+            if (! isset($attachment['mediaType'], $attachment['url'])) {
+                continue;
+            }
+
+            $validUrl = self::validateUrl(is_string($attachment['url']) ? $attachment['url'] : null);
+            if (! $validUrl) {
+                continue;
+            }
+
+            $candidate = $attachment;
+            $candidate['url'] = $validUrl;
+            $normalized[] = $candidate;
+        }
+
+        return count($normalized) ? $normalized : null;
+    }
+
+    public static function applyLoopsPreviewToAttachments(array $object, array $attachments): array
+    {
+        $preview = self::normalizeLoopsPreview($object);
+
+        if (! $preview) {
+            return $attachments;
+        }
+
+        foreach ($attachments as $idx => $attachment) {
+            if (! is_array($attachment)) {
+                continue;
+            }
+
+            $mediaType = $attachment['mediaType'] ?? null;
+            if (! is_string($mediaType) || ! str_starts_with($mediaType, 'video/')) {
+                continue;
+            }
+
+            $attachments[$idx]['thumbnail_url'] = $preview['thumbnail_url'];
+
+            if (! isset($attachments[$idx]['width']) && isset($preview['width'])) {
+                $attachments[$idx]['width'] = $preview['width'];
+            }
+
+            if (! isset($attachments[$idx]['height']) && isset($preview['height'])) {
+                $attachments[$idx]['height'] = $preview['height'];
+            }
+
+            if (! isset($attachments[$idx]['name']) && isset($preview['name'])) {
+                $attachments[$idx]['name'] = $preview['name'];
+            }
+
+            break;
+        }
+
+        return $attachments;
+    }
+
+    public static function normalizeLoopsPreview(array $object): ?array
+    {
+        if (! array_key_exists('preview', $object)) {
+            return null;
+        }
+
+        $preview = $object['preview'];
+        $items = is_array($preview) && array_is_list($preview) ? $preview : [$preview];
+        $allowedImageMimes = collect(explode(',', config_cache('pixelfed.media_types')))
+            ->map(fn ($mime) => trim((string) $mime))
+            ->filter(fn ($mime) => str_starts_with($mime, 'image/'))
+            ->values()
+            ->toArray();
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            if (isset($item['type']) && $item['type'] !== 'Image') {
+                continue;
+            }
+
+            $urlInfo = self::extractPreviewUrlAndMime($item);
+            if (! $urlInfo) {
+                continue;
+            }
+
+            $mime = $urlInfo['mime'];
+            if (! in_array($mime, $allowedImageMimes)) {
+                continue;
+            }
+
+            $validUrl = self::validateUrl($urlInfo['url']);
+            if (! $validUrl) {
+                continue;
+            }
+
+            $width = isset($item['width']) ? filter_var($item['width'], FILTER_VALIDATE_INT) : null;
+            $height = isset($item['height']) ? filter_var($item['height'], FILTER_VALIDATE_INT) : null;
+
+            if (($width !== null && ($width < 1 || $width > 5000)) || ($height !== null && ($height < 1 || $height > 5000))) {
+                continue;
+            }
+
+            $name = null;
+            if (isset($item['name']) && is_string($item['name'])) {
+                $name = mb_substr($item['name'], 0, 500);
+            }
+
+            $normalized = [
+                'thumbnail_url' => $validUrl,
+            ];
+
+            if ($width !== null) {
+                $normalized['width'] = $width;
+            }
+
+            if ($height !== null) {
+                $normalized['height'] = $height;
+            }
+
+            if ($name !== null) {
+                $normalized['name'] = $name;
+            }
+
+            return $normalized;
+        }
+
+        return null;
+    }
+
+    private static function extractPreviewUrlAndMime(array $preview): ?array
+    {
+        $urlField = $preview['url'] ?? null;
+
+        if (is_string($urlField)) {
+            $mime = isset($preview['mediaType']) && is_string($preview['mediaType']) ? $preview['mediaType'] : null;
+            if (! $mime) {
+                return null;
+            }
+
+            return [
+                'url' => $urlField,
+                'mime' => $mime,
+            ];
+        }
+
+        if (is_array($urlField)) {
+            $href = $urlField['href'] ?? $urlField['url'] ?? null;
+            $mime = $urlField['mediaType'] ?? $preview['mediaType'] ?? null;
+
+            if (! is_string($href) || ! is_string($mime)) {
+                return null;
+            }
+
+            return [
+                'url' => $href,
+                'mime' => $mime,
+            ];
+        }
+
+        return null;
     }
 
     /**
