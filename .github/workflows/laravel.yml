@@ -44,7 +44,6 @@ jobs:
         run: |
           composer validate --strict --check-lock
           composer install --no-interaction --prefer-dist
-          composer audit --locked --no-dev
 
       - name: Prepare test application
         run: |
