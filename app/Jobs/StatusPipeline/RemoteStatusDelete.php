@@ -16,6 +16,7 @@ use App\Report;
 use App\Services\Account\AccountStatService;
 use App\Services\AccountService;
 use App\Services\CollectionService;
+use App\Services\DirectMessageService;
 use App\Services\NotificationService;
 use App\Services\StatusService;
 use App\Status;
@@ -140,14 +141,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             });
         $dms = DirectMessage::whereStatusId($status->id)->get();
         foreach ($dms as $dm) {
-            $not = Notification::whereItemType('App\DirectMessage')
-                ->whereItemId($dm->id)
-                ->first();
-            if ($not) {
-                NotificationService::del($not->profile_id, $not->id);
-                $not->forceDeleteQuietly();
-            }
-            $dm->delete();
+            DirectMessageService::deleteDm($dm);
         }
         Like::whereStatusId($status->id)->forceDelete();
         Media::whereStatusId($status->id)
