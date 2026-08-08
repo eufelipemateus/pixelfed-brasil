@@ -6,6 +6,7 @@ use App\AccountInterstitial;
 use App\Bookmark;
 use App\CollectionItem;
 use App\DirectMessage;
+use App\Jobs\ActivityPub\PubDeliver;
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
 use App\Like;
 use App\Media;
@@ -14,6 +15,7 @@ use App\Mention;
 use App\Notification;
 use App\Report;
 use App\Services\CollectionService;
+use App\Services\DirectMessageService;
 use App\Services\NotificationService;
 use App\Services\StatusService;
 use App\Status;
@@ -30,7 +32,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Jobs\ActivityPub\PubDeliver;
 
 class StatusDelete implements ShouldQueue
 {
@@ -128,14 +129,7 @@ class StatusDelete implements ShouldQueue
 
         $dms = DirectMessage::whereStatusId($status->id)->get();
         foreach ($dms as $dm) {
-            $not = Notification::whereItemType('App\DirectMessage')
-                ->whereItemId($dm->id)
-                ->first();
-            if ($not) {
-                NotificationService::del($not->profile_id, $not->id);
-                $not->forceDeleteQuietly();
-            }
-            $dm->delete();
+            DirectMessageService::deleteDm($dm);
         }
         Like::whereStatusId($status->id)->delete();
 
