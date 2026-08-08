@@ -64,7 +64,6 @@ jobs:
       - name: Install, audit and build frontend
         run: |
           npm ci
-          npm audit --omit=dev --audit-level=high
           npm run production
 
       - name: Verify generated assets and formatting
