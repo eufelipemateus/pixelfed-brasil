@@ -114,7 +114,7 @@ class InstanceActorController extends Controller
             'type' => 'OrderedCollection',
             'totalItems' => 0,
             'first' => config('app.url') . '/i/actor/outbox?page=true',
-            'last' => config('app.url') . '/i/actor/outbox?min_id=0page=true',
+            'last' => config('app.url') . '/i/actor/outbox?min_id=0&page=true',
         ], JSON_UNESCAPED_SLASHES);
 
         return response($res)->header('Content-Type', 'application/activity+json');
