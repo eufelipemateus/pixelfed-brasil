@@ -9,6 +9,8 @@
 			<div class="spacer">·</div>
 			<a href="/privacy">{{ $t('navmenu.privacy') }}</a>
             <div class="spacer">·</div>
+            <a href="/app">App</a>
+            <div class="spacer">·</div>
             <a v-if="config.show_legal_notice_link" href="/legal-notice">Legal Notice</a>
             <div v-if="config.show_legal_notice_link" class="spacer">·</div>
 			<a href="/donate" style="background: #ff6600; color: #fff; border-radius: 20px; font-weight: bold; padding: 6px 18px;" >{{ $t('navmenu.donate') }}</a>
