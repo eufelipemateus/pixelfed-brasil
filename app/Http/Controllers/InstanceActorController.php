@@ -207,19 +207,25 @@ class InstanceActorController extends Controller
                 'object' => $instanceActorUrl,
             ],
         ];
+        $acceptJson = json_encode($accept);
+
+        if (! $acceptJson) {
+            return;
+        }
 
         $version = config('pixelfed.version');
         $appUrl = config('app.url');
-        $headers = HttpSignature::instanceActorSign($relay->inbox_url, $accept, [
-            'Content-Type' => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        $headers = HttpSignature::instanceActorSign($relay->inbox_url, $acceptJson, [
+            'Accept' => 'application/activity+json',
+            'Content-Type' => 'application/activity+json',
             'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
         ]);
 
         Http::withHeaders($headers)
             ->timeout(config('federation.activitypub.delivery.timeout', 30))
             ->withBody(
-                json_encode($accept, JSON_UNESCAPED_SLASHES),
-                'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+                $acceptJson,
+                'application/activity+json'
             )
             ->send('POST', $relay->inbox_url);
     }
