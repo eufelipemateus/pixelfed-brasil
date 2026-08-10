@@ -25,6 +25,11 @@ class Instance extends Model
         ];
     }
 
+    public function setDomainAttribute($value): void
+    {
+        $this->attributes['domain'] = strtolower($value);
+    }
+
     // To get all moderated instances, we need to search where (banned OR unlisted)
     public function scopeModerated($query): void
     {
