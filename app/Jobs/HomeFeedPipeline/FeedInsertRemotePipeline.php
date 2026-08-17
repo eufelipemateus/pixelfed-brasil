@@ -6,7 +6,9 @@ use App\Models\UserDomainBlock;
 use App\Services\FollowerService;
 use App\Services\HomeTimelineService;
 use App\Services\StatusService;
+use App\Status;
 use App\UserFilter;
+use App\Util\ActivityPub\Helpers;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,7 +20,10 @@ use Illuminate\Support\Facades\Log;
 
 class FeedInsertRemotePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     protected $sid;
 
@@ -97,7 +102,9 @@ class FeedInsertRemotePipeline implements ShouldBeUniqueUntilProcessing, ShouldQ
         }
 
         if (! in_array($status['pf_type'], ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])) {
-            return;
+            if (! $this->shouldInsertArticleTextStatus($status)) {
+                return;
+            }
         }
 
         $ids = FollowerService::localFollowerIds($pid);
@@ -131,5 +138,19 @@ class FeedInsertRemotePipeline implements ShouldBeUniqueUntilProcessing, ShouldQ
                 HomeTimelineService::add($id, $sid);
             }
         }
+    }
+
+    protected function shouldInsertArticleTextStatus(array $status): bool
+    {
+        if (($status['pf_type'] ?? null) !== 'text') {
+            return false;
+        }
+
+        $model = Status::select('id', 'entities')->find($status['id']);
+        if (! $model) {
+            return false;
+        }
+
+        return Helpers::isArticleObjectStatus($model);
     }
 }

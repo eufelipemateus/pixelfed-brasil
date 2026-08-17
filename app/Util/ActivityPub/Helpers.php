@@ -5,6 +5,7 @@ namespace App\Util\ActivityPub;
 use App\Instance;
 use App\Jobs\AvatarPipeline\RemoteAvatarFetch;
 use App\Jobs\HomeFeedPipeline\FeedInsertRemotePipeline;
+use App\Jobs\InstancePipeline\FetchNodeinfoPipeline;
 use App\Jobs\MediaPipeline\MediaStoragePipeline;
 use App\Jobs\StatusPipeline\StatusReplyPipeline;
 use App\Jobs\StatusPipeline\StatusTagsPipeline;
@@ -23,13 +24,13 @@ use App\Services\SanitizeService;
 use App\Services\UserFilterService;
 use App\Status;
 use App\Util\Media\License;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use League\Uri\Exceptions\UriException;
 use League\Uri\Uri;
-use Validator;
 use Purify;
+use Validator;
 
 class Helpers
 {
@@ -79,15 +80,21 @@ class Helpers
 
         $activity = $data['object'];
         $mimeTypes = explode(',', config_cache('pixelfed.media_types'));
-        $mediaTypes = in_array('video/mp4', $mimeTypes) ?
-            ['Document', 'Image', 'Video'] :
-            ['Document', 'Image'];
+        $mediaTypes = self::getSupportedMediaTypes();
 
         if (! isset($activity['attachment']) || empty($activity['attachment'])) {
             return false;
         }
 
-        return Validator::make($activity['attachment'], [
+        return self::validateAttachmentCollection($activity['attachment'], $mediaTypes, $mimeTypes);
+    }
+
+    /**
+     * Validate attachment collection
+     */
+    public static function validateAttachmentCollection(array $attachments, array $mediaTypes, array $mimeTypes): bool
+    {
+        return Validator::make($attachments, [
             '*.type' => ['required', 'string', Rule::in($mediaTypes)],
             '*.url' => 'required|url',
             '*.mediaType' => ['required', 'string', Rule::in($mimeTypes)],
@@ -265,7 +272,7 @@ class Helpers
     public static function hasValidDNS(string $host): bool
     {
         $hash = hash('sha256', $host);
-        $key = self::URL_CACHE_PREFIX . "valid-dns:sha256-{$hash}";
+        $key = self::URL_CACHE_PREFIX."valid-dns:sha256-{$hash}";
 
         return Cache::remember($key, self::CACHE_TTL, function () use ($host) {
             return DomainService::hasValidDns($host);
@@ -534,7 +541,7 @@ class Helpers
 
         if (is_array($attributedTo)) {
             return collect($attributedTo)
-                ->filter(fn($o) => $o && isset($o['type']) && $o['type'] == 'Person')
+                ->filter(fn ($o) => $o && isset($o['type']) && $o['type'] == 'Person')
                 ->pluck('id')
                 ->first();
         }
@@ -652,12 +659,13 @@ class Helpers
         return self::validateUrl($id) && self::validateUrl($url);
     }
 
-    static function htmlToPlainTextWithLineBreaks(string $html): string
+    public static function htmlToPlainTextWithLineBreaks(string $html): string
     {
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $html = preg_replace(['/<br\s*\/?>/i', '/<\/p>/i'], "\n", $html);
         $text = strip_tags($html);
         $text = preg_replace("/\n{3,}/", "\n\n", $text);
+
         return trim($text);
     }
 
@@ -727,6 +735,17 @@ class Helpers
         ) {
             FeedInsertRemotePipeline::dispatch($status->id, $profileId)
                 ->onQueue('feed');
+
+            return;
+        }
+
+        if (
+            $status->in_reply_to_id === null &&
+            $status->type === 'text' &&
+            self::isArticleObjectStatus($status)
+        ) {
+            FeedInsertRemotePipeline::dispatch($status->id, $profileId)
+                ->onQueue('feed');
         }
     }
 
@@ -754,6 +773,18 @@ class Helpers
             ->toArray();
     }
 
+    public static function isArticleObjectStatus(Status $status): bool
+    {
+        $entities = $status->entities;
+
+        if (is_string($entities)) {
+            $decoded = json_decode($entities, true);
+            $entities = json_last_error() === JSON_ERROR_NONE ? $decoded : null;
+        }
+
+        return is_array($entities) && (($entities['ap_object_type'] ?? null) === 'article');
+    }
+
     public static function getSensitive($activity, $url)
     {
         if (! $url || ! strlen($url)) {
@@ -768,6 +799,22 @@ class Helpers
         }
 
         return $cw;
+    }
+
+    public static function mergeStatusEntities(Status $status, array $extra): array
+    {
+        $current = $status->entities;
+
+        if (is_string($current)) {
+            $decoded = json_decode($current, true);
+            $current = json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : [];
+        }
+
+        if (! is_array($current)) {
+            $current = [];
+        }
+
+        return array_merge($current, $extra);
     }
 
     public static function getReplyTo($activity)
@@ -890,7 +937,9 @@ class Helpers
             return;
         }
 
+        $object = isset($data['object']) && is_array($data['object']) ? $data['object'] : $data;
         $attachments = self::getAttachments($data);
+        $attachments = self::applyLoopsPreviewToAttachments($object, $attachments);
         $profile = $status->profile;
         $storagePath = MediaPathService::get($profile, 2);
         $allowedTypes = explode(',', config_cache('pixelfed.media_types'));
@@ -905,6 +954,184 @@ class Helpers
         }
 
         $status->viewType();
+    }
+
+    public static function normalizeNoteAttachmentsForUpdate(array $activity): ?array
+    {
+        if (! isset($activity['attachment']) || ! is_array($activity['attachment']) || ! count($activity['attachment'])) {
+            return null;
+        }
+
+        if (! self::verifyAttachments($activity)) {
+            return null;
+        }
+
+        $attachments = self::applyLoopsPreviewToAttachments($activity, $activity['attachment']);
+        $normalized = [];
+
+        foreach ($attachments as $attachment) {
+            if (! is_array($attachment)) {
+                continue;
+            }
+
+            if (! isset($attachment['mediaType'], $attachment['url'])) {
+                continue;
+            }
+
+            $validUrl = self::validateUrl(is_string($attachment['url']) ? $attachment['url'] : null);
+            if (! $validUrl) {
+                continue;
+            }
+
+            $candidate = $attachment;
+            $candidate['url'] = $validUrl;
+            $normalized[] = $candidate;
+        }
+
+        return count($normalized) ? $normalized : null;
+    }
+
+    public static function applyLoopsPreviewToAttachments(array $object, array $attachments): array
+    {
+        $preview = self::normalizeLoopsPreview($object);
+
+        if (! $preview) {
+            return $attachments;
+        }
+
+        foreach ($attachments as $idx => $attachment) {
+            if (! is_array($attachment)) {
+                continue;
+            }
+
+            $mediaType = $attachment['mediaType'] ?? null;
+            if (! is_string($mediaType) || ! str_starts_with($mediaType, 'video/')) {
+                continue;
+            }
+
+            $attachments[$idx]['thumbnail_url'] = $preview['thumbnail_url'];
+
+            if (! isset($attachments[$idx]['width']) && isset($preview['width'])) {
+                $attachments[$idx]['width'] = $preview['width'];
+            }
+
+            if (! isset($attachments[$idx]['height']) && isset($preview['height'])) {
+                $attachments[$idx]['height'] = $preview['height'];
+            }
+
+            if (! isset($attachments[$idx]['name']) && isset($preview['name'])) {
+                $attachments[$idx]['name'] = $preview['name'];
+            }
+
+            break;
+        }
+
+        return $attachments;
+    }
+
+    public static function normalizeLoopsPreview(array $object): ?array
+    {
+        if (! array_key_exists('preview', $object)) {
+            return null;
+        }
+
+        $preview = $object['preview'];
+        $items = is_array($preview) && array_is_list($preview) ? $preview : [$preview];
+        $allowedImageMimes = collect(explode(',', config_cache('pixelfed.media_types')))
+            ->map(fn ($mime) => trim((string) $mime))
+            ->filter(fn ($mime) => str_starts_with($mime, 'image/'))
+            ->values()
+            ->toArray();
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            if (isset($item['type']) && $item['type'] !== 'Image') {
+                continue;
+            }
+
+            $urlInfo = self::extractPreviewUrlAndMime($item);
+            if (! $urlInfo) {
+                continue;
+            }
+
+            $mime = $urlInfo['mime'];
+            if (! in_array($mime, $allowedImageMimes)) {
+                continue;
+            }
+
+            $validUrl = self::validateUrl($urlInfo['url']);
+            if (! $validUrl) {
+                continue;
+            }
+
+            $width = isset($item['width']) ? filter_var($item['width'], FILTER_VALIDATE_INT) : null;
+            $height = isset($item['height']) ? filter_var($item['height'], FILTER_VALIDATE_INT) : null;
+
+            if (($width !== null && ($width < 1 || $width > 5000)) || ($height !== null && ($height < 1 || $height > 5000))) {
+                continue;
+            }
+
+            $name = null;
+            if (isset($item['name']) && is_string($item['name'])) {
+                $name = mb_substr($item['name'], 0, 500);
+            }
+
+            $normalized = [
+                'thumbnail_url' => $validUrl,
+            ];
+
+            if ($width !== null) {
+                $normalized['width'] = $width;
+            }
+
+            if ($height !== null) {
+                $normalized['height'] = $height;
+            }
+
+            if ($name !== null) {
+                $normalized['name'] = $name;
+            }
+
+            return $normalized;
+        }
+
+        return null;
+    }
+
+    private static function extractPreviewUrlAndMime(array $preview): ?array
+    {
+        $urlField = $preview['url'] ?? null;
+
+        if (is_string($urlField)) {
+            $mime = isset($preview['mediaType']) && is_string($preview['mediaType']) ? $preview['mediaType'] : null;
+            if (! $mime) {
+                return null;
+            }
+
+            return [
+                'url' => $urlField,
+                'mime' => $mime,
+            ];
+        }
+
+        if (is_array($urlField)) {
+            $href = $urlField['href'] ?? $urlField['url'] ?? null;
+            $mime = $urlField['mediaType'] ?? $preview['mediaType'] ?? null;
+
+            if (! is_string($href) || ! is_string($mime)) {
+                return null;
+            }
+
+            return [
+                'url' => $href,
+                'mime' => $mime,
+            ];
+        }
+
+        return null;
     }
 
     /**
@@ -970,6 +1197,10 @@ class Helpers
             app(SanitizeService::class)->html($data['name']) :
             null;
 
+        if (isset($data['thumbnail_url'])) {
+            $media->thumbnail_url = $data['thumbnail_url'];
+        }
+
         if (isset($data['width'])) {
             $media->width = $data['width'];
         }
@@ -994,39 +1225,38 @@ class Helpers
     }
 
     /**
-     * Validate attachment collection
-     */
-    public static function validateAttachmentCollection(array $attachments, array $mediaTypes, array $mimeTypes): bool
-    {
-        return Validator::make($attachments, [
-            '*.type' => [
-                'required',
-                'string',
-                Rule::in($mediaTypes),
-            ],
-            '*.url' => 'required|url',
-            '*.mediaType' => [
-                'required',
-                'string',
-                Rule::in($mimeTypes),
-            ],
-            '*.name' => 'sometimes|nullable|string',
-            '*.blurhash' => 'sometimes|nullable|string|min:6|max:164',
-            '*.width' => 'sometimes|nullable|integer|min:1|max:5000',
-            '*.height' => 'sometimes|nullable|integer|min:1|max:5000',
-        ])->passes();
-    }
-
-    /**
      * Get supported media types
      */
     public static function getSupportedMediaTypes(): array
     {
         $mimeTypes = explode(',', config_cache('pixelfed.media_types'));
+        $supportsImages = false;
+        $supportsVideo = false;
 
-        return in_array('video/mp4', $mimeTypes) ?
-            ['Document', 'Image', 'Video'] :
-            ['Document', 'Image'];
+        foreach ($mimeTypes as $mimeType) {
+            $mimeType = trim((string) $mimeType);
+
+            if (! $supportsImages && str_starts_with($mimeType, 'image/')) {
+                $supportsImages = true;
+            }
+
+            if (! $supportsVideo && str_starts_with($mimeType, 'video/')) {
+                $supportsVideo = true;
+            }
+
+        }
+
+        $mediaTypes = ['Document'];
+
+        if ($supportsImages) {
+            $mediaTypes[] = 'Image';
+        }
+
+        if ($supportsVideo) {
+            $mediaTypes[] = 'Video';
+        }
+
+        return $mediaTypes;
     }
 
     /**
@@ -1180,14 +1410,13 @@ class Helpers
 
         $webfinger = "@{$username}@{$domain}";
         $instance = self::getOrCreateInstance($domain);
-        if (!empty($instance->shared_inbox)) {
+        if (! empty($instance->shared_inbox)) {
             $sharedInbox = data_get($res, 'endpoints.sharedInbox');
 
             if (filter_var($sharedInbox, FILTER_VALIDATE_URL)) {
                 $instance->shared_inbox = $sharedInbox;
             }
         }
-
 
         $movedToPid = $movedToCheck ? null : self::handleMovedTo($res);
 
@@ -1262,18 +1491,17 @@ class Helpers
                     'unlisted' => config('pixelfed.hide_remote_instance'),
                     'updated_at' => $now,
                     'created_at' => $now,
-                ]
+                ],
             ],
             ['domain'],
             ['updated_at' /* ,'unlisted' */]
         );
 
         $instance = Instance::where('domain', $domain)->first();
-        \App\Jobs\InstancePipeline\FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
+        FetchNodeinfoPipeline::dispatch($instance)->onQueue('low');
 
         return $instance;
     }
-
 
     /**
      * Handle moved profile references
