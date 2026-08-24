@@ -40,7 +40,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use Laravel\Pulse\Facades\Pulse;
-use URL;
 use App\Util\ActivityPub\Inbox;
 
 class AppServiceProvider extends ServiceProvider

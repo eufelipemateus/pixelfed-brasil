@@ -17,14 +17,22 @@ class UserAvatarDelete extends Command implements PromptsForMissingInput
      *
      * @var string
      */
-    protected $signature = 'user:avatar-delete {username}';
+    protected $signature = 'user:avatar-delete {username} {--force : Delete without confirmation prompts}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Delete user avatar';
+    protected $description = 'Delete user avatar and reset to default';
+
+    /**
+     * @var array<int, string>
+     */
+    protected array $defaultPaths = [
+        'public/avatars/default.jpg',
+        'public/avatars/default.png',
+    ];
 
     /**
      * Prompt for missing input arguments using the returned questions.
@@ -41,83 +49,100 @@ class UserAvatarDelete extends Command implements PromptsForMissingInput
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $user = User::whereUsername($this->argument('username'))->first();
 
         if (! $user) {
             $this->error('Could not find any user with that username');
+
             return Command::FAILURE;
         }
 
         if (! $user->profile_id) {
             $this->error('Could not find the profile with that username');
+
             return Command::FAILURE;
         }
 
         $pid = $user->profile_id;
 
-        $avatarModel = Avatar::where('profile_id', $pid)->first();
+        $avatarModel = Avatar::whereProfileId($pid)->first();
 
         if (! $avatarModel) {
             $this->error('No avatar model found');
-            Cache::forget('avatar:'.$pid);
+            $this->forgetAvatarCaches($pid);
+
             return Command::FAILURE;
         }
 
-        $defaultPaths = ['public/avatars/default.jpg', 'public/avatars/default.png'];
-        $mediaPath = $avatarModel->media_path;
-
-        if (in_array($mediaPath, $defaultPaths, true)) {
+        if ($this->isDefaultAvatar($avatarModel->media_path)) {
             $this->info('Default avatar already used, aborting...');
-            Cache::forget('avatar:'.$pid);
+            $this->forgetAvatarCaches($pid);
+
             return Command::SUCCESS;
         }
 
-        if (! $this->isAllowedAvatarPath($mediaPath)) {
-            $this->error('Refusing to delete an avatar outside the allowed storage prefix.');
+        if (! $this->deleteStoredAvatar($avatarModel->media_path)) {
+            $this->info('Aborted, no changes were made.');
 
-            return Command::FAILURE;
-        }
-
-        $disks = array_values(array_unique(array_filter([
-            config('filesystems.cloud'),
-            'local',
-        ])));
-        $existing = collect($disks)
-            ->filter(fn (string $disk): bool => Storage::disk($disk)->exists($mediaPath));
-
-        if ($existing->isNotEmpty() && ! $this->confirm('Delete all stored copies of '.$mediaPath.'?', false)) {
             return Command::SUCCESS;
-        }
-
-        $backups = [];
-        foreach ($existing as $disk) {
-            $backups[$disk] = Storage::disk($disk)->get($mediaPath);
-        }
-
-        $deleted = [];
-        foreach ($existing as $disk) {
-            if (! Storage::disk($disk)->delete($mediaPath)) {
-                foreach ($deleted as $deletedDisk) {
-                    Storage::disk($deletedDisk)->put($mediaPath, $backups[$deletedDisk]);
-                }
-                $this->error('Avatar deletion failed; previously removed copies were restored.');
-
-                return Command::FAILURE;
-            }
-            $deleted[] = $disk;
         }
 
         $avatarModel->media_path = 'public/avatars/default.jpg';
         $avatarModel->cdn_url = null;
+        $avatarModel->change_count = $avatarModel->change_count + 1;
         $avatarModel->save();
-        Cache::forget('avatar:'.$pid);
-        AccountService::del($pid);
+
+        $this->forgetAvatarCaches($pid);
 
         $this->info('Successfully deleted user avatar!');
 
         return Command::SUCCESS;
+    }
+
+    protected function isDefaultAvatar(?string $path): bool
+    {
+        return in_array($path, $this->defaultPaths, true);
+    }
+
+    protected function forgetAvatarCaches($pid): void
+    {
+        Cache::forget('avatar:'.$pid);
+        AccountService::del($pid);
+    }
+
+    protected function deleteStoredAvatar(string $path): bool
+    {
+        if (! $this->isAllowedAvatarPath($path)) {
+            $this->error('Refusing to delete an avatar outside the allowed storage prefix.');
+
+            return false;
+        }
+
+        if ((bool) config_cache('pixelfed.cloud_storage')) {
+            $cloudDisk = Storage::disk(config('filesystems.cloud'));
+
+            if ($cloudDisk->exists($path)) {
+                if (! $this->option('force') && ! $this->confirm("Found a cloud avatar at {$path}! Are you sure you want to delete this?")) {
+                    return false;
+                }
+
+                $cloudDisk->delete($path);
+                $this->info('Deleting cloud avatar copy');
+            }
+        }
+
+        if (Storage::disk('local')->exists($path)) {
+            if (! $this->option('force') && ! $this->confirm("Found a local avatar at {$path}! Are you sure you want to delete this?")) {
+                return false;
+            }
+
+            Storage::disk('local')->delete($path);
+            $this->info('Deleting local avatar copy');
+        }
+
+        return true;
     }
 
     private function isAllowedAvatarPath(?string $path): bool
