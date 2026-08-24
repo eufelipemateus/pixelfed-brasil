@@ -22,7 +22,7 @@ class ActivityPubFetchService
 
     public static function get($url, $validateUrl = true)
     {
-        $url = Helpers::validateUrl($url);
+        $url = self::validateUrl($url);
 
         if (! $url) {
             return false;
@@ -45,7 +45,25 @@ class ActivityPubFetchService
 
     public static function validateUrl($url)
     {
-        return Helpers::validateUrl($url);
+        if (! is_string($url) || substr_count($url, '://') !== 1) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+        if (! is_array($parts) || isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+
+        $validated = Helpers::validateUrl($url);
+        if (! $validated) {
+            return false;
+        }
+
+        $host = trim((string) parse_url($validated, PHP_URL_HOST), '[]');
+
+        return $host !== '' && self::resolvePublicIps($host) !== []
+            ? $validated
+            : false;
     }
 
     public static function fetchRequest($url, $returnJsonFormat = false)
@@ -53,7 +71,7 @@ class ActivityPubFetchService
         $currentUrl = $url;
 
         for ($redirects = 0; $redirects <= self::MAX_REDIRECTS; $redirects++) {
-            $currentUrl = Helpers::validateUrl($currentUrl);
+            $currentUrl = self::validateUrl($currentUrl);
 
             if (! $currentUrl) {
                 return;
@@ -66,7 +84,7 @@ class ActivityPubFetchService
                 return;
             }
 
-            $ips = Helpers::resolvePublicIps($host);
+            $ips = self::resolvePublicIps($host);
 
             if (empty($ips)) {
                 return;
@@ -236,7 +254,7 @@ class ActivityPubFetchService
 
             $url = (string) $resolved;
 
-            return Helpers::validateUrl($url)
+            return self::validateUrl($url)
                 ? $url
                 : null;
         } catch (\Throwable $e) {
@@ -286,5 +304,46 @@ class ActivityPubFetchService
         }
 
         return false;
+    }
+
+    private static function resolvePublicIps(string $host): array
+    {
+        $host = trim($host, '[]');
+
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return self::isPublicIp($host) ? [$host] : [];
+        }
+
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+        if (! is_array($records) || $records === []) {
+            return [];
+        }
+
+        $ips = [];
+        foreach ($records as $record) {
+            $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+            if (! is_string($ip) || ! self::isPublicIp($ip)) {
+                return [];
+            }
+            $ips[] = $ip;
+        }
+
+        return array_values(array_unique($ips));
+    }
+
+    private static function isPublicIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $numeric = ip2long($ip);
+            if ($numeric !== false && ($numeric & 0xF0000000) === 0xE0000000) {
+                return false;
+            }
+        }
+
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
     }
 }
