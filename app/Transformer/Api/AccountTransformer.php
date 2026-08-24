@@ -3,6 +3,7 @@
 namespace App\Transformer\Api;
 
 use App\Profile;
+use App\Services\AccountService;
 use App\Services\PronounService;
 use App\User;
 use App\UserSetting;
@@ -76,9 +77,20 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'label' => $profile->label,
         ];
 
-        $extra = app(\App\Services\ExtraFieldsService::class)->getAccountExtraFields($profile);
-        return array_merge($res, $extra);
+        if ($profile->moved_to_profile_id) {
+            $newProfile = AccountService::get($profile->moved_to_profile_id);
+            if ($newProfile && isset($newProfile['id'], $newProfile['acct'])) {
+                $res['moved'] = [
+                    'id' => $newProfile['id'],
+                    'acct' => $newProfile['acct'],
+                    'avatar' => $newProfile['avatar'],
+                ];
+            }
+        }
 
+        $extra = app(\App\Services\ExtraFieldsService::class)->getAccountExtraFields($profile);
+
+        return array_merge($res, $extra);
     }
 
     protected function includeRelationship(Profile $profile)

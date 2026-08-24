@@ -2,35 +2,41 @@
 
 namespace App\Services;
 
+use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Cache;
-use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\Uri as GuzzleUri;
 use GuzzleHttp\Psr7\UriResolver;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\ResponseInterface;
 
 class ActivityPubFetchService
 {
     const CACHE_KEY = 'pf:services:apfetchs:';
 
-    const MAX_REDIRECTS = 2;
+    private const MAX_REDIRECTS = 2;
 
-    const MAX_RESPONSE_BYTES = 2097152;
+    private const MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
 
     public static function get($url, $validateUrl = true)
     {
         $url = self::validateUrl($url);
+
         if (! $url) {
             return false;
         }
-        $domain = parse_url($url, PHP_URL_HOST);
-        if (! $domain) {
+
+        $host = parse_url($url, PHP_URL_HOST);
+
+        if (! $host) {
             return false;
         }
-        $domainKey = base64_encode($domain);
+
+        $domainKey = base64_encode(strtolower($host));
         $urlKey = hash('sha256', $url);
-        $key = self::CACHE_KEY.$domainKey.':'.$urlKey;
+        $key = self::CACHE_KEY . $domainKey . ':' . $urlKey;
 
         return Cache::remember($key, 450, function () use ($url) {
             return self::fetchRequest($url);
@@ -39,186 +45,273 @@ class ActivityPubFetchService
 
     public static function validateUrl($url)
     {
-        if (is_array($url)) {
-            $url = $url[0];
-        }
-
         if (! is_string($url) || substr_count($url, '://') !== 1) {
             return false;
         }
 
         $parts = parse_url($url);
-        if (
-            ! is_array($parts)
-            || strtolower($parts['scheme'] ?? '') !== 'https'
-            || empty($parts['host'])
-            || isset($parts['user'])
-            || isset($parts['pass'])
-        ) {
+        if (! is_array($parts) || isset($parts['user']) || isset($parts['pass'])) {
             return false;
         }
 
-        $host = rtrim(strtolower($parts['host']), '.');
-        if (function_exists('idn_to_ascii')) {
-            $asciiHost = idn_to_ascii($host, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
-            if ($asciiHost === false) {
-                return false;
-            }
-            $host = $asciiHost;
-        }
-
-        if ($host === 'localhost' || ! self::resolvePublicAddresses($host)) {
+        $validated = Helpers::validateUrl($url);
+        if (! $validated) {
             return false;
         }
 
-        if (app()->environment() === 'production') {
-            $bannedInstances = InstanceService::getBannedDomains();
-            if (in_array($host, $bannedInstances, true)) {
-                return false;
-            }
-        }
+        $host = trim((string) parse_url($validated, PHP_URL_HOST), '[]');
 
-        $parts['host'] = $host;
-
-        return self::buildUrl($parts);
+        return $host !== '' && self::resolvePublicIps($host) !== []
+            ? $validated
+            : false;
     }
 
     public static function fetchRequest($url, $returnJsonFormat = false)
     {
-        $url = self::validateUrl($url);
-        if (! $url) {
-            return;
-        }
+        $currentUrl = $url;
 
         for ($redirects = 0; $redirects <= self::MAX_REDIRECTS; $redirects++) {
-            $response = self::request($url);
-            if (! $response) {
+            $currentUrl = self::validateUrl($currentUrl);
+
+            if (! $currentUrl) {
                 return;
             }
 
-            if ($response->redirect()) {
-                if ($redirects === self::MAX_REDIRECTS || ! $response->hasHeader('Location')) {
+            $host = parse_url($currentUrl, PHP_URL_HOST);
+            $port = parse_url($currentUrl, PHP_URL_PORT) ?: 443;
+
+            if (! $host) {
+                return;
+            }
+
+            $ips = self::resolvePublicIps($host);
+
+            if (empty($ips)) {
+                return;
+            }
+
+            $headers = self::signedHeaders($currentUrl);
+
+            try {
+                $res = Http::withOptions([
+                    'allow_redirects' => false,
+
+                    'curl' => [
+                        CURLOPT_RESOLVE => [
+                            self::buildResolveEntry(
+                                $host,
+                                $port,
+                                $ips
+                            ),
+                        ],
+
+                        CURLOPT_FRESH_CONNECT => true,
+                        CURLOPT_FORBID_REUSE => true,
+                    ],
+
+                    'on_headers' => function (ResponseInterface $response) {
+                        $length = $response->getHeaderLine('Content-Length');
+
+                        if (
+                            $length !== '' &&
+                            ctype_digit($length) &&
+                            (int) $length > self::MAX_RESPONSE_SIZE
+                        ) {
+                            throw new \RuntimeException(
+                                'ActivityPub response exceeds maximum size'
+                            );
+                        }
+                    },
+                ])
+                    ->withHeaders($headers)
+                    ->timeout(15)
+                    ->connectTimeout(5)
+                    ->retry(2, 250)
+                    ->get($currentUrl);
+            } catch (RequestException $e) {
+                return;
+            } catch (ConnectionException $e) {
+                return;
+            } catch (\Throwable $e) {
+                return;
+            }
+
+            if (in_array($res->status(), [301, 302, 303, 307, 308], true)) {
+                if ($redirects >= self::MAX_REDIRECTS) {
                     return;
                 }
 
-                $location = $response->header('Location');
-                $nextUrl = (string) UriResolver::resolve(new Uri($url), new Uri($location));
-                $url = self::validateUrl($nextUrl);
-                if (! $url) {
+                $location = $res->header('Location');
+
+                if (! $location) {
                     return;
                 }
+
+                $nextUrl = self::resolveRedirect($currentUrl, $location);
+
+                if (! $nextUrl) {
+                    return;
+                }
+
+                $currentUrl = $nextUrl;
 
                 continue;
             }
 
-            return self::validatedBody($response, $returnJsonFormat);
+            if (! $res->ok()) {
+                return;
+            }
+
+            if (! self::hasValidContentType($res)) {
+                return;
+            }
+
+            $body = $res->body();
+
+            if (
+                $body === '' ||
+                strlen($body) > self::MAX_RESPONSE_SIZE
+            ) {
+                return;
+            }
+
+            if (! $returnJsonFormat) {
+                return $body;
+            }
+
+            try {
+                return json_decode(
+                    $body,
+                    true,
+                    64,
+                    JSON_THROW_ON_ERROR
+                );
+            } catch (\JsonException $e) {
+                return;
+            }
         }
+
+        return;
     }
 
-    private static function request(string $url)
+    private static function signedHeaders(string $url): array
     {
         $baseHeaders = [
             'Accept' => 'application/activity+json',
         ];
 
-        $headers = HttpSignature::instanceActorSign($url, false, $baseHeaders, 'get');
-        $headers['Accept'] = 'application/activity+json';
-        $headers['User-Agent'] = 'PixelFedBot/1.0.0 (Pixelfed/'.config('pixelfed.version').'; +'.config('app.url').')';
-
-        $host = parse_url($url, PHP_URL_HOST);
-        $port = parse_url($url, PHP_URL_PORT) ?: 443;
-        $addresses = self::resolvePublicAddresses($host);
-        if (! $addresses) {
-            return;
-        }
-
-        $pinned = array_map(
-            fn (string $ip): string => $host.':'.$port.':'.(str_contains($ip, ':') ? '['.$ip.']' : $ip),
-            $addresses
+        $headers = HttpSignature::instanceActorSign(
+            $url,
+            false,
+            $baseHeaders,
+            'get'
         );
 
-        try {
-            $res = Http::withOptions([
-                'allow_redirects' => false,
-                'curl' => [
-                    CURLOPT_RESOLVE => $pinned,
-                ],
-            ])
-                ->withHeaders($headers)
-                ->timeout(15)
-                ->connectTimeout(5)
-                ->retry(2, 250)
-                ->get($url);
-        } catch (RequestException $e) {
-            return;
-        } catch (ConnectionException $e) {
-            return;
-        } catch (\Exception $e) {
-            return;
-        }
+        $headers['Accept'] = 'application/activity+json';
 
-        return $res;
+        $headers['User-Agent'] =
+            'PixelFedBot/1.0.0 (Pixelfed/' .
+            config('pixelfed.version') .
+            '; +' .
+            config('app.url') .
+            ')';
+
+        return $headers;
     }
 
-    private static function validatedBody($res, bool $returnJsonFormat)
+    private static function buildResolveEntry(
+        string $host,
+        int $port,
+        array $ips
+    ): string {
+        $addresses = array_map(function ($ip) {
+            return str_contains($ip, ':')
+                ? '[' . $ip . ']'
+                : $ip;
+        }, $ips);
+
+        return $host . ':' . $port . ':' . implode(',', $addresses);
+    }
+
+    private static function resolveRedirect(
+        string $baseUrl,
+        string $location
+    ): ?string {
+        $location = trim($location);
+
+        if (
+            $location === '' ||
+            preg_match('/[\x00-\x20\x7f]/', $location)
+        ) {
+            return null;
+        }
+
+        try {
+            $resolved = UriResolver::resolve(
+                new GuzzleUri($baseUrl),
+                new GuzzleUri($location)
+            );
+
+            $url = (string) $resolved;
+
+            return self::validateUrl($url)
+                ? $url
+                : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function hasValidContentType($res): bool
     {
-        if (! $res->ok()) {
-            return;
-        }
-
-        $contentLength = (int) $res->header('Content-Length', 0);
-        if ($contentLength > self::MAX_RESPONSE_BYTES || strlen($res->body()) > self::MAX_RESPONSE_BYTES) {
-            return;
-        }
-
-        if (! $res->hasHeader('Content-Type')) {
-            return;
-        }
-
-        $contentType = $res->getHeader('Content-Type')[0];
+        $contentType = $res->header('Content-Type');
 
         if (! $contentType) {
-            return;
+            return false;
         }
 
-        // Parse Content-Type: extract media type (case-insensitive) and parameters
-        $contentTypeParts = array_map('trim', explode(';', $contentType));
+        $contentTypeParts = array_map(
+            'trim',
+            explode(';', $contentType)
+        );
+
         $mediaType = strtolower($contentTypeParts[0]);
 
-        $acceptedMediaTypes = [
+        if (! in_array($mediaType, [
             'application/activity+json',
             'application/ld+json',
-        ];
-
-        if (! in_array($mediaType, $acceptedMediaTypes, true)) {
-            return;
+        ], true)) {
+            return false;
         }
 
-        //// For application/ld+json, verify the ActivityStreams profile parameter
-        if ($mediaType === 'application/ld+json') {
-            $hasActivityStreamsProfile = false;
-            foreach (array_slice($contentTypeParts, 1) as $param) {
-                $param = trim($param);
-                if (stripos($param, 'profile=') === 0) {
-                    $profile = trim(substr($param, strlen('profile=')), ' "\'');
-                    if ($profile === 'https://www.w3.org/ns/activitystreams') {
-                        $hasActivityStreamsProfile = true;
-                        break;
-                    }
-                }
+        if ($mediaType !== 'application/ld+json') {
+            return true;
+        }
+
+        foreach (array_slice($contentTypeParts, 1) as $param) {
+            if (stripos($param, 'profile=') !== 0) {
+                continue;
             }
-            if (! $hasActivityStreamsProfile) {
-                return;
+
+            $profile = trim(
+                substr($param, strlen('profile=')),
+                " \"'"
+            );
+
+            if ($profile === 'https://www.w3.org/ns/activitystreams') {
+                return true;
             }
         }
 
-        return $returnJsonFormat ? $res->json() : $res->body();
+        return false;
     }
 
-    private static function resolvePublicAddresses(string $host): array
+    private static function resolvePublicIps(string $host): array
     {
+        $host = trim($host, '[]');
+
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            return self::isPublicAddress($host) ? [$host] : [];
+            return self::isPublicIp($host) ? [$host] : [];
         }
 
         $records = @dns_get_record($host, DNS_A | DNS_AAAA);
@@ -226,19 +319,19 @@ class ActivityPubFetchService
             return [];
         }
 
-        $addresses = [];
+        $ips = [];
         foreach ($records as $record) {
             $ip = $record['ip'] ?? $record['ipv6'] ?? null;
-            if (! $ip || ! self::isPublicAddress($ip)) {
+            if (! is_string($ip) || ! self::isPublicIp($ip)) {
                 return [];
             }
-            $addresses[] = $ip;
+            $ips[] = $ip;
         }
 
-        return array_values(array_unique($addresses));
+        return array_values(array_unique($ips));
     }
 
-    private static function isPublicAddress(string $ip): bool
+    private static function isPublicIp(string $ip): bool
     {
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             $numeric = ip2long($ip);
@@ -247,28 +340,10 @@ class ActivityPubFetchService
             }
         }
 
-        if (
-            filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
-            && str_starts_with(strtolower($ip), 'ff')
-        ) {
-            return false;
-        }
-
         return filter_var(
             $ip,
             FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
         ) !== false;
-    }
-
-    private static function buildUrl(array $parts): string
-    {
-        $host = str_contains($parts['host'], ':') ? '['.$parts['host'].']' : $parts['host'];
-
-        return 'https://'.$host
-            .(isset($parts['port']) ? ':'.$parts['port'] : '')
-            .($parts['path'] ?? '')
-            .(isset($parts['query']) ? '?'.$parts['query'] : '')
-            .(isset($parts['fragment']) ? '#'.$parts['fragment'] : '');
     }
 }
