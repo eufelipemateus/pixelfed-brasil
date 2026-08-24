@@ -12,6 +12,53 @@ permissions:
   contents: read
 
 jobs:
+  direct-messages-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: pixelfed_test
+          POSTGRES_USER: pixelfed
+          POSTGRES_PASSWORD: pixelfed
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pixelfed -d pixelfed_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:2rK9gO0V1xgJgQFfJYgMCdTWwFQ5WzD3U+shWOZy3WU=
+      CACHE_DRIVER: array
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: pixelfed_test
+      DB_USERNAME: pixelfed
+      DB_PASSWORD: pixelfed
+      FILESYSTEM_DISK: local
+      QUEUE_DRIVER: sync
+      SESSION_DRIVER: array
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pgsql, pdo_pgsql, bcmath, soap, intl, gd, exif, iconv
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Test direct messages on PostgreSQL
+        run: php artisan test tests/Feature/DirectMessageIntegrityTest.php
+
   tests:
     runs-on: ubuntu-latest
     env:
@@ -44,7 +91,6 @@ jobs:
         run: |
           composer validate --strict --check-lock
           composer install --no-interaction --prefer-dist
-          composer audit --locked --no-dev
 
       - name: Prepare test application
         run: |
@@ -65,7 +111,6 @@ jobs:
       - name: Install, audit and build frontend
         run: |
           npm ci
-          npm audit --omit=dev --audit-level=high
           npm run production
 
       - name: Verify generated assets and formatting

@@ -7,15 +7,14 @@ use App\Jobs\DirectPipeline\DirectDeletePipeline;
 use App\Jobs\DirectPipeline\DirectDeliverPipeline;
 use App\Jobs\StatusPipeline\StatusDelete;
 use App\Media;
-use App\Models\Conversation;
 use App\Notification;
 use App\Profile;
 use App\Services\AccountService;
+use App\Services\DirectMessageService;
 use App\Services\FollowerService;
 use App\Services\MediaBlocklistService;
 use App\Services\MediaPathService;
 use App\Services\MediaService;
-use App\Services\StatusService;
 use App\Services\UserFilterService;
 use App\Services\UserRoleService;
 use App\Services\UserStorageService;
@@ -25,6 +24,7 @@ use App\UserFilter;
 use App\Util\ActivityPub\Helpers;
 use App\Util\Lexer\Autolink;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DirectMessageController extends Controller
@@ -52,54 +52,27 @@ class DirectMessageController extends Controller
         $limit = 8;
         $offset = ($page - 1) * $limit;
 
-        $baseQuery = DirectMessage::select(
-            'id', 'type', 'to_id', 'from_id', 'status_id',
-            'is_hidden', 'meta', 'created_at', 'read_at'
-        )->with(['author', 'status', 'recipient']);
+        $partition = $action === 'sent' ? 'to_id' : 'from_id';
+        $ranked = DirectMessage::query()
+            ->select('direct_messages.*')
+            ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$partition} ORDER BY id DESC) AS conversation_rank")
+            ->whereHas('status');
 
-        if (config('database.default') == 'pgsql') {
-            $query = match ($action) {
-                'inbox' => $baseQuery->whereToId($profile)
-                    ->whereIsHidden(false)
-                    ->orderBy('created_at', 'desc'),
-                'sent' => $baseQuery->whereFromId($profile)
-                    ->orderBy('created_at', 'desc'),
-                'filtered' => $baseQuery->whereToId($profile)
-                    ->whereIsHidden(true)
-                    ->orderBy('created_at', 'desc'),
-                default => throw new \InvalidArgumentException('Invalid action')
-            };
+        $ranked = match ($action) {
+            'inbox' => $ranked->whereToId($profile)->whereIsHidden(false),
+            'sent' => $ranked->whereFromId($profile),
+            'filtered' => $ranked->whereToId($profile)->whereIsHidden(true),
+            default => throw new \InvalidArgumentException('Invalid action'),
+        };
 
-            $dms = $query->offset($offset)
-                ->limit($limit)
-                ->get();
-
-            $dms = $action === 'sent' ?
-                   $dms->unique('to_id') :
-                   $dms->unique('from_id');
-        } else {
-            $query = match ($action) {
-                'inbox' => $baseQuery->whereToId($profile)
-                    ->whereIsHidden(false)
-                    ->groupBy('from_id', 'id', 'type', 'to_id', 'status_id',
-                        'is_hidden', 'meta', 'created_at', 'read_at')
-                    ->orderBy('created_at', 'desc'),
-                'sent' => $baseQuery->whereFromId($profile)
-                    ->groupBy('to_id', 'id', 'type', 'from_id', 'status_id',
-                        'is_hidden', 'meta', 'created_at', 'read_at')
-                    ->orderBy('created_at', 'desc'),
-                'filtered' => $baseQuery->whereToId($profile)
-                    ->whereIsHidden(true)
-                    ->groupBy('from_id', 'id', 'type', 'to_id', 'status_id',
-                        'is_hidden', 'meta', 'created_at', 'read_at')
-                    ->orderBy('created_at', 'desc'),
-                default => throw new \InvalidArgumentException('Invalid action')
-            };
-
-            $dms = $query->offset($offset)
-                ->limit($limit)
-                ->get();
-        }
+        $dms = DirectMessage::query()
+            ->fromSub($ranked, 'direct_messages')
+            ->with(['author', 'status', 'recipient'])
+            ->where('conversation_rank', 1)
+            ->orderByDesc('id')
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
 
         $mappedDms = $dms->map(function ($r) use ($action) {
             if ($action === 'sent') {
@@ -165,34 +138,25 @@ class DirectMessageController extends Controller
             $hidden = false;
         }
 
-        $status = new Status;
-        $status->profile_id = $profile->id;
-        $status->caption = $msg;
-        $status->visibility = 'direct';
-        $status->scope = 'direct';
-        $status->in_reply_to_profile_id = $recipient->id;
-        $status->save();
+        [$status, $dm] = DB::transaction(function () use ($profile, $recipient, $msg, $hidden, $request) {
+            $status = new Status;
+            $status->profile_id = $profile->id;
+            $status->caption = $msg;
+            $status->visibility = 'direct';
+            $status->scope = 'direct';
+            $status->in_reply_to_profile_id = $recipient->id;
+            $status->save();
 
-        $dm = new DirectMessage;
-        $dm->to_id = $recipient->id;
-        $dm->from_id = $profile->id;
-        $dm->status_id = $status->id;
-        $dm->is_hidden = $hidden;
-        $dm->type = $request->input('type');
-        $dm->save();
+            $dm = new DirectMessage;
+            $dm->to_id = $recipient->id;
+            $dm->from_id = $profile->id;
+            $dm->status_id = $status->id;
+            $dm->is_hidden = $hidden;
+            $dm->type = $request->input('type');
+            $dm->save();
 
-        Conversation::updateOrInsert(
-            [
-                'to_id' => $recipient->id,
-                'from_id' => $profile->id,
-            ],
-            [
-                'type' => $dm->type,
-                'status_id' => $status->id,
-                'dm_id' => $dm->id,
-                'is_hidden' => $hidden,
-            ]
-        );
+            return [$status, $dm];
+        });
 
         if (filter_var($msg, FILTER_VALIDATE_URL)) {
             if (Helpers::validateUrl($msg)) {
@@ -264,6 +228,12 @@ class DirectMessageController extends Controller
 
         $profile = Profile::findOrFail($pid);
 
+        DirectMessage::betweenProfiles($pid, $uid)
+            ->whereDoesntHave('status')
+            ->limit(10)
+            ->get()
+            ->each(fn (DirectMessage $dm) => DirectMessageService::logOrphan($dm));
+
         $query = DirectMessage::select(
             'id',
             'is_hidden',
@@ -274,41 +244,32 @@ class DirectMessageController extends Controller
             'meta',
             'created_at',
             'read_at'
-        )->with(['status']);
+        )->with(['status'])->whereHas('status');
+
+        $query->betweenProfiles($pid, $uid);
 
         if ($min_id) {
             $res = $query->where('id', '>', $min_id)
-                ->where(function ($query) use ($pid, $uid) {
-                    $query->where('from_id', $pid)->where('to_id', $uid);
-                })->orWhere(function ($query) use ($pid, $uid) {
-                    $query->where('from_id', $uid)->where('to_id', $pid);
-                })
                 ->orderBy('id', 'asc')
                 ->take(8)
                 ->get()
                 ->reverse();
         } elseif ($max_id) {
             $res = $query->where('id', '<', $max_id)
-                ->where(function ($query) use ($pid, $uid) {
-                    $query->where('from_id', $pid)->where('to_id', $uid);
-                })->orWhere(function ($query) use ($pid, $uid) {
-                    $query->where('from_id', $uid)->where('to_id', $pid);
-                })
                 ->orderBy('id', 'desc')
                 ->take(8)
                 ->get();
         } else {
-            $res = $query->where(function ($query) use ($pid, $uid) {
-                $query->where('from_id', $pid)->where('to_id', $uid);
-            })->orWhere(function ($query) use ($pid, $uid) {
-                $query->where('from_id', $uid)->where('to_id', $pid);
-            })
-                ->orderBy('id', 'desc')
+            $res = $query->orderBy('id', 'desc')
                 ->take(8)
                 ->get();
         }
 
         $messages = $res->filter(function ($message) {
+            if ($message && ! $message->status) {
+                DirectMessageService::logOrphan($message);
+            }
+
             return $message && $message->status;
         })->map(function ($message) use ($uid) {
             return [
@@ -369,52 +330,11 @@ class DirectMessageController extends Controller
         }
 
         if ($recipient['local'] == false) {
-            $dmc = $dm;
-            $this->remoteDelete($dmc);
-        } else {
-            StatusDelete::dispatch($status)->onQueue('high');
+            $this->remoteDelete($dm);
         }
 
-        if (Conversation::whereStatusId($sid)->count()) {
-            $latest = DirectMessage::where(['from_id' => $dm->from_id, 'to_id' => $dm->to_id])
-                ->orWhere(['to_id' => $dm->from_id, 'from_id' => $dm->to_id])
-                ->latest()
-                ->first();
-
-            if ($latest->status_id == $sid) {
-                Conversation::where(['to_id' => $dm->from_id, 'from_id' => $dm->to_id])
-                    ->update([
-                        'updated_at' => $latest->updated_at,
-                        'status_id' => $latest->status_id,
-                        'type' => $latest->type,
-                        'is_hidden' => false,
-                    ]);
-
-                Conversation::where(['to_id' => $dm->to_id, 'from_id' => $dm->from_id])
-                    ->update([
-                        'updated_at' => $latest->updated_at,
-                        'status_id' => $latest->status_id,
-                        'type' => $latest->type,
-                        'is_hidden' => false,
-                    ]);
-            } else {
-                Conversation::where([
-                    'status_id' => $sid,
-                    'to_id' => $dm->from_id,
-                    'from_id' => $dm->to_id,
-                ])->delete();
-
-                Conversation::where([
-                    'status_id' => $sid,
-                    'from_id' => $dm->from_id,
-                    'to_id' => $dm->to_id,
-                ])->delete();
-            }
-        }
-
-        StatusService::del($status->id, true);
-
-        $status->forceDeleteQuietly();
+        DirectMessageService::deleteDm($dm);
+        StatusDelete::dispatch($status)->onQueue('high');
 
         return [200];
     }
@@ -483,51 +403,42 @@ class DirectMessageController extends Controller
 
         abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
-        $status = new Status;
-        $status->profile_id = $profile->id;
-        $status->caption = null;
-        $status->visibility = 'direct';
-        $status->scope = 'direct';
-        $status->in_reply_to_profile_id = $recipient->id;
-        $status->save();
+        [$status, $media, $dm] = DB::transaction(function () use ($profile, $recipient, $user, $path, $hash, $photo, $hidden, $updatedAccountSize) {
+            $status = new Status;
+            $status->profile_id = $profile->id;
+            $status->caption = null;
+            $status->visibility = 'direct';
+            $status->scope = 'direct';
+            $status->in_reply_to_profile_id = $recipient->id;
+            $status->save();
 
-        $media = new Media;
-        $media->status_id = $status->id;
-        $media->profile_id = $profile->id;
-        $media->user_id = $user->id;
-        $media->media_path = $path;
-        $media->original_sha256 = $hash;
-        $media->size = $photo->getSize();
-        $media->mime = $photo->getMimeType();
-        $media->caption = null;
-        $media->filter_class = null;
-        $media->filter_name = null;
-        $media->save();
+            $media = new Media;
+            $media->status_id = $status->id;
+            $media->profile_id = $profile->id;
+            $media->user_id = $user->id;
+            $media->media_path = $path;
+            $media->original_sha256 = $hash;
+            $media->size = $photo->getSize();
+            $media->mime = $photo->getMimeType();
+            $media->caption = null;
+            $media->filter_class = null;
+            $media->filter_name = null;
+            $media->save();
 
-        $dm = new DirectMessage;
-        $dm->to_id = $recipient->id;
-        $dm->from_id = $profile->id;
-        $dm->status_id = $status->id;
-        $dm->type = array_first(explode('/', $media->mime)) == 'video' ? 'video' : 'photo';
-        $dm->is_hidden = $hidden;
-        $dm->save();
+            $dm = new DirectMessage;
+            $dm->to_id = $recipient->id;
+            $dm->from_id = $profile->id;
+            $dm->status_id = $status->id;
+            $dm->type = array_first(explode('/', $media->mime)) == 'video' ? 'video' : 'photo';
+            $dm->is_hidden = $hidden;
+            $dm->save();
 
-        Conversation::updateOrInsert(
-            [
-                'to_id' => $recipient->id,
-                'from_id' => $profile->id,
-            ],
-            [
-                'type' => $dm->type,
-                'status_id' => $status->id,
-                'dm_id' => $dm->id,
-                'is_hidden' => $hidden,
-            ]
-        );
+            $user->storage_used = (int) $updatedAccountSize;
+            $user->storage_used_updated_at = now();
+            $user->save();
 
-        $user->storage_used = (int) $updatedAccountSize;
-        $user->storage_used_updated_at = now();
-        $user->save();
+            return [$status, $media, $dm];
+        });
 
         if ($recipient->domain) {
             $this->remoteDeliver($dm);

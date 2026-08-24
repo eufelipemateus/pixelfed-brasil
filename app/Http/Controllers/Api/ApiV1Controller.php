@@ -35,7 +35,6 @@ use App\Jobs\StatusPipeline\StatusDelete;
 use App\Jobs\VideoPipeline\VideoThumbnail;
 use App\Like;
 use App\Media;
-use App\Models\Conversation;
 use App\Models\CustomFilter;
 use App\Notification;
 use App\Profile;
@@ -3269,45 +3268,30 @@ class ApiV1Controller extends Controller
             return [];
         }
 
-        $pid = $user->profile_id;
+        $pid = (int) $user->profile_id;
 
-        $isPgsql = config('database.default') == 'pgsql';
+        $counterpart = $scope === 'sent'
+            ? 'to_id'
+            : ($scope === 'requests'
+                ? 'from_id'
+                : "CASE WHEN from_id = {$pid} THEN to_id ELSE from_id END");
 
-        if ($isPgsql) {
-            $dms = DirectMessage::when($scope === 'inbox', function ($q) use ($pid) {
-                return $q->whereIsHidden(false)
+        $ranked = DirectMessage::query()
+            ->select('direct_messages.*')
+            ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$counterpart} ORDER BY id DESC) AS conversation_rank")
+            ->whereHas('status')
+            ->when($scope === 'inbox', function ($query) use ($pid) {
+                $query->whereIsHidden(false)
                     ->where(function ($query) use ($pid) {
-                        $query->where('to_id', $pid)
-                            ->orWhere('from_id', $pid);
+                        $query->whereToId($pid)->orWhere('from_id', $pid);
                     });
             })
-                ->when($scope === 'sent', function ($q) use ($pid) {
-                    return $q->whereFromId($pid)
-                        ->groupBy(['to_id', 'id']);
-                })
-                ->when($scope === 'requests', function ($q) use ($pid) {
-                    return $q->whereToId($pid)
-                        ->whereIsHidden(true);
-                });
-        } else {
-            $dms = Conversation::when($scope === 'inbox', function ($q) use ($pid) {
-                return $q->whereIsHidden(false)
-                    ->where(function ($query) use ($pid) {
-                        $query->where('to_id', $pid)
-                            ->orWhere('from_id', $pid);
-                    })
-                    ->orderByDesc('status_id')
-                    ->groupBy(['to_id', 'from_id']);
-            })
-                ->when($scope === 'sent', function ($q) use ($pid) {
-                    return $q->whereFromId($pid)
-                        ->groupBy('to_id');
-                })
-                ->when($scope === 'requests', function ($q) use ($pid) {
-                    return $q->whereToId($pid)
-                        ->whereIsHidden(true);
-                });
-        }
+            ->when($scope === 'sent', fn ($query) => $query->whereFromId($pid))
+            ->when($scope === 'requests', fn ($query) => $query->whereToId($pid)->whereIsHidden(true));
+
+        $dms = DirectMessage::query()
+            ->fromSub($ranked, 'direct_messages')
+            ->where('conversation_rank', 1);
 
         if ($min_id) {
             $dms = $dms->where('id', '>', $min_id);
@@ -3319,7 +3303,7 @@ class ApiV1Controller extends Controller
             $dms = $dms->where('id', '>', $since_id);
         }
 
-        $dms = $dms->orderByDesc('status_id')->orderBy('id');
+        $dms = $dms->orderByDesc('id');
 
         $dmResults = $dms->limit($limit + 1)->get();
 
@@ -3348,9 +3332,6 @@ class ApiV1Controller extends Controller
                     && count($dm['accounts'])
                     && isset($dm['accounts'][0])
                     && isset($dm['accounts'][0]['id']);
-            })
-            ->unique(function ($item) {
-                return $item['accounts'][0]['id'];
             })
             ->values();
 

@@ -12,6 +12,7 @@ use App\Mention;
 use App\Notification;
 use App\Report;
 use App\Services\Account\AccountStatService;
+use App\Services\DirectMessageService;
 use App\Services\NetworkTimelineService;
 use App\Services\StatusService;
 use App\Status;
@@ -79,7 +80,9 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             Notification::whereItemType('App\Status')
                 ->whereItemId($status->id)
                 ->forceDelete();
-            DirectMessage::whereStatusId($status->id)->delete();
+            DirectMessage::whereStatusId($status->id)->get()->each(function ($dm) {
+                DirectMessageService::deleteDm($dm);
+            });
             Like::whereStatusId($status->id)->forceDelete();
             MediaTag::whereStatusId($status->id)->delete();
             Media::whereStatusId($status->id)

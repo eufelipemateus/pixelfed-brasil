@@ -75,13 +75,16 @@ class InternalApiController extends Controller
             abort(403);
         }
 
-        $msg = DirectMessage::whereToId($profile->id)
-            ->orWhere('from_id', $profile->id)
+        $msg = DirectMessage::where(function ($query) use ($profile) {
+            $query->whereToId($profile->id)
+                ->orWhere('from_id', $profile->id);
+        })
             ->findOrFail($threadId);
 
-        $thread = DirectMessage::with('status')->whereIn('to_id', [$profile->id, $msg->from_id])
-            ->whereIn('from_id', [$profile->id, $msg->from_id])
-            ->orderBy('created_at', 'asc')
+        $counterpartId = $msg->from_id == $profile->id ? $msg->to_id : $msg->from_id;
+        $thread = DirectMessage::with('status')
+            ->betweenProfiles($profile->id, $counterpartId)
+            ->orderBy('id', 'asc')
             ->paginate(30);
 
         return response()->json(compact('msg', 'profile', 'thread'), 200, [], JSON_PRETTY_PRINT);
