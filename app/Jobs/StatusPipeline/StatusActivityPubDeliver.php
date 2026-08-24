@@ -4,6 +4,7 @@ namespace App\Jobs\StatusPipeline;
 
 use App\Profile;
 use App\Status;
+use App\Instance;
 use App\Transformer\ActivityPub\Verb\CreateNote;
 use App\Transformer\ActivityPub\Verb\CreateQuestion;
 use Illuminate\Bus\Queueable;

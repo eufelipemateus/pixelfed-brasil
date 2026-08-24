@@ -39,6 +39,7 @@ class LandingController extends Controller
                 ->whereIsSuggestable(true)
                 ->orderByDesc('updated_at')
                 ->whereNull('status')
+                ->where('is_private', false)
                 ->cursorPaginate(20)
         );
     }
