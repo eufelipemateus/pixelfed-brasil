@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\DirectMessage;
+use App\Models\DirectMessage;
 use App\Models\Conversation;
-use App\Notification;
+use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 

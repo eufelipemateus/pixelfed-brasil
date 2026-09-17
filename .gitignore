@@ -1,3 +1,5 @@
+/redis-data
+/mysql-9-data
 .DS_Store
 /.bash_history
 /.bash_profile
@@ -27,12 +29,13 @@
 /vendor
 /yarn-error.log
 /public/build
+/packages/
 
 # Exceptions - these *MUST* be last
 !/bootstrap/cache/.gitignore
 !/public/vendor/horizon/.gitignore
 
-/packages/
-
-/resources/lang/pt
-/resources/assets/js/i18n/pt.json
+# Psalm reports and cache
+/storage/psalm-reports
+/psalm.sarif.json
+/.psalm-cache

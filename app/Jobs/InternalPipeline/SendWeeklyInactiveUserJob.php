@@ -2,7 +2,7 @@
 
 namespace App\Jobs\InternalPipeline;
 
-use App\User;
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Queue\Queueable;

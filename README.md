@@ -10,56 +10,73 @@
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/v/stable.svg" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/pixelfed/pixelfed"><img src="https://poser.pugx.org/pixelfed/pixelfed/license.svg" alt="License"></a>
 <a title="Crowdin" target="_blank" href="https://crowdin.com/project/pixelfed"><img src="https://badges.crowdin.net/pixelfed/localized.svg"></a>
-</p>
-
-<p align="center">
 <a href="https://fedidb.org/software/pixelfed"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.fedidb.org%2Fv1%2Fsoftware%2Fpixelfed&query=%24.user_count&logo=pixelfed&logoColor=white&label=Total%20Users" alt="Total Pixelfed users from FediDB" /></a>
 </p>
 
-# Pixelfed Brasil Branch Workflow
+<p align="center">
+<a target="_blank" href="https://discord.gg/msXs3MumsK"><img src="https://dcbadge.limes.pink/api/server/https://discord.gg/msXs3MumsK" alt="" /></a>
+</p>
 
-This repository follows a branch flow to keep upstream updates, integration, development, and production separated and stable.
+</p>
 
-## Branch Roles
+## Introduction
 
-- `dev-contrib-origin`: Always synchronized with upstream Pixelfed. No local custom changes should be committed here.
-- `update-dev`: Intermediate integration branch. It receives `dev` and merges with `dev-contrib-origin`, resolving possible conflicts.
-- `dev`: Development branch associated with https://pixelfed.dev.br.
-- `main`: Production branch used to publish https://pixelfed.com.br.
-- `feat/<feature-name>`: Branch for local updates that do not come from upstream. It must be merged into `dev`.
-- `hotfix/<name>`: Branch for urgent production fixes. Direct merge to `main` is allowed only for this case.
+Photo sharing the way it should be. Pixelfed lets your casual shots and creative photography find their audience naturally, without algorithmic barriers. Join [millions](https://fedidb.com) of people sharing across the [fediverse](https://fediverse.info).
 
-## Pixelfed Brasil Update Flow
+## Pixelfed Brasil
 
-```mermaid
-flowchart LR
-  A[dev-contrib-origin\nUpstream mirror\nNo local changes] --> B[update-dev\nIntermediate merge\nConflict resolution]
-  C[dev\nEnvironment: pixelfed.dev.br] --> B
-  B --> C
-  C --> E[main\nProduction: pixelfed.com.br]
-  E --> F[feat/<feature-name>\nLocal custom updates]
-  F --> C
-  E --> H[hotfix/<name>\nCritical production fix]
-  H --> E
-```
+This fork powers the Brazilian Pixelfed community at [pixelfed.com.br](https://pixelfed.com.br). Upstream changes are integrated through `update-dev`, validated on `dev`, and promoted to `main` only after deployment checks.
 
-## Recommended Update Process
+<p align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://pixelfed.nyc3.cdn.digitaloceanspaces.com/media/pixelfed-readme-dark.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="https://pixelfed.nyc3.cdn.digitaloceanspaces.com/media/pixelfed-readme-light.jpg">
+  <img alt="Pixelfed web user interface in light mode" src="https://pixelfed.nyc3.cdn.digitaloceanspaces.com/media/pixelfed-readme-light.jpg">
+</picture>
+</p>
 
-1. Update `dev-contrib-origin` from upstream Pixelfed.
-2. Merge `dev` into `update-dev`.
-3. Merge `dev-contrib-origin` into `update-dev`.
-4. Resolve conflicts in `update-dev` and validate the application.
-5. Merge `update-dev` back into `dev`.
-6. After validation on `dev` (`pixelfed.dev.br`), promote changes to `main` (`pixelfed.com.br`).
+## Database Support (Please report any regressions)
+* MySQL 9+ is officially supported (Strict mode is not default).
+* MariaDB 11+ is officially supported (Strict mode is default).
+* PostgreSQL 14+ is best effort _as of writing_.
 
-## Local Changes and Merge Policy
+Notice: We need to improve the ecosystem to test/validate the codebase to be database agnostic, but this will require considerable engineering effort. Thank you for your understanding.
 
-1. Every new local change starts from `main`, using either `feat/<feature-name>` or `hotfix/<name>`.
-2. Any local update that does not come from upstream must be developed in a `feat/<feature-name>` branch and merged into `dev`.
-3. Direct merges into `main` are not allowed during normal development.
-4. Direct merges into `main` are allowed only for urgent `hotfix/<name>` branches that fix problematic production updates.
+## Official Documentation
 
-## Quick Links
+Documentation for Pixelfed can be found on the [Pixelfed documentation website](https://docs.pixelfed.org/).
 
-- Stable (production): https://github.com/eufelipemateus/pixelfed/tree/main
-- Development: https://github.com/eufelipemateus/pixelfed/tree/dev
+## Host your own instance with
+
+[![Install on YunoHost](https://user-images.githubusercontent.com/42862428/139559471-9495f1e9-e7a4-49f1-9a4b-675ddcc510a2.png "Install on YunoHost")](https://install-app.yunohost.org/?app=pixelfed)
+
+Pixelfed app for [YunoHost](https://yunohost.org "YunoHost"). See [the package source code](https://github.com/YunoHost-Apps/pixelfed_ynh "pixelfed_ynh repository on GitHub")
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/Pixelfed/)
+
+## License
+
+Pixelfed is open-sourced software licensed under the AGPL license.
+
+## Communication
+
+The ways you can communicate on the project are below. Before interacting, please
+read through the [Code Of Conduct](CODE_OF_CONDUCT.md).
+
+-   Mastodon: [@pixelfed@mastodon.social](https://mastodon.social/@pixelfed)
+-   E-mail: [hello@pixelfed.org](mailto:hello@pixelfed.org)
+
+## Pixelfed Sponsors
+
+We would like to extend our thanks to the following sponsors for funding Pixelfed development. If you are interested in becoming a sponsor, please visit the Pixelfed [Patreon Page](https://www.patreon.com/dansup/overview)
+
+-   [NLnet Foundation](https://nlnet.nl) and [NGI0
+    Discovery](https://nlnet.nl/discovery/), part of the [Next Generation
+    Internet](https://ngi.eu) initiative.
+
+<p>This project is supported by:</p>
+<p>
+  <a href="https://www.fastly.com/fast-forward">
+    <img src="https://github.com/user-attachments/assets/f1499b1f-c05f-480a-a5d5-dbebcb0e20fd">
+  </a>
+</p>

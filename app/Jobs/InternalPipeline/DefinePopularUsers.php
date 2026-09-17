@@ -2,7 +2,7 @@
 
 namespace App\Jobs\InternalPipeline;
 
-use App\Profile;
+use App\Models\Profile;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use App\Services\ModLogService;

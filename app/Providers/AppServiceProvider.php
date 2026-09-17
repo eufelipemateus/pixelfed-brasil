@@ -2,13 +2,27 @@
 
 namespace App\Providers;
 
-use App\Avatar;
-use App\Follower;
-use App\HashtagFollow;
-use App\Like;
+use App\Listeners\AuthLogin;
+use App\Listeners\LogFailedLogin;
+use App\Models\AccountInterstitial;
+use App\Models\Avatar;
+use App\Models\CustomFilter;
+use App\Models\DirectMessage;
+use App\Models\Follower;
+use App\Models\HashtagFollow;
+use App\Models\Like;
+use App\Models\Media;
+use App\Models\MediaTag;
+use App\Models\ModLog;
+use App\Models\Notification;
 use App\Models\OAuthToken;
-use App\ModLog;
-use App\Notification;
+use App\Models\Profile;
+use App\Models\Report;
+use App\Models\Status;
+use App\Models\StatusHashtag;
+use App\Models\Story;
+use App\Models\User;
+use App\Models\UserFilter;
 use App\Observers\AvatarObserver;
 use App\Observers\FollowerObserver;
 use App\Observers\HashtagFollowObserver;
@@ -20,28 +34,27 @@ use App\Observers\StatusHashtagObserver;
 use App\Observers\StatusObserver;
 use App\Observers\UserFilterObserver;
 use App\Observers\UserObserver;
-use App\Profile;
+use App\Policies\CustomFilterPolicy;
 use App\Services\AccountService;
 use App\Services\UserOidcService;
-use App\Status;
-use App\StatusHashtag;
-use App\User;
-use App\UserFilter;
-use Auth;
-use Horizon;
+use App\Util\Localization\EmptyStrippingFileLoader;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Horizon\Horizon;
 use Laravel\Passport\Passport;
 use Laravel\Pulse\Facades\Pulse;
-use App\Util\ActivityPub\Inbox;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -59,7 +72,6 @@ class AppServiceProvider extends ServiceProvider
         Passport::$clientUuids = false;
         Passport::authorizationView('auth.oauth.authorize');
 
-        Schema::defaultStringLength(191);
         Paginator::useBootstrap();
         Avatar::observe(AvatarObserver::class);
         Follower::observe(FollowerObserver::class);
@@ -72,10 +84,32 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Status::observe(StatusObserver::class);
         UserFilter::observe(UserFilterObserver::class);
+
+        Relation::morphMap([
+            'App\AccountInterstitial' => AccountInterstitial::class,
+            'App\DirectMessage' => DirectMessage::class,
+            'App\Follower' => Follower::class,
+            'App\Like' => Like::class,
+            'App\Media' => Media::class,
+            'App\MediaTag' => MediaTag::class,
+            'App\Notification' => Notification::class,
+            'App\Profile' => Profile::class,
+            'App\Report' => Report::class,
+            'App\Status' => Status::class,
+            'App\Story' => Story::class,
+            'App\User' => User::class,
+            'App\UserFilter' => UserFilter::class,
+        ]);
+
         Horizon::auth(function ($request) {
             return Auth::check() && $request->user()->is_admin;
         });
         Validator::includeUnvalidatedArrayKeys();
+
+        Gate::policy(CustomFilter::class, CustomFilterPolicy::class);
+
+        Event::listen(Login::class, AuthLogin::class);
+        Event::listen(Failed::class, LogFailedLogin::class);
 
         Gate::define('viewPulse', function (User $user) {
             return $user->is_admin === 1;
@@ -97,34 +131,31 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(512)->by($request->user()?->id ?: $request->ip());
+        });
+
         RateLimiter::for('app-signup', function (Request $request) {
             return Limit::perDay(100)->by($request->ip());
         });
 
         RateLimiter::for('app-code-verify', function (Request $request) {
-            return Limit::perHour(20)->by($request->ip());
+            $email = strtolower(trim((string) $request->input('email')));
+
+            $emailKey = $email !== ''
+                ? hash('sha256', $email)
+                : 'missing';
+
+            return [
+                Limit::perHour(20)->by('app-code-verify:ip:'.$request->ip()),
+                Limit::perHour(10)->by('app-code-verify:email:'.$emailKey),
+            ];
         });
 
         RateLimiter::for('app-code-resend', function (Request $request) {
             return Limit::perHour(10)->by($request->ip());
         });
 
-        Inbox::registerHandlers([
-            'Add' => \App\Util\ActivityPub\Handlers\AddHandler::class,
-            'Create' => \App\Util\ActivityPub\Handlers\CreateHandler::class,
-            'Follow' => \App\Util\ActivityPub\Handlers\FollowHandler::class,
-            'Announce' => \App\Util\ActivityPub\Handlers\AnnounceHandler::class,
-            'Accept' => \App\Util\ActivityPub\Handlers\AcceptHandler::class,
-            'Delete' => \App\Util\ActivityPub\Handlers\DeleteHandler::class,
-            'Like' => \App\Util\ActivityPub\Handlers\LikeHandler::class,
-            'Reject' => \App\Util\ActivityPub\Handlers\RejectHandler::class,
-            'Undo' => \App\Util\ActivityPub\Handlers\UndoHandler::class,
-            'Story:Reaction' => \App\Util\ActivityPub\Handlers\StoryReactionHandler::class,
-            'Story:Reply' => \App\Util\ActivityPub\Handlers\StoryReplyHandler::class,
-            'Flag' => \App\Util\ActivityPub\Handlers\FlagHandler::class,
-            'Update' => \App\Util\ActivityPub\Handlers\UpdateHandler::class,
-            'Move' => \App\Util\ActivityPub\Handlers\MoveHandler::class,
-        ]);
         RateLimiter::for('account-lookup', function (Request $request) {
             return Limit::perDay(50)->by($request->ip());
         });
@@ -135,6 +166,17 @@ class AppServiceProvider extends ServiceProvider
             $actor = $user
                 ? 'u:'.$user->getAuthIdentifier()
                 : 'ip:'.$request->ip();
+
+            $tooMany = function (Request $request, array $headers) {
+                return response()->json([
+                    'message' => 'Too many requests',
+                    'retry_after' => isset($headers['Retry-After'])
+                        ? (int) $headers['Retry-After']
+                        : null,
+                    'debug' => 'oauth-pat limiter hit',
+                    'headers' => $headers,
+                ], 429)->withHeaders($headers)->header('X-Debug-Limiter', 'oauth-pat');
+            };
 
             return [
                 Limit::perMinute(3)
@@ -151,7 +193,7 @@ class AppServiceProvider extends ServiceProvider
         Passport::useTokenModel(OAuthToken::class);
         Passport::tokensExpireIn(now()->addDays(config('instance.oauth.token_expiration', 356)));
         Passport::refreshTokensExpireIn(now()->addDays(config('instance.oauth.refresh_expiration', 400)));
-        Passport::enableImplicitGrant();
+
         Passport::tokensCan([
             'read' => 'Full read access to your account',
             'write' => 'Full write access to your account',
@@ -161,15 +203,23 @@ class AppServiceProvider extends ServiceProvider
             'admin:write' => 'Modify all data on the server',
             'admin:write:domain_blocks' => 'Perform moderation actions on domain blocks',
             'push' => 'Receive your push notifications',
+            'security:read' => 'See which apps and devices have access to your account',
+            'security:write' => 'Change your password and revoke access for other apps and devices',
         ]);
 
-        Passport::setDefaultScope([
+        Passport::defaultScopes([
             'read',
             'write',
             'follow',
+            'push',
         ]);
 
-        // Model::preventLazyLoading(true);
+        URL::forceRootUrl(config('app.url'));
+
+        // Enable strict testing in dev/test only (false in production)
+        // Model::preventLazyLoading(! $this->app->isProduction());
+        // Model::preventSilentlyDiscardingAttributes(! $this->app->isProduction());
+        // Model::preventAccessingMissingAttributes(! $this->app->isProduction());
     }
 
     /**
@@ -183,6 +233,16 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(UserOidcService::class, function () {
             return UserOidcService::build();
+        });
+
+        // Swap the translation loader so empty (untranslated) strings are
+        // dropped at load time. This lets Laravel fall back to the fallback
+        // locale for partially-translated locales instead of rendering blanks.
+        $this->app->extend('translation.loader', function ($loader, $app) {
+            return new EmptyStrippingFileLoader(
+                $app['files'],
+                $app['path.lang']
+            );
         });
     }
 }

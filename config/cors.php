@@ -24,7 +24,10 @@ return [
     'paths' => [
         '.well-known/*',
         'api/*',
-        'oauth/*'
+        'oauth/*',
+        'sanctum/csrf-cookie',
+        'login',
+        'logout',
     ],
 
     /*
@@ -35,7 +38,7 @@ return [
     /*
      * Matches the request origin. `[*]` allows all origins. Wildcards can be used, eg `*.mydomain.com`
      */
-    'allowed_origins' => ['*'],
+    'allowed_origins' => env('PF_CORS_ALLOWED_ORIGINS') ? explode(',', env('PF_CORS_ALLOWED_ORIGINS', '')) : [],
 
     /*
      * Patterns that can be used with `preg_match` to match the origin.
@@ -60,5 +63,5 @@ return [
     /*
      * Sets the Access-Control-Allow-Credentials header.
      */
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];

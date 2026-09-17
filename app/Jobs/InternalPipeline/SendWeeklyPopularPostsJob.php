@@ -2,7 +2,7 @@
 
 namespace App\Jobs\InternalPipeline;
 
-use App\User;
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,10 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
-use App\Status;
+use App\Models\Status;
 use App\Mail\WeeklyPopularPostsMail;
 use Carbon\Carbon;
-use App\Profile;
+use App\Models\Profile;
 use App\Enums\StatusEnums;
 
 class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique

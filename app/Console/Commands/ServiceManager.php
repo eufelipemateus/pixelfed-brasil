@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Follower;
+use App\Models\Follower;
 use Illuminate\Console\Command;
-use App\Profile;
+use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
-use App\FollowRequest;
+use App\Models\FollowRequest;
 
 class ServiceManager extends Command
 {

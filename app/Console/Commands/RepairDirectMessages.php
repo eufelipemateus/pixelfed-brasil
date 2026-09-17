@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\DirectMessage;
+use App\Models\DirectMessage;
 use App\Models\Conversation;
 use App\Services\DirectMessageService;
 use Illuminate\Console\Command;

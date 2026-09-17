@@ -2,19 +2,19 @@
 
 namespace App\Observers;
 
-use App\Follower;
+use App\Enums\StatusEnums;
+use App\Http\Controllers\FollowerController;
 use App\Jobs\AvatarPipeline\CreateAvatar;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use App\Models\DefaultDomainBlock;
+use App\Models\Follower;
+use App\Models\FollowRequest;
+use App\Models\Profile;
+use App\Models\User;
 use App\Models\UserDomainBlock;
-use App\Profile;
+use App\Models\UserSetting;
 use App\Services\FollowerService;
-use App\User;
-use App\UserSetting;
-use DB;
-use App\Enums\StatusEnums;
-use App\Http\Controllers\FollowerController;
-use App\FollowRequest;
+use Illuminate\Support\Facades\DB;
 
 class UserObserver
 {
@@ -60,7 +60,7 @@ class UserObserver
 
     protected function handleUser($user)
     {
-        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
+        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE], true)) {
             return;
         }
 
@@ -118,37 +118,43 @@ class UserObserver
 
                 if ($profiles) {
                     foreach ($profiles as $p) {
-                        if (empty($p->domain)) {
-                            $follower = new Follower;
-                            $follower->profile_id = $profile->id;
-                            $follower->following_id = $p->id;
-                            $follower->save();
+                        if ($p->domain) {
+                            FollowRequest::firstOrCreate([
+                                'follower_id' => $profile->id,
+                                'following_id' => $p->id,
+                            ]);
 
-                            FollowPipeline::dispatch($follower);
-                        } else {
-                            FollowRequest::firstOrCreate(
-                                [
-                                    'follower_id' => $profile->id,
-                                    'following_id' => $p->id,
-                                ]
-                            );
-
-                            if (config('federation.activitypub.remoteFollow') == true) {
+                            if ((bool) config('federation.activitypub.remoteFollow')) {
                                 (new FollowerController)->sendFollow($profile, $p);
                             }
+
+                            continue;
+                        }
+
+                        $follower = Follower::firstOrCreate([
+                            'profile_id' => $profile->id,
+                            'following_id' => $p->id,
+                        ]);
+
+                        if ($follower->wasRecentlyCreated) {
+                            FollowPipeline::dispatch($follower);
                         }
                     }
                 }
+            }
 
-                if (!empty($user->referred_by) && config('pixelfed.user_invites.enabled')) {
-                    $target = Profile::whereUserId($user->referred_by)->first();
+            if ($user->referred_by && config('pixelfed.user_invites.enabled')) {
+                $target = Profile::whereUserId($user->referred_by)->first();
 
-                    $follower = new Follower();
-                    $follower->profile_id = $profile->id;
-                    $follower->following_id = $target->id;
-                    $follower->save();
+                if ($target) {
+                    $follower = Follower::firstOrCreate([
+                        'profile_id' => $profile->id,
+                        'following_id' => $target->id,
+                    ]);
 
-                    FollowPipeline::dispatch($follower);
+                    if ($follower->wasRecentlyCreated) {
+                        FollowPipeline::dispatch($follower);
+                    }
                 }
             }
         }

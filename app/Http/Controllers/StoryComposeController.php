@@ -2,30 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\DirectMessage;
 use App\Jobs\StoryPipeline\StoryDelete;
 use App\Jobs\StoryPipeline\StoryFanout;
 use App\Jobs\StoryPipeline\StoryReactionDeliver;
 use App\Jobs\StoryPipeline\StoryReplyDeliver;
 use App\Models\Conversation;
+use App\Models\DirectMessage;
+use App\Models\Notification;
 use App\Models\Poll;
 use App\Models\PollVote;
-use App\Notification;
-use App\Report;
+use App\Models\Report;
+use App\Models\Status;
+use App\Models\Story;
 use App\Services\FollowerService;
 use App\Services\MediaPathService;
 use App\Services\StoryIndexService;
 use App\Services\StoryService;
+use App\Services\UserFilterService;
 use App\Services\UserRoleService;
-use App\Status;
-use App\Story;
 use App\Util\Media\ImageDriverManager;
 use FFMpeg;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
-use Storage;
 
 class StoryComposeController extends Controller
 {
@@ -74,7 +76,7 @@ class StoryComposeController extends Controller
         $story->path = $path;
         $story->local = true;
         $story->size = $photo->getSize();
-        $story->bearcap_token = str_random(64);
+        $story->bearcap_token = Str::random(64);
         $story->expires_at = now()->addMinutes(1440);
         $story->save();
 
@@ -91,16 +93,19 @@ class StoryComposeController extends Controller
         if ($story->type === 'video') {
 
             if ($localFs) {
-                $videoPath = storage_path('app/'.$path);
+                $media = FFMpeg::fromDisk('local')->open($path);
             } else {
-                $tempPath = sys_get_temp_dir().'/'.Str::random(40).'.mp4';
+                $tempName = Str::random(40).'.mp4';
+                $tempPath = sys_get_temp_dir().'/'.$tempName;
                 file_put_contents($tempPath, $disk->get($path));
-                $videoPath = $tempPath;
+                $media = FFMpeg::fromDisk(Storage::build([
+                    'driver' => 'local',
+                    'root' => sys_get_temp_dir(),
+                ]))->open($tempName);
             }
 
             try {
-                $video = FFMpeg::open($videoPath);
-                $duration = $video->getDurationInSeconds();
+                $duration = $media->getDurationInSeconds();
                 $res['media_duration'] = $duration;
 
                 if ($duration > 500) {
@@ -144,7 +149,7 @@ class StoryComposeController extends Controller
             if ($localFs) {
                 $fpath = storage_path('app/'.$path);
 
-                $img = $this->imageManager->read($fpath);
+                $img = $this->imageManager->decodePath($fpath);
                 $quality = config_cache('pixelfed.image_quality');
                 $encoder = in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg']) ?
                     new JpegEncoder($quality) :
@@ -157,7 +162,7 @@ class StoryComposeController extends Controller
 
                 $fileContent = $disk->get($path);
 
-                $img = $this->imageManager->read($fileContent);
+                $img = $this->imageManager->decodeBinary($fileContent);
                 $quality = config_cache('pixelfed.image_quality');
                 $encoder = in_array($photo->getMimeType(), ['image/jpeg', 'image/jpg']) ?
                     new JpegEncoder($quality) :
@@ -172,7 +177,7 @@ class StoryComposeController extends Controller
         return $path;
     }
 
-    public function cropPhoto(Request $request)
+    public function cropPhoto(Request $request): array
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
@@ -216,9 +221,9 @@ class StoryComposeController extends Controller
                 $path = storage_path('app/'.$story->path);
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
 
-                $img = $this->imageManager->read($path);
+                $img = $this->imageManager->decodePath($path);
                 $img = $img->crop($width, $height, $x, $y);
-                $img = $img->coverDown(1080, 1920);
+                $img = $img->cover(1080, 1920);
 
                 if (in_array(strtolower($extension), ['jpg', 'jpeg'])) {
                     $encoder = new JpegEncoder($quality);
@@ -234,9 +239,9 @@ class StoryComposeController extends Controller
 
                 $fileContent = $disk->get($story->path);
 
-                $img = $this->imageManager->read($fileContent);
+                $img = $this->imageManager->decodeBinary($fileContent);
                 $img = $img->crop($width, $height, $x, $y);
-                $img = $img->coverDown(1080, 1920);
+                $img = $img->cover(1080, 1920);
 
                 if (in_array(strtolower($extension), ['jpg', 'jpeg'])) {
                     $encoder = new JpegEncoder($quality);
@@ -256,7 +261,7 @@ class StoryComposeController extends Controller
         ];
     }
 
-    public function publishStory(Request $request)
+    public function publishStory(Request $request): array
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
@@ -292,7 +297,7 @@ class StoryComposeController extends Controller
         ];
     }
 
-    public function apiV1Delete(Request $request, $id)
+    public function apiV1Delete(Request $request, $id): array
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
@@ -314,7 +319,7 @@ class StoryComposeController extends Controller
         ];
     }
 
-    public function compose(Request $request)
+    public function compose(Request $request): View
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
         $user = $request->user();
@@ -323,15 +328,7 @@ class StoryComposeController extends Controller
         return view('stories.compose');
     }
 
-    public function createPoll(Request $request)
-    {
-        abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
-        abort_if(! config('instance.polls.enabled'), 404);
-
-        return $request->all();
-    }
-
-    public function publishStoryPoll(Request $request)
+    public function publishStoryPoll(Request $request): array
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
@@ -391,7 +388,7 @@ class StoryComposeController extends Controller
         ];
     }
 
-    public function storyPollVote(Request $request)
+    public function storyPollVote(Request $request): int
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
 
@@ -403,7 +400,10 @@ class StoryComposeController extends Controller
         $pid = $request->user()->profile_id;
         $ci = $request->input('ci');
         $story = Story::findOrFail($request->input('sid'));
-        abort_if(! FollowerService::follows($pid, $story->profile_id), 403);
+        abort_if(now()->gt($story->expires_at), 404);
+        abort_if($story->profile_id == $pid, 422, 'Cannot vote on your own story');
+        abort_if(! FollowerService::follows($pid, $story->profile_id), 422, 'Cannot vote on a story from an account you do not follow');
+        abort_if(in_array($pid, UserFilterService::blocks($story->profile_id)), 403);
         $poll = Poll::whereStoryId($story->id)->firstOrFail();
 
         $vote = new PollVote;
@@ -456,12 +456,13 @@ class StoryComposeController extends Controller
         abort_if(! in_array($type, $types), 422, 'Invalid story report type');
 
         $story = Story::findOrFail($sid);
-
+        abort_if(now()->gt($story->expires_at), 404);
         abort_if($story->profile_id == $pid, 422, 'Cannot report your own story');
         abort_if(! FollowerService::follows($pid, $story->profile_id), 422, 'Cannot report a story from an account you do not follow');
+        abort_if(in_array($pid, UserFilterService::blocks($story->profile_id)), 403);
 
         if (Report::whereProfileId($pid)
-            ->whereObjectType('App\Story')
+            ->whereObjectType(Story::class)
             ->whereObjectId($story->id)
             ->exists()
         ) {
@@ -475,7 +476,7 @@ class StoryComposeController extends Controller
         $report->profile_id = $pid;
         $report->user_id = $request->user()->id;
         $report->object_id = $story->id;
-        $report->object_type = 'App\Story';
+        $report->object_type = Story::class;
         $report->reported_profile_id = $story->profile_id;
         $report->type = $type;
         $report->message = null;
@@ -484,7 +485,7 @@ class StoryComposeController extends Controller
         return [200];
     }
 
-    public function react(Request $request)
+    public function react(Request $request): int
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
         $this->validate($request, [
@@ -496,6 +497,12 @@ class StoryComposeController extends Controller
         $user = $request->user();
         abort_if($user->has_roles && ! UserRoleService::can('can-use-stories', $user->id), 403, 'Invalid permissions for this action');
         $story = Story::findOrFail($request->input('sid'));
+        abort_if(now()->gt($story->expires_at), 404);
+        abort_if(
+            $story->profile_id !== $pid && ! FollowerService::follows($pid, $story->profile_id),
+            403
+        );
+        abort_if(in_array($pid, UserFilterService::blocks($story->profile_id)), 403);
 
         abort_if(! $story->can_react, 422);
         abort_if(StoryService::reactCounter($story->id, $pid) >= 5, 422, 'You have already reacted to this story');
@@ -551,7 +558,7 @@ class StoryComposeController extends Controller
             $n->profile_id = $dm->to_id;
             $n->actor_id = $dm->from_id;
             $n->item_id = $dm->id;
-            $n->item_type = 'App\DirectMessage';
+            $n->item_type = DirectMessage::class;
             $n->action = 'story:react';
             $n->save();
         } else {
@@ -563,7 +570,7 @@ class StoryComposeController extends Controller
         return 200;
     }
 
-    public function comment(Request $request)
+    public function comment(Request $request): int
     {
         abort_if(! (bool) config_cache('instance.stories.enabled') || ! $request->user(), 404);
         $this->validate($request, [
@@ -575,6 +582,12 @@ class StoryComposeController extends Controller
         $user = $request->user();
         abort_if($user->has_roles && ! UserRoleService::can('can-use-stories', $user->id), 403, 'Invalid permissions for this action');
         $story = Story::findOrFail($request->input('sid'));
+        abort_if(now()->gt($story->expires_at), 404);
+        abort_if(
+            $story->profile_id !== $pid && ! FollowerService::follows($pid, $story->profile_id),
+            403
+        );
+        abort_if(in_array($pid, UserFilterService::blocks($story->profile_id)), 403);
 
         abort_if(! $story->can_reply, 422);
 
@@ -628,7 +641,7 @@ class StoryComposeController extends Controller
             $n->profile_id = $dm->to_id;
             $n->actor_id = $dm->from_id;
             $n->item_id = $dm->id;
-            $n->item_type = 'App\DirectMessage';
+            $n->item_type = DirectMessage::class;
             $n->action = 'story:comment';
             $n->save();
         } else {

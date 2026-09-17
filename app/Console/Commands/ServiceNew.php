@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Profile;
+use App\Models\Profile;
 
 class ServiceNew extends Command
 {

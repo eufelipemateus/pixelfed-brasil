@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 class UpdateStatusVisibilityDefaults extends Migration
 {
@@ -14,8 +13,7 @@ class UpdateStatusVisibilityDefaults extends Migration
     public function up()
     {
         $type = config('database.default');
-        switch($type)
-        {
+        switch ($type) {
             case 'mysql':
                 DB::statement("ALTER TABLE statuses CHANGE COLUMN visibility visibility ENUM('public','unlisted','private','direct', 'draft') NOT NULL DEFAULT 'public'");
                 break;

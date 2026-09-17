@@ -3,21 +3,19 @@
 namespace App\Jobs\SharePipeline;
 
 use App\Jobs\HomeFeedPipeline\FeedInsertPipeline;
-use App\Notification;
+use App\Models\Status;
+use App\Services\ActivityPubDeliveryService;
+use App\Services\FractalService;
+use App\Services\NotificationService;
 use App\Services\ReblogService;
 use App\Services\StatusService;
-use App\Status;
 use App\Transformer\ActivityPub\Verb\Announce;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
-use App\Services\AccountService;
-use App\Notifications\ShareNotification;
-use  App\Jobs\ActivityPub\PubDeliver;
+use Illuminate\Support\Facades\Cache;
 
 class SharePipeline implements ShouldQueue
 {
@@ -31,6 +29,10 @@ class SharePipeline implements ShouldQueue
      * @var bool
      */
     public $deleteWhenMissingModels = true;
+
+    public $timeout = 60;
+
+    public $tries = 3;
 
     /**
      * Create a new job instance.
@@ -50,47 +52,59 @@ class SharePipeline implements ShouldQueue
     public function handle()
     {
         $status = $this->status;
-        $parent = Status::find($this->status->reblog_of_id);
+
+        if (! $status->reblog_of_id) {
+            return;
+        }
+
+        $parent = Status::find($status->reblog_of_id);
+
         if (! $parent) {
             return;
         }
+
         $actor = $status->profile;
         $target = $parent->profile;
 
-        if ($status->uri !== null) {
-            // Ignore notifications to remote statuses
+        if (! $actor || ! $target) {
             return;
         }
 
-        if ($target->id === $status->profile_id) {
-            $this->remoteAnnounceDeliver();
+        $isRemoteShare = $status->uri !== null;
 
-            return true;
-        }
+        $isSelfShare = (int) $target->id === (int) $actor->id;
+
+        $targetIsLocal = $target->domain === null;
 
         ReblogService::addPostReblog($parent->profile_id, $status->id);
 
-        $parent->reblogs_count = $parent->reblogs_count + 1;
-        $parent->save();
-        StatusService::del($parent->id);
+        if (Cache::add($this->counterGuardKey($status->id), 1, now()->addDays(30))) {
+            Status::whereId($parent->id)->increment('reblogs_count');
+            StatusService::del($parent->id);
+        }
 
-        Notification::firstOrCreate(
-            [
-                'profile_id' => $target->id,
-                'actor_id' => $actor->id,
-                'action' => 'share',
-                'item_type' => 'App\Status',
-                'item_id' => $status->reblog_of_id ?? $status->id,
-            ]
-        );
-
-        if (!empty($target->user_id)  && AccountService::getAccountSettings($target->id)["send_email_on_share"]) {
-            $target->user->notify(new ShareNotification($actor->id,  $status->reblog_of_id ?? $status->id));
+        if ($targetIsLocal && ! $isSelfShare) {
+            NotificationService::firstOrCreateNotification(
+                $target->id,
+                $actor->id,
+                'share',
+                $status->reblog_of_id,
+                Status::class
+            );
         }
 
         FeedInsertPipeline::dispatch($status->id, $status->profile_id)->onQueue('feed');
 
+        if ($isRemoteShare) {
+            return;
+        }
+
         return $this->remoteAnnounceDeliver();
+    }
+
+    protected function counterGuardKey($statusId)
+    {
+        return 'pf:share-pipeline:counted:'.$statusId;
     }
 
     public function remoteAnnounceDeliver()
@@ -98,25 +112,31 @@ class SharePipeline implements ShouldQueue
         if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
             return true;
         }
+
         $status = $this->status;
-        $profile = $status->profile;
 
-        $fractal = new Fractal\Manager;
-        $fractal->setSerializer(new ArraySerializer);
-        $resource = new Fractal\Resource\Item($status, new Announce);
-        $activity = $fractal->createData($resource)->toArray();
-
-        $audience = $status->profile->getAudienceInbox($status->scope);
-
-        if (empty($audience) || $status->scope != 'public') {
-            // Return on profiles with no remote followers
+        if ($status->uri !== null) {
             return;
         }
 
-        $payload = json_encode($activity);
+        $profile = $status->profile;
 
-        foreach (array_chunk($audience, 100) as $chunk) {
-            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
+        if (! $profile || $profile->domain !== null) {
+            return;
         }
+
+        if ($status->scope !== 'public') {
+            return;
+        }
+
+        $audience = $profile->getAudienceInbox();
+
+        if (empty($audience)) {
+            return;
+        }
+
+        $activity = FractalService::item($status, new Announce);
+
+        ActivityPubDeliveryService::pool($profile, $audience, $activity);
     }
 }

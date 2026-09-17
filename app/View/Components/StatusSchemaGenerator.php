@@ -38,7 +38,7 @@ class StatusSchemaGenerator extends Component
         $creator,
         $creatorUrl,
         $caption = "",
-        $publishedAt,
+        $publishedAt = null,
         $siteName = "Pixelfed Brasil",
         $siteLogo = "/logo.png",
         // Imagem

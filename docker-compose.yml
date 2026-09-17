@@ -52,6 +52,11 @@ services:
     environment:
       # SSL Configuration (handled by reverse proxy)
       SSL_MODE: "off"
+      LOG_OUTPUT_LEVEL: "error"
+      # TODO: Once the new webui is completed, we will try to handle the service worker cache on that side.
+      CADDY_SERVER_EXTRA_DIRECTIVES: |
+        @service_worker path /sw.js
+        header @service_worker Cache-Control "no-cache"
 
       # PHP Configuration
       PHP_POST_MAX_SIZE: "500M"
@@ -69,7 +74,6 @@ services:
 
     volumes:
       - ./storage:/var/www/html/storage
-      - ./bootstrap/cache:/var/www/html/bootstrap/cache
     depends_on:
       - db
       - redis
@@ -100,7 +104,6 @@ services:
       PHP_OPCACHE_ENABLE: "1"
     volumes:
       - ./storage:/var/www/html/storage
-      - ./bootstrap/cache:/var/www/html/bootstrap/cache
     depends_on:
       - db
       - redis
@@ -137,7 +140,6 @@ services:
       PHP_OPCACHE_ENABLE: "1"
     volumes:
       - ./storage:/var/www/html/storage
-      - ./bootstrap/cache:/var/www/html/bootstrap/cache
     depends_on:
       - db
       - redis

@@ -1,9 +1,9 @@
 <?php
 
 use AndreasElia\Analytics\Http\Middleware\Analytics;
-use App\Http\Kernel;
 use App\Http\Middleware\RefreshSessionActivity;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Routing\Router;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Laravel\Passport\Http\Middleware\CreateFreshApiToken;
@@ -13,10 +13,10 @@ uses(TestCase::class);
 
 function middlewareGroups(): array
 {
-    $property = new ReflectionProperty(Kernel::class, 'middlewareGroups');
+    $property = new ReflectionProperty(Router::class, 'middlewareGroups');
     $property->setAccessible(true);
 
-    return $property->getValue(app(Kernel::class));
+    return $property->getValue(app(Router::class));
 }
 
 it('preserves local web middleware', function () {

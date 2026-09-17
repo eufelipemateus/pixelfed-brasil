@@ -1,10 +1,9 @@
 <?php
 
-use App\Exceptions\Handler;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
@@ -14,11 +13,10 @@ uses(TestCase::class);
 function renderJsonException(Throwable $exception, bool $debug = false)
 {
     config()->set('app.debug', $debug);
-    $request = Request::create('/api/test', 'GET', [], [], [], [
-        'HTTP_ACCEPT' => 'application/json',
-    ]);
+    $uri = '/api/exception-test/'.Str::uuid();
+    Route::get($uri, fn () => throw $exception);
 
-    return app(Handler::class)->render($request, $exception);
+    return test()->getJson($uri);
 }
 
 it('hides unexpected exception details when debug is disabled', function () {
@@ -50,7 +48,8 @@ it('preserves explicit http responses', function () {
     $expected = response()->json(['message' => 'safe'], 409);
     $response = renderJsonException(new HttpResponseException($expected), false);
 
-    expect($response)->toBe($expected);
+    expect($response->getStatusCode())->toBe(409)
+        ->and($response->json())->toBe(['message' => 'safe']);
 });
 
 it('preserves validation errors', function () {

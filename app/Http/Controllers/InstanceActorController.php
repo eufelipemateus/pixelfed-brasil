@@ -3,19 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\InstanceActor;
-use App\Profile;
+use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
+use DateTimeImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class InstanceActorController extends Controller
 {
-    public function profile()
+    public function profile(): Response
     {
         $res = Cache::rememberForever(InstanceActor::PROFILE_KEY, function () {
-            $res = InstanceActor::query()->first()->getActor();
+            $res = (new InstanceActor)->first()->getActor();
 
             return json_encode($res, JSON_UNESCAPED_SLASHES);
         });
@@ -23,36 +25,35 @@ class InstanceActorController extends Controller
         return response($res)->header('Content-Type', 'application/activity+json');
     }
 
-    public function inbox(Request $request)
+    public function inbox(Request $request): Response
     {
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
         abort_if(! config('federation.activitypub.sharedInbox'), 404);
 
-        $headers = $request->headers->all();
         $payload = $request->getContent();
-
-        if (empty($headers) || empty($payload) || ! isset($headers['signature']) || ! isset($headers['date'])) {
+        if ($payload === '' || strlen($payload) > 1024 * 1024) {
             return response('', 202);
         }
 
-        $obj = json_decode($payload, true, 8);
-
-        if (! is_array($obj) || ! isset($obj['type']) || ! isset($obj['id'])) {
+        $activity = json_decode($payload, true, 16);
+        if (! is_array($activity) || ($activity['type'] ?? null) !== 'Follow') {
             return response('', 202);
         }
 
-        if (! $this->verifySignature($headers, $payload, $obj)) {
+        if (($activity['object'] ?? null) !== InstanceActor::first()?->permalink()) {
             return response('', 202);
         }
 
-        if ($obj['type'] === 'Follow') {
-            $this->sendAcceptForFollow($obj);
+        if (! $this->verifySignature($request, $payload, $activity)) {
+            return response('', 202);
         }
+
+        $this->sendAcceptForFollow($activity);
 
         return response('', 202);
     }
 
-    public function outbox()
+    public function outbox(): Response
     {
         $res = json_encode([
             '@context' => [
@@ -110,59 +111,56 @@ class InstanceActorController extends Controller
                     'suspended' => 'toot:suspended',
                 ],
             ],
-            'id' => config('app.url') . '/i/actor/outbox',
+            'id' => config('app.url').'/i/actor/outbox',
             'type' => 'OrderedCollection',
             'totalItems' => 0,
-            'first' => config('app.url') . '/i/actor/outbox?page=true',
-            'last' => config('app.url') . '/i/actor/outbox?min_id=0&page=true',
+            'first' => config('app.url').'/i/actor/outbox?page=true',
+            'last' => config('app.url').'/i/actor/outbox?min_id=0&page=true',
         ], JSON_UNESCAPED_SLASHES);
 
         return response($res)->header('Content-Type', 'application/activity+json');
     }
 
-    protected function verifySignature(array $headers, string $rawPayload, array $payload): bool
+    /** @param array<string, mixed> $activity */
+    private function verifySignature(Request $request, string $rawPayload, array $activity): bool
     {
-        $signature = is_array($headers['signature']) ? $headers['signature'][0] : $headers['signature'];
-        $date = is_array($headers['date']) ? $headers['date'][0] : $headers['date'];
-
+        $signature = $request->header('Signature');
+        $date = $request->header('Date');
         if (! $signature || ! $date) {
             return false;
         }
 
-        if (! now()->parse($date)->gt(now()->subDays(1)) || ! now()->parse($date)->lt(now()->addDays(1))) {
+        try {
+            $requestDate = new DateTimeImmutable($date);
+        } catch (\Exception) {
+            return false;
+        }
+
+        if ($requestDate < now()->subDay() || $requestDate > now()->addDay()) {
             return false;
         }
 
         $signatureData = HttpSignature::parseSignatureHeader($signature);
-        if (
-            ! isset($signatureData['keyId'], $signatureData['signature'], $signatureData['headers']) ||
-            isset($signatureData['error'])
-        ) {
+        if (isset($signatureData['error']) || ! isset($signatureData['keyId'], $signatureData['signature'], $signatureData['headers'])) {
             return false;
         }
 
         $keyId = Helpers::validateUrl($signatureData['keyId']);
-        $id = Helpers::validateUrl($payload['id']);
-        if (! $keyId || ! $id) {
+        $activityId = Helpers::validateUrl($activity['id'] ?? '');
+        $actorUrl = Helpers::pluckval($activity['actor'] ?? null);
+        if (! $keyId || ! $activityId || ! is_string($actorUrl) || ! Helpers::validateUrl($actorUrl)) {
             return false;
         }
 
         $keyDomain = parse_url($keyId, PHP_URL_HOST);
-        $idDomain = parse_url($id, PHP_URL_HOST);
-        if (! $keyDomain || ! $idDomain || $keyDomain !== $idDomain) {
+        $activityDomain = parse_url($activityId, PHP_URL_HOST);
+        $actorDomain = parse_url($actorUrl, PHP_URL_HOST);
+        if (! $keyDomain || $keyDomain !== $activityDomain || $keyDomain !== $actorDomain) {
             return false;
         }
 
-        $actor = Profile::whereKeyId($keyId)->first();
-        if (! $actor) {
-            $actorUrl = Helpers::pluckval($payload['actor'] ?? null);
-            if (! is_string($actorUrl) || ! $actorUrl) {
-                return false;
-            }
-            $actor = Helpers::profileFirstOrNew($actorUrl);
-        }
-
-        if (! $actor || ! $actor->public_key) {
+        $actor = Profile::whereKeyId($keyId)->first() ?? Helpers::profileFirstOrNew($actorUrl);
+        if (! $actor || ! $actor->domain || ! $actor->public_key) {
             return false;
         }
 
@@ -171,33 +169,36 @@ class InstanceActorController extends Controller
             return false;
         }
 
-        [$verified, ] = HttpSignature::verify($publicKey, $signatureData, $headers, '/i/actor/inbox', $rawPayload);
+        [$verified] = HttpSignature::verify(
+            $publicKey,
+            $signatureData,
+            $request->headers->all(),
+            '/i/actor/inbox',
+            $rawPayload
+        );
 
         return $verified === 1;
     }
 
-    protected function sendAcceptForFollow(array $follow): void
+    /** @param array<string, mixed> $follow */
+    private function sendAcceptForFollow(array $follow): void
     {
         $actorUrl = Helpers::pluckval($follow['actor'] ?? null);
-        if (! is_string($actorUrl) || ! Helpers::validateUrl($actorUrl)) {
+        $followId = Helpers::pluckval($follow['id'] ?? null);
+        if (! is_string($actorUrl) || ! is_string($followId) || ! Helpers::validateUrl($actorUrl) || ! Helpers::validateUrl($followId)) {
             return;
         }
 
         $relay = Helpers::profileFirstOrNew($actorUrl);
-        if (! $relay || ! $relay->inbox_url || ! Helpers::validateUrl($relay->inbox_url)) {
-            return;
-        }
-
         $instanceActor = InstanceActor::first();
-        if (! $instanceActor) {
+        if (! $relay || ! $relay->inbox_url || ! Helpers::validateUrl($relay->inbox_url) || ! $instanceActor?->private_key) {
             return;
         }
 
         $instanceActorUrl = $instanceActor->permalink();
-        $followId = Helpers::pluckval($follow['id'] ?? null);
         $accept = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $instanceActor->permalink('#accepts/follows/' . hash('sha256', (string) $followId)),
+            'id' => $instanceActor->permalink('#accepts/follows/'.hash('sha256', $followId)),
             'type' => 'Accept',
             'actor' => $instanceActorUrl,
             'object' => [
@@ -207,26 +208,27 @@ class InstanceActorController extends Controller
                 'object' => $instanceActorUrl,
             ],
         ];
-        $acceptJson = json_encode($accept);
 
-        if (! $acceptJson) {
-            return;
+        try {
+            $body = json_encode($accept, JSON_THROW_ON_ERROR);
+            $digest = base64_encode(hash('sha256', $body, true));
+            $headers = HttpSignature::instanceActorSignWithDigest(
+                $relay->inbox_url,
+                $digest,
+                [
+                    'Accept' => 'application/activity+json',
+                    'Content-Type' => 'application/activity+json',
+                    'User-Agent' => '(Pixelfed/'.config('pixelfed.version').'; +'.config('app.url').')',
+                ]
+            );
+
+            Http::withHeaders($headers)
+                ->timeout((int) config('federation.activitypub.delivery.timeout', 30))
+                ->connectTimeout(10)
+                ->withBody($body, 'application/activity+json')
+                ->post($relay->inbox_url);
+        } catch (\Throwable) {
+            // Relay delivery is best-effort; invalid or unreachable relays must not fail the inbox request.
         }
-
-        $version = config('pixelfed.version');
-        $appUrl = config('app.url');
-        $headers = HttpSignature::instanceActorSign($relay->inbox_url, $acceptJson, [
-            'Accept' => 'application/activity+json',
-            'Content-Type' => 'application/activity+json',
-            'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
-        ]);
-
-        Http::withHeaders($headers)
-            ->timeout(config('federation.activitypub.delivery.timeout', 30))
-            ->withBody(
-                $acceptJson,
-                'application/activity+json'
-            )
-            ->send('POST', $relay->inbox_url);
     }
 }

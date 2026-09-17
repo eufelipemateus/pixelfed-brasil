@@ -3,19 +3,18 @@
 namespace App\Jobs\SharePipeline;
 
 use App\Jobs\HomeFeedPipeline\FeedRemovePipeline;
-use App\Notification;
+use App\Models\Notification;
+use App\Models\Status;
+use App\Services\ActivityPubDeliveryService;
+use App\Services\FractalService;
 use App\Services\ReblogService;
 use App\Services\StatusService;
-use App\Status;
 use App\Transformer\ActivityPub\Verb\UndoAnnounce;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
-use App\Jobs\ActivityPub\PubDeliver;
 
 class UndoSharePipeline implements ShouldQueue
 {
@@ -52,7 +51,7 @@ class UndoSharePipeline implements ShouldQueue
                 ->whereActorId($status->profile_id)
                 ->whereAction('share')
                 ->whereItemId($status->reblog_of_id)
-                ->whereItemType('App\Status')
+                ->whereItemType(Status::class)
                 ->first();
 
             if ($notification) {
@@ -75,28 +74,22 @@ class UndoSharePipeline implements ShouldQueue
     {
         if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
             $this->status->delete();
+
             return 1;
         }
 
         $status = $this->status;
         $profile = $status->profile;
 
-        $fractal = new Fractal\Manager;
-        $fractal->setSerializer(new ArraySerializer);
-        $resource = new Fractal\Resource\Item($status, new UndoAnnounce);
-        $activity = $fractal->createData($resource)->toArray();
+        $activity = FractalService::item($status, new UndoAnnounce);
 
-        $audience = $status->profile->getAudienceInbox($status->scope);
+        $audience = $status->profile->getAudienceInbox();
 
         if (empty($audience) || $status->scope != 'public') {
             return 1;
         }
 
-        $payload = json_encode($activity);
-
-        foreach (array_chunk($audience, 100) as $chunk) {
-            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
-        }
+        ActivityPubDeliveryService::pool($profile, $audience, $activity);
 
         $status->delete();
 

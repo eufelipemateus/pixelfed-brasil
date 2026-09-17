@@ -14,12 +14,10 @@
 
 namespace App\Services\Translate;
 
-use App\Status;
+use App\Models\Profile;
+use App\Models\Status;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
-use App\Services\Translate\GoogleTranslate;
-use App\Services\Translate\DeepLTranslate;
-use App\Profile;
-use App\User;
 
 /**
  * Service class for handling translation operations using different providers.
@@ -80,23 +78,21 @@ class TranslateService
             self::statusKey($id, $language),
             21600,
             function () use ($id, $language) {
-                $status =  Status::where('id', $id)
-                    ->first();
-
-                $config = self::config();
-                $ranslate = new Translator($config['provider'], $config['config']);
-
-                if ($status) {
-                    $text = $ranslate->translate($status->caption, $language);
-                    return [
-                        'id' => $id,
-                        'language' => $language,
-                        'text' => $text['text'],
-                        'provider' => $config['provider'],
-                    ];
-                } else {
+                $status = Status::find($id);
+                if (! $status || ! is_string($status->caption) || $status->caption === '') {
                     return null;
                 }
+
+                $config = self::config();
+                $translator = new Translator($config['provider'], $config['config']);
+                $text = $translator->translate($status->caption, $language);
+
+                return [
+                    'id' => $id,
+                    'language' => $language,
+                    'text' => $text['text'],
+                    'provider' => $config['provider'],
+                ];
             }
         );
     }
@@ -148,10 +144,14 @@ class TranslateService
             self::bioKey($pid, $targetLanguage),
             21600,
             function () use ($pid, $targetLanguage) {
+                $profile = Profile::find($pid);
+                if (! $profile || ! is_string($profile->bio) || $profile->bio === '') {
+                    return null;
+                }
+
                 $config = self::config();
-                $ranslate = new Translator($config['provider'], $config['config']);
-                $profile = Profile::where('id', $pid)->first();
-                $text = $ranslate->translate($profile->bio, $targetLanguage);
+                $translator = new Translator($config['provider'], $config['config']);
+                $text = $translator->translate($profile->bio, $targetLanguage);
                 return [
                     'id' => $pid,
                     'language' => $targetLanguage,
@@ -180,7 +180,7 @@ class TranslateService
                     return false;
                 }
                 $settings = $user->settings;
-                if (config('pixelfed.translation.users_limited') &&  $settings['enable_translate'] == false) {
+                if (config('pixelfed.translation.users_limited') && ! $settings?->enable_translate) {
                     return false;
                 }
                 return true;

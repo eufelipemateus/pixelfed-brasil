@@ -2,23 +2,22 @@
 
 namespace App\Jobs\FollowPipeline;
 
-use App\Follower;
 use App\Jobs\PushNotificationPipeline\FollowPushNotifyPipeline;
-use App\Notification;
+use App\Models\Follower;
+use App\Models\Profile;
+use App\Models\User;
 use App\Services\AccountService;
 use App\Services\FollowerService;
 use App\Services\NotificationAppGatewayService;
+use App\Services\NotificationService;
 use App\Services\PushNotificationService;
-use App\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Notifications\FollowNotification;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Exception;
+use Illuminate\Support\Facades\Log;
 
 class FollowPipeline implements ShouldQueue
 {
@@ -79,19 +78,8 @@ class FollowPipeline implements ShouldQueue
 
         if ($target->user_id && $target->domain === null) {
             try {
-                $notification = new Notification;
-                $notification->profile_id = $target->id;
-                $notification->actor_id = $actor->id;
-                $notification->action = 'follow';
-                $notification->item_id = $target->id;
-                $notification->item_type = "App\Profile";
-                $notification->save();
-
-                $account = AccountService::getAccountSettings($target->id);
-                if ( $account &&  $account["send_email_new_follower"]) {
-                    User::find($target->user_id)->notify(new FollowNotification($actor->id));
-                }
-            } catch (Exception $e) {
+                NotificationService::createNotification($target->id, $actor->id, 'follow', $target->id, Profile::class);
+            } catch (\Exception $e) {
                 Log::error($e);
             }
 

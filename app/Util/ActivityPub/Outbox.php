@@ -4,7 +4,7 @@ namespace App\Util\ActivityPub;
 
 use App\Enums\StatusEnums;
 use App\Http\Controllers\ProfileController;
-use App\Status;
+use App\Models\Status;
 use App\Transformer\ActivityPub\Verb\CreateNote;
 use League\Fractal;
 
