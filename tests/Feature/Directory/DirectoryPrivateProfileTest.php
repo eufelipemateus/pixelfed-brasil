@@ -53,7 +53,7 @@ it('clears is_suggestable when an account goes private', function () {
     $profile->save();
 
     $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
         ->post('/settings/privacy/account', ['mode' => 'keep-all', 'duration' => 60])
         ->assertOk();
 

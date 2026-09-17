@@ -64,7 +64,7 @@ it('renders the 2fa setup page behind password confirmation', function () {
     $user->refresh();
 
     $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
         ->get('/settings/security/2fa/setup')
         ->assertOk();
 });

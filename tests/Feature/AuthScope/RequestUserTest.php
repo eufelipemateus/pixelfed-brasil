@@ -190,7 +190,7 @@ describe('middleware using $request->user()', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withSession(['sudoMode' => time()])
             ->get('/i/admin/dashboard')
             ->assertRedirect(config('app.url'));
     });
@@ -200,7 +200,7 @@ describe('middleware using $request->user()', function () {
         $admin->refresh();
 
         $this->actingAs($admin)
-            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withSession(['sudoMode' => time()])
             ->get('/i/admin/dashboard')
             ->assertOk();
     });

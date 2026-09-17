@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\UserOidcMapping;
+use App\Services\EmailService;
 use App\Services\UserOidcService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,15 @@ use League\OAuth2\Client\Token\AccessToken;
 use Mockery\MockInterface;
 
 uses(LazilyRefreshDatabase::class);
+
+function oidcTestEmail(): string
+{
+    do {
+        $email = fake()->unique()->freeEmail;
+    } while (EmailService::isBanned($email));
+
+    return $email;
+}
 
 it('shows the oidc start redirect', function () {
     config([
@@ -110,6 +120,9 @@ it('shows the oidc start redirect', function () {
 // });
 
 it('lets an oidc user reach a dangerzone route without a password prompt', function () {
+    Auth::logout();
+    session()->flush();
+
     config(['remote-auth.oidc.enabled' => true]);
     config(['remote-auth.oidc.field_username' => 'preferred_username']);
 
@@ -117,7 +130,7 @@ it('lets an oidc user reach a dangerzone route without a password prompt', funct
         'sub' => Str::random(10),
         'name' => fake()->name,
         'preferred_username' => 'oidcuser',
-        'email' => fake()->unique()->freeEmail,
+        'email' => oidcTestEmail(),
     ];
 
     $this->partialMock(UserOidcService::class, function (MockInterface $mock) use ($oauthData) {
@@ -169,7 +182,7 @@ it('ensures a valid username from the oidc callback', function () {
             'sub' => Str::random(10),
             'name' => fake()->name,
             'preferred_username' => $input,
-            'email' => fake()->unique()->freeEmail,
+            'email' => oidcTestEmail(),
         ];
 
         $this->partialMock(UserOidcService::class, function (MockInterface $mock) use ($oauthData) {

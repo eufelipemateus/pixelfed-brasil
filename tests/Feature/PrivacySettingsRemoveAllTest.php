@@ -46,7 +46,7 @@ describe('remove-all', function () {
         expect(Follower::whereFollowingId($profile->id)->count())->toBe($followerCount);
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withSession(['sudoMode' => time()])
             ->post(route('settings.privacy.account'), [
                 'mode' => 'remove-all',
                 'duration' => 60,

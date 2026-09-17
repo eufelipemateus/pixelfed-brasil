@@ -133,49 +133,49 @@ describe('guest profile page (regression: cached UserSetting model)', function (
     });
 });
 
-describe('static site pages (regression: cached Page model)', function () {
+describe('canonical static site pages (regression: cached Page model)', function () {
     uses(LazilyRefreshDatabase::class);
 
     it('loads terms of use twice', function () {
-        $this->get('/site/terms')->assertStatus(200);
-        $this->get('/site/terms')->assertStatus(200);
+        $this->get('/terms')->assertStatus(200);
+        $this->get('/terms')->assertStatus(200);
     });
 
     it('loads privacy policy twice', function () {
-        $this->get('/site/privacy')->assertStatus(200);
-        $this->get('/site/privacy')->assertStatus(200);
+        $this->get('/privacy')->assertStatus(200);
+        $this->get('/privacy')->assertStatus(200);
     });
 
     it('renders db-backed terms content twice', function () {
         Page::create([
-            'slug' => '/site/terms',
+            'slug' => '/terms',
             'title' => 'Terms',
             'content' => '<p>Custom terms content</p>',
             'active' => true,
         ]);
 
-        $this->get('/site/terms')
+        $this->get('/terms')
             ->assertStatus(200)
             ->assertSee('Custom terms content', false);
 
-        $this->get('/site/terms')
+        $this->get('/terms')
             ->assertStatus(200)
             ->assertSee('Custom terms content', false);
     });
 
     it('loads legal notice twice when a page exists', function () {
         Page::create([
-            'slug' => '/site/legal-notice',
+            'slug' => '/legal-notice',
             'title' => 'Legal Notice',
             'content' => '<p>Legal notice body</p>',
             'active' => true,
         ]);
 
-        $this->get('/site/legal-notice')
+        $this->get('/legal-notice')
             ->assertStatus(200)
             ->assertSee('Legal notice body', false);
 
-        $this->get('/site/legal-notice')
+        $this->get('/legal-notice')
             ->assertStatus(200)
             ->assertSee('Legal notice body', false);
     });
@@ -190,7 +190,7 @@ describe('static site pages (regression: cached Page model)', function () {
 
 describe('static informational pages load for guests', function () {
     test('help index loads', function () {
-        $this->get('/site/help')->assertStatus(200);
+        $this->get('/help')->assertStatus(200);
     });
 
     test('fediverse info page loads', function () {
@@ -225,7 +225,7 @@ describe('community guidelines page (regression: cached page render)', function 
 
     it('renders db-backed content twice', function () {
         Page::create([
-            'slug' => '/site/kb/community-guidelines',
+            'slug' => '/kb/community-guidelines',
             'title' => 'Community Guidelines',
             'content' => '<p>Be excellent to each other</p>',
             'active' => true,

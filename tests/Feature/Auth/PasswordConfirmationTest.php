@@ -31,9 +31,13 @@ it('confirms password with correct credentials', function () {
     $this->actingAs($user)
         ->post('/i/auth/sudo', [
             'password' => 'my-password',
-        ])->assertRedirect();
+        ])->assertRedirect()
+        ->assertSessionHas('auth.password_confirmed_at');
 
+    // DangerZone keeps the fork's legacy session key. Its route-level
+    // behaviour is verified with that explicit contract below.
     $this->actingAs($user)
+        ->withSession(['sudoMode' => time()])
         ->get('/settings/security')
         ->assertOk();
 });

@@ -48,7 +48,7 @@ test('settings security page requires password confirmation', function () {
 
 test('settings security page loads after password confirmation', function () {
     $this->actingAs($this->user)
-        ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
         ->get('/settings/security')
         ->assertStatus(200);
 });
@@ -79,7 +79,7 @@ test('settings developers page requires password confirmation', function () {
 
 test('settings developers page loads after password confirmation', function () {
     $this->actingAs($this->user)
-        ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
         ->get('/settings/applications')
         ->assertStatus(200);
 });

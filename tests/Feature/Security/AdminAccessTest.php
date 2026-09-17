@@ -23,7 +23,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/dashboard')
             ->assertRedirect(config('app.url'));
     });
@@ -33,7 +33,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/users/show/1')
             ->assertRedirect(config('app.url'));
     });
@@ -43,7 +43,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/reports')
             ->assertRedirect(config('app.url'));
     });
@@ -53,7 +53,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/settings')
             ->assertRedirect(config('app.url'));
     });
@@ -63,7 +63,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/instances')
             ->assertRedirect(config('app.url'));
     });
@@ -73,7 +73,7 @@ describe('web admin routes deny non-admin users', function () {
         $user->refresh();
 
         $this->actingAs($user)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/curated-onboarding/home')
             ->assertRedirect(config('app.url'));
     });
@@ -198,7 +198,7 @@ describe('admin access granted to admin users', function () {
         $admin->refresh();
 
         $this->actingAs($admin)
-            ->withSession(['auth.password_confirmed_at' => time()])
+        ->withSession(['sudoMode' => time()])
             ->get('/i/admin/dashboard')
             ->assertOk();
     });
