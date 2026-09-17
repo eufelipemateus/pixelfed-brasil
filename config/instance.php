@@ -115,6 +115,14 @@ return [
         'show_explore' => env('INSTANCE_LANDING_SHOW_EXPLORE', true),
     ],
 
+    'label' => [
+        'covid' => [
+            'enabled' => env('ENABLE_COVID_LABEL', true),
+            'url' => env('COVID_LABEL_URL', 'https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public'),
+            'org' => env('COVID_LABEL_ORG', 'visit the WHO website'),
+        ],
+    ],
+
     'banner' => [
         'blurhash' => env('INSTANCE_BANNER_BLURHASH', 'UzJR]l{wHZRjM}R%XRkCH?X9xaWEjZj]kAjt'),
     ],
