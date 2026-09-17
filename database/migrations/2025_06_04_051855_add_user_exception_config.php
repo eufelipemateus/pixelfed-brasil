@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::table(
             'user_settings',
             function (Blueprint $table) {
-                $table->boolean('enable_limit_daily_posts_exception')->default(false)->after('some_column');
+                $table->boolean('enable_limit_daily_posts_exception')->default(false);
             }
         );
     }

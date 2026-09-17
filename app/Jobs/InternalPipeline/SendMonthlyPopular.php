@@ -10,11 +10,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
-use App\Status;
-use App\User;
+use App\Models\Status;
+use App\Models\User;
 use Carbon\Carbon;
 use App\Mail\MonthlyPopularPostsMail;
-use App\Profile;
+use App\Models\Profile;
 use App\Jobs\InternalPipeline\DefinePopularUsers;
 
 class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique

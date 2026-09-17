@@ -2,12 +2,13 @@
 
 namespace App\Listeners;
 
-use App\Jobs\AvatarPipeline\CreateAvatar;
 use App\Enums\StatusEnums;
-use App\Profile;
-use App\UserDevice;
-use App\UserSetting;
-use DB;
+use App\Jobs\AvatarPipeline\CreateAvatar;
+use App\Models\Profile;
+use App\Models\UserDevice;
+use App\Models\UserSetting;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AuthLogin
 {
@@ -36,7 +37,7 @@ class AuthLogin
     protected function userProfile($user)
     {
         if (empty($user->profile)) {
-            if ($user->created_at->lt(now()->subDays(1)) && empty($user->status)) {
+            if ($user->created_at->lt(now()->subDays(1)) && $user->status === StatusEnums::ACTIVE) {
                 $p = Profile::withTrashed()->whereUserId($user->id)->first();
                 if ($p) {
                     $p->restore();
@@ -83,7 +84,7 @@ class AuthLogin
 
     protected function userState($user)
     {
-        if($user->status != StatusEnums::ACTIVE) {
+        if ($user->status !== StatusEnums::ACTIVE) {
             $profile = $user->profile;
             if (! $profile) {
                 return;
@@ -118,7 +119,7 @@ class AuthLogin
             return UserDevice::firstOrCreate([
                 'user_id' => $user->id,
                 'ip' => request()->ip(),
-                'user_agent' => str_limit(request()->userAgent(), 180),
+                'user_agent' => Str::limit(request()->userAgent(), 180),
             ]);
         });
     }

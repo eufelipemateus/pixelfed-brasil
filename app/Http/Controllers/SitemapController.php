@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Cache;
-use App\Profile;
-use App\Status;
+use App\Models\Profile;
+use App\Models\Status;
 use Illuminate\Support\Facades\Storage;
 
 class SitemapController extends Controller

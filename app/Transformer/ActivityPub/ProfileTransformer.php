@@ -3,7 +3,7 @@
 namespace App\Transformer\ActivityPub;
 
 use App\Enums\StatusEnums;
-use App\Profile;
+use App\Models\Profile;
 use App\Services\AccountService;
 use League\Fractal;
 
@@ -31,7 +31,7 @@ class ProfileTransformer extends Fractal\TransformerAbstract
                 ],
             ],
             'id' => $profile->permalink(),
-            'type' => $profile->is_service? 'Service' :  'Person',
+            'type' => 'Person',
             'following' => $profile->permalink('/following'),
             'followers' => $profile->permalink('/followers'),
             'inbox' => $profile->permalink('/inbox'),
@@ -58,7 +58,7 @@ class ProfileTransformer extends Fractal\TransformerAbstract
             ],
         ];
 
-        if (in_array($profile->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::SUSPENDED, StatusEnums::DISABLED, StatusEnums::BANNED], true) || $profile->deleted_at != null) {
+        if ($profile->status === StatusEnums::DELETE_QUEUE || $profile->deleted_at != null) {
             $res['suspended'] = true;
             $res['name'] = '';
             unset($res['icon']);

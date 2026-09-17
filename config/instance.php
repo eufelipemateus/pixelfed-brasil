@@ -74,10 +74,7 @@ return [
     'oauth' => [
         'token_expiration' => env('OAUTH_TOKEN_DAYS', 365),
         'refresh_expiration' => env('OAUTH_REFRESH_DAYS', 400),
-        'pat' => [
-            'enabled' => env('OAUTH_PAT_ENABLED', false),
-            'id' => env('OAUTH_PAT_ID'),
-        ],
+        'pat_enabled' => env('OAUTH_PAT_ENABLED', false),
     ],
 
     'enable_cc' => env('ENABLE_CONFIG_CACHE', true),
@@ -152,8 +149,6 @@ return [
         'enabled' => env('INSTANCE_CUR_REG', false),
 
         'resend_confirmation_limit' => env('INSTANCE_CUR_REG_RESEND_LIMIT', 5),
-
-        'captcha_enabled' => env('INSTANCE_CUR_REG_CAPTCHA', env('CAPTCHA_ENABLED', false)),
 
         'state' => [
             'fallback_on_closed_reg' => true,

@@ -8,7 +8,7 @@ use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
-use App\Status;
+use App\Models\Status;
 
 class LoadOutbox implements ShouldQueue
 {

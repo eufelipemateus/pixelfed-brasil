@@ -2,13 +2,13 @@
 
 namespace App\Services\Status;
 
-use App\Media;
+use App\Models\Media;
+use App\Models\ModLog;
+use App\Models\Status;
 use App\Models\StatusEdit;
-use App\ModLog;
 use App\Services\MediaService;
 use App\Services\MediaStorageService;
 use App\Services\StatusService;
-use App\Status;
 use Purify;
 use App\Util\Lexer\Autolink;
 
@@ -74,7 +74,7 @@ class UpdateStatusService
         if (isset($attributes['sensitive'])) {
             if ($status->is_nsfw != (bool) $attributes['sensitive'] &&
               (bool) $attributes['sensitive'] == false) {
-                $exists = ModLog::whereObjectType('App\Status::class')
+                $exists = ModLog::whereIn('object_type', [Status::class, 'App\\Status::class'])
                     ->whereObjectId($status->id)
                     ->whereAction('admin.status.moderate')
                     ->exists();

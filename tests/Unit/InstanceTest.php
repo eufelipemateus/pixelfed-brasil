@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Instance;
+use App\Models\Instance;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 

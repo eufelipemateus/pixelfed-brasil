@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Laravel\Passport\Passport;
 use Laravel\Passport\Token;
@@ -53,6 +53,12 @@ class PersonalAccessTokenController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (! config('instance.oauth.pat_enabled')) {
+            return response()->json([
+                'error' => 'Personal access tokens are not enabled on this instance. Please contact your administrator.',
+            ], 403);
+        }
+
         $allowedScopes = collect(Passport::scopeIds())
             ->filter(function (string $scope) use ($request) {
                 return $this->userCanUseScope($request->user(), $scope);
@@ -68,10 +74,16 @@ class PersonalAccessTokenController extends Controller
 
         $scopes = array_values(array_unique($validated['scopes'] ?? []));
 
-        $result = $request->user()->createToken(
-            $validated['name'],
-            $scopes
-        );
+        try {
+            $result = $request->user()->createToken(
+                $validated['name'],
+                $scopes
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'error' => 'Unable to create personal access token. The server may not have a personal access client configured. Please contact your administrator.',
+            ], 500);
+        }
 
         return response()->json([
             'accessToken' => $result->accessToken,
@@ -81,37 +93,41 @@ class PersonalAccessTokenController extends Controller
 
     public function renew(Request $request, string $token_id): JsonResponse
     {
-        $result = DB::transaction(function () use ($request, $token_id) {
-            $oldToken = $request->user()
-                ->tokens()
-                ->with('client')
-                ->whereKey($token_id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        // renew() mints a brand-new PAT, so it must honor the same kill-switch
+        // as store(); otherwise disabling PATs only blocks creation, not renewal.
+        if (! config('instance.oauth.pat_enabled')) {
+            return response()->json([
+                'error' => 'Personal access tokens are not enabled on this instance. Please contact your administrator.',
+            ], 403);
+        }
 
-            abort_unless($this->isPersonalAccessToken($oldToken), 404);
-            abort_if($oldToken->revoked, 422, 'This token has already been revoked.');
-            abort_if(
-                $oldToken->expires_at && $oldToken->expires_at->isPast(),
-                422,
-                'This token has expired.'
-            );
+        $oldToken = $request->user()
+            ->tokens()
+            ->with('client')
+            ->whereKey($token_id)
+            ->firstOrFail();
 
-            $scopes = array_values(array_unique($oldToken->scopes ?? []));
-            $newToken = $request->user()->createToken($oldToken->name, $scopes);
-            $oldToken->revoke();
+        abort_unless($this->isPersonalAccessToken($oldToken), 404);
 
-            return [$newToken, $oldToken->id];
-        }, 3);
+        abort_if($oldToken->revoked, 422, 'This token has already been revoked.');
+
+        $scopes = array_values(array_unique($oldToken->scopes ?? []));
+
+        $result = $request->user()->createToken(
+            $oldToken->name,
+            $scopes
+        );
+
+        $oldToken->revoke();
 
         return response()->json([
-            'accessToken' => $result[0]->accessToken,
-            'token' => $this->serializeToken($result[0]->token),
-            'renewedTokenId' => $result[1],
+            'accessToken' => $result->accessToken,
+            'token' => $this->serializeToken($result->token),
+            'renewedTokenId' => $oldToken->id,
         ]);
     }
 
-    public function destroy(Request $request, string $token)
+    public function destroy(Request $request, string $token): Response
     {
         $token = $request->user()
             ->tokens()
@@ -133,9 +149,9 @@ class PersonalAccessTokenController extends Controller
             'name' => $token->name,
             'scopes' => $token->scopes ?? [],
             'revoked' => (bool) $token->revoked,
-            'created_at' => optional($token->created_at)->toJSON(),
-            'updated_at' => optional($token->updated_at)->toJSON(),
-            'expires_at' => optional($token->expires_at)->toJSON(),
+            'created_at' => $token->created_at?->toJSON(),
+            'updated_at' => $token->updated_at?->toJSON(),
+            'expires_at' => $token->expires_at?->toJSON(),
         ];
     }
 

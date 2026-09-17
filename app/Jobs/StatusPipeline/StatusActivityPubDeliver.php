@@ -2,9 +2,10 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use App\Profile;
-use App\Status;
-use App\Instance;
+use App\Models\Profile;
+use App\Models\Status;
+use App\Services\ActivityPubDeliveryService;
+use App\Services\FractalService;
 use App\Transformer\ActivityPub\Verb\CreateNote;
 use App\Transformer\ActivityPub\Verb\CreateQuestion;
 use Illuminate\Bus\Queueable;
@@ -12,10 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
-use Log;
-use App\Jobs\ActivityPub\PubDeliver;
+use Illuminate\Support\Facades\Log;
 
 class StatusActivityPubDeliver implements ShouldQueue
 {
@@ -74,60 +72,48 @@ class StatusActivityPubDeliver implements ShouldQueue
             return;
         }
 
-        $audienceInboxes = $status->profile->getAudienceInbox($status->scope);
+        $audience = $status->profile->getAudienceInbox();
 
-        $mentionInboxes = $status->mentions
-            ->filter(fn($mention) => $mention->domain !== null)
-            ->map(fn($mention) => $mention->sharedInbox ?? $mention->inbox_url)
+        $parentInbox = [];
+
+        $mentions = $status->mentions
+            ->filter(function ($f) {
+                return $f->domain !== null;
+            })
             ->values()
+            ->map(function ($m) {
+                return $m->sharedInbox ?? $m->inbox_url;
+            })
             ->toArray();
 
-        $replyInbox = [];
-
         if ($status->in_reply_to_profile_id) {
-            $parentProfile = Profile::find($status->in_reply_to_profile_id);
-
-            if ($parentProfile && $parentProfile->domain !== null) {
-                $replyInbox[] = $parentProfile->sharedInbox ?? $parentProfile->inbox_url;
+            $parent = Profile::find($status->in_reply_to_profile_id);
+            if ($parent && $parent->domain !== null) {
+                $parentInbox = [
+                    $parent->sharedInbox ?? $parent->inbox_url,
+                ];
             }
         }
 
-        $audience = array_values(array_unique(array_merge(
-            $audienceInboxes,
-            $mentionInboxes,
-            $replyInbox
-        )));
+        $audience = array_values(array_unique(array_merge($audience, $mentions, $parentInbox)));
 
-        if (empty($audience) || !in_array($status->scope, ['public', 'unlisted', 'private'])) {
+        if (empty($audience) || ! in_array($status->scope, ['public', 'unlisted', 'private'])) {
             // Return on profiles with no remote followers
             return;
         }
 
-        if ($status->scope === 'public') {
-            $knownSharedInboxes = Instance::whereNotNull('shared_inbox')->pluck('shared_inbox')->toArray();
-            $audience = array_unique(array_merge($audience, $knownSharedInboxes));
-        }
-
         switch ($status->type) {
             case 'poll':
-                $activitypubObject = new CreateQuestion();
+                $activitypubObject = new CreateQuestion;
                 break;
 
             default:
-                $activitypubObject = new CreateNote();
+                $activitypubObject = new CreateNote;
                 break;
         }
 
+        $activity = FractalService::item($status, $activitypubObject);
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
-        $resource = new Fractal\Resource\Item($status, $activitypubObject);
-        $activity = $fractal->createData($resource)->toArray();
-
-        $payload = json_encode($activity);
-
-        foreach (array_chunk($audience, 100) as $chunk) {
-            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
-        }
+        ActivityPubDeliveryService::pool($profile, $audience, $activity);
     }
 }

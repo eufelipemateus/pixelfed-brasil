@@ -2,22 +2,22 @@
 
 namespace App\Jobs\AvatarPipeline;
 
-use App\Avatar;
-use App\Profile;
+use App\Models\Avatar;
+use App\Models\Profile;
 use App\Util\Media\ImageDriverManager;
-use Cache;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Encoders\AvifEncoder;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\Encoders\WebpEncoder;
-use Storage;
 
 class AvatarOptimize implements ShouldQueue
 {
@@ -61,36 +61,39 @@ class AvatarOptimize implements ShouldQueue
 
         $quality = config_cache('pixelfed.image_quality');
 
-        $encoder = match ($extension) {
-            'jpeg', 'jpg' => new JpegEncoder($quality),
-            'png' => new PngEncoder(),
-            'webp' => new WebpEncoder($quality),
-            'avif' => new AvifEncoder($quality),
-            'heic' => new JpegEncoder($quality),
-            default => new JpegEncoder($quality),
-        };
-
-        if ((bool) config_cache('pixelfed.cloud_storage')) {
-            $file = Storage::disk(config('filesystems.cloud'))->url($avatar->media_path);
+        $encoder = null;
+        switch ($extension) {
+            case 'jpeg':
+            case 'jpg':
+                $encoder = new JpegEncoder($quality);
+                break;
+            case 'png':
+                $encoder = new PngEncoder;
+                break;
+            case 'webp':
+                $encoder = new WebpEncoder($quality);
+                break;
+            case 'avif':
+                $encoder = new AvifEncoder($quality);
+                break;
+            case 'heic':
+                $encoder = new JpegEncoder($quality);
+                $extension = 'jpg';
+                break;
+            default:
+                $encoder = new JpegEncoder($quality);
+                $extension = 'jpg';
         }
 
         try {
-            $img = $imageManager->read(file_get_contents($file));
-            $img->cover(200, 200, 'center');
-
-            $quality = config_cache('pixelfed.image_quality');
-            if ((bool) config_cache('pixelfed.cloud_storage')) {
-                $tempFile = tempnam(sys_get_temp_dir(), 'avatar');
-                $img->save($tempFile, $quality);
-                Storage::disk(config('filesystems.cloud'))->put($avatar->media_path, file_get_contents($tempFile));
-                unlink($tempFile);
-            } else {
-                $img->save($file, $quality);
-            }
+            $img = $imageManager->decodePath($file);
+            $img = $img->coverDown(200, 200);
+            $encoded = $encoder->encode($img);
+            file_put_contents($file, $encoded->toString());
 
             $avatar = Avatar::whereProfileId($this->profile->id)->firstOrFail();
             $avatar->change_count = ++$avatar->change_count;
-            $avatar->last_processed_at = Carbon::now();
+            $avatar->last_processed_at = now();
             $avatar->save();
             Cache::forget('avatar:'.$avatar->profile_id);
             $this->deleteOldAvatar($avatar->media_path, $this->current);
@@ -102,22 +105,28 @@ class AvatarOptimize implements ShouldQueue
                 $avatar->save();
             }
         } catch (\Exception $e) {
+            Log::error('AvatarOptimize failed for profile '.$this->profile->id.': '.$e->getMessage());
+
+            // The encode/upload may have failed before the old avatar file was
+            // removed. $this->current is the previous avatar's absolute path;
+            // clean it (and its now-stale directory) up so failures don't leak.
+            $this->deleteOldAvatar('', $this->current);
         }
     }
 
     protected function deleteOldAvatar($new, $current)
     {
+        if (! $current) {
+            return;
+        }
+
         if (storage_path('app/'.$new) == $current ||
              Str::endsWith($current, 'avatars/default.png') ||
              Str::endsWith($current, 'avatars/default.jpg')) {
             return;
         }
         if (is_file($current)) {
-            if ((bool) config_cache('pixelfed.cloud_storage')) {
-                Storage::disk(config('filesystems.cloud'))->delete($current);
-            } else {
-                @unlink($current);
-            }
+            @unlink($current);
         }
     }
 

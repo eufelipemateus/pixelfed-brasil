@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Mail\AdminMessage;
-use App\ModLog;
-use App\Profile;
+use App\Models\ModLog;
+use App\Models\Profile;
+use App\Models\User;
 use App\Services\AccountService;
 use App\Services\ModLogService;
-use App\User;
-use Cache;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 trait AdminUserController
@@ -134,7 +134,7 @@ trait AdminUserController
             ModLogService::boot()
                 ->objectUid($user->id)
                 ->objectId($user->id)
-                ->objectType('App\User::class')
+                ->objectType(User::class)
                 ->user($request->user())
                 ->action('admin.user.edit')
                 ->metadata([
@@ -178,7 +178,7 @@ trait AdminUserController
         ModLogService::boot()
             ->objectUid($user->id)
             ->objectId($user->id)
-            ->objectType('App\User::class')
+            ->objectType(User::class)
             ->user($request->user())
             ->action('admin.user.mail')
             ->metadata([
@@ -220,7 +220,7 @@ trait AdminUserController
         ModLogService::boot()
             ->objectUid($user->id)
             ->objectId($user->id)
-            ->objectType('App\User::class')
+            ->objectType(User::class)
             ->user($request->user())
             ->message($msg)
             ->accessLevel('admin')
@@ -252,7 +252,7 @@ trait AdminUserController
         }
 
         $ts = now()->addMonth();
-        $user->status = 'delete';
+        $user->status = \App\Enums\StatusEnums::DELETE_QUEUE;
         $profile->status = \App\Enums\StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $profile->delete_after = $ts;
@@ -262,7 +262,7 @@ trait AdminUserController
         ModLogService::boot()
             ->objectUid($user->id)
             ->objectId($user->id)
-            ->objectType('App\User::class')
+            ->objectType(User::class)
             ->user($request->user())
             ->action('admin.user.delete')
             ->accessLevel('admin')
@@ -293,6 +293,7 @@ trait AdminUserController
             abort_if($profile->user_id < $mid, 403);
         }
 
+        $msg = 'Success!';
         switch ($action) {
             case 'cw':
                 $profile->cw = ! $profile->cw;
@@ -315,7 +316,7 @@ trait AdminUserController
         ModLogService::boot()
             ->objectUid($profile->user_id)
             ->objectId($profile->user_id)
-            ->objectType('App\User::class')
+            ->objectType(User::class)
             ->user($request->user())
             ->action('admin.user.moderate')
             ->metadata([

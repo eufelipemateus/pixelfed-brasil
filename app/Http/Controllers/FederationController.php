@@ -2,23 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\Jobs\InboxPipeline\DeleteWorker;
 use App\Jobs\InboxPipeline\InboxValidator;
 use App\Jobs\InboxPipeline\InboxWorker;
-use App\Profile;
+use App\Models\Profile;
+use App\Models\Status;
 use App\Services\AccountService;
 use App\Services\InstanceService;
-use App\Status;
 use App\Util\Lexer\Nickname;
 use App\Util\Site\Nodeinfo;
 use App\Util\Webfinger\Webfinger;
-use Cache;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Enums\StatusEnums;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class FederationController extends Controller
 {
-    public function nodeinfoWellKnown()
+    public function nodeinfoWellKnown(): JsonResponse
     {
         abort_if(! config('federation.nodeinfo.enabled'), 404);
 
@@ -26,7 +28,7 @@ class FederationController extends Controller
             ->header('Access-Control-Allow-Origin', '*');
     }
 
-    public function nodeinfo()
+    public function nodeinfo(): JsonResponse
     {
         abort_if(! config('federation.nodeinfo.enabled'), 404);
 
@@ -34,7 +36,7 @@ class FederationController extends Controller
             ->header('Access-Control-Allow-Origin', '*');
     }
 
-    public function webfinger(Request $request)
+    public function webfinger(Request $request): JsonResponse|Response
     {
         if (! config('federation.webfinger.enabled') ||
             ! $request->has('resource') ||
@@ -128,7 +130,7 @@ class FederationController extends Controller
             ->header('Access-Control-Allow-Origin', '*');
     }
 
-    public function hostMeta(Request $request)
+    public function hostMeta(Request $request): Response
     {
         abort_if(! config('federation.webfinger.enabled'), 404);
 
@@ -160,7 +162,7 @@ class FederationController extends Controller
         return response(json_encode($res, JSON_UNESCAPED_SLASHES))->header('Content-Type', 'application/activity+json');
     }
 
-    public function userInbox(Request $request, $username)
+    public function userInbox(Request $request, $username): void
     {
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
         abort_if(! config('federation.activitypub.inbox'), 404);
@@ -213,7 +215,7 @@ class FederationController extends Controller
 
     }
 
-    public function sharedInbox(Request $request)
+    public function sharedInbox(Request $request): void
     {
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
         abort_if(! config('federation.activitypub.sharedInbox'), 404);
@@ -269,7 +271,7 @@ class FederationController extends Controller
 
     }
 
-    public function userFollowing(Request $request, $username)
+    public function userFollowing(Request $request, $username): JsonResponse
     {
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
 
@@ -277,102 +279,62 @@ class FederationController extends Controller
         abort_if(! $id, 404);
         $account = AccountService::get($id);
         abort_if(! $account || ! isset($account['following_count']), 404);
-
         $perPage = 50;
-        $page = max(1, (int) request()->query('page', 1));
+        $page = max(1, (int) $request->query('page', 1));
         $offset = ($page - 1) * $perPage;
-
-        $following = AccountService::getFollowing($id, $perPage, $offset);
-
-        $baseUrl = url()->current();
-        $nextPage = $account['following_count'] > $offset + $perPage ? "$baseUrl?page=" . ($page + 1) : null;
-        $prevPage = $page > 1 ? "$baseUrl?page=" . ($page - 1) : null;
-        $lastPage = $nextPage ? "$baseUrl?page=" . ceil($account['following_count'] / $perPage) : null;
-        $firstPage = "$baseUrl?page=1";
-
+        $baseUrl = $request->url();
         $obj = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' =>  url()->full(),
+            'id' => $request->fullUrl(),
             'type' => 'OrderedCollection',
             'totalItems' => $account['following_count'] ?? 0,
         ];
 
-        if (!request()->has('page')) {
-            $obj['first'] = $firstPage;
-        }
-
-        if ($nextPage && request()->has('page')) {
-            $obj['next'] = $nextPage;
-        }
-
-        if ($prevPage && request()->has('page')) {
-            $obj['prev'] = $prevPage;
-        }
-
-        if ($lastPage && request()->has('page')) {
-            $obj['last'] = $lastPage;
-        }
-
-        if (request()->has('page')) {
+        if (! $request->has('page')) {
+            $obj['first'] = $baseUrl.'?page=1';
+        } else {
             $obj['partOf'] = $baseUrl;
+            $obj['orderedItems'] = AccountService::getFollowing($id, $perPage, $offset);
+            if ($offset > 0) {
+                $obj['prev'] = $baseUrl.'?page='.($page - 1);
+            }
+            if ($account['following_count'] > $offset + $perPage) {
+                $obj['next'] = $baseUrl.'?page='.($page + 1);
+            }
         }
 
-        if (request()->has('page')) {
-            $obj['orderedItems'] = $following;
-        }
-        return response()->json($obj)->header('Content-Type', 'application/activity+json');;
+        return response()->json($obj)->header('Content-Type', 'application/activity+json');
     }
 
-    public function userFollowers(Request $request, $username)
+    public function userFollowers(Request $request, $username): JsonResponse
     {
         abort_if(! (bool) config_cache('federation.activitypub.enabled'), 404);
         $id = AccountService::usernameToId($username);
         abort_if(! $id, 404);
         $account = AccountService::get($id);
         abort_if(! $account || ! isset($account['followers_count']), 404);
-
         $perPage = 50;
-        $page = max(1, (int) request()->query('page', 1));
+        $page = max(1, (int) $request->query('page', 1));
         $offset = ($page - 1) * $perPage;
-
-        $followers = AccountService::getFollowers($id, $perPage, $offset);
-
-        $baseUrl = url()->current();
-        $nextPage = $account['followers_count'] > $offset + $perPage ? "$baseUrl?page=" . ($page + 1) : null;
-        $prevPage = $page > 1 ? "$baseUrl?page=" . ($page - 1) : null;
-        $lastPage = $nextPage ? "$baseUrl?page=" . ceil($account['followers_count'] / $perPage) : null;
-        $firstPage = "$baseUrl?page=1";
-
+        $baseUrl = $request->url();
         $obj = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => url()->full(),
+            'id' => $request->fullUrl(),
             'type' => 'OrderedCollection',
             'totalItems' => $account['followers_count'] ?? 0,
         ];
 
-
-        if (!request()->has('page')) {
-            $obj['first'] = $firstPage;
-        }
-
-        if ($nextPage && request()->has('page')) {
-            $obj['next'] = $nextPage;
-        }
-
-        if ($prevPage && request()->has('page')) {
-            $obj['prev'] = $prevPage;
-        }
-
-        if ($lastPage && request()->has('page')) {
-            $obj['last'] = $lastPage;
-        }
-
-        if (request()->has('page')) {
+        if (! $request->has('page')) {
+            $obj['first'] = $baseUrl.'?page=1';
+        } else {
             $obj['partOf'] = $baseUrl;
-        }
-
-        if (request()->has('page')) {
-            $obj['orderedItems'] = $followers;
+            $obj['orderedItems'] = AccountService::getFollowers($id, $perPage, $offset);
+            if ($offset > 0) {
+                $obj['prev'] = $baseUrl.'?page='.($page - 1);
+            }
+            if ($account['followers_count'] > $offset + $perPage) {
+                $obj['next'] = $baseUrl.'?page='.($page + 1);
+            }
         }
 
         return response()->json($obj)->header('Content-Type', 'application/activity+json');

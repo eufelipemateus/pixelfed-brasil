@@ -3,29 +3,27 @@
 namespace App\Jobs\StoryPipeline;
 
 use App\Enums\StatusEnums;
+use App\Models\Story;
 use App\Services\MediaPathService;
+use App\Services\SecureMediaFetchService;
 use App\Services\StoryIndexService;
 use App\Services\StoryService;
-use App\Story;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\Validator\StoryValidator;
 use App\Util\Lexer\Bearcap;
-use Cache;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Log;
 
 class StoryFetch implements ShouldQueue
 {
@@ -34,10 +32,6 @@ class StoryFetch implements ShouldQueue
     protected $activity;
 
     private const MAX_DURATION = 300;
-
-    private const REQUEST_TIMEOUT = 30;
-
-    private const MAX_REDIRECTS = 3;
 
     // Rate limiting
     public $tries = 3;
@@ -282,28 +276,21 @@ class StoryFetch implements ShouldQueue
         ];
 
         try {
-            $response = Http::withHeaders($headers)
-                ->timeout(self::REQUEST_TIMEOUT)
-                ->connectTimeout(10)
-                ->retry(2, 1000)
-                ->withOptions([
-                    'verify' => true,
-                    'max_redirects' => self::MAX_REDIRECTS,
-                ])
-                ->get($url);
+            // Fetch the bearcap story JSON through the SSRF-hardened path so the
+            // request cannot be redirected to an internal address. The bearer
+            // token is forwarded only to the original host and stripped on any
+            // cross-origin redirect hop (see SecureMediaFetchService::request).
+            $body = SecureMediaFetchService::get($url, null, null, $headers);
 
-            if (! $response->successful()) {
+            if ($body === false) {
                 if (config('app.dev_log')) {
-                    Log::warning('Story fetch failed', [
-                        'url' => $url,
-                        'status' => $response->status(),
-                    ]);
+                    Log::warning('Story fetch failed', ['url' => $url]);
                 }
 
                 return null;
             }
 
-            $payload = $response->json();
+            $payload = json_decode($body, true);
 
             if (! is_array($payload)) {
                 if (config('app.dev_log')) {
@@ -315,15 +302,6 @@ class StoryFetch implements ShouldQueue
 
             return $payload;
 
-        } catch (RequestException|ConnectionException $e) {
-            if (config('app.dev_log')) {
-                Log::warning('HTTP request failed', [
-                    'url' => $url,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            return null;
         } catch (Exception $e) {
             if (config('app.dev_log')) {
                 Log::error('Unexpected error in story fetch', [
@@ -416,7 +394,7 @@ class StoryFetch implements ShouldQueue
             }
 
             // Check if profile is blocked or suspended
-            if (in_array($profile->status, [StatusEnums::SUSPENDED, StatusEnums::DELETED, StatusEnums::BANNED], true)) {
+            if (in_array($profile->status, [StatusEnums::SUSPENDED, StatusEnums::DELETED], true)) {
                 if (config('app.dev_log')) {
                     Log::info('Profile is suspended/deleted', ['profile_id' => $profile->id]);
                 }
@@ -465,23 +443,12 @@ class StoryFetch implements ShouldQueue
         }
 
         try {
-            $contextOptions = [
-                'ssl' => [
-                    'verify_peer' => true,
-                    'verify_peername' => true,
-                    'allow_self_signed' => false,
-                    'SNI_enabled' => true,
-                ],
-                'http' => [
-                    'timeout' => self::REQUEST_TIMEOUT,
-                    'max_redirects' => self::MAX_REDIRECTS,
-                    'user_agent' => 'Pixelfed/'.config('pixelfed.version'),
-                ],
-            ];
-
-            $ctx = stream_context_create($contextOptions);
-
-            $data = $this->downloadWithSizeLimit($mediaUrl, $ctx);
+            // Fetch through the SSRF-hardened path: https-only, resolves + pins
+            // to public IPs (CURLOPT_RESOLVE), disables auto-redirects and
+            // re-validates every hop against private/reserved ranges, and caps
+            // the body size. Replaces the bare fopen() stream that followed
+            // redirects to arbitrary internal addresses without re-validation.
+            $data = SecureMediaFetchService::get($mediaUrl, $this->getMaxFileSizeBytes());
             if (! $data) {
                 return null;
             }
@@ -495,16 +462,12 @@ class StoryFetch implements ShouldQueue
             }
 
             if (! $this->validateDownloadedFile($tmpName, $payload['attachment']['mediaType'])) {
-                unlink($tmpName);
-
                 return null;
             }
 
             $disk = Storage::disk(config('filesystems.default'));
             $path = $disk->putFileAs($storagePath, new File($tmpName), $fileName, 'public');
             $size = filesize($tmpName);
-
-            unlink($tmpName);
 
             if (! $path) {
                 if (config('app.dev_log')) {
@@ -521,10 +484,6 @@ class StoryFetch implements ShouldQueue
             ];
 
         } catch (Exception $e) {
-            if (file_exists($tmpName)) {
-                unlink($tmpName);
-            }
-
             if (config('app.dev_log')) {
                 Log::error('Media download failed', [
                     'url' => $mediaUrl,
@@ -533,49 +492,13 @@ class StoryFetch implements ShouldQueue
             }
 
             return null;
-        }
-    }
-
-    /**
-     * Download with size limit enforcement
-     */
-    private function downloadWithSizeLimit(string $url, $context): ?string
-    {
-        $maxFileSizeBytes = $this->getMaxFileSizeBytes();
-
-        $handle = fopen($url, 'r', false, $context);
-        if (! $handle) {
-            if (config('app.dev_log')) {
-                Log::warning('Failed to open URL stream', ['url' => $url]);
+        } finally {
+            // Always remove the remcache temp file, even on a non-Exception
+            // throwable or an early return, so downloads never leak temp files.
+            if (is_file($tmpName)) {
+                @unlink($tmpName);
             }
-
-            return null;
         }
-
-        $data = '';
-        $size = 0;
-
-        while (! feof($handle) && $size < $maxFileSizeBytes) {
-            $chunk = fread($handle, 8192);
-            if ($chunk === false) {
-                break;
-            }
-
-            $data .= $chunk;
-            $size += strlen($chunk);
-        }
-
-        fclose($handle);
-
-        if ($size >= $maxFileSizeBytes) {
-            if (config('app.dev_log')) {
-                Log::warning('File too large', ['size' => $size, 'limit' => $maxFileSizeBytes]);
-            }
-
-            return null;
-        }
-
-        return $data;
     }
 
     /**

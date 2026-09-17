@@ -2,36 +2,35 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use App\AccountInterstitial;
-use App\Bookmark;
-use App\CollectionItem;
-use App\DirectMessage;
-use App\Jobs\ActivityPub\PubDeliver;
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
-use App\Like;
-use App\Media;
-use App\MediaTag;
-use App\Mention;
-use App\Notification;
-use App\Report;
+use App\Models\AccountInterstitial;
+use App\Models\Bookmark;
+use App\Models\CollectionItem;
+use App\Models\DirectMessage;
+use App\Models\Like;
+use App\Models\Media;
+use App\Models\MediaTag;
+use App\Models\Mention;
+use App\Models\Notification;
+use App\Models\Report;
+use App\Models\Status;
+use App\Models\StatusArchived;
+use App\Models\StatusEdit;
+use App\Models\StatusHashtag;
+use App\Models\StatusView;
+use App\Services\ActivityPubDeliveryService;
 use App\Services\CollectionService;
-use App\Services\DirectMessageService;
+use App\Services\FractalService;
 use App\Services\NotificationService;
 use App\Services\StatusService;
-use App\Status;
-use App\StatusArchived;
-use App\StatusHashtag;
-use App\StatusView;
 use App\Transformer\ActivityPub\Verb\DeleteNote;
-use Cache;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
 
 class StatusDelete implements ShouldQueue
 {
@@ -104,22 +103,29 @@ class StatusDelete implements ShouldQueue
 
     public function unlinkRemoveMedia($status)
     {
-        Media::whereStatusId($status->id)
-            ->get()
-            ->each(function ($media) {
-                MediaDeletePipeline::dispatch($media);
-            });
+        $media = Media::whereStatusId($status->id)->get();
+        // Detach media from the status before dispatching deletion. status_id
+        // has no FK/cascade, so it is not cleared when the status is deleted;
+        // detaching here ensures the row is genuinely orphaned by the time the
+        // MediaDeletePipeline guard checks it, so the delete is not skipped.
+        Media::whereStatusId($status->id)->update(['status_id' => null]);
+        $media->each(function ($m) {
+            $m->status_id = null;
+            MediaDeletePipeline::dispatch($m);
+        });
 
         if ($status->in_reply_to_id) {
-            $parent = Status::findOrFail($status->in_reply_to_id);
-            $parent->reply_count--;
-            $parent->save();
-            StatusService::del($parent->id);
+            $parent = Status::find($status->in_reply_to_id);
+            if ($parent) {
+                $parent->reply_count = max(0, $parent->reply_count - 1);
+                $parent->save();
+                StatusService::del($parent->id);
+            }
         }
 
         Bookmark::whereStatusId($status->id)->delete();
 
-        CollectionItem::whereObjectType('App\Status')
+        CollectionItem::whereObjectType(Status::class)
             ->whereObjectId($status->id)
             ->get()
             ->each(function ($col) {
@@ -127,43 +133,66 @@ class StatusDelete implements ShouldQueue
                 $col->delete();
             });
 
-        $dms = DirectMessage::whereStatusId($status->id)->get();
-        foreach ($dms as $dm) {
-            DirectMessageService::deleteDm($dm);
+        $dmIds = DirectMessage::whereStatusId($status->id)->pluck('id');
+        if ($dmIds->isNotEmpty()) {
+            Notification::whereItemType(DirectMessage::class)
+                ->whereIn('item_id', $dmIds)
+                ->cursor()
+                ->each(function ($not) {
+                    NotificationService::del($not->profile_id, $not->id);
+                    $not->forceDeleteQuietly();
+                });
+            DirectMessage::whereIn('id', $dmIds)->delete();
         }
         Like::whereStatusId($status->id)->delete();
 
-        $mediaTags = MediaTag::where('status_id', $status->id)->get();
-        foreach ($mediaTags as $mtag) {
-            $not = Notification::whereItemType('App\MediaTag')
-                ->whereItemId($mtag->id)
-                ->first();
-            if ($not) {
-                NotificationService::del($not->profile_id, $not->id);
-                $not->forceDeleteQuietly();
-            }
-            $mtag->delete();
+        $mediaTagIds = MediaTag::where('status_id', $status->id)->pluck('id');
+        if ($mediaTagIds->isNotEmpty()) {
+            Notification::whereItemType(MediaTag::class)
+                ->whereIn('item_id', $mediaTagIds)
+                ->cursor()
+                ->each(function ($not) {
+                    NotificationService::del($not->profile_id, $not->id);
+                    $not->forceDeleteQuietly();
+                });
+            MediaTag::whereIn('id', $mediaTagIds)->delete();
         }
         Mention::whereStatusId($status->id)->forceDelete();
 
-        Notification::whereItemType('App\Status')
-            ->whereItemId($status->id)
-            ->forceDelete();
+        // Per-row (not bulk) so NotificationObserver::forceDeleted fires and
+        // NotificationService::del invalidates the 24h cached ITEM_KEY snapshot;
+        // a bulk forceDelete() would leave the web feed serving the deleted
+        // status as a ghost. Match the legacy 'App\Status' morph alias too.
+        Notification::whereIn('item_type', ['App\Status', Status::class])
+            ->where('item_id', $status->id)
+            ->cursor()
+            ->each(function ($not) {
+                NotificationService::del($not->profile_id, $not->id);
+                $not->forceDeleteQuietly();
+            });
 
-        Report::whereObjectType('App\Status')
+        Report::whereObjectType(Status::class)
             ->whereObjectId($status->id)
             ->delete();
 
         StatusArchived::whereStatusId($status->id)->delete();
-        StatusHashtag::whereStatusId($status->id)->delete();
+        // Purge edit history so single-status deletion doesn't leave prior
+        // caption/CW versions behind (status_edits has no FK/cascade).
+        StatusEdit::whereStatusId($status->id)->delete();
+        // Model-based delete so StatusHashtagObserver::deleted() runs and
+        // decrements hashtags.cached_count (a query-builder delete bypasses it).
+        StatusHashtag::whereStatusId($status->id)->get()->each->delete();
         StatusView::whereStatusId($status->id)->delete();
         Status::whereInReplyToId($status->id)->update(['in_reply_to_id' => null]);
 
-        AccountInterstitial::where('item_type', 'App\Status')
+        AccountInterstitial::where('item_type', Status::class)
             ->where('item_id', $status->id)
             ->delete();
 
+        $statusId = $status->id;
         $status->delete();
+
+        StatusService::del($statusId, true);
 
         return 1;
     }
@@ -176,20 +205,43 @@ class StatusDelete implements ShouldQueue
             return;
         }
 
-        $audience = $status->profile->getAudienceInbox();
+        $status->setRelation('profile', $profile);
 
-        $fractal = new Fractal\Manager;
-        $fractal->setSerializer(new ArraySerializer);
-        $resource = new Fractal\Resource\Item($status, new DeleteNote);
-        $activity = $fractal->createData($resource)->toArray();
+        $audience = array_values($profile->getAudienceInbox());
+        $activity = FractalService::item($status, new DeleteNote);
+
+        Log::info('StatusDelete: fanout', [
+            'status_id' => $status->id,
+            'actor' => $activity['actor'] ?? null,
+            'object' => $activity['object']['id'] ?? $activity['object'] ?? null,
+            'inboxes' => count($audience),
+        ]);
+
+        // Isolate federation delivery from local cleanup. pool() can throw
+        // synchronously (e.g. validateSender() rejects an inactive sender during
+        // account deletion, where profiles.status = 'delete'). If that exception
+        // escaped, unlinkRemoveMedia() — the whole point of this job — would be
+        // skipped and the status + its data would leak. Delivery is best-effort;
+        // local deletion is not.
+        try {
+            ActivityPubDeliveryService::pool($profile, $audience, $activity, function ($res, $i) use ($audience, $status) {
+                Log::warning('StatusDelete: delivery failed', [
+                    'status_id' => $status->id,
+                    'inbox' => $audience[$i] ?? null,
+                    'result' => $res instanceof \Throwable
+                        ? get_class($res).': '.$res->getMessage()
+                        : $res->status().' '.substr($res->body(), 0, 300),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            Log::warning('StatusDelete: delivery aborted, proceeding to local cleanup', [
+                'status_id' => $status->id,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $this->unlinkRemoveMedia($status);
-
-        $payload = json_encode($activity);
-
-        foreach (array_chunk($audience, 100) as $chunk) {
-            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
-        }
 
         return 1;
     }

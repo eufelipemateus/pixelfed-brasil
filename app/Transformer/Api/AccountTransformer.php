@@ -2,12 +2,12 @@
 
 namespace App\Transformer\Api;
 
-use App\Profile;
-use App\Services\AccountService;
+use App\Models\Profile;
+use App\Models\User;
+use App\Models\UserSetting;
 use App\Services\PronounService;
-use App\User;
-use App\UserSetting;
-use Cache;
+use App\Services\StoryIndexService;
+use Illuminate\Support\Facades\Cache;
 use League\Fractal;
 
 class AccountTransformer extends Fractal\TransformerAbstract
@@ -26,7 +26,6 @@ class AccountTransformer extends Fractal\TransformerAbstract
             return User::whereIsAdmin(true)->pluck('profile_id')->toArray();
         });
 
-        $local = $profile->private_key != null;
         $local = $profile->user_id && $profile->private_key != null;
         $hideFollowing = false;
         $hideFollowers = false;
@@ -64,33 +63,48 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'note' => $profile->bio ?? '',
             'note_text' => $profile->bio ? strip_tags($profile->bio) : null,
             'url' => $profile->url(),
-            'no_autolink' => $profile->no_autolink ?? false,
             'avatar' => $profile->avatarUrl(),
             'website' => $profile->website,
             'local' => (bool) $local,
             'is_admin' => (bool) $is_admin,
             'created_at' => $profile->created_at->toJSON(),
             'header_bg' => $profile->header_bg,
-            'last_fetched_at' => optional($profile->last_fetched_at)->toJSON(),
+            'last_fetched_at' => $local ? null : $profile->last_fetched_at?->toJSON(),
             'pronouns' => PronounService::get($profile->id),
             'location' => $profile->location,
-            'label' => $profile->label,
+            'has_story' => app(StoryIndexService::class)->hasActiveStory($profile->id),
         ];
 
-        if ($profile->moved_to_profile_id) {
-            $newProfile = AccountService::get($profile->moved_to_profile_id);
-            if ($newProfile && isset($newProfile['id'], $newProfile['acct'])) {
-                $res['moved'] = [
-                    'id' => $newProfile['id'],
-                    'acct' => $newProfile['acct'],
-                    'avatar' => $newProfile['avatar'],
-                ];
-            }
+        $moved = $this->resolveMoved($profile);
+        if ($moved) {
+            $res['moved'] = $moved;
         }
 
-        $extra = app(\App\Services\ExtraFieldsService::class)->getAccountExtraFields($profile);
+        return $res;
+    }
 
-        return array_merge($res, $extra);
+    protected function resolveMoved(Profile $profile): ?array
+    {
+        $targetId = $profile->moved_to_profile_id;
+
+        if (! $targetId || (string) $targetId === (string) $profile->id) {
+            return null;
+        }
+
+        return Cache::remember('pf:acct-trans:moved:'.$targetId, 3600, function () use ($targetId) {
+            $target = Profile::find($targetId);
+            if (! $target) {
+                return null;
+            }
+
+            $targetLocal = $target->user_id && $target->private_key != null;
+
+            return [
+                'id' => (string) $target->id,
+                'acct' => $targetLocal ? $target->username : substr($target->username, 1),
+                'avatar' => $target->avatarUrl(),
+            ];
+        });
     }
 
     protected function includeRelationship(Profile $profile)

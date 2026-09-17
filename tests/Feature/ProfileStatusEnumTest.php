@@ -3,13 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\StatusEnums;
-use App\Profile;
+use App\Models\Profile;
 use App\Services\ActivityPubDeliveryService;
 use App\Util\ActivityPub\Outbox;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class ProfileStatusEnumTest extends TestCase
@@ -65,7 +66,10 @@ class ProfileStatusEnumTest extends TestCase
 
     public function test_null_database_status_is_exposed_as_active_and_all_states_round_trip(): void
     {
-        $profile = $this->createProfile(['status' => null]);
+        $profile = $this->createProfile([
+            'status' => null,
+            'private_key' => 'test-private-key',
+        ]);
 
         $this->assertSame(StatusEnums::ACTIVE, $profile->fresh()->status);
         $this->assertSame('banned', StatusEnums::BANNED->value());
@@ -83,11 +87,15 @@ class ProfileStatusEnumTest extends TestCase
     public function test_active_local_profile_can_queue_activitypub_delivery(): void
     {
         config(['app.env' => 'testing']);
-        $profile = $this->createProfile(['status' => null]);
+        $profile = $this->createProfile([
+            'status' => null,
+            'private_key' => 'test-private-key',
+        ]);
+        Cache::put('helpers:url:public-ips:'.hash('xxh128', 'remote.example'), ['203.0.113.40'], 3600);
 
         $this->assertNull(ActivityPubDeliveryService::queue()
             ->from($profile)
-            ->to('https://example.com/inbox')
+            ->to('https://remote.example/inbox')
             ->payload(['type' => 'Follow'])
             ->send());
     }
@@ -95,13 +103,16 @@ class ProfileStatusEnumTest extends TestCase
     public function test_inactive_local_profiles_cannot_queue_activitypub_delivery(): void
     {
         foreach ([StatusEnums::DISABLED, StatusEnums::SUSPENDED, StatusEnums::DELETE_QUEUE, StatusEnums::DELETED, StatusEnums::BANNED] as $status) {
-            $profile = $this->createProfile(['status' => $status]);
+            $profile = $this->createProfile([
+                'status' => $status,
+                'private_key' => 'test-private-key',
+            ]);
 
             try {
                 ActivityPubDeliveryService::queue()->from($profile)->to('https://example.com/inbox')->payload(['type' => 'Follow'])->send();
                 $this->fail("{$status->name} profile was allowed to deliver");
-            } catch (HttpException $exception) {
-                $this->assertSame(400, $exception->getStatusCode());
+            } catch (InvalidArgumentException $exception) {
+                $this->assertSame('Inactive profiles cannot sign outgoing ActivityPub deliveries.', $exception->getMessage());
             }
         }
     }

@@ -7,7 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 use App\Services\StatusService;
 use DateTime;
-use App\Status;
+use App\Models\Status;
 use Exception;
 
 class ForumSchemaGenerator extends Component
