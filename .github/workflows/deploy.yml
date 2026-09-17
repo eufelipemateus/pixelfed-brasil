@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   test:
-    uses: ./.github/workflows/laravel.yml
+    uses: ./.github/workflows/php-laravel-tests.yml
     secrets: inherit
 
 
