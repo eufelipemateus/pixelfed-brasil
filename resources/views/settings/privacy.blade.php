@@ -121,9 +121,20 @@
       </p>
       @endif
     </div>
-    @endif
+     @endif
 
-    <div class="form-group row mt-5 pt-5">
+     <div class="form-group pb-3">
+       <label class="font-weight-bold" for="can_feature">Featured Collections</label>
+       <p class="text-muted small help-text">Control who can add your account to featured collections or starter packs.</p>
+       <select class="form-control" name="can_feature" id="can_feature">
+         <option value="everyone" {{ ($settings->can_feature ?? 'everyone') === 'everyone' ? 'selected' : '' }}>Everyone</option>
+         <option value="followers" {{ ($settings->can_feature ?? 'everyone') === 'followers' ? 'selected' : '' }}>People who follow you</option>
+         <option value="nobody" {{ ($settings->can_feature ?? 'everyone') === 'nobody' ? 'selected' : '' }}>Nobody</option>
+       </select>
+       <p class="small mb-0 mt-2"><a href="{{ route('settings.privacy.featured-collections') }}" class="font-weight-bold">Manage featured collections</a></p>
+     </div>
+
+     <div class="form-group row mt-5 pt-5">
       <div class="col-12 text-right">
         <hr>
         <button type="submit" class="btn btn-primary font-weight-bold py-0 px-5">{{__('settings.submit')}}</button>

@@ -13,6 +13,7 @@ use App\Models\Conversation;
 use App\Models\CustomFilter;
 use App\Models\DirectMessage;
 use App\Models\EmailVerification;
+use App\Models\FeatureAuthorization;
 use App\Models\Follower;
 use App\Models\FollowRequest;
 use App\Models\HashtagFollow;
@@ -194,6 +195,7 @@ class DeleteAccountPipeline implements ShouldQueue
 
         UserDevice::whereUserId($user->id)->forceDelete();
         UserFilter::whereUserId($user->id)->forceDelete();
+        FeatureAuthorization::whereProfileId($id)->delete();
         UserSetting::whereUserId($user->id)->forceDelete();
 
         Mention::whereProfileId($id)->forceDelete();

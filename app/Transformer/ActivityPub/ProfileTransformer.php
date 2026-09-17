@@ -5,6 +5,7 @@ namespace App\Transformer\ActivityPub;
 use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Services\AccountService;
+use App\Services\FeaturedCollectionService;
 use League\Fractal;
 
 class ProfileTransformer extends Fractal\TransformerAbstract
@@ -28,6 +29,23 @@ class ProfileTransformer extends Fractal\TransformerAbstract
                     ],
                     'indexable' => 'toot:indexable',
                     'suspended' => 'toot:suspended',
+                    'gts' => 'https://gotosocial.org/ns#',
+                    'interactionPolicy' => [
+                        '@id' => 'gts:interactionPolicy',
+                        '@type' => '@id',
+                    ],
+                    'canFeature' => [
+                        '@id' => 'https://w3id.org/fep/7aa9#canFeature',
+                        '@type' => '@id',
+                    ],
+                    'automaticApproval' => [
+                        '@id' => 'gts:automaticApproval',
+                        '@type' => '@id',
+                    ],
+                    'manualApproval' => [
+                        '@id' => 'gts:manualApproval',
+                        '@type' => '@id',
+                    ],
                 ],
             ],
             'id' => $profile->permalink(),
@@ -76,6 +94,8 @@ class ProfileTransformer extends Fractal\TransformerAbstract
                     $res['movedTo'] = $movedTo['url'];
                 }
             }
+
+            $res['interactionPolicy'] = FeaturedCollectionService::interactionPolicy($profile);
         }
 
         return $res;
