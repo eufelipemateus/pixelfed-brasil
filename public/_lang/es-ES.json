@@ -57,7 +57,8 @@
         "privacy": "Privacidad",
         "terms": "T\u00e9rminos",
         "legalNotice": "Aviso Legal",
-        "backToPreviousDesign": "Volver al dise\u00f1o anterior"
+        "backToPreviousDesign": "Volver al dise\u00f1o anterior",
+        "appearance": "Aspecto"
     },
     "directMessages": {
         "inbox": "Entrada",
@@ -75,6 +76,7 @@
         "sentA": "envi\u00f3 un",
         "followed": "te sigui\u00f3",
         "mentioned": "te mencion\u00f3",
+        "you": "t\u00fa",
         "yourApplication": "Tu solicitud para unirse",
         "applicationApproved": "ha sido aprobada",
         "applicationRejected": "ha sido rechazada. Puedes volver a solicitar unirte en 6 meses.",
@@ -308,5 +310,18 @@
             "add_keyword": "Agregar palabra clave...",
             "enter_filter_title": "Introduce el t\u00edtulo del filtro"
         }
+    },
+    "appearance": {
+        "theme": "Tema",
+        "profileLayout": "Arreglo de Perfil",
+        "compactPreviews": "Previstas Compactas de Medios",
+        "loadComments": "Cargar Comentarios",
+        "hideStats": "Ocultar Cuentas y Estadísticas",
+        "auto": "Automático",
+        "lightMode": "Modo claro",
+        "darkMode": "Modo oscuro",
+        "grid": "Cuadrícula",
+        "masonry": "Mampostería",
+        "feed": "Feed"
     }
 }

@@ -29,11 +29,48 @@
         "sensitiveContentWarning": "This post may contain sensitive content",
         "javascript": "Please enable javascript to view this content.",
         "loading": "Loading...",
-        "continue": "Continue"
+        "continue": "Continue",
+        "Hide": "Hide",
+        "endFeed": "You have reached the end of the feed.",
+        "showMore": "Show more",
+        "translate": "Translate"
     },
     "site": {
         "terms": "Terms of Use",
-        "privacy": "Privacy Policy"
+        "privacy": "Privacy Policy",
+        "about": "About",
+        "directory": "Directory",
+        "explore": "Explore",
+        "softwareDescription": "Decentralized photo sharing social media powered by <a href=\"https://pixelfed.org\" target=\"_blank\">Pixelfed</a>",
+        "posts": "Posts",
+        "activeUsers": "Active Users",
+        "totalUsers": "Total Users",
+        "managedBy": "Managed by",
+        "contact": "Contact",
+        "serverRules": "Server Rules",
+        "supportedFeatures": "Supported Features",
+        "sharePhotos": "You can share up to {albumLimit} photos*",
+        "shareVideo": "or 1 vídeo*",
+        "maxCaptionLength": "at a time with a max caption length of {maxCaptionLength} characters.",
+        "maxFileSize": "*  - Maximum file size is {maxPhotoSize}",
+        "login": "Login",
+        "signup": "Sign up",
+        "federation": "Federation",
+        "mobileAppSuport": "Mobile App Support",
+        "discoverAccounts": "Discover accounts and people",
+        "noData": "Nothing to show yet! Check back later.",
+        "exploreTrending": "Explore trending posts",
+        "followers": "Followers",
+        "following": "Following",
+        "viewPost": "View Post",
+        "subtitle": "Discover the trends of independent photography in Brazil.",
+        "trendingSubtitle": "The most relevant posts on Pixelfed Brazil right now.",
+        "syncingFeed": "Syncing feed...",
+        "nothingNew": "Nothing new here today. How about being the first?",
+        "intro": "Meet the photographers and creators who are part of our Brazilian network.",
+        "locatingCreators": "Locating creators...",
+        "noProfileFound": "No profile found",
+        "beFirstToPopulate": "Be the first to populate our directory!"
     },
     "navmenu": {
         "search": "Search",
@@ -60,7 +97,8 @@
         "terms": "Terms",
         "legalNotice": "Legal Notice",
         "mobileApps": "Mobile Apps",
-        "backToPreviousDesign": "Go back to previous design"
+        "backToPreviousDesign": "Go back to previous design",
+        "donate": "Donate"
     },
     "directMessages": {
         "inbox": "Inbox",
@@ -104,7 +142,8 @@
         "dms": "DMs",
         "dmsDescription": "Direct messages you have with other accounts",
         "accept": "Accept",
-        "reject": "Reject"
+        "reject": "Reject",
+        "markAllRead": "Confirm you want to mark all as read?"
     },
     "post": {
         "shareToFollowers": "Share to followers",
@@ -218,10 +257,17 @@
         "report": "Report",
         "close": "Close",
         "myStories": "My Stories",
-        "seeAll": "See All"
+        "seeAll": "See All",
+        "subtitle": ">Share moments with followers that last 24 hours"
     },
     "timeline": {
         "peopleYouMayKnow": "People you may know",
+        "reblog": {
+            "introducing": "Introducing Reblogs in feeds",
+            "description": "See reblogs from accounts you follow in your home feed!",
+            "disableInfo": "You can disable reblogs in feeds on the Timeline Settings page.",
+            "showReblogs": "Show reblogs in home feed"
+        },
         "onboarding": {
             "welcome": "Welcome",
             "thisIsYourHomeFeed": "This is your home feed, a chronological feed of posts from accounts you follow.",
