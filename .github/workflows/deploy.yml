@@ -145,8 +145,8 @@ jobs:
             echo "CAPTCHA_ENABLED=true" >> .env
             echo "CAPTCHA_ENABLED_ON_LOGIN=true" >> .env
             echo "CAPTCHA_ENABLED_ON_REGISTER=true" >> .env
-            echo "CAPTCHA_SECRET=${{secrets.CAPTCHA_SECRET}}" >> .env
-            echo "CAPTCHA_SITEKEY=${{secrets.CAPTCHA_SITEKEY}}" >> .env
+            echo "CAPTCHA_H_SECRET=${{secrets.CAPTCHA_SECRET}}" >> .env
+            echo "CAPTCHA_H_SITEKEY=${{secrets.CAPTCHA_SITEKEY}}" >> .env
             echo "BANNED_USERNAMES=${{secrets.BANNED_USERNAMES}}" >> .env
 
             echo "PF_ENABLE_CLOUD=true" >> .env
