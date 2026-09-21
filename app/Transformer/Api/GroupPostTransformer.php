@@ -9,7 +9,7 @@ use App\Util\Lexer\Autolink;
 
 class GroupPostTransformer extends Fractal\TransformerAbstract
 {
-    public function transform($status)
+    public function transform($status): array
     {
         return [
             'id' => (string) $status->id,

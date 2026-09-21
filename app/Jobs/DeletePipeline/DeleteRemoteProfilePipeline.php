@@ -16,12 +16,14 @@ use App\Models\Notification;
 use App\Models\Poll;
 use App\Models\PollVote;
 use App\Models\Profile;
+use App\Models\QuoteAuthorization;
 use App\Models\Report;
 use App\Models\Status;
 use App\Models\Story;
 use App\Models\StoryView;
 use App\Models\UserFilter;
 use App\Services\AccountService;
+use App\Services\DirectMessageService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,13 +58,13 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         if (! $profile) {
             Log::info('DeleteRemoteProfilePipeline: Profile no longer exists, skipping job');
 
-            return;
+            return null;
         }
 
         $pid = $profile->id;
 
         if ($profile->domain == null || $profile->private_key) {
-            return;
+            return null;
         }
 
         $profile->status = \App\Enums\StatusEnums::DELETE_QUEUE;
@@ -93,6 +95,7 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         // Delete DMs
         DirectMessage::whereFromId($pid)->orWhere('to_id', $pid)->delete();
         Conversation::whereFromId($pid)->orWhere('to_id', $pid)->delete();
+        app(DirectMessageService::class)->purgeProfile($pid);
 
         // Delete FollowRequests
         FollowRequest::whereFollowingId($pid)
@@ -122,6 +125,9 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 
         // Delete mentions
         Mention::whereProfileId($pid)->forceDelete();
+
+        // Delete quote approval stamps issued to this actor
+        QuoteAuthorization::whereActorId($pid)->delete();
 
         // Delete notifications
         Notification::whereProfileId($pid)

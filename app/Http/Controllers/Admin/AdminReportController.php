@@ -51,7 +51,7 @@ trait AdminReportController
 
         $mailVerifications = Redis::scard('email:manual');
 
-        if ($filter == 'open' && $page == 1) {
+        if ($filter === 'open' && $page == 1) {
             $reports = Cache::remember('admin-dash:reports:list-cache', 300, function () use ($filter) {
                 return Report::whereHas('status')
                     ->whereHas('reportedUser')
@@ -77,7 +77,7 @@ trait AdminReportController
                 ->paginate(6);
         }
 
-        return view('admin.reports.home', compact('reports', 'ai', 'spam', 'mailVerifications'));
+        return view('admin.reports.home', ['reports' => $reports, 'ai' => $ai, 'spam' => $spam, 'mailVerifications' => $mailVerifications]);
     }
 
     public function showReport(Request $request, $id)
@@ -87,7 +87,7 @@ trait AdminReportController
             return redirect('/i/admin/reports?tab=report&id='.$report->id);
         }
 
-        return view('admin.reports.show', compact('report'));
+        return view('admin.reports.show', ['report' => $report]);
     }
 
     public function appeals(Request $request)
@@ -97,7 +97,7 @@ trait AdminReportController
             ->latest()
             ->paginate(6);
 
-        return view('admin.reports.appeals', compact('appeals'));
+        return view('admin.reports.appeals', ['appeals' => $appeals]);
     }
 
     public function showAppeal(Request $request, $id)
@@ -107,7 +107,7 @@ trait AdminReportController
             ->findOrFail($id);
         $meta = json_decode($appeal->meta);
 
-        return view('admin.reports.show_appeal', compact('appeal', 'meta'));
+        return view('admin.reports.show_appeal', ['appeal' => $appeal, 'meta' => $meta]);
     }
 
     public function spam(Request $request)
@@ -205,7 +205,7 @@ trait AdminReportController
             };
         }
 
-        return view('admin.reports.spam', compact('tab', 'appeals', 'openCount', 'monthlyCount', 'totalCount', 'avgCount', 'avgOpen', 'uncategorized'));
+        return view('admin.reports.spam', ['tab' => $tab, 'appeals' => $appeals, 'openCount' => $openCount, 'monthlyCount' => $monthlyCount, 'totalCount' => $totalCount, 'avgCount' => $avgCount, 'avgOpen' => $avgOpen, 'uncategorized' => $uncategorized]);
     }
 
     public function showSpam(Request $request, $id)
@@ -217,7 +217,7 @@ trait AdminReportController
         }
         $meta = json_decode($appeal->meta);
 
-        return view('admin.reports.show_spam', compact('appeal', 'meta'));
+        return view('admin.reports.show_spam', ['appeal' => $appeal, 'meta' => $meta]);
     }
 
     public function fixUncategorizedSpam(Request $request)
@@ -309,7 +309,7 @@ trait AdminReportController
             Cache::forget('profiles:private');
             DeleteAccountPipeline::dispatch($user);
 
-            return;
+            return null;
         }
 
         if ($action == 'dismiss') {
@@ -543,7 +543,7 @@ trait AdminReportController
         return $this;
     }
 
-    protected function actionMap()
+    protected function actionMap(): array
     {
         return [
             '1' => 'ignore',
@@ -604,7 +604,7 @@ trait AdminReportController
                 ->values();
         }
 
-        return view('admin.reports.mail_verification', compact('reports', 'ignored'));
+        return view('admin.reports.mail_verification', ['reports' => $reports, 'ignored' => $ignored]);
     }
 
     public function reportMailVerifyIgnore(Request $request)
@@ -627,14 +627,14 @@ trait AdminReportController
         return redirect('/i/admin/reports');
     }
 
-    public function reportMailVerifyClearIgnored(Request $request)
+    public function reportMailVerifyClearIgnored(Request $request): array
     {
         Redis::del('email:manual-ignored');
 
         return [200];
     }
 
-    public function reportsStats(Request $request)
+    public function reportsStats(Request $request): array
     {
         $stats = [
             'total' => Report::count(),
@@ -705,12 +705,14 @@ trait AdminReportController
         ]);
 
         $report = Report::whereObjectId($request->input('object_id'))->findOrFail($request->input('id'));
-
         if ($request->input('action_type') === 'profile') {
             return $this->reportsHandleProfileAction($report, $request->input('action'));
-        } elseif ($request->input('action_type') === 'post') {
+        }
+        if ($request->input('action_type') === 'post') {
             return $this->reportsHandleStatusAction($report, $request->input('action'));
-        } elseif ($request->input('action_type') === 'story') {
+        }
+
+        if ($request->input('action_type') === 'story') {
             return $this->reportsHandleStoryAction($report, $request->input('action'));
         }
 
@@ -791,6 +793,8 @@ trait AdminReportController
 
                 return [200];
         }
+
+        return null;
     }
 
     protected function reportsHandleProfileAction($report, $action)
@@ -818,7 +822,7 @@ trait AdminReportController
                 }
 
                 if (! $profile) {
-                    return;
+                    return null;
                 }
 
                 abort_if($profile->user && $profile->user->is_admin, 400, 'Cannot moderate an admin account.');
@@ -878,7 +882,7 @@ trait AdminReportController
                 }
 
                 if (! $profile) {
-                    return;
+                    return null;
                 }
 
                 abort_if($profile->user && $profile->user->is_admin, 400, 'Cannot moderate an admin account.');
@@ -938,7 +942,7 @@ trait AdminReportController
                 }
 
                 if (! $profile) {
-                    return;
+                    return null;
                 }
 
                 abort_if($profile->user && $profile->user->is_admin, 400, 'Cannot moderate an admin account.');
@@ -1002,7 +1006,7 @@ trait AdminReportController
                 }
 
                 if (! $profile) {
-                    return;
+                    return null;
                 }
 
                 abort_if($profile->user && $profile->user->is_admin, 400, 'Cannot delete an admin account.');
@@ -1068,6 +1072,8 @@ trait AdminReportController
 
                 return [200];
         }
+
+        return null;
     }
 
     protected function reportsHandleStatusAction($report, $action)
@@ -1219,6 +1225,8 @@ trait AdminReportController
 
                 return [200];
         }
+
+        return null;
     }
 
     public function reportsApiSpamAll(Request $request)
@@ -1236,7 +1244,7 @@ trait AdminReportController
         return $appeals;
     }
 
-    public function reportsApiSpamHandle(Request $request)
+    public function reportsApiSpamHandle(Request $request): array
     {
         $this->validate($request, [
             'id' => 'required',
@@ -1381,7 +1389,7 @@ trait AdminReportController
         return new AdminSpamReport($report);
     }
 
-    public function reportsApiRemoteHandle(Request $request)
+    public function reportsApiRemoteHandle(Request $request): array
     {
         $this->validate($request, [
             'id' => 'required|exists:remote_reports,id',
@@ -1512,7 +1520,6 @@ trait AdminReportController
 
             default:
                 abort(404);
-                break;
         }
 
         if ($ogPublicStatuses && count($ogPublicStatuses)) {
@@ -1603,7 +1610,7 @@ trait AdminReportController
         }, 'data-export.json');
     }
 
-    public function deleteModeratedProfile(Request $request)
+    public function deleteModeratedProfile(Request $request): array
     {
         $this->validate($request, [
             'id' => 'required',
@@ -1637,7 +1644,7 @@ trait AdminReportController
         return ['status' => 200, 'message' => 'Successfully deleted moderated profile!'];
     }
 
-    public function updateModeratedProfile(Request $request)
+    public function updateModeratedProfile(Request $request): array
     {
         $this->validate($request, [
             'id' => 'required|exists:moderated_profiles',

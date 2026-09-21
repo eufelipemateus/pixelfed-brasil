@@ -6,9 +6,11 @@ use App\Jobs\HomeFeedPipeline\FeedUnfollowPipeline;
 use App\Models\FeatureAuthorization;
 use App\Models\Follower;
 use App\Models\Profile;
+use App\Models\QuoteAuthorization;
 use App\Models\UserFilter;
 use App\Services\AccountService;
 use App\Services\FeaturedCollectionService;
+use App\Services\QuoteService;
 use App\Services\RelationshipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -30,7 +32,7 @@ trait PrivacySettings
             $settings['disable_embeds'] = false;
         }
 
-        return view('settings.privacy', compact('settings', 'profile'));
+        return view('settings.privacy', ['settings' => $settings, 'profile' => $profile]);
     }
 
     public function privacyStore(Request $request)
@@ -64,7 +66,7 @@ trait PrivacySettings
 
         foreach ($fields as $field) {
             $form = $request->input($field);
-            if ($field == 'is_private') {
+            if ($field === 'is_private') {
                 if ($form == 'on') {
                     $profile->{$field} = true;
                     $settings->show_guests = false;
@@ -75,19 +77,19 @@ trait PrivacySettings
                     $profile->save();
                 }
                 Cache::forget('profiles:private');
-            } elseif ($field == 'crawlable') {
+            } elseif ($field === 'crawlable') {
                 if ($form == 'on') {
                     $settings->{$field} = false;
                 } else {
                     $settings->{$field} = true;
                 }
-            } elseif ($field == 'public_dm') {
+            } elseif ($field === 'public_dm') {
                 if ($form == 'on') {
                     $settings->{$field} = true;
                 } else {
                     $settings->{$field} = false;
                 }
-            } elseif ($field == 'indexable') {
+            } elseif ($field === 'indexable') {
             } else {
                 if ($form == 'on') {
                     $settings->{$field} = true;
@@ -105,6 +107,13 @@ trait PrivacySettings
             $settings->save();
             FeatureAuthorization::whereProfileId($pid)->revoked()->delete();
             FeaturedCollectionService::forgetPolicy($pid);
+        }
+
+        $canQuote = $request->input('can_quote');
+        if (in_array($canQuote, QuoteService::POLICIES, true) && $canQuote !== $settings->can_quote) {
+            $settings->can_quote = $canQuote;
+            $settings->save();
+            QuoteService::forgetPolicy($pid);
         }
 
         Cache::forget('profile:settings:'.$pid);
@@ -130,7 +139,7 @@ trait PrivacySettings
         $ids = (new UserFilter)->mutedUserIds($pid);
         $users = Profile::whereIn('id', $ids)->simplePaginate(15);
 
-        return view('settings.privacy.muted', compact('users'));
+        return view('settings.privacy.muted', ['users' => $users]);
     }
 
     public function mutedUsersUpdate(Request $request)
@@ -162,7 +171,7 @@ trait PrivacySettings
             ->orderByDesc('created_at')
             ->simplePaginate(15);
 
-        return view('settings.privacy.featured-collections', compact('collections'));
+        return view('settings.privacy.featured-collections', ['collections' => $collections]);
     }
 
     public function featuredCollectionsRemove(Request $request)
@@ -180,13 +189,40 @@ trait PrivacySettings
         return redirect()->back()->with('status', 'You have been removed from the collection.');
     }
 
+    public function quotes(Request $request)
+    {
+        $pid = $request->user()->profile->id;
+        $quotes = QuoteAuthorization::whereProfileId($pid)
+            ->approved()
+            ->with(['actor', 'status'])
+            ->orderByDesc('id')
+            ->simplePaginate(15);
+
+        return view('settings.privacy.quotes', ['quotes' => $quotes]);
+    }
+
+    public function quotesRevoke(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|integer|min:1',
+        ]);
+        $pid = $request->user()->profile->id;
+        $auth = QuoteAuthorization::whereProfileId($pid)
+            ->approved()
+            ->findOrFail($request->input('id'));
+
+        QuoteService::revoke($auth);
+
+        return redirect()->back()->with('status', 'Quote approval revoked.');
+    }
+
     public function blockedUsers(Request $request)
     {
         $pid = $request->user()->profile->id;
         $ids = (new UserFilter)->blockedUserIds($pid);
         $users = Profile::whereIn('id', $ids)->simplePaginate(15);
 
-        return view('settings.privacy.blocked', compact('users'));
+        return view('settings.privacy.blocked', ['users' => $users]);
     }
 
     public function blockedUsersUpdate(Request $request)
@@ -237,7 +273,7 @@ trait PrivacySettings
         return view('settings.privacy.blocked-keywords');
     }
 
-    public function privateAccountOptions(Request $request)
+    public function privateAccountOptions(Request $request): array
     {
         $this->validate($request, [
             'mode' => 'required|string|in:keep-all,mutual-only,only-followers,remove-all',

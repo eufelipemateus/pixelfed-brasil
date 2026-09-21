@@ -20,7 +20,9 @@ use App\Models\StatusView;
 use App\Services\Account\AccountStatService;
 use App\Services\AccountService;
 use App\Services\CollectionService;
+use App\Services\DirectMessageService;
 use App\Services\NotificationService;
+use App\Services\Status\ReplyCleanupService;
 use App\Services\StatusService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
@@ -110,7 +112,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         StatusService::del($status->id, true);
 
         // AccountStatService::decrementPostCount($status->profile_id);
-        return $this->unlinkRemoveMedia($status);
+        $this->unlinkRemoveMedia($status);
     }
 
     public function unlinkRemoveMedia($status)
@@ -149,6 +151,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
                 });
             DirectMessage::whereIn('id', $dmIds)->delete();
         }
+        app(DirectMessageService::class)->deleteByStatusId($status->id);
         Like::whereStatusId($status->id)->forceDelete();
         $media = Media::whereStatusId($status->id)->get();
         // Detach media from the status before dispatching deletion. status_id
@@ -191,7 +194,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         // decrements hashtags.cached_count (a query-builder delete bypasses it).
         StatusHashtag::whereStatusId($status->id)->get()->each->delete();
         StatusView::whereStatusId($status->id)->delete();
-        Status::whereInReplyToId($status->id)->update(['in_reply_to_id' => null]);
+        ReplyCleanupService::releaseRepliesOf($status);
 
         StatusService::del($status->id, true);
         AccountService::del($status->profile_id);
