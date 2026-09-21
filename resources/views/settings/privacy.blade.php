@@ -134,6 +134,17 @@
        <p class="small mb-0 mt-2"><a href="{{ route('settings.privacy.featured-collections') }}" class="font-weight-bold">Manage featured collections</a></p>
      </div>
 
+     <div class="form-group pb-3">
+       <label class="font-weight-bold" for="can_quote">Quote Posts</label>
+       <p class="text-muted small help-text">Control who can quote your public and unlisted posts.</p>
+       <select class="form-control" name="can_quote" id="can_quote">
+         <option value="everyone" {{ ($settings->can_quote ?? 'everyone') === 'everyone' ? 'selected' : '' }}>Everyone</option>
+         <option value="followers" {{ ($settings->can_quote ?? 'everyone') === 'followers' ? 'selected' : '' }}>People who follow you</option>
+         <option value="nobody" {{ ($settings->can_quote ?? 'everyone') === 'nobody' ? 'selected' : '' }}>Nobody</option>
+       </select>
+       <p class="small mb-0 mt-2"><a href="{{ route('settings.privacy.quotes') }}" class="font-weight-bold">Manage quotes of your posts</a></p>
+     </div>
+
      <div class="form-group row mt-5 pt-5">
       <div class="col-12 text-right">
         <hr>

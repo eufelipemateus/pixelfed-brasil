@@ -83,6 +83,7 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             DirectMessage::whereStatusId($status->id)->get()->each(function ($dm) {
                 DirectMessageService::deleteDm($dm);
             });
+            app(DirectMessageService::class)->deleteByStatusId($status->id);
             Like::whereStatusId($status->id)->forceDelete();
             MediaTag::whereStatusId($status->id)->delete();
             $media = Media::whereStatusId($status->id)->get();
@@ -108,7 +109,5 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             Log::warning("DeleteRemoteStatusPipeline: Failed to delete status {$status->id}: ".$e->getMessage());
             throw $e;
         }
-
-        return 1;
     }
 }

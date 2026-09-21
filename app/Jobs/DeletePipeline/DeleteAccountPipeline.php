@@ -3,6 +3,7 @@
 namespace App\Jobs\DeletePipeline;
 
 use App\Enums\StatusEnums;
+use App\Jobs\Federation\FanoutAccountDeleteActivity;
 use App\Jobs\StatusPipeline\StatusDelete;
 use App\Models\AccountInterstitial;
 use App\Models\AccountLog;
@@ -30,6 +31,7 @@ use App\Models\Profile;
 use App\Models\ProfileAlias;
 use App\Models\ProfileMigration;
 use App\Models\ProfileSponsor;
+use App\Models\QuoteAuthorization;
 use App\Models\RemoteAuth;
 use App\Models\RemoteReport;
 use App\Models\Report;
@@ -47,6 +49,7 @@ use App\Models\UserPronoun;
 use App\Models\UserSetting;
 use App\Services\AccountRevocationService;
 use App\Services\AccountService;
+use App\Services\DirectMessageService;
 use App\Services\FollowerService;
 use App\Services\PublicTimelineService;
 use Illuminate\Bus\Queueable;
@@ -169,6 +172,7 @@ class DeleteAccountPipeline implements ShouldQueue
         StatusHashtag::whereProfileId($id)->get()->each->delete();
         DirectMessage::whereFromId($id)->orWhere('to_id', $id)->delete();
         Conversation::whereFromId($id)->orWhere('to_id', $id)->delete();
+        app(DirectMessageService::class)->purgeProfile($id);
         StatusArchived::whereProfileId($id)->delete();
         UserPronoun::whereProfileId($id)->delete();
         FollowRequest::whereFollowingId($id)
@@ -196,6 +200,7 @@ class DeleteAccountPipeline implements ShouldQueue
         UserDevice::whereUserId($user->id)->forceDelete();
         UserFilter::whereUserId($user->id)->forceDelete();
         FeatureAuthorization::whereProfileId($id)->delete();
+        QuoteAuthorization::whereProfileId($id)->delete();
         UserSetting::whereUserId($user->id)->forceDelete();
 
         Mention::whereProfileId($id)->forceDelete();
@@ -219,6 +224,11 @@ class DeleteAccountPipeline implements ShouldQueue
         $this->deleteUserColumns($user);
         AccountService::del($user->profile_id);
         Profile::whereUserId($user->id)->delete();
+
+        // Last, so remote servers only hear about it once the account is
+        // really gone here. Every path that deletes a local account runs
+        // this pipeline, so they all federate from this one place.
+        FanoutAccountDeleteActivity::dispatch((int) $id)->onQueue('delete');
     }
 
     protected function deleteUserColumns($user)

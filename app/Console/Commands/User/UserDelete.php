@@ -74,9 +74,9 @@ class UserDelete extends Command implements PromptsForMissingInput
                 return $u->username;
             })
         );
-        $user = Profile::whereUsername($user)->first();
+        $profile = Profile::whereUsername($user)->first();
 
-        if (! $user) {
+        if (! $profile) {
             $this->error('Invalid id or username');
 
             return;
