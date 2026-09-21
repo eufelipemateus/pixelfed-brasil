@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Federation;
 
+use App\Enums\StatusEnums;
 use App\Exceptions\InvalidDeliveryDestinationException;
 use App\Models\Profile;
 use App\Services\ActivityPubDeliveryService;
@@ -68,7 +69,7 @@ class DeliverDirectMessageActivity implements ShouldQueue
     {
         $from = Profile::find($this->fromProfileId);
 
-        if (! $from || $from->domain !== null || $from->status !== null) {
+        if (! $from || $from->domain !== null || ! StatusEnums::isActive($from->status)) {
             return;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Federation\Handlers;
 
+use App\Enums\StatusEnums;
 use App\Exceptions\DirectMessageException;
 use App\Federation\Validators\DirectMessageValidator;
 use App\Models\DmConversation;
@@ -34,7 +35,7 @@ class DirectMessageHandler
      */
     public function handleCreate(array $object, Profile $actor): ?DmMessage
     {
-        if ($actor->domain === null || $actor->status !== null) {
+        if ($actor->domain === null || ! StatusEnums::isActive($actor->status)) {
             return null;
         }
 
@@ -240,7 +241,7 @@ class DirectMessageHandler
                 $local = FollowersSyncService::resolveLocalActor($uri);
                 $profile = $local ? Profile::find($local->id) : null;
 
-                if ($profile && $profile->status === null && $profile->user_id) {
+                if ($profile && StatusEnums::isActive($profile->status) && $profile->user_id) {
                     $resolved->put($profile->id, $profile);
                 }
 
@@ -259,7 +260,7 @@ class DirectMessageHandler
                 }
             }
 
-            if ($profile && $profile->status === null && $profile->id !== $actor->id) {
+            if ($profile && StatusEnums::isActive($profile->status) && $profile->id !== $actor->id) {
                 $resolved->put($profile->id, $profile);
             }
         }

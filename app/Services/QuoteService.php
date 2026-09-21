@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Jobs\QuotePipeline\DeliverQuoteActivityPipeline;
 use App\Models\Profile;
 use App\Models\QuoteAuthorization;
@@ -271,7 +272,7 @@ class QuoteService
 
         return $profile
             && $profile->domain === null
-            && $profile->status === null
+            && StatusEnums::isActive($profile->status)
             && ! $profile->deleted_at;
     }
 
@@ -363,7 +364,7 @@ class QuoteService
             return false;
         }
 
-        if ($actor->domain === null || $actor->status !== null) {
+        if ($actor->domain === null || ! StatusEnums::isActive($actor->status)) {
             return false;
         }
 

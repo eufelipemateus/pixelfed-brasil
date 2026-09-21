@@ -135,7 +135,7 @@
      </div>
 
      <div class="form-group pb-3">
-       <label class="font-weight-bold" for="can_quote">Quote Posts</label>
+       <label class="font-weight-bold" for="can_quote">Who can quote your posts</label>
        <p class="text-muted small help-text">Control who can quote your public and unlisted posts.</p>
        <select class="form-control" name="can_quote" id="can_quote">
          <option value="everyone" {{ ($settings->can_quote ?? 'everyone') === 'everyone' ? 'selected' : '' }}>Everyone</option>

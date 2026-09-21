@@ -30,7 +30,7 @@ use NotificationChannels\WebPush\PushSubscription;
  * @property string|null $name
  * @property string|null $username
  * @property string $email
- * @property string|null $status
+ * @property \App\Enums\StatusEnums|null $status
  * @property string|null $language
  * @property string $password
  * @property string|null $remember_token

@@ -84,13 +84,13 @@ class DefinePopularUsers implements ShouldQueue, ShouldBeUnique
     /**
      * Log a profile change action to the moderation log.
      *
-     * @param \App\Profile $profile The profile being updated.
+     * @param Profile $profile The profile being updated.
      * @param string       $action  The action performed.
      * @param string       $message The message to log.
      *
      * @return void
      */
-    private function _logProfileChange($profile, $action, $message)
+    private function _logProfileChange(Profile $profile, string $action, string $message): void
     {
         ModLogService::boot()
             ->objectUid($profile->user->id)

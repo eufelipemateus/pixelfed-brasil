@@ -2,6 +2,7 @@
 
 namespace App\Jobs\StatusPipeline;
 
+use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Bus\Queueable;
@@ -136,7 +137,7 @@ class RemoteReplyResolvePipeline implements ShouldBeUniqueUntilProcessing, Shoul
         $profile = Profile::find($this->profileId);
 
         // Author deleted, suspended or somehow local: nothing to store.
-        if (! $profile || $profile->domain === null || $profile->status !== null) {
+        if (! $profile || $profile->domain === null || ! StatusEnums::isActive($profile->status)) {
             $this->finish($id);
 
             return;

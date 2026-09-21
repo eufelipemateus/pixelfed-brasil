@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Http\Controllers\FollowerController;
 use App\Jobs\FollowPipeline\FollowersSyncPipeline;
 use App\Jobs\FollowPipeline\FollowPipeline;
@@ -468,7 +469,7 @@ class FollowersSyncService
             ->whereNotNull('domain')
             ->first();
 
-        if (! $sender || $sender->status !== null) {
+        if (! $sender || ! StatusEnums::isActive($sender->status)) {
             return;
         }
 
@@ -627,7 +628,7 @@ class FollowersSyncService
         if (
             ! self::enabled()
             || $sender->domain === null
-            || $sender->status !== null
+            || ! StatusEnums::isActive($sender->status)
             || ! preg_match('/^[0-9a-f]{64}$/', $expectedDigest)
             || ! self::senderMatches($sender, $collectionId, $url)
         ) {

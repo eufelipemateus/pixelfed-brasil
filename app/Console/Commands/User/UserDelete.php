@@ -68,13 +68,13 @@ class UserDelete extends Command implements PromptsForMissingInput
 
             return;
         }
-        $user = select(
+        $selectedUsername = select(
             'Select the account',
             $user->map(function ($u) {
                 return $u->username;
             })
         );
-        $profile = Profile::whereUsername($user)->first();
+        $profile = Profile::whereUsername($selectedUsername)->first();
 
         if (! $profile) {
             $this->error('Invalid id or username');
@@ -82,7 +82,13 @@ class UserDelete extends Command implements PromptsForMissingInput
             return;
         }
 
-        $user = $user->user;
+        $user = $profile->user;
+
+        if (! $user) {
+            $this->error('Could not find the account for this profile.');
+
+            return;
+        }
 
         if ($user->status === StatusEnums::DELETED && $force == false) {
             $this->error('Account has already been deleted.');

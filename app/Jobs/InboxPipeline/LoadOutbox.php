@@ -8,6 +8,7 @@ use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
+use App\Models\Profile;
 use App\Models\Status;
 
 class LoadOutbox implements ShouldQueue
@@ -15,16 +16,16 @@ class LoadOutbox implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $profile;
+    public Profile $profile;
 
     public const LIMIT_ACTIVITIES = 10;
 
     /**
      * Create a new job instance.
      *
-     * @param \App\Profile $profile The profile for which to load the outbox.
+     * @param Profile $profile The profile for which to load the outbox.
      */
-    public function __construct($profile)
+    public function __construct(Profile $profile)
     {
         $this->profile = $profile;
     }

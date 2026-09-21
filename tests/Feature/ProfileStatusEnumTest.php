@@ -64,8 +64,8 @@ class ProfileStatusEnumTest extends TestCase
         }
     }
 
-    public function test_null_database_status_is_exposed_as_active_and_all_states_round_trip(): void
-    {
+	public function test_null_database_status_is_exposed_as_active_and_all_states_round_trip(): void
+	{
         $profile = $this->createProfile([
             'status' => null,
             'private_key' => 'test-private-key',
@@ -82,9 +82,18 @@ class ProfileStatusEnumTest extends TestCase
             $this->assertSame($status, $profile->fresh()->status);
             $this->assertSame($status->value(), $profile->fresh()->getRawOriginal('status'));
         }
-    }
+	}
 
-    public function test_active_local_profile_can_queue_activitypub_delivery(): void
+	public function test_upstream_guards_accept_the_local_active_enum_cast(): void
+	{
+		$profile = $this->createProfile(['status' => null]);
+
+		$this->assertTrue(StatusEnums::isActive($profile->fresh()->status));
+		$this->assertTrue(StatusEnums::isActive(StatusEnums::ACTIVE));
+		$this->assertFalse(StatusEnums::isActive(StatusEnums::SUSPENDED));
+	}
+
+	public function test_active_local_profile_can_queue_activitypub_delivery(): void
     {
         config(['app.env' => 'testing']);
         $profile = $this->createProfile([

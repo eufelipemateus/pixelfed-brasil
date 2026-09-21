@@ -2,6 +2,7 @@
 
 namespace App\Jobs\QuotePipeline;
 
+use App\Enums\StatusEnums;
 use App\Exceptions\InvalidDeliveryDestinationException;
 use App\Models\Profile;
 use App\Services\ActivityPubDeliveryService;
@@ -66,7 +67,7 @@ class DeliverQuoteActivityPipeline implements ShouldQueue
         $from = Profile::find($this->fromProfileId);
         $to = Profile::find($this->toProfileId);
 
-        if (! $from || ! $to || $from->domain !== null || $from->status !== null) {
+        if (! $from || ! $to || $from->domain !== null || ! StatusEnums::isActive($from->status)) {
             return;
         }
 

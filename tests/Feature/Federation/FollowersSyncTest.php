@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\ActivityPubDeliveryService;
 use App\Services\FollowersSyncService;
 use App\Services\RelationshipService;
+use App\Util\ActivityPub\Helpers;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -81,7 +82,10 @@ function fsyncFollow(Profile $actor, Profile $target, int $ageInMinutes = 120): 
 function fsyncSeedHosts(array $hosts): void
 {
     foreach ($hosts as $host) {
-        Cache::put('helpers:url:public-ips:'.hash('xxh128', $host), ['203.0.113.40'], 3600);
+        Cache::put('helpers:url:public-ips:v2:'.hash('xxh128', $host), [
+            'state' => Helpers::URL_OK,
+            'ips' => ['203.0.113.40'],
+        ], 3600);
     }
 
     Cache::put('instances:banned:domains', [], 1209600);

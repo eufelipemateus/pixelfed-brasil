@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Jobs\FeaturedCollectionPipeline\RevokeFeatureAuthorizationPipeline;
 use App\Models\FeatureAuthorization;
 use App\Models\Profile;
@@ -116,11 +117,11 @@ class FeaturedCollectionService
      */
     public static function canFeature(Profile $target, Profile $actor): bool
     {
-        if ($target->domain !== null || $target->status !== null) {
+        if ($target->domain !== null || ! StatusEnums::isActive($target->status)) {
             return false;
         }
 
-        if ($actor->domain === null || $actor->status !== null) {
+        if ($actor->domain === null || ! StatusEnums::isActive($actor->status)) {
             return false;
         }
 

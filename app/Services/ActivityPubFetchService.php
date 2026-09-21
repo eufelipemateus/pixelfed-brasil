@@ -62,7 +62,7 @@ class ActivityPubFetchService
     {
         self::$lastFailureTransient = null;
 
-        $url = self::validateUrl($url);
+        $url = Helpers::validateUrl($url);
 
         if (! $url) {
             self::failed(false);
@@ -89,25 +89,7 @@ class ActivityPubFetchService
 
     public static function validateUrl($url)
     {
-        if (! is_string($url) || substr_count($url, '://') !== 1) {
-            return false;
-        }
-
-        $parts = parse_url($url);
-        if (! is_array($parts) || isset($parts['user']) || isset($parts['pass'])) {
-            return false;
-        }
-
-        $validated = Helpers::validateUrl($url);
-        if (! $validated) {
-            return false;
-        }
-
-        $host = trim((string) parse_url($validated, PHP_URL_HOST), '[]');
-
-        return $host !== '' && self::resolvePublicIps($host) !== []
-            ? $validated
-            : false;
+        return Helpers::validateUrl($url);
     }
 
     public static function fetchRequest($url, $returnJsonFormat = false)
@@ -117,7 +99,7 @@ class ActivityPubFetchService
         $currentUrl = $url;
 
         for ($redirects = 0; $redirects <= self::MAX_REDIRECTS; $redirects++) {
-            $currentUrl = self::validateUrl($currentUrl);
+            $currentUrl = Helpers::validateUrl($currentUrl);
 
             if (! $currentUrl) {
                 return self::failed(false);
@@ -130,7 +112,7 @@ class ActivityPubFetchService
                 return self::failed(false);
             }
 
-            $ips = self::resolvePublicIps($host);
+            $ips = Helpers::resolvePublicIps($host);
 
             if ($ips === []) {
                 // A host that just delivered to us but does not resolve is
@@ -299,7 +281,7 @@ class ActivityPubFetchService
 
             $url = (string) $resolved;
 
-            return self::validateUrl($url)
+            return Helpers::validateUrl($url)
                 ? $url
                 : null;
         } catch (\Throwable) {
@@ -351,44 +333,4 @@ class ActivityPubFetchService
         return false;
     }
 
-    private static function resolvePublicIps(string $host): array
-    {
-        $host = trim($host, '[]');
-
-        if (filter_var($host, FILTER_VALIDATE_IP)) {
-            return self::isPublicIp($host) ? [$host] : [];
-        }
-
-        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
-        if (! is_array($records) || $records === []) {
-            return [];
-        }
-
-        $ips = [];
-        foreach ($records as $record) {
-            $ip = $record['ip'] ?? $record['ipv6'] ?? null;
-            if (! is_string($ip) || ! self::isPublicIp($ip)) {
-                return [];
-            }
-            $ips[] = $ip;
-        }
-
-        return array_values(array_unique($ips));
-    }
-
-    private static function isPublicIp(string $ip): bool
-    {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $numeric = ip2long($ip);
-            if ($numeric !== false && ($numeric & 0xF0000000) === 0xE0000000) {
-                return false;
-            }
-        }
-
-        return filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-        ) !== false;
-    }
 }

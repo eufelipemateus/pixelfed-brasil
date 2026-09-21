@@ -35,4 +35,13 @@ case BANNED;
             default => null,
         };
     }
+
+    /**
+     * Active rows are stored as NULL in the database but are exposed by the
+     * local cast as ACTIVE. Accept both forms for code shared with upstream.
+     */
+    public static function isActive(?self $status): bool
+    {
+        return $status === null || $status === self::ACTIVE;
+    }
 }

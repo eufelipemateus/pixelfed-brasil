@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Admin;
 
+use App\Enums\StatusEnums;
 use App\Models\ConfigCache;
 use App\Models\Instance;
 use App\Models\InstanceActor;
@@ -1866,8 +1867,8 @@ class AppFederation extends Command
             $issues[] = 'soft-deleted locally';
         }
 
-        if ($local->status !== null) {
-            $issues[] = 'status='.$local->status;
+        if (! StatusEnums::isActive($local->status)) {
+            $issues[] = 'status='.$local->status->value();
         }
 
         if (! $this->samePem($local->public_key, $doc['publicKey']['publicKeyPem'])) {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Jobs\ProfilePipeline\SigningActorDiscoveryPipeline;
 use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
@@ -105,7 +106,7 @@ class ActivityPubSignedFetchService
             return null;
         }
 
-        if ($signer->status !== null || empty($signer->public_key)) {
+        if (! StatusEnums::isActive($signer->status) || empty($signer->public_key)) {
             return null;
         }
 

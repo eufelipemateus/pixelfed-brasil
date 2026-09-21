@@ -27,7 +27,7 @@ class Translator
     /**
      * Translator constructor.
      *
-     * @param TranslateInterface $provider The translation provider implementation.
+     * @param class-string<TranslateInterface> $provider The translation provider implementation.
      * @param array              $config   Configuration array for the provider.
      */
     public function __construct(string $provider, array $config)
@@ -41,9 +41,9 @@ class Translator
      * @param string $text           The text to translate.
      * @param string $targetLanguage The language code to translate the text into.
      *
-     * @return rturn  The translated text.
+     * @return array{text: string, target: string} The translated text and target language.
      */
-    public function translate(string $text, string $targetLanguage):  Array
+    public function translate(string $text, string $targetLanguage): array
     {
         $text =  $this->provider->translate($text, $targetLanguage);
 

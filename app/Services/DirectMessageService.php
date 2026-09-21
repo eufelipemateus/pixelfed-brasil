@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Exceptions\DirectMessageException;
 use App\Federation\ActivityBuilders\DirectMessageActivityBuilder;
 use App\Jobs\Federation\DeliverDirectMessageActivity;
@@ -60,7 +61,7 @@ class DirectMessageService
             return false;
         }
 
-        if ($recipient->status !== null || $sender->status !== null) {
+        if (! StatusEnums::isActive($recipient->status) || ! StatusEnums::isActive($sender->status)) {
             return false;
         }
 
@@ -304,7 +305,7 @@ class DirectMessageService
             }
 
             $this->enforceRequestLimit($conversation, $sender, $recipient);
-        } elseif ($others->filter(fn (Profile $other) => $other->status === null)->isEmpty()) {
+        } elseif ($others->filter(fn (Profile $other) => StatusEnums::isActive($other->status))->isEmpty()) {
             throw new DirectMessageException('Nobody in this conversation can be reached.', 403);
         }
 
@@ -829,7 +830,7 @@ class DirectMessageService
     public function remoteInboxes(Collection $profiles): array
     {
         return $profiles
-            ->filter(fn (Profile $profile) => $profile->domain !== null && $profile->status === null)
+            ->filter(fn (Profile $profile) => $profile->domain !== null && StatusEnums::isActive($profile->status))
             ->map(fn (Profile $profile) => $profile->sharedInbox ?: $profile->inbox_url)
             ->filter()
             ->unique()

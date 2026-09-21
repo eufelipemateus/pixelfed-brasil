@@ -2,6 +2,7 @@
 
 namespace App\Federation\ActivityBuilders;
 
+use App\Enums\StatusEnums;
 use App\Models\DmConversation;
 use App\Models\DmMessage;
 use App\Models\Media;
@@ -58,7 +59,7 @@ class DirectMessageActivityBuilder
      */
     public function buildNote(DmMessage $message, DmConversation $conversation, Profile $sender, Collection $others): array
     {
-        $recipients = $others->filter(fn (Profile $profile) => $profile->status === null)->values();
+        $recipients = $others->filter(fn (Profile $profile) => StatusEnums::isActive($profile->status))->values();
         $uri = $message->objectUri();
 
         return [
@@ -98,7 +99,7 @@ class DirectMessageActivityBuilder
             'type' => 'Delete',
             'actor' => $sender->permalink(),
             'to' => $others
-                ->filter(fn (Profile $profile) => $profile->status === null)
+                ->filter(fn (Profile $profile) => StatusEnums::isActive($profile->status))
                 ->map(fn (Profile $profile) => $profile->permalink())
                 ->values()
                 ->all(),

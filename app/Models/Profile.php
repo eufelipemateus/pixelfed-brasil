@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $user_id
  * @property string|null $domain
  * @property string|null $username
- * @property string|null $status
+ * @property \App\Enums\StatusEnums|null $status
  * @property string|null $name
  * @property string|null $bio
  * @property int $unlisted
