@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\Http\Controllers\Settings\ExportSettings;
 use App\Http\Controllers\Settings\HomeSettings;
 use App\Http\Controllers\Settings\LabsSettings;
@@ -24,7 +25,6 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
-use App\Enums\StatusEnums;
 
 class SettingsController extends Controller
 {
@@ -114,6 +114,20 @@ class SettingsController extends Controller
         $profile = $user->profile;
         $user->disable();
         $profile->disable();
+
+        // Revoke OAuth tokens so previously-authorized third-party clients
+        // cannot keep acting on a disabled account. oauth_refresh_tokens has no
+        // user_id column, so delete it via access_token_id before removing the
+        // access tokens themselves.
+        $accessTokenIds = DB::table('oauth_access_tokens')
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->all();
+        DB::table('oauth_refresh_tokens')
+            ->whereIn('access_token_id', $accessTokenIds)
+            ->delete();
+        DB::table('oauth_access_tokens')->where('user_id', $user->id)->delete();
+
         Auth::logout();
         Cache::forget('profiles:private');
         AccountService::del($profile->id);
@@ -154,8 +168,16 @@ class SettingsController extends Controller
         $profile->save();
         Cache::forget('profiles:private');
         AccountService::del($profile->id);
+        // oauth_refresh_tokens keys on access_token_id, not user_id, so delete
+        // it via the user's access-token ids before removing the access tokens.
+        $accessTokenIds = DB::table('oauth_access_tokens')
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->all();
+        DB::table('oauth_refresh_tokens')
+            ->whereIn('access_token_id', $accessTokenIds)
+            ->delete();
         DB::table('oauth_access_tokens')->where('user_id', $user->id)->delete();
-        DB::table('oauth_refresh_tokens')->where('user_id', $user->id)->delete();
         OauthClient::where('user_id', $user->id)->delete();
         Auth::logout();
         DeleteAccountPipeline::dispatch($user)->onQueue('low');

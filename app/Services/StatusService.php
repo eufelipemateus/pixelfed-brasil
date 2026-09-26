@@ -12,6 +12,7 @@ use League\Fractal\Serializer\ArraySerializer;
 class StatusService
 {
     const CACHE_KEY = 'pf:services:status:v1.1:';
+
     const MAX_PINNED = 3;
 
     public static function key($id, $publicOnly = true): string
@@ -89,6 +90,22 @@ class StatusService
             unset($res['_pid']);
         }
 
+        // Legacy _pe clients that don't resolve `reblog` would render a boost
+        // as an empty card, so lift the shared content up. Never touch
+        // `account`: the top-level account is always the booster.
+        if (
+            ! $mastodonMode
+            && request()->has('_pe')
+            && ! request()->filled('include_reblogs')
+            && ! empty($res['reblog'])
+        ) {
+            foreach (['content', 'content_text', 'emojis', 'media_attachments', 'sensitive', 'spoiler_text'] as $key) {
+                if (array_key_exists($key, $res['reblog'])) {
+                    $res[$key] = $res['reblog'][$key];
+                }
+            }
+        }
+
         return $res;
     }
 
@@ -112,6 +129,14 @@ class StatusService
 
         if (config('exp.emc') == false) {
             return $status;
+        }
+
+        // The shared status nests under `reblog` and needs Mastodon field names too
+        if (! empty($status['reblog'])) {
+            $status['reblog']['replies_count'] = $status['reblog']['reply_count'] ?? 0;
+            $status['reblog']['favourited'] = false;
+            $status['reblog']['muted'] = false;
+            $status['reblog']['reblogged'] = false;
         }
 
         unset(
@@ -152,6 +177,7 @@ class StatusService
             MediaService::getMastodon($status['id'])
         );
 
+        $status['favourited'] = false;
         $status['muted'] = false;
         $status['reblogged'] = false;
 

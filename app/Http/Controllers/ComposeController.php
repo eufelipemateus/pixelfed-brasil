@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ImageOptimizePipeline\ImageOptimize;
 use App\Jobs\ImageOptimizePipeline\ImageGifThumbnail;
+use App\Jobs\ImageOptimizePipeline\ImageOptimize;
 use App\Jobs\StatusPipeline\NewStatusPipeline;
 use App\Jobs\VideoPipeline\VideoThumbnail;
 use App\Models\Collection;
@@ -29,9 +29,9 @@ use App\Services\UserFilterService;
 use App\Services\UserRoleService;
 use App\Services\UserStorageService;
 use App\Transformer\Api\MediaTransformer;
+use App\Util\Lexer\Autolink;
 use App\Util\Media\Filter;
 use App\Util\Media\License;
-use App\Util\Lexer\Autolink;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -204,13 +204,23 @@ class ComposeController extends Controller
             ->whereNull('status_id')
             ->findOrFail($id);
 
-        $media->save();
+        // Enforce the content blocklist on the replacement bytes, mirroring
+        // mediaUpload — mediaUpdate overwrites the previously-validated file.
+        $hash = \hash_file('sha256', $photo->getRealPath());
+        abort_if(MediaBlocklistService::exists($hash) == true, 451);
 
         $fragments = explode('/', $media->media_path);
         $name = last($fragments);
         array_pop($fragments);
         $dir = implode('/', $fragments);
         $path = $photo->storePubliclyAs($dir, $name);
+
+        // Keep the row in sync with the new bytes.
+        $media->original_sha256 = $hash;
+        $media->mime = $photo->getMimeType();
+        $media->size = $photo->getSize();
+        $media->save();
+
         $res = [
             'url' => $media->url().'?v='.time(),
         ];

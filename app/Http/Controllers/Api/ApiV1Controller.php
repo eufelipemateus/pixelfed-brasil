@@ -65,6 +65,7 @@ use App\Services\MediaPathService;
 use App\Services\MediaService;
 use App\Services\NetworkTimelineService;
 use App\Services\NotificationService;
+use App\Services\PlaceService;
 use App\Services\PublicTimelineService;
 use App\Services\QuoteService;
 use App\Services\ReblogService;
@@ -333,8 +334,8 @@ class ApiV1Controller extends Controller
             $changes = true;
         }
 
-        if ($request->has('source[language]')) {
-            $lang = $request->input('source[language]');
+        if ($request->has('source.language')) {
+            $lang = $request->input('source.language');
             if (in_array($lang, Localization::languages())) {
                 $user->language = $lang;
                 $changes = true;
@@ -368,7 +369,12 @@ class ApiV1Controller extends Controller
         }
 
         if ($request->has('display_name')) {
-            $displayName = strip_tags(Purify::clean($request->input('display_name')));
+            // Purify entity-encodes &, <, > even in plain text; decode after the
+            // tag/XSS strip so the display name is stored as readable text.
+            $displayName = htmlspecialchars_decode(
+                strip_tags(Purify::clean($request->input('display_name'))),
+                ENT_QUOTES | ENT_HTML5
+            );
             if ($displayName !== $user->name) {
                 $user->name = $displayName;
                 $profile->name = $displayName;
@@ -470,8 +476,8 @@ class ApiV1Controller extends Controller
             }
         }
 
-        if ($request->has('source[privacy]')) {
-            $scope = $request->input('source[privacy]');
+        if ($request->has('source.privacy')) {
+            $scope = $request->input('source.privacy');
             if (in_array($scope, ['public', 'private', 'unlisted'])) {
                 if ($composeSettings['default_scope'] != $scope) {
                     $composeSettings['default_scope'] = $profile->is_private ? 'private' : $scope;
@@ -2644,6 +2650,16 @@ class ApiV1Controller extends Controller
         $inTypes = $includeReblogs ?
             ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album', 'share'] :
             ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'];
+
+        // "Photo reblogs only"
+        $photosReblogsOnly = $request->filled('photos_reblogs_only')
+            ? $request->boolean('photos_reblogs_only')
+            : data_get($other, 'photo_reblogs_only', false);
+        $reblogTargetTypes = array_diff($inTypes, ['share']);
+
+        // Filtering happens after the fetch, so fetch deeper to fill a page
+        $fetchLimit = $photosReblogsOnly ? $limit * 6 : $limit * 2;
+
         AccountService::setLastActive($request->user()->id);
 
         $cachedFilters = CustomFilter::getCachedFiltersForAccount($pid);
@@ -2772,7 +2788,7 @@ class ApiV1Controller extends Controller
                 ->whereIn('type', $inTypes)
                 ->whereIn('visibility', ['public', 'unlisted', 'private'])
                 ->orderByDesc('id')
-                ->take(($limit * 2))
+                ->take($fetchLimit)
                 ->get()
                 ->map(function ($s) use ($pid, $napi) {
                     try {
@@ -2788,7 +2804,8 @@ class ApiV1Controller extends Controller
                         return false;
                     }
 
-                    $status['account'] = $account;
+                    // Not $status['account'] = $account: $account is resolved from
+                    // the row, StatusService picks the right one per client
 
                     if ($pid) {
                         $status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
@@ -2798,8 +2815,15 @@ class ApiV1Controller extends Controller
 
                     return $status;
                 })
-                ->filter(function ($status) {
-                    return $status && isset($status['account']);
+                ->filter(function ($status) use ($photosReblogsOnly, $reblogTargetTypes) {
+                    if (! $status || ! isset($status['account'])) {
+                        return false;
+                    }
+
+                    // direct posts pass; a boost must share a photo or video
+                    return ! $photosReblogsOnly
+                        || empty($status['reblog'])
+                        || in_array(data_get($status['reblog'], 'pf_type'), $reblogTargetTypes);
                 })
                 ->map(function ($status) use ($pid) {
                     if (! empty($status['reblog'])) {
@@ -2843,7 +2867,7 @@ class ApiV1Controller extends Controller
                 ->whereIn('type', $inTypes)
                 ->whereIn('visibility', ['public', 'unlisted', 'private'])
                 ->orderByDesc('id')
-                ->take(($limit * 2))
+                ->take($fetchLimit)
                 ->get()
                 ->map(function ($s) use ($pid, $napi) {
                     try {
@@ -2859,7 +2883,8 @@ class ApiV1Controller extends Controller
                         return false;
                     }
 
-                    $status['account'] = $account;
+                    // Not $status['account'] = $account: $account is resolved from
+                    // the row, StatusService picks the right one per client
 
                     if ($pid) {
                         $status['favourited'] = (bool) LikeService::liked($pid, $s['id']);
@@ -2869,8 +2894,15 @@ class ApiV1Controller extends Controller
 
                     return $status;
                 })
-                ->filter(function ($status) {
-                    return $status && isset($status['account']);
+                ->filter(function ($status) use ($photosReblogsOnly, $reblogTargetTypes) {
+                    if (! $status || ! isset($status['account'])) {
+                        return false;
+                    }
+
+                    // direct posts pass; a boost must share a photo or video
+                    return ! $photosReblogsOnly
+                        || empty($status['reblog'])
+                        || in_array(data_get($status['reblog'], 'pf_type'), $reblogTargetTypes);
                 })
                 ->map(function ($status) use ($pid) {
                     if (! empty($status['reblog'])) {
@@ -3346,7 +3378,7 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $service = app(DirectMessageService::class);
-        $found = is_numeric($id) ? $service->conversationFor($id, $request->user()->profile_id) : null;
+        $found = is_numeric($id) ? $service->conversationForMastodonId($id, $request->user()->profile_id) : null;
         abort_if(! $found, 404);
 
         $service->setHidden($found[1], true);
@@ -3366,7 +3398,7 @@ class ApiV1Controller extends Controller
         $payloads = app(DirectMessagePayloadService::class);
         $pid = $request->user()->profile_id;
 
-        $found = is_numeric($id) ? $service->conversationFor($id, $pid) : null;
+        $found = is_numeric($id) ? $service->conversationForMastodonId($id, $pid) : null;
         abort_if(! $found, 404);
 
         [$conversation, $participant] = $found;
@@ -3401,6 +3433,14 @@ class ApiV1Controller extends Controller
 
         $res = $request->has(self::PF_API_ENTITY_KEY) ? StatusService::get($id, false) : StatusService::getMastodon($id, false);
         if (! $res || ! isset($res['visibility'])) {
+            // Direct messages are no longer statuses, but clients still take
+            // the id they got from /api/v1/conversations to this endpoint
+            $direct = app(DirectMessagePayloadService::class)->mastodonStatusById($id, $pid);
+
+            if ($direct) {
+                return $this->json($direct);
+            }
+
             abort(404);
         }
 
@@ -3454,6 +3494,12 @@ class ApiV1Controller extends Controller
         );
 
         if (! $status || ! isset($status['account'])) {
+            $direct = app(DirectMessagePayloadService::class)->mastodonContext($id, $pid);
+
+            if ($direct) {
+                return $this->json($direct);
+            }
+
             return response('', 404);
         }
 
@@ -3918,6 +3964,7 @@ class ApiV1Controller extends Controller
                 $status->visibility = 'draft';
                 if ($request->has('place_id')) {
                     $status->place_id = $request->input('place_id');
+                    PlaceService::clearStatusesByPlaceId($request->input('place_id'));
                 }
                 $status->save();
             }
@@ -4016,8 +4063,24 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         AccountService::setLastActive($request->user()->id);
-        $status = Status::whereProfileId($request->user()->profile->id)
-            ->findOrFail($id);
+        $pid = $request->user()->profile_id;
+        $status = Status::whereProfileId($pid)->find($id);
+
+        if (! $status) {
+            $message = DmMessage::where('profile_id', $pid)->find($id);
+            abort_if(! $message, 404);
+
+            $payloads = app(DirectMessagePayloadService::class);
+            $res = $payloads->mastodonStatusById($message->id, $pid);
+            abort_if(! $res, 404);
+
+            app(DirectMessageService::class)->deleteMessage($message);
+
+            $res['text'] = $res['content_text'];
+            unset($res['content']);
+
+            return $this->json($res);
+        }
 
         $resource = new Fractal\Resource\Item($status, new StatusTransformer);
 
@@ -4780,8 +4843,8 @@ class ApiV1Controller extends Controller
         abort_unless($request->user()->tokenCan('write'), 403);
 
         $pid = $request->user()->profile_id;
-        $home = $request->input('home[last_read_id]');
-        $notifications = $request->input('notifications[last_read_id]');
+        $home = $request->input('home.last_read_id');
+        $notifications = $request->input('notifications.last_read_id');
 
         if ($home) {
             return $this->json(MarkerService::set($pid, 'home', $home));

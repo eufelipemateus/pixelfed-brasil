@@ -99,7 +99,7 @@ class RestrictedNames
         'mix-manifest.json',
         'robots.txt',
 
-        // Laravel Horizon
+        // Horizon
         'horizon',
 
         // Reserved routes
@@ -375,7 +375,7 @@ class RestrictedNames
         'legal-notice',
         'sitemap',
         'donate',
-        'app'
+        'app',
     ];
 
     /**

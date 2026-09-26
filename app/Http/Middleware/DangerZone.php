@@ -33,11 +33,19 @@ class DangerZone
         }
         if (! $request->is('i/auth/sudo') && $request->session()->get('sudoTrustDevice') != 1) {
             if (! $request->session()->has('sudoMode')) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Password confirmation required.'], 423);
+                }
+
                 $request->session()->put('redirectNext', $request->url());
 
                 return redirect('/i/auth/sudo');
             }
             if ($request->session()->get('sudoMode') < now()->subMinutes(30)->timestamp) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Password confirmation required.'], 423);
+                }
+
                 $request->session()->put('redirectNext', $request->url());
 
                 return redirect('/i/auth/sudo');

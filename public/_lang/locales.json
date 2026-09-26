@@ -145,6 +145,11 @@
         "nativeName": "íslenska (Ísland)"
     },
     {
+        "code": "ig-NG",
+        "name": "Igbo (Nigeria)",
+        "nativeName": "Igbo (Naịjịrịa)"
+    },
+    {
         "code": "id-ID",
         "name": "Indonesian (Indonesia)",
         "nativeName": "Indonesia (Indonesia)"
@@ -177,7 +182,7 @@
     {
         "code": "ku-TR",
         "name": "Kurdish (Türkiye)",
-        "nativeName": "kurdî (kurmancî) (Tirkiye)"
+        "nativeName": "kurdî (kurmancî) (Tirkîye)"
     },
     {
         "code": "lo-LA",

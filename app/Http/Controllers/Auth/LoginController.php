@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Enums\StatusEnums;
+use App\Http\Controllers\Controller;
 use App\Models\AccountLog;
 use App\Models\User;
 use App\Services\BouncerService;
@@ -453,7 +453,7 @@ class LoginController extends Controller
 
     protected function requiresEmailVerification(User $user): bool
     {
-        return (bool) config('pixelfed.enforce_email_verification')
+        return (bool) config_cache('pixelfed.enforce_email_verification')
             && is_null($user->email_verified_at);
     }
 

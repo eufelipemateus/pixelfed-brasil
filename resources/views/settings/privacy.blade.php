@@ -223,25 +223,50 @@
 <script type="text/javascript">
   $(document).ready(function() {
 
-    $('#is_private').on('click', function(e) {
-      let el = $(this);
-      if(el[0].checked) {
+    let privateModeConfirmed = false;
+
+    $('#is_private').on('change', function() {
+      if (this.checked) {
+        privateModeConfirmed = false;
         $('#pac_modal').modal('show');
       }
     });
 
-    $('#modal_confirm').on('click', function(e) {
-      $('#pac_modal').modal('hide')
-      let mode = $('input[name="pfType"]:checked').val();
-      let duration = $('select[name="pfDuration"]').val();
-      // let newrequests = $('#allowFollowRequest')[0].checked;
-      axios.post("{{route('settings.privacy.account')}}", {
+    $('#pac_modal').on('hidden.bs.modal', function() {
+      if (! privateModeConfirmed) {
+        $('#is_private').prop('checked', false);
+      }
+    });
+
+    $('#modal_confirm').on('click', function() {
+      const button = $(this);
+      const mode = $('input[name="pfType"]:checked').val();
+      const duration = $('select[name="pfDuration"]').val();
+
+      privateModeConfirmed = true;
+
+      button
+        .prop('disabled', true)
+        .text('{{ __('settings.save') }}...');
+
+      axios.post("{{ route('settings.privacy.account') }}", {
         'mode': mode,
-        'duration': duration,
-        // 'newrequests': newrequests
-      }).then(res => {
-        window.location.href = window.location.href;
-      }).catch(err => {
+        'duration': duration
+      }).then(() => {
+        window.location.reload();
+      }).catch((err) => {
+        if (err.response && err.response.status === 423) {
+          window.location.href = "{{ route('password.confirm') }}?redirect=" +
+            encodeURIComponent(window.location.pathname + window.location.search);
+          return;
+        }
+
+        privateModeConfirmed = false;
+        $('#is_private').prop('checked', false);
+        $('#pac_modal').modal('hide');
+        button
+          .prop('disabled', false)
+          .text('{{ __('settings.save') }}');
         swal('{{__('settings.error')}}', '{{__('settings.privacy.an_error_occured_please_try_again')}}', 'error');
       });
     });
