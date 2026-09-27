@@ -2,19 +2,18 @@
 
 namespace App\Jobs\InternalPipeline;
 
+use App\Mail\InactiveUser;
 use App\Models\User;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Mail\InactiveUser;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
-
-class SendWeeklyInactiveUserJob implements ShouldQueue, ShouldBeUnique
+class SendWeeklyInactiveUserJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -58,13 +57,13 @@ class SendWeeklyInactiveUserJob implements ShouldQueue, ShouldBeUnique
         User::whereNull('status')
             ->whereNull('deleted_at')
             ->whereNull('last_active_at')
-            ->whereNull("email_verified_at")
+            ->whereNull('email_verified_at')
             ->where('created_at', '<', now()->subDays(7))
             ->chunk(
                 100,
                 function ($users) {
                     foreach ($users as $user) {
-                        info('Sending inactive user email to ' . $user->username);
+                        info('Sending inactive user email to '.$user->username);
                         Mail::to($user->email)
                             ->queue(((new InactiveUser($user))->onQueue('email')));
                     }

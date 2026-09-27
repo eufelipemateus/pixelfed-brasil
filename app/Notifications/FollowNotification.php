@@ -2,15 +2,15 @@
 
 namespace App\Notifications;
 
+use App\Models\Profile;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Profile;
 
 class FollowNotification extends Notification
 {
     use Queueable;
+
     public $profile;
 
     /**
@@ -19,7 +19,7 @@ class FollowNotification extends Notification
     public function __construct($origin_profile_id)
     {
         //
-        $this->profile =  Profile::find($origin_profile_id);
+        $this->profile = Profile::find($origin_profile_id);
     }
 
     /**
@@ -38,8 +38,8 @@ class FollowNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('[Notification]   ' . $this->profile->username . ' started following you')
-            ->line('**@' . $this->profile->username .'** started following you');
+            ->subject('[Notification]   '.$this->profile->username.' started following you')
+            ->line('**@'.$this->profile->username.'** started following you');
     }
 
     /**

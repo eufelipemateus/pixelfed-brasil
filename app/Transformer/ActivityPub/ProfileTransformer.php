@@ -10,7 +10,7 @@ use League\Fractal;
 
 class ProfileTransformer extends Fractal\TransformerAbstract
 {
-    public function transform(Profile $profile)
+    public function transform(Profile $profile): array
     {
         $res = [
             '@context' => [

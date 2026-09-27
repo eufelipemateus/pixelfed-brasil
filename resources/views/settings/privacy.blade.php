@@ -134,6 +134,17 @@
        <p class="small mb-0 mt-2"><a href="{{ route('settings.privacy.featured-collections') }}" class="font-weight-bold">Manage featured collections</a></p>
      </div>
 
+     <div class="form-group pb-3">
+       <label class="font-weight-bold" for="can_quote">Who can quote your posts</label>
+       <p class="text-muted small help-text">Control who can quote your public and unlisted posts.</p>
+       <select class="form-control" name="can_quote" id="can_quote">
+         <option value="everyone" {{ ($settings->can_quote ?? 'everyone') === 'everyone' ? 'selected' : '' }}>Everyone</option>
+         <option value="followers" {{ ($settings->can_quote ?? 'everyone') === 'followers' ? 'selected' : '' }}>People who follow you</option>
+         <option value="nobody" {{ ($settings->can_quote ?? 'everyone') === 'nobody' ? 'selected' : '' }}>Nobody</option>
+       </select>
+       <p class="small mb-0 mt-2"><a href="{{ route('settings.privacy.quotes') }}" class="font-weight-bold">Manage quotes of your posts</a></p>
+     </div>
+
      <div class="form-group row mt-5 pt-5">
       <div class="col-12 text-right">
         <hr>
@@ -212,25 +223,50 @@
 <script type="text/javascript">
   $(document).ready(function() {
 
-    $('#is_private').on('click', function(e) {
-      let el = $(this);
-      if(el[0].checked) {
+    let privateModeConfirmed = false;
+
+    $('#is_private').on('change', function() {
+      if (this.checked) {
+        privateModeConfirmed = false;
         $('#pac_modal').modal('show');
       }
     });
 
-    $('#modal_confirm').on('click', function(e) {
-      $('#pac_modal').modal('hide')
-      let mode = $('input[name="pfType"]:checked').val();
-      let duration = $('select[name="pfDuration"]').val();
-      // let newrequests = $('#allowFollowRequest')[0].checked;
-      axios.post("{{route('settings.privacy.account')}}", {
+    $('#pac_modal').on('hidden.bs.modal', function() {
+      if (! privateModeConfirmed) {
+        $('#is_private').prop('checked', false);
+      }
+    });
+
+    $('#modal_confirm').on('click', function() {
+      const button = $(this);
+      const mode = $('input[name="pfType"]:checked').val();
+      const duration = $('select[name="pfDuration"]').val();
+
+      privateModeConfirmed = true;
+
+      button
+        .prop('disabled', true)
+        .text('{{ __('settings.save') }}...');
+
+      axios.post("{{ route('settings.privacy.account') }}", {
         'mode': mode,
-        'duration': duration,
-        // 'newrequests': newrequests
-      }).then(res => {
-        window.location.href = window.location.href;
-      }).catch(err => {
+        'duration': duration
+      }).then(() => {
+        window.location.reload();
+      }).catch((err) => {
+        if (err.response && err.response.status === 423) {
+          window.location.href = "{{ route('password.confirm') }}?redirect=" +
+            encodeURIComponent(window.location.pathname + window.location.search);
+          return;
+        }
+
+        privateModeConfirmed = false;
+        $('#is_private').prop('checked', false);
+        $('#pac_modal').modal('hide');
+        button
+          .prop('disabled', false)
+          .text('{{ __('settings.save') }}');
         swal('{{__('settings.error')}}', '{{__('settings.privacy.an_error_occured_please_try_again')}}', 'error');
       });
     });

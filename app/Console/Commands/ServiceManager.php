@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Follower;
-use Illuminate\Console\Command;
+use App\Models\FollowRequest;
 use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
-use App\Models\FollowRequest;
+use Illuminate\Console\Command;
 
 class ServiceManager extends Command
 {
@@ -34,24 +34,25 @@ class ServiceManager extends Command
         $this->info('This command allows you to manage followers and following for a service profile.');
         $this->info('You can add or remove followers, view lists of followers and following, manage pending requests, and block or unblock users.');
 
-        $username =  $this->anticipate(
+        $username = $this->anticipate(
             'Enter the service profile username you want to manage (e.g., @service):',
             function ($input) {
-                return Profile::where('username', 'like', '%' . $input . '%')->where('is_service', true)->pluck('username')->toArray();
+                return Profile::where('username', 'like', '%'.$input.'%')->where('is_service', true)->pluck('username')->toArray();
             }
         );
 
         if (empty($username)) {
             $this->error('Username cannot be empty. Please enter a valid username.');
+
             return false;
         }
 
         $profile = Profile::where('username', $username)->where('is_service', true)->first();
-        if (!$profile) {
+        if (! $profile) {
             $this->error('Username not exists. Please type a service prfoile.');
+
             return;
         }
-
 
         $task = $this->choice(
             'What do you want to do?',
@@ -76,57 +77,56 @@ class ServiceManager extends Command
                 $this->addFollowing($profile);
                 break;
             case 'View list of followers':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'View list of following':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Remove follower':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Remove following':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
 
                 break;
             case 'View pending requests':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Accept a request':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Reject a request':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'View blocked users':
 
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Block a user':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
             case 'Unblock a user':
-                $this->info(("not implemented yet"));
+                $this->info(('not implemented yet'));
                 Command::INVALID;
                 break;
         }
     }
 
-
-
-    function addFollowing($profile)
+    public function addFollowing($profile)
     {
 
-        if (!config('federation.activitypub.remoteFollow')) {
+        if (! config('federation.activitypub.remoteFollow')) {
             $this->error('Remote following is not enabled. Please enable it in the configuration.');
+
             return;
         }
 
@@ -134,14 +134,17 @@ class ServiceManager extends Command
 
         if (empty($remoteUrl)) {
             $this->error('Remote URL cannot be empty. Please enter a valid URL.');
+
             return;
         }
-        if (!filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
+        if (! filter_var($remoteUrl, FILTER_VALIDATE_URL)) {
             $this->error('Invalid URL format. Please enter a valid URL.');
+
             return;
         }
         if (strpos($remoteUrl, 'http') !== 0) {
             $this->error('URL must start with http:// or https://');
+
             return;
         }
 
@@ -149,20 +152,17 @@ class ServiceManager extends Command
         $this->info("Adding following for profile: {$profile->username} with remote url : {$remoteUrl}");
         // Implement the logic to add a following here
 
-
-        if (!Helpers::validateUrl($remoteUrl)) {
+        if (! Helpers::validateUrl($remoteUrl)) {
             return;
         }
 
-        $target =    Helpers::getOrFetchRemoteProfile($remoteUrl);
+        $target = Helpers::getOrFetchRemoteProfile($remoteUrl);
 
-        if (!$target) {
+        if (! $target) {
             $this->error('Failed to fetch the remote profile. Please check the URL and try again.');
+
             return;
         }
-
-
-
 
         if (FollowRequest::where([
             'follower_id' => $profile->id,
@@ -174,6 +174,7 @@ class ServiceManager extends Command
             $this->error(
                 'You are already following this user or a follow request is pending.'
             );
+
             return;
         }
 
@@ -185,11 +186,11 @@ class ServiceManager extends Command
         );
 
         $payload = [
-            '@context'  => 'https://www.w3.org/ns/activitystreams',
-            'id'        => $profile->permalink('#follow/' . $target->id),
-            'type'      => 'Follow',
-            'actor'     => $profile->permalink(),
-            'object'    => $target->permalink()
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => $profile->permalink('#follow/'.$target->id),
+            'type' => 'Follow',
+            'actor' => $profile->permalink(),
+            'object' => $target->permalink(),
         ];
 
         $inbox = $target->sharedInbox ?? $target->inbox_url;

@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
 
 class SessionService
 {
@@ -21,6 +19,7 @@ class SessionService
             }
         );
         Cache::put(self::CACHE_KEY, $activeSessions, now()->addMinutes(config('instance.limit_users_active.user_session_timeout')));
+
         return $activeSessions;
     }
 
@@ -40,10 +39,11 @@ class SessionService
         unset($activeSessions[$sessionId]);
         Cache::put(self::CACHE_KEY, $activeSessions, now()->addMinutes(config('instance.limit_users_active.user_session_timeout')));
     }
+
     public static function getTotalActiveSessions()
     {
         $activeSessions = self::getActiveSessions();
+
         return count($activeSessions);
     }
-
 }

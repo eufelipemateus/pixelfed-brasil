@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\DirectMessage;
 use App\Models\Conversation;
+use App\Models\DirectMessage;
 use App\Services\DirectMessageService;
 use Illuminate\Console\Command;
 
@@ -80,7 +80,7 @@ class RepairDirectMessages extends Command
         });
 
         $duplicates = Conversation::query()
-            ->select('from_id', 'to_id')
+            ->select(['from_id', 'to_id'])
             ->selectRaw('COUNT(*) AS aggregate')
             ->groupBy('from_id', 'to_id')
             ->havingRaw('COUNT(*) > 1')

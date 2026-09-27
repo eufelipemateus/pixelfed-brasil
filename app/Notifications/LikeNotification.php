@@ -2,17 +2,18 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 use App\Models\Profile;
 use App\Models\Status;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class LikeNotification extends Notification
 {
     use Queueable;
+
     public $actor;
+
     public $status;
 
     /**
@@ -21,8 +22,8 @@ class LikeNotification extends Notification
     public function __construct($actor_id, $status_id)
     {
         //
-        $this->actor =  Profile::find($actor_id);
-        $this->status =  Status::find($status_id);
+        $this->actor = Profile::find($actor_id);
+        $this->status = Status::find($status_id);
 
     }
 
@@ -43,7 +44,7 @@ class LikeNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] Your post was liked!')
-            ->line('**@' . $this->actor->username . '** liked your post')
+            ->line('**@'.$this->actor->username.'** liked your post')
             ->action('View Post', $this->status->url());
     }
 

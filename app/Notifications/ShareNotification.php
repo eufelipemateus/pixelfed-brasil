@@ -2,19 +2,18 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 use App\Models\Profile;
 use App\Models\Status;
-
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class ShareNotification extends Notification
 {
     use Queueable;
 
     public $actor;
+
     public $status;
 
     /**
@@ -23,8 +22,8 @@ class ShareNotification extends Notification
     public function __construct($target_id, $status_id)
     {
         //
-        $this->actor =  Profile::find($target_id);
-        $this->status =  Status::find($status_id);
+        $this->actor = Profile::find($target_id);
+        $this->status = Status::find($status_id);
     }
 
     /**
@@ -44,9 +43,10 @@ class ShareNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] Your post was shared')
-            ->line('**@' . $this->actor->username . '** shared your post')
+            ->line('**@'.$this->actor->username.'** shared your post')
             ->action('View Post', $this->status->url());
     }
+
     /**
      * Get the array representation of the notification.
      *

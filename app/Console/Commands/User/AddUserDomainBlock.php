@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\User;
 
+use App\Enums\StatusEnums;
 use App\Models\DefaultDomainBlock;
 use App\Models\User;
 use App\Models\UserDomainBlock;
@@ -9,7 +10,6 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\progress;
-use App\Enums\StatusEnums;
 use function Laravel\Prompts\text;
 
 class AddUserDomainBlock extends Command
@@ -48,7 +48,7 @@ class AddUserDomainBlock extends Command
     protected function validateDomain($domain)
     {
         if (! strpos($domain, '.')) {
-            return;
+            return null;
         }
 
         if (str_starts_with($domain, 'https://')) {
@@ -63,18 +63,18 @@ class AddUserDomainBlock extends Command
 
         $valid = filter_var($domain, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME | FILTER_NULL_ON_FAILURE);
         if (! $valid) {
-            return;
+            return null;
         }
 
         if ($domain === config('pixelfed.domain.app')) {
             $this->error('Invalid domain');
 
-            return;
+            return null;
         }
 
         $confirmed = confirm('Are you sure you want to block '.$domain.'?');
         if (! $confirmed) {
-            return;
+            return null;
         }
 
         return $domain;
@@ -98,7 +98,7 @@ class AddUserDomainBlock extends Command
             return;
         }
 
-        if($user->status != StatusEnums::ACTIVE && $user->status != StatusEnums::DISABLED) {
+        if ($user->status != StatusEnums::ACTIVE && $user->status != StatusEnums::DISABLED) {
             return;
         }
 

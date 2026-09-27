@@ -5,21 +5,22 @@ namespace App\Jobs\MentionPipeline;
 use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
 use App\Models\Mention;
 use App\Models\Notification;
+use App\Models\Profile;
 use App\Models\Status;
 use App\Models\User;
+use App\Notifications\MentionNotification;
+use App\Services\AccountService;
 use App\Services\NotificationAppGatewayService;
 use App\Services\NotificationService;
 use App\Services\PushNotificationService;
 use App\Services\StatusService;
+use App\Services\UserFilterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Services\AccountService;
-use App\Models\Profile;
-use App\Notifications\MentionNotification;
 
 class MentionPipeline implements ShouldQueue
 {
@@ -88,6 +89,15 @@ class MentionPipeline implements ShouldQueue
             return;
         }
 
+        // Suppress the mention notification when the target has blocked the
+        // actor. This is the shared sink for every mention path (including AP
+        // ingest, which dispatches without a block check), so a blocked account
+        // could otherwise still ping and push-notify the target.
+        $blocks = UserFilterService::blocks($target);
+        if ($blocks && in_array($actor->id, $blocks)) {
+            return;
+        }
+
         $exists = Notification::whereProfileId($target)
             ->whereActorId($actor->id)
             ->whereIn('action', ['mention', 'comment'])
@@ -101,7 +111,7 @@ class MentionPipeline implements ShouldQueue
 
         NotificationService::firstOrCreateNotification($target, $actor->id, 'mention', $status->id, Status::class);
 
-        if (!empty($target->user_id)  &&   AccountService::getAccountSettings($target)["send_email_on_mention"]) {
+        if (! empty($target->user_id) && AccountService::getAccountSettings($target)['send_email_on_mention']) {
             Profile::find($target)->user->notify(new MentionNotification($mention->profile_id, $status->id));
         }
 

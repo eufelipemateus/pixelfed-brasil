@@ -8,9 +8,10 @@ use App\Models\Status;
 use App\Models\StatusEdit;
 use App\Services\MediaService;
 use App\Services\MediaStorageService;
+use App\Services\PlaceService;
 use App\Services\StatusService;
-use Purify;
 use App\Util\Lexer\Autolink;
+use Purify;
 
 class UpdateStatusService
 {
@@ -67,16 +68,20 @@ class UpdateStatusService
             $cleaned = Purify::clean($attributes['status']);
             $status->caption = $cleaned;
             $status->rendered = nl2br(Autolink::create()->autolink($cleaned));
-        } else {
-            $status->caption = null;
-            $status->rendered = null;
         }
         if (isset($attributes['sensitive'])) {
             if ($status->is_nsfw != (bool) $attributes['sensitive'] &&
-              (bool) $attributes['sensitive'] == false) {
-                $exists = ModLog::whereIn('object_type', [Status::class, 'App\\Status::class'])
-                    ->whereObjectId($status->id)
-                    ->whereAction('admin.status.moderate')
+              (bool) $attributes['sensitive'] === false) {
+                // Same admin NSFW lock as StatusRemoteUpdatePipeline: accept
+                // both object_type literals and object_id conventions, and gate
+                // on metadata.action = 'cw' so only a genuine NSFW-add re-locks.
+                $exists = ModLog::whereAction('admin.status.moderate')
+                    ->whereIn('object_type', ['App\Status::class', 'App\Models\Status::class'])
+                    ->where(function ($q) use ($status) {
+                        $q->where('object_id', $status->id)
+                            ->orWhere('object_id', $status->profile_id);
+                    })
+                    ->where('metadata->action', 'cw')
                     ->exists();
                 if (! $exists) {
                     $status->is_nsfw = (bool) $attributes['sensitive'];
@@ -88,7 +93,9 @@ class UpdateStatusService
         if (isset($attributes['spoiler_text'])) {
             $status->cw_summary = Purify::clean($attributes['spoiler_text']);
         }
+        $oldPlaceId = null;
         if (isset($attributes['location'])) {
+            $oldPlaceId = $status->getOriginal('place_id');
             if (isset($attributes['location']['id'])) {
                 $status->place_id = $attributes['location']['id'];
             } else {
@@ -100,6 +107,14 @@ class UpdateStatusService
         }
         $status->edited_at = now();
         $status->save();
+        if (isset($attributes['location']) && $oldPlaceId != $status->place_id) {
+            if ($oldPlaceId) {
+                PlaceService::clearStatusesByPlaceId($oldPlaceId);
+            }
+            if ($status->place_id) {
+                PlaceService::clearStatusesByPlaceId($status->place_id);
+            }
+        }
         StatusService::del($status->id);
     }
 

@@ -2,18 +2,18 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 use App\Models\Profile;
 use App\Models\Status;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class MentionNotification extends Notification
 {
     use Queueable;
 
     public $profile;
+
     public $status;
 
     /**
@@ -22,8 +22,8 @@ class MentionNotification extends Notification
     public function __construct($target_id, $status_id)
     {
         //
-        $this->profile =  Profile::find($target_id);
-        $this->status =  Status::find($status_id);
+        $this->profile = Profile::find($target_id);
+        $this->status = Status::find($status_id);
     }
 
     /**
@@ -43,7 +43,7 @@ class MentionNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] You were mentioned!')
-            ->line('**@' . $this->profile->username . '** mentioned you in a post')
+            ->line('**@'.$this->profile->username.'** mentioned you in a post')
             ->action('View Post', $this->status->url());
     }
 

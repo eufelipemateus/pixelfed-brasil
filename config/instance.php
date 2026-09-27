@@ -88,10 +88,6 @@ return [
 
     'hide_nsfw_on_public_feeds' => env('PF_HIDE_NSFW_ON_PUBLIC_FEEDS', false),
 
-    'avatar' => [
-        'local_to_cloud' => env('PF_LOCAL_AVATAR_TO_CLOUD', false),
-    ],
-
     'admin_invites' => [
         'enabled' => env('PF_ADMIN_INVITES_ENABLED', true),
     ],
@@ -138,13 +134,13 @@ return [
     ],
 
     'software-update' => [
-        'disable_failed_warning' => env('INSTANCE_SOFTWARE_UPDATE_DISABLE_FAILED_WARNING', false)
+        'disable_failed_warning' => env('INSTANCE_SOFTWARE_UPDATE_DISABLE_FAILED_WARNING', false),
     ],
 
     'notifications' => [
         'gc' => [
             'enabled' => env('INSTANCE_NOTIFY_AUTO_GC', false),
-            'delete_after_days' => env('INSTANCE_NOTIFY_AUTO_GC_DEL_AFTER_DAYS', 365)
+            'delete_after_days' => env('INSTANCE_NOTIFY_AUTO_GC_DEL_AFTER_DAYS', 365),
         ],
         'nag' => [
             'enabled' => (bool) env('INSTANCE_NOTIFY_APP_GATEWAY', true),
@@ -174,7 +170,7 @@ return [
                     'cc_addresses' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_VERIFY_CC'),
                 ],
                 'on_user_response' => env('INSTANCE_CUR_REG_NOTIFY_ADMIN_ON_USER_RESPONSE', false),
-            ]
+            ],
         ],
     ],
 
@@ -262,13 +258,13 @@ return [
         'max_updates_per_hour' => env('PF_CF_MAX_UPDATES_PER_HOUR', 40),
     ],
 
-    'limit_users_active' =>[
+    'limit_users_active' => [
         'enabled' => env('LIMIT_USERS_ACTIVE', true),
         'max_users_active' => env('MAX_USER_ACTIVE', 100),
         'user_session_timeout' => env('USER_SESSION_TIMEOUT', 15), // in minutes
     ],
 
-    /// this define  no_autolink for new accounts
-    /// if set to true, new accounts will  have autolink enabled by default
+    // / this define  no_autolink for new accounts
+    // / if set to true, new accounts will  have autolink enabled by default
     'default_no_autolink' => env('PF_DEFAULT_NO_AUTOLINK', false),
 ];

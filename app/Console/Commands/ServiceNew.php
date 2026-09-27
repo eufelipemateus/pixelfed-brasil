@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Profile;
+use Illuminate\Console\Command;
 
 class ServiceNew extends Command
 {
@@ -31,6 +31,7 @@ class ServiceNew extends Command
         $name = $this->ask('Enter the name of the service profile');
         if (empty($name)) {
             $this->error('Name cannot be empty. Please enter a valid name.');
+
             return;
         }
 
@@ -38,21 +39,22 @@ class ServiceNew extends Command
 
         if (Profile::where('username', $username)->exists()) {
             $this->error('Username already exists. Please choose another one.');
+
             return;
         }
 
-        $profile = new Profile();
+        $profile = new Profile;
         $profile->username = $username;
         $profile->name = $name;
         $pkiConfig = [
-            'digest_alg'       => 'sha512',
+            'digest_alg' => 'sha512',
             'private_key_bits' => 2048,
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
         ];
         $pki = openssl_pkey_new($pkiConfig);
 
         if ($pki === false) {
-            throw new \Exception('Falha ao gerar par de chaves: ' . openssl_error_string());
+            throw new \Exception('Falha ao gerar par de chaves: '.openssl_error_string());
         }
 
         openssl_pkey_export($pki, $pki_private);
@@ -66,12 +68,11 @@ class ServiceNew extends Command
         $profile->save();
 
         $this->info('Service profile created successfully!');
-        $this->info('Username: ' . $profile->username);
-        $this->info('Name: ' . $profile->name);
-        $this->info('Private Key: ' . $profile->private_key);
-        $this->info('Public Key: ' . $profile->public_key);
+        $this->info('Username: '.$profile->username);
+        $this->info('Name: '.$profile->name);
+        $this->info('Private Key: '.$profile->private_key);
+        $this->info('Public Key: '.$profile->public_key);
         $this->info('You can now use this profile to manage service-related tasks.');
-
 
     }
 }

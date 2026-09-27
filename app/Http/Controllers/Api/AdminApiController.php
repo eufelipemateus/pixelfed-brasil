@@ -19,6 +19,7 @@ use App\Models\RemoteReport;
 use App\Models\Report;
 use App\Models\Status;
 use App\Models\User;
+use App\Services\Account\AccountStatService;
 use App\Services\AccountService;
 use App\Services\AdminStatsService;
 use App\Services\ConfigCacheService;
@@ -99,7 +100,10 @@ class AdminApiController extends Controller
         return $appeals;
     }
 
-    public function autospamHandle(Request $request)
+    /**
+     * @return 'success'[]
+     */
+    public function autospamHandle(Request $request): array
     {
         abort_if(! $request->user() || ! $request->user()->token(), 404);
 
@@ -220,13 +224,16 @@ class AdminApiController extends Controller
                 ->whereNull('appeal_handled_at')
                 ->whereUserId($appeal->user_id)
                 ->get()
-                ->each(function ($report) use ($meta) {
+                ->each(function ($report) {
                     $report->is_spam = false;
                     $report->appeal_handled_at = now();
                     $report->save();
                     $status = Status::find($report->item_id);
                     if ($status) {
-                        $status->is_nsfw = $meta->is_nsfw;
+                        // Restore each status from its own appeal's snapshot,
+                        // not the trigger appeal's, so mixed NSFW/SFW posts keep
+                        // their own content-warning state.
+                        $status->is_nsfw = json_decode($report->meta)->is_nsfw;
                         $status->scope = 'public';
                         $status->visibility = 'public';
                         $status->save();
@@ -558,16 +565,12 @@ class AdminApiController extends Controller
         $action = $request->input('action');
 
         abort_if($user->is_admin == true && $action !== 'refresh_stats', 400, 'Cannot moderate admin accounts');
-
         if ($action === 'delete') {
             if (config('pixelfed.account_deletion') == false) {
                 abort(404);
             }
-
             abort_if($user->is_admin, 400, 'Cannot delete an admin account.');
-
             $ts = now()->addMonth();
-
             $user->status = StatusEnums::DELETE_QUEUE;
             $user->delete_after = $ts;
             $user->save();
@@ -575,7 +578,6 @@ class AdminApiController extends Controller
             $profile->status = StatusEnums::DELETE_QUEUE;
             $profile->delete_after = $ts;
             $profile->save();
-
             ModLogService::boot()
                 ->objectUid($profile->id)
                 ->objectId($profile->id)
@@ -584,10 +586,8 @@ class AdminApiController extends Controller
                 ->action('admin.user.delete')
                 ->accessLevel('admin')
                 ->save();
-
             PublicTimelineService::deleteByProfileId($profile->id);
             NetworkTimelineService::deleteByProfileId($profile->id);
-
             if ($profile->user_id) {
                 DB::table('oauth_access_tokens')->whereUserId($user->id)->delete();
                 DB::table('oauth_auth_codes')->whereUserId($user->id)->delete();
@@ -612,15 +612,12 @@ class AdminApiController extends Controller
                 'status' => 200,
                 'msg' => 'deleted',
             ];
-        } elseif ($action === 'refresh_stats') {
+        }
+
+        if ($action === 'refresh_stats') {
             $profile->following_count = DB::table('followers')->whereProfileId($user->profile_id)->count();
             $profile->followers_count = DB::table('followers')->whereFollowingId($user->profile_id)->count();
-            $statusCount = Status::whereProfileId($user->profile_id)
-                ->whereNull('in_reply_to_id')
-                ->whereNull('reblog_of_id')
-                ->whereIn('scope', ['public', 'unlisted', 'private'])
-                ->count();
-            $profile->status_count = $statusCount;
+            $profile->status_count = AccountStatService::recalculateStatusCount($user->profile_id);
             $profile->save();
         } elseif ($action === 'verify_email') {
             $user->email_verified_at = now();
@@ -739,9 +736,9 @@ class AdminApiController extends Controller
             ->when($filter, function ($query, $filter) {
                 if ($filter === 'all') {
                     return $query;
-                } else {
-                    return $query->where($filter, true);
                 }
+
+                return $query->where($filter, true);
             })
             ->when($sortBy, function ($query, $sortBy) use ($sort) {
                 return $query->orderBy($sortBy, $sort);
@@ -807,7 +804,7 @@ class AdminApiController extends Controller
         $id = $request->input('id');
         $instance = Instance::findOrFail($id);
         $instance->user_count = Profile::whereDomain($instance->domain)->count();
-        $instance->status_count = Profile::whereDomain($instance->domain)->leftJoin('statuses', 'profiles.id', '=', 'statuses.profile_id')->count();
+        $instance->status_count = Profile::whereDomain($instance->domain)->leftJoin('statuses', 'profiles.id', '=', 'statuses.profile_id')->count('statuses.id');
         $instance->save();
 
         return new AdminInstance($instance);
@@ -965,14 +962,14 @@ class AdminApiController extends Controller
                 'type' => $status->type,
                 'scope' => $status->scope,
                 'is_nsfw' => (bool) $status->is_nsfw,
-                'report_count' => Report::whereObjectType(Status::class)
+                'report_count' => Report::whereIn('object_type', ['App\Status', Status::class])
                     ->whereObjectId($status->id)
                     ->count(),
-                'open_report_count' => Report::whereObjectType(Status::class)
+                'open_report_count' => Report::whereIn('object_type', ['App\Status', Status::class])
                     ->whereObjectId($status->id)
                     ->whereNull('admin_seen')
                     ->count(),
-                'autospam' => AccountInterstitial::whereItemType(Status::class)
+                'autospam' => AccountInterstitial::whereIn('item_type', ['App\Status', Status::class])
                     ->whereItemId($status->id)
                     ->whereType('post.autospam')
                     ->whereNull('appeal_handled_at')

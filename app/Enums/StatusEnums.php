@@ -4,16 +4,16 @@ namespace App\Enums;
 
 enum StatusEnums
 {
-case DISABLED;
-case DELETED;
-case ACTIVE;
-case DELETE_QUEUE;
-case SUSPENDED;
-case BANNED;
+    case DISABLED;
+    case DELETED;
+    case ACTIVE;
+    case DELETE_QUEUE;
+    case SUSPENDED;
+    case BANNED;
 
     public function value(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::DISABLED => 'disabled',
             self::DELETED => 'deleted',
             self::DELETE_QUEUE => 'delete',
@@ -25,7 +25,7 @@ case BANNED;
 
     public static function fromValue(?string $value): ?self
     {
-        return match($value) {
+        return match ($value) {
             'disabled' => self::DISABLED,
             'deleted' => self::DELETED,
             'delete' => self::DELETE_QUEUE,
@@ -34,5 +34,14 @@ case BANNED;
             null => self::ACTIVE,
             default => null,
         };
+    }
+
+    /**
+     * Active rows are stored as NULL in the database but are exposed by the
+     * local cast as ACTIVE. Accept both forms for code shared with upstream.
+     */
+    public static function isActive(?self $status): bool
+    {
+        return $status === null || $status === self::ACTIVE;
     }
 }

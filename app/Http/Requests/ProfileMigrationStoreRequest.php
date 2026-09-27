@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StatusEnums;
 use App\Models\ProfileMigration;
 use App\Services\ActivityPubFetchService;
 use App\Services\WebfingerService;
@@ -22,7 +23,7 @@ class ProfileMigrationStoreRequest extends FormRequest
         ) {
             return false;
         }
-        if (! $this->user() || $this->user()->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $this->user() || $this->user()->status !== StatusEnums::ACTIVE) {
             return false;
         }
 

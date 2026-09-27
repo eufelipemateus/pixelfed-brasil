@@ -5,11 +5,10 @@ namespace App\Transformer\Api;
 use App\Services\AccountService;
 use App\Services\Groups\GroupMediaService;
 use League\Fractal;
-use App\Util\Lexer\Autolink;
 
 class GroupPostTransformer extends Fractal\TransformerAbstract
 {
-    public function transform($status)
+    public function transform($status): array
     {
         return [
             'id' => (string) $status->id,

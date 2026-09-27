@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\DirectMessage;
 use App\Models\Conversation;
+use App\Models\DirectMessage;
 use App\Models\Profile;
-use App\Services\DirectMessageService;
 use App\Models\Status;
+use App\Services\DirectMessageService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

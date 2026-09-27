@@ -2,22 +2,21 @@
 
 namespace App\Jobs\InternalPipeline;
 
+use App\Mail\WeeklyPopularPostsMail;
+use App\Models\Profile;
+use App\Models\Status;
 use App\Models\User;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Foundation\Queue\Queueable;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
-use App\Models\Status;
-use App\Mail\WeeklyPopularPostsMail;
-use Carbon\Carbon;
-use App\Models\Profile;
-use App\Enums\StatusEnums;
+use Illuminate\Support\Facades\Mail;
 
-class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
+class SendWeeklyPopularPostsJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -41,7 +40,7 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
      */
     public function uniqueId(): string
     {
-        return 'weekly-popular-' . now()->format('Y-W');
+        return 'weekly-popular-'.now()->format('Y-W');
     }
 
     /**
@@ -51,13 +50,14 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
     {
 
         // Verificar se o job foi executado nos últimos 5 dias
-        if (Cache::has('weekly_popular_posts_job_last_run') && !$this->testing) {
+        if (Cache::has('weekly_popular_posts_job_last_run') && ! $this->testing) {
             return;
         }
 
         $popularPosts = $this->getPopularPosts();
         if ($popularPosts->isEmpty()) {
             info('Nenhum post popular encontrado para enviar.');
+
             return;
         }
 
@@ -74,11 +74,11 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             $promoters = collect();
         }
 
-        #========== Send Emails ==========#
+        // ========== Send Emails ==========#
         $this->send($popularPosts, $promoters);
 
         // Marcar o job como executado
-        if (!$this->testing) {
+        if (! $this->testing) {
             Cache::put('weekly_popular_posts_job_last_run', now(), now()->addDays(5));
         }
         info('Emails enviados com sucesso!');
@@ -103,7 +103,6 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             ->get();
     }
 
-
     public function send($popularPosts, $promoters)
     {
         if ($this->testing) {
@@ -111,25 +110,26 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
             User::whereNull('status')
                 ->whereNull('deleted_at')
                 ->whereNotNull('last_active_at')
-                ->whereNotNull("email_verified_at")
+                ->whereNotNull('email_verified_at')
                 ->where('is_admin', true)
                 ->chunk(
                     1000,
                     function ($users) use ($popularPosts, $promoters) {
                         foreach ($users as $user) {
-                            info('Sending popular posts email to ' . $user->username);
+                            info('Sending popular posts email to '.$user->username);
                             Mail::to($user->email)
                                 ->queue((new WeeklyPopularPostsMail($popularPosts, $user, $promoters))->onQueue('email'));
                         }
                     }
                 );
+
             return;
         }
 
         User::whereNull('status')
             ->whereNull('deleted_at')
             ->whereNotNull('last_active_at')
-            ->whereNotNull("email_verified_at")
+            ->whereNotNull('email_verified_at')
             ->whereHas('settings', function ($query) {
                 $query->where('send_weekly_email', true);
             })
@@ -137,7 +137,7 @@ class SendWeeklyPopularPostsJob implements ShouldQueue, ShouldBeUnique
                 100,
                 function ($users) use ($popularPosts, $promoters) {
                     foreach ($users as $user) {
-                        info('Sending popular posts email to ' . $user->username);
+                        info('Sending popular posts email to '.$user->username);
                         Mail::to($user->email)
                             ->queue((new WeeklyPopularPostsMail($popularPosts, $user, $promoters))->onQueue('email'));
                     }
