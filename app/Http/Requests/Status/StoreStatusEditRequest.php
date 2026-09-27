@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests\Status;
 
+use App\Enums\StatusEnums;
 use App\Models\Media;
 use App\Models\Status;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Enums\StatusEnums;
 
 class StoreStatusEditRequest extends FormRequest
 {

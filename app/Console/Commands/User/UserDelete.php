@@ -5,7 +5,6 @@ namespace App\Console\Commands\User;
 use App\Enums\StatusEnums;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Models\Profile;
-use App\Models\User;
 use App\Services\AccountService;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\PromptsForMissingInput;

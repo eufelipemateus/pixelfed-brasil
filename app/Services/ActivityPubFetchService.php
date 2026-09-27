@@ -332,5 +332,4 @@ class ActivityPubFetchService
 
         return false;
     }
-
 }

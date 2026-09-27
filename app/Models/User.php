@@ -16,8 +16,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 use Laravel\Passport\Contracts\OAuthenticatable;
 use Laravel\Passport\HasApiTokens;
@@ -30,7 +30,7 @@ use NotificationChannels\WebPush\PushSubscription;
  * @property string|null $name
  * @property string|null $username
  * @property string $email
- * @property \App\Enums\StatusEnums|null $status
+ * @property StatusEnums|null $status
  * @property string|null $language
  * @property string $password
  * @property string|null $remember_token

@@ -6,35 +6,38 @@
  * Provides translation services using the DeepL API.
  *
  * @category Translation
- * @package  App\Services\Translate
+ *
  * @author   Felipe Mateus <eu@felipeamteus.com>
  * @license  AGPL-3.0  https://opensource.org/licenses/AGPL-3.0
+ *
  * @link     https://github.com/felipeamteus/pixelfed
  */
 
 namespace App\Services\Translate;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 /**
  * DeepLTranslate translation provider.
  *
  * @category Translation
- * @package  App\Services\Translate
+ *
  * @author   Felipe Mateus <eu@felipeamteus.com>
  * @license  AGPL-3.0  https://opensource.org/licenses/AGPL-3.0
+ *
  * @link     https://github.com/felipeamteus/pixelfed
  */
 class DeepLTranslate extends Provider implements TranslateInterface
 {
     protected $deeplApi;
 
-    protected const URL = "https://api-free.deepl.com/v2/translate";
+    protected const URL = 'https://api-free.deepl.com/v2/translate';
 
     /**
      * DeepLTranslate constructor.
      *
-     * @param array $config The configuration array containing the DeepL API client instance.
+     * @param  array  $config  The configuration array containing the DeepL API client instance.
      */
     public function __construct(array $config)
     {
@@ -44,23 +47,21 @@ class DeepLTranslate extends Provider implements TranslateInterface
     /**
      * Creates an HTTP client with the necessary headers and token.
      *
-     * @return \Illuminate\Http\Client\PendingRequest
+     * @return PendingRequest
      */
     private function _client()
     {
-        return  Http::acceptJson()
+        return Http::acceptJson()
             /*->withHeaders(
                 ['Authorization' => 'DeepL-Auth-Key ' . $this->deeplApi]
             );*/;
     }
 
-
     /**
      * Translates the given text to the specified target language using DeepL.
      *
-     * @param string $text           The text to translate.
-     * @param string $targetLanguage The language code to translate the text into.
-     *
+     * @param  string  $text  The text to translate.
+     * @param  string  $targetLanguage  The language code to translate the text into.
      * @return string The translated text.
      */
     public function translate(string $text, string $targetLanguage): string
@@ -76,7 +77,7 @@ class DeepLTranslate extends Provider implements TranslateInterface
         );
 
         if ($response->failed()) {
-            throw new \Exception('Translation failed: ' . $response->body());
+            throw new \Exception('Translation failed: '.$response->body());
         }
 
         if ($response->successful()) {
@@ -87,14 +88,14 @@ class DeepLTranslate extends Provider implements TranslateInterface
         }
 
         $response->throw();
+
         return 'null';
     }
 
     /**
      * Detects the language of the given text using DeepL.
      *
-     * @param string $text The text to detect the language of.
-     *
+     * @param  string  $text  The text to detect the language of.
      * @return string The detected language code.
      */
     public function detect(string $text): string
@@ -104,8 +105,8 @@ class DeepLTranslate extends Provider implements TranslateInterface
         $response = $this->_client()->asForm()->post(
             self::URL,
             [
-                'auth_key'    =>   $this->deeplApi,
-                'text'        => $text,
+                'auth_key' => $this->deeplApi,
+                'text' => $text,
                 'target_lang' => 'EN',
             ]
         );
@@ -116,6 +117,6 @@ class DeepLTranslate extends Provider implements TranslateInterface
 
         $response->throw();
 
-        return "";
+        return '';
     }
 }

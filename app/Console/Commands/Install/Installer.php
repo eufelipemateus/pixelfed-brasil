@@ -158,6 +158,7 @@ class Installer extends Command
                 return 1;
             }
         }
+
         return null;
     }
 
@@ -308,6 +309,7 @@ class Installer extends Command
 
             if (empty($domain)) {
                 $this->error('You must set the site domain');
+
                 continue;
             }
 

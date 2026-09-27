@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\User;
 
+use App\Enums\StatusEnums;
 use App\Models\DefaultDomainBlock;
 use App\Models\User;
 use App\Models\UserDomainBlock;
@@ -9,7 +10,6 @@ use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\progress;
-use App\Enums\StatusEnums;
 use function Laravel\Prompts\text;
 
 class AddUserDomainBlock extends Command
@@ -98,7 +98,7 @@ class AddUserDomainBlock extends Command
             return;
         }
 
-        if($user->status != StatusEnums::ACTIVE && $user->status != StatusEnums::DISABLED) {
+        if ($user->status != StatusEnums::ACTIVE && $user->status != StatusEnums::DISABLED) {
             return;
         }
 

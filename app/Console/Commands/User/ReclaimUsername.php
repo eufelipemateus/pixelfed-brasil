@@ -2,13 +2,12 @@
 
 namespace App\Console\Commands\User;
 
+use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
-use App\Enums\StatusEnums;
-
 use function Laravel\Prompts\search;
 
 class ReclaimUsername extends Command

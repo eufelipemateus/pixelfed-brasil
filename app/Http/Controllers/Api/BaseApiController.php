@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\StatusEnums;
 use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\Controller;
 use App\Jobs\AvatarPipeline\AvatarOptimize;
@@ -21,7 +22,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
-use App\Enums\StatusEnums;
 
 class BaseApiController extends Controller
 {

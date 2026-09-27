@@ -69,7 +69,7 @@ class Newsroom extends Model
         return route('newsroom.show', [
             'year' => $year,
             'month' => $month,
-            'slug' => $slug
+            'slug' => $slug,
         ]);
     }
 

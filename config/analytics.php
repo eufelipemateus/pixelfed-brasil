@@ -1,5 +1,7 @@
 <?php
 
+use AndreasElia\Analytics\RequestSessionProvider;
+
 return [
 
     'enabled' => env('ANALYTICS_ENABLED', true),
@@ -21,7 +23,7 @@ return [
     'middleware' => [
         'web',
         'admin',
-        'dangerzone'
+        'dangerzone',
     ],
 
     /**
@@ -65,7 +67,7 @@ return [
      * The HTTP verbs/methods that should be excluded from page view tracking.
      */
     'ignoreMethods' => [
-       'OPTIONS', 'POST','DELETE','PUT','PATCH'
+        'OPTIONS', 'POST', 'DELETE', 'PUT', 'PATCH',
     ],
 
     /**
@@ -87,7 +89,7 @@ return [
     ],
 
     'session' => [
-        'provider' => \AndreasElia\Analytics\RequestSessionProvider::class,
+        'provider' => RequestSessionProvider::class,
     ],
 
     /**

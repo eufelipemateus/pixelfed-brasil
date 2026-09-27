@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\Models\RemoteAuth;
 use App\Models\User;
 use App\Rules\ValidUsername;
@@ -21,7 +22,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Purify;
-USE App\Enums\StatusEnums;
 
 class RemoteAuthController extends Controller
 {

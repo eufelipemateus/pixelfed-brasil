@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
 class GenerateReferCodes extends Command
 {
     protected $signature = 'users:generate-refer-codes';
+
     protected $description = 'Gera códigos de referência únicos para usuários que ainda não possuem um';
 
     public function handle()
@@ -31,6 +32,7 @@ class GenerateReferCodes extends Command
         }
 
         $this->info("Códigos gerados para {$updated} usuários.");
+
         return 0;
     }
 }

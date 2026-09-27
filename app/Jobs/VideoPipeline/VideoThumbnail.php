@@ -81,7 +81,7 @@ class VideoThumbnail implements ShouldBeUniqueUntilProcessing, ShouldQueue
         if ($media->mime != 'video/mp4') {
             return;
         }
-        $url = $media->remote_media? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
+        $url = $media->remote_media ? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
         $base = $media->media_path;
 
         $path = explode('/', $base);

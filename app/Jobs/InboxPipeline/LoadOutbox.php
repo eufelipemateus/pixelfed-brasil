@@ -2,14 +2,14 @@
 
 namespace App\Jobs\InboxPipeline;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use App\Util\ActivityPub\Helpers;
-use App\Util\ActivityPub\HttpSignature;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\SerializesModels;
 use App\Models\Profile;
 use App\Models\Status;
+use App\Util\ActivityPub\Helpers;
+use App\Util\ActivityPub\HttpSignature;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class LoadOutbox implements ShouldQueue
 {
@@ -23,7 +23,7 @@ class LoadOutbox implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param Profile $profile The profile for which to load the outbox.
+     * @param  Profile  $profile  The profile for which to load the outbox.
      */
     public function __construct(Profile $profile)
     {
@@ -32,18 +32,17 @@ class LoadOutbox implements ShouldQueue
 
     public function handle(): void
     {
-        Log::info('Starting LoadOutbox job for: ' . $this->profile->username);
-
+        Log::info('Starting LoadOutbox job for: '.$this->profile->username);
 
         $outboxUrl = $this->profile->outbox_url;
 
         $allItems = $this->fetchAllOutboxPages($outboxUrl);
 
-        Log::info('Total activities collected: ' . count($allItems));
+        Log::info('Total activities collected: '.count($allItems));
         $count = 0;
         foreach ($allItems as $item) {
             if ($count >= self::LIMIT_ACTIVITIES) {
-                Log::info('Activity limit reached: ' . self::LIMIT_ACTIVITIES);
+                Log::info('Activity limit reached: '.self::LIMIT_ACTIVITIES);
                 break;
             }
             if (isset($item['type']) && $item['type'] === 'Create') {
@@ -53,14 +52,14 @@ class LoadOutbox implements ShouldQueue
         }
     }
 
-
     private function fetchAllOutboxPages(string $url): array
     {
         $filteredItems = [];
         $data = $this->fetchActivityPubJson($url);
 
-        if (!isset($data['first'])) {
+        if (! isset($data['first'])) {
             Log::error('The first page of the outbox was not found.');
+
             return [];
         }
 
@@ -68,7 +67,7 @@ class LoadOutbox implements ShouldQueue
         while ($nextUrl) {
             $page = $this->fetchActivityPubJson($nextUrl);
 
-            if (!isset($page['orderedItems']) || !is_array($page['orderedItems'])) {
+            if (! isset($page['orderedItems']) || ! is_array($page['orderedItems'])) {
                 break;
             }
 
@@ -97,7 +96,7 @@ class LoadOutbox implements ShouldQueue
             'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
         ];
 
-        $signedHeaders = \App\Util\ActivityPub\HttpSignature::instanceActorSign(
+        $signedHeaders = HttpSignature::instanceActorSign(
             $url,
             false,
             $baseHeaders,
@@ -105,7 +104,7 @@ class LoadOutbox implements ShouldQueue
         );
 
         $curlHeaders = array_map(
-            fn($k, $v) => "$k: $v",
+            fn ($k, $v) => "$k: $v",
             array_keys($signedHeaders),
             $signedHeaders
         );
@@ -125,11 +124,12 @@ class LoadOutbox implements ShouldQueue
             if (json_last_error() === JSON_ERROR_NONE) {
                 return $json;
             } else {
-                \Log::warning("JSON decode error on: $url - " . json_last_error_msg());
+                \Log::warning("JSON decode error on: $url - ".json_last_error_msg());
             }
         } else {
-            \Log::info("Error requesting: $url (HTTP $httpCode) " . ($error ? "- cURL error: $error" : ''));
+            \Log::info("Error requesting: $url (HTTP $httpCode) ".($error ? "- cURL error: $error" : ''));
         }
+
         return null;
     }
 
@@ -139,13 +139,14 @@ class LoadOutbox implements ShouldQueue
 
         if (
             isset($activity['inReplyTo'])
-            && !empty($activity['inReplyTo'])
+            && ! empty($activity['inReplyTo'])
             && Helpers::validateUrl($activity['inReplyTo'])
         ) {
             return true;
         }
 
         $valid = Helpers::verifyAttachments($activity);
+
         return $valid;
     }
 
@@ -176,7 +177,6 @@ class LoadOutbox implements ShouldQueue
             $activity
         );
     }
-
 
     public function handleCreateActivity($payload)
     {

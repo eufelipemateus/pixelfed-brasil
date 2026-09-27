@@ -1,13 +1,11 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-   /**
+    /**
      * Run the migrations.
      *
      * @return void
@@ -33,13 +31,13 @@ return new class extends Migration
             'tutamail.com',
             'protonmail.ch',
             'passmail.net',
-            'hey.com'
+            'hey.com',
         ];
 
         DB::table('users')
             ->where(function ($query) use ($domains) {
                 foreach ($domains as $d) {
-                    $query->orWhere('email', 'like', '%@' . $d);
+                    $query->orWhere('email', 'like', '%@'.$d);
                 }
             })
             ->update([
@@ -52,8 +50,5 @@ return new class extends Migration
      *
      * @return void
      */
-    public function down()
-    {
-
-    }
+    public function down() {}
 };

@@ -43,15 +43,16 @@ class ImageGifThumbnail implements ShouldQueue
     {
         $media = $this->media;
 
-        if (!$media) {
+        if (! $media) {
             error_log("Media not found in ImageGifThumbnail job.\n");
+
             return;
         }
 
         $pathInfo = pathinfo($media->media_path);
-        $thumbPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_thumb.jpg';
+        $thumbPath = $pathInfo['dirname'].'/'.$pathInfo['filename'].'_thumb.jpg';
 
-        $url = $media->remote_media? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
+        $url = $media->remote_media ? $media->media_path : Storage::disk(config('filesystems.cloud'))->url($media->media_path);
 
         try {
             FFMpeg::openUrl($url)
@@ -65,7 +66,7 @@ class ImageGifThumbnail implements ShouldQueue
                 'thumbnail_url' => Storage::disk(config('filesystems.default'))->url($thumbPath),
             ]);
         } catch (\Exception $e) {
-            error_log("ImageGifThumbnail job failed: " . $e->getMessage());
+            error_log('ImageGifThumbnail job failed: '.$e->getMessage());
         }
     }
 }

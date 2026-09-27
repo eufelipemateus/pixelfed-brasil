@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Internal\BeagleService;
 use Illuminate\Support\Str;
-use App\Http\Resources\UserResource;
 
 class AdminSettingsService
 {

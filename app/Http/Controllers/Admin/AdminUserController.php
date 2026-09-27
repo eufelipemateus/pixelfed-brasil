@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\StatusEnums;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Mail\AdminMessage;
 use App\Models\ModLog;
@@ -252,8 +253,8 @@ trait AdminUserController
         }
 
         $ts = now()->addMonth();
-        $user->status = \App\Enums\StatusEnums::DELETE_QUEUE;
-        $profile->status = \App\Enums\StatusEnums::DELETE_QUEUE;
+        $user->status = StatusEnums::DELETE_QUEUE;
+        $profile->status = StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $profile->delete_after = $ts;
         $user->save();
