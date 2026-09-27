@@ -31,25 +31,22 @@ class DangerZone
         if (! $request->user()) {
             return redirect(route('login'));
         }
-        if (! $request->is('i/auth/sudo') && $request->session()->get('sudoTrustDevice') != 1) {
-            if (! $request->session()->has('sudoMode')) {
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Password confirmation required.'], 423);
-                }
+        $passwordTimeout = (int) config('auth.password_timeout', 1800);
+        $confirmedAt = max(
+            (int) $request->session()->get('sudoMode', 0),
+            (int) $request->session()->get('auth.password_confirmed_at', 0),
+        );
+        $passwordConfirmed = $request->session()->get('sudoTrustDevice') == 1
+            || $confirmedAt >= now()->subSeconds($passwordTimeout)->timestamp;
 
-                $request->session()->put('redirectNext', $request->url());
-
-                return redirect('/i/auth/sudo');
+        if (! $request->is('i/auth/sudo') && ! $passwordConfirmed) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Password confirmation required.'], 423);
             }
-            if ($request->session()->get('sudoMode') < now()->subMinutes(30)->timestamp) {
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Password confirmation required.'], 423);
-                }
 
-                $request->session()->put('redirectNext', $request->url());
+            $request->session()->put('redirectNext', $request->url());
 
-                return redirect('/i/auth/sudo');
-            }
+            return redirect('/i/auth/sudo');
         }
 
         return $next($request);
