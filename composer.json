@@ -54,7 +54,6 @@
         "barryvdh/laravel-ide-helper": "^3.7",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.0",
-        "laravel/boost": "^2.10",
         "laravel/pint": "^1.13",
         "laravel/telescope": "^5.5",
         "mockery/mockery": "^1.6",
@@ -130,9 +129,6 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
-        },
-        "platform": {
-            "php": "8.3.0"
         }
     },
     "prefer-stable": true

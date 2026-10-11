@@ -4,6 +4,7 @@ namespace App\Services\Status;
 
 use App\Models\Media;
 use App\Models\ModLog;
+use App\Models\Profile;
 use App\Models\Status;
 use App\Models\StatusEdit;
 use App\Services\MediaService;
@@ -89,12 +90,16 @@ class UpdateStatusService
             } else {
                 $status->is_nsfw = (bool) $attributes['sensitive'];
             }
+            $profile = Profile::find($status->profile_id);
+            if (! $profile || $profile->cw == true) {
+                $status->is_nsfw = true;
+            }
         }
         if (isset($attributes['spoiler_text'])) {
             $status->cw_summary = Purify::clean($attributes['spoiler_text']);
         }
         $oldPlaceId = null;
-        if (isset($attributes['location'])) {
+        if (array_key_exists('location', $attributes)) {
             $oldPlaceId = $status->getOriginal('place_id');
             if (isset($attributes['location']['id'])) {
                 $status->place_id = $attributes['location']['id'];

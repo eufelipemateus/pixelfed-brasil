@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AdminApiController;
 use App\Http\Controllers\Api\ApiV1Controller;
 use App\Http\Controllers\Api\ApiV1Dot1Controller;
 use App\Http\Controllers\Api\ApiV2Controller;
+use App\Http\Controllers\Api\ApiV2Dot1Controller;
 use App\Http\Controllers\Api\V1\Admin\DomainBlocksController;
 use App\Http\Controllers\Api\V1\DomainBlockController;
 use App\Http\Controllers\Api\V1\TagsController;
@@ -46,6 +47,7 @@ $middleware = ['auth:sanctum,api'];
 Route::post('/f/inbox', [FederationController::class, 'sharedInbox']);
 Route::post('/users/{username}/inbox', [FederationController::class, 'userInbox']);
 Route::get('/users/{username}/followers_synchronization', [FederationController::class, 'userFollowersSynchronization']);
+Route::get('/f/block_sync', [FederationController::class, 'blockSynchronization']);
 Route::get('i/actor', [InstanceActorController::class, 'profile']);
 Route::post('i/actor/inbox', [InstanceActorController::class, 'inbox']);
 Route::get('i/actor/outbox', [InstanceActorController::class, 'outbox']);
@@ -369,6 +371,13 @@ Route::prefix('api')->group(function () use ($middleware) {
             Route::get('carousel', [StoryApiV1Controller::class, 'carouselNext'])->middleware($middleware);
             Route::get('mention-autocomplete', [StoryApiV1Controller::class, 'mentionAutocomplete'])->middleware($middleware);
         });
+    });
+
+    Route::prefix('v2.1')->group(function () use ($middleware) {
+        Route::get('config', [ApiV2Dot1Controller::class, 'getConfig']);
+
+        Route::get('account/timeline/settings', [ApiV2Dot1Controller::class, 'accountTimelineSettings'])->middleware($middleware);
+        Route::post('account/timeline/settings', [ApiV2Dot1Controller::class, 'updateAccountTimelineSettings'])->middleware($middleware);
     });
 
     Route::prefix('live')->group(function () {

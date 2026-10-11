@@ -23,7 +23,7 @@ return [
     | This value is the version of your Pixelfed instance.
     |
     */
-    'version' => '0.14.3',
+    'version' => '0.14.4',
 
     /*
     |--------------------------------------------------------------------------
@@ -128,6 +128,18 @@ return [
     |
     */
     'min_password_length' => env('MIN_PASSWORD_LENGTH', 8),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Minimum registration age
+    |--------------------------------------------------------------------------
+    |
+    | The minimum age (in years) a user must be to register an account. This
+    | lets instance admins comply with the legislation of their jurisdiction.
+    | Defaults to 16.
+    |
+    */
+    'min_registration_age' => (int) env('PF_MIN_REGISTRATION_AGE', 16),
 
     /*
     |--------------------------------------------------------------------------
