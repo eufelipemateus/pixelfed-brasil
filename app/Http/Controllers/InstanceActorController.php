@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\InstanceActor;
 use App\Models\Profile;
+use App\Services\BlockSyncService;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use DateTimeImmutable;
 use Illuminate\Http\Request;
-use App\Services\BlockSyncService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
