@@ -4305,7 +4305,7 @@ class ApiV1Controller extends Controller
         }
 
         $page = Bookmark::query()
-            ->select('id', 'status_id')
+            ->select(['id', 'status_id'])
             ->where('profile_id', $pid)
             ->orderByDesc('id')
             ->cursorPaginate($limit)

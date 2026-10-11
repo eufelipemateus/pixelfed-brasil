@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StatusEnums;
 use App\Models\Profile;
+use App\Models\Status;
 use App\Models\User;
 use App\Models\UserDomainBlock;
 use App\Models\UserSetting;
