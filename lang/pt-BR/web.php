@@ -12,7 +12,7 @@ return [
         'share' => 'Compartilhar',
         'shared' => 'Compartilhado',
         'shares' => 'Compartilhamentos',
-        'unshare' => 'Despartilhar',
+        'unshare' => 'Descompartilhar',
         'bookmark' => 'Favorito',
 
         'cancel' => 'Cancelar',
@@ -20,7 +20,7 @@ return [
         'delete' => 'Excluir',
         'error' => 'Erro',
         'errorMsg' => 'Ocorreu um erro. Por favor tente novamente mais tarde.',
-        'oops' => 'Oops!',
+        'oops' => 'Ops!',
         'other' => 'Outro',
         'readMore' => 'Ler mais',
         'success' => 'Sucesso',
@@ -92,7 +92,7 @@ return [
 
         // Core features
         'discover' => 'Explorar',
-        'directMessages' => 'DM',
+        'directMessages' => 'Mensagens Diretas',
         'notifications' => 'Notificações',
         'groups' => 'Grupos',
         'stories' => 'Stories',
@@ -148,10 +148,10 @@ return [
         'story' => 'story',
         'noneFound' => 'Nenhuma notificação encontrada',
         'title' => 'Notificações',
-        'youRecent' => 'Você recente',
+        'youRecent' => 'Recentes',
         'hasUnlisted' => 'foi removida da lista',
         'cannotDisplay' => 'Não podemos exibir esta notificação no momento.',
-        'followRequest' => 'Pedidos de seguimento',
+        'followRequest' => 'Pedidos para seguir',
         'filteringResults' => 'Os resultados do filtro podem não incluir notificações mais antigas',
         'mentions' => 'Menções',
         'mentionsDescription' => 'Respostas às suas publicações e publicações em que você foi mencionado',
@@ -248,14 +248,14 @@ return [
 
         'toFollowers' => 'para Seguidores',
 
-        'showCaption' => 'Mostar legenda',
+        'showCaption' => 'Mostrar legenda',
         'showLikes' => 'Mostrar Curtidas',
         'compactMode' => 'Modo compacto',
         'embedConfirmText' => 'Ao usar este conteúdo, você concorda com:',
 
-        'deletePostConfirm' => 'Tens a certeza que pretendes excluir esta publicação?',
-        'archivePostConfirm' => 'Tens a certeza que pretendes arquivar esta publicação?',
-        'unarchivePostConfirm' => 'Tem a certeza que pretende desarquivar este post?',
+        'deletePostConfirm' => 'Tem certeza de que deseja excluir esta publicação?',
+        'archivePostConfirm' => 'Tem certeza de que deseja arquivar esta publicação?',
+        'unarchivePostConfirm' => 'Tem certeza de que deseja desarquivar esta publicação?',
         'pin' => 'Fixar',
         'unpin' => 'Desfixar',
         'pinPostConfirm' => 'Tem certeza de que deseja fixar esta publicação?',
@@ -263,7 +263,7 @@ return [
     ],
 
     'story' => [
-        'add' => 'Adicionar Storie',
+        'add' => 'Adicionar Story',
         'myStory' => 'Minha Story',
         'viewMyStory' => 'Ver Minha Story',
         'goBack' => 'Voltar',
@@ -278,7 +278,7 @@ return [
         'cancel' => 'Cancelar',
         'viewdBy' => 'Visualizado por',
         'next' => 'Próximo',
-        'zoom' => 'Mova e pinça para dar zoom',
+        'zoom' => 'Use o gesto de pinça para dar zoom',
         'options' => 'Opções',
         'allowReplies' => 'Permitir Respostas',
         'allowReactions' => 'Permitir Reações',
@@ -299,7 +299,7 @@ return [
         'scamOrFraud' => 'Golpe ou fraude',
         'report' => 'Denunciar',
         'close' => 'Fechar',
-        'myStories' => 'My Stories',
+        'myStories' => 'Minhas Stories',
         'seeAll' => 'Ver todas as stories',
     ],
 
@@ -342,7 +342,7 @@ return [
         'lightMode' => 'Modo Claro',
         'darkMode' => 'Modo Escuro',
         'grid' => 'Grade',
-        'masonry' => 'Mansory',
+        'masonry' => 'Masonry',
         'feed' => 'Feed',
     ],
 

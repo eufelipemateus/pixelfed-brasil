@@ -551,7 +551,7 @@ class Profile extends Model
         }
     }
 
-    public function getLabelAttribute(): ?array
+    public function getLabelAttribute(): ?UserLabel
     {
         if (! $this->user) {
             return null;
