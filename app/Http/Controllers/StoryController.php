@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\Jobs\StoryPipeline\StoryViewDeliver;
 use App\Models\Profile;
 use App\Models\Story;
@@ -120,7 +121,7 @@ class StoryController extends StoryComposeController
 
         // Suspended/deleted profiles are unavailable to everyone, including the
         // account itself, matching the status gate on posts and other content.
-        abort_if($profile->status !== null, 404);
+        abort_if(! StatusEnums::isActive($profile->status), 404);
 
         if ($authed != $profile->id && ! FollowerService::follows($authed, $profile->id)) {
             abort(403);

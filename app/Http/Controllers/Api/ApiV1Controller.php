@@ -268,7 +268,7 @@ class ApiV1Controller extends Controller
 
         $profile = Profile::whereUsername($lookup)->first();
 
-        if (! $profile || $profile->status != null) {
+        if (! $profile || ! StatusEnums::isActive($profile->status)) {
             return $this->json(['error' => 'Record not found'], 400);
         }
 

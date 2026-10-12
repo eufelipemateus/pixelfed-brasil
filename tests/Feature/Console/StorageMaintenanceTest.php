@@ -25,7 +25,11 @@ beforeEach(function () {
 
 afterEach(function () {
     // Clean up any temp files this test created in the real remcache dir.
-    foreach (glob($this->remcacheDir.'/{,.}pf-maint-test-*', GLOB_BRACE) ?: [] as $f) {
+    $files = array_merge(
+        glob($this->remcacheDir.'/pf-maint-test-*') ?: [],
+        glob($this->remcacheDir.'/.pf-maint-test-*') ?: []
+    );
+    foreach ($files as $f) {
         @unlink($f);
     }
 });

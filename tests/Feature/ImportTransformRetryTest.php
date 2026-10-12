@@ -25,7 +25,7 @@ uses(LazilyRefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('local');
-    config(['filesystems.default' => 'local']);
+    config(['filesystems.default' => 'local', 'import.instagram.enabled' => true]);
 });
 
 function makeImportPost(User $user): ImportPost

@@ -29,7 +29,7 @@ it('redacts non-HTTP exception messages for JSON clients in production', functio
     $payload = $response->json();
 
     expect($payload)->toHaveKey('error');
-    expect($payload['error'])->toBe('Server Error');
+    expect($payload['error'])->toBe('An unexpected error occurred.');
     expect($response->getContent())->not->toContain('sensitive internal detail');
 });
 
@@ -48,5 +48,5 @@ it('redacts for ActivityPub Accept headers too', function () {
     $response = $this->get('/__test/boom', ['Accept' => 'application/activity+json']);
 
     $response->assertStatus(500);
-    expect($response->json('error'))->toBe('Server Error');
+    expect($response->json('error'))->toBe('An unexpected error occurred.');
 });

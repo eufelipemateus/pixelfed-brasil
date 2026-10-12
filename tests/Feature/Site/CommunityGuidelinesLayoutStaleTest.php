@@ -19,7 +19,7 @@ uses(LazilyRefreshDatabase::class);
 
 it('re-renders the footer version per request instead of serving a cached blob', function () {
     Page::create([
-        'slug' => '/site/kb/community-guidelines',
+        'slug' => '/kb/community-guidelines',
         'title' => 'Community Guidelines',
         'content' => '<p>Be nice.</p>',
         'active' => true,

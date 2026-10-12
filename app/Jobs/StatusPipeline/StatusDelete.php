@@ -2,6 +2,7 @@
 
 namespace App\Jobs\StatusPipeline;
 
+use App\Enums\StatusEnums;
 use App\Jobs\Federation\DeliverStatusDeleteActivity;
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
 use App\Models\AccountInterstitial;
@@ -121,7 +122,7 @@ class StatusDelete implements ShouldQueue
             return null;
         }
 
-        if ($profile->domain !== null || $profile->status !== null) {
+        if ($profile->domain !== null || ! StatusEnums::isActive($profile->status)) {
             return null;
         }
 

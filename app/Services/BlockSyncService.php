@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Jobs\Federation\BlockSyncPipeline;
 use App\Jobs\Federation\DeliverBlockActivity;
 use App\Jobs\FollowPipeline\UnfollowPipeline;
@@ -542,7 +543,7 @@ class BlockSyncService
             ->whereNotNull('domain')
             ->first();
 
-        if (! $sender || $sender->status !== null) {
+        if (! $sender || ! StatusEnums::isActive($sender->status)) {
             return;
         }
 

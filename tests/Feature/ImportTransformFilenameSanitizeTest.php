@@ -22,7 +22,7 @@ uses(LazilyRefreshDatabase::class);
 
 beforeEach(function () {
     Storage::fake('local');
-    config(['filesystems.default' => 'local']);
+    config(['filesystems.default' => 'local', 'import.instagram.enabled' => true]);
 });
 
 it('imports a post whose media filename contains spaces/special chars', function () {

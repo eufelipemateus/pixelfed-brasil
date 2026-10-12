@@ -76,7 +76,7 @@ it('revokes oauth access and refresh tokens when temporarily disabling', functio
         ->assertRedirect('/');
 
     // Account is disabled.
-    expect($user->fresh()->status)->toBe('disabled');
+    expect(DB::table('users')->where('id', $user->id)->value('status'))->toBe('disabled');
 
     // Both token rows must be gone, so the third-party bearer/refresh is dead.
     expect(DB::table('oauth_access_tokens')->where('id', $atId)->exists())->toBeFalse();
