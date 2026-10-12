@@ -2,15 +2,15 @@
 
 namespace App\Jobs\ImageOptimizePipeline;
 
-use App\Media;
+use App\Models\Media;
 use App\Util\Media\Image;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Log;
-use Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ImageResize implements ShouldQueue
 {
@@ -81,10 +81,8 @@ class ImageResize implements ShouldQueue
         try {
             $img = new Image;
             $img->resizeImage($media);
-        } catch (\Exception $e) {
-            if (config('app.dev_log')) {
-                Log::error('Image resize failed: '.$e->getMessage());
-            }
+        } catch (\Throwable $e) {
+            Log::error("ImageResize: media {$media->id} was not resized [".$e::class.']: '.$e->getMessage());
         }
 
         ImageThumbnail::dispatch($media)->onQueue('mmo');

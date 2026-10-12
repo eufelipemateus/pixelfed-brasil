@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\ConfigCache as ConfigCacheModel;
-use Cache;
 use Exception;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 
 class ConfigCacheService
 {
@@ -16,8 +16,9 @@ class ConfigCacheService
         'filesystems.disks.s3.secret',
         'filesystems.disks.spaces.key',
         'filesystems.disks.spaces.secret',
-        'captcha.secret',
-        'captcha.sitekey',
+        'captcha.hcaptcha.secret',
+        'captcha.turnstile.secret',
+        'captcha.cap.secret',
     ];
 
     public static function get($key)
@@ -28,8 +29,15 @@ class ConfigCacheService
             return config($key);
         }
 
+        $protect = in_array($key, self::PROTECTED_KEYS);
+
         try {
-            return Cache::remember($cacheKey, $ttl, function () use ($key) {
+            $cached = Cache::get($cacheKey);
+            if ($cached !== null) {
+                return $protect ? decrypt($cached) : $cached;
+            }
+
+            $stored = (function () use ($key) {
                 $allowed = [
                     'app.name',
                     'app.short_description',
@@ -66,7 +74,6 @@ class ConfigCacheService
                     'config.discover.features',
 
                     'instance.has_legal_notice',
-                    'instance.avatar.local_to_cloud',
 
                     'pixelfed.directory',
                     'app.banner_image',
@@ -103,12 +110,20 @@ class ConfigCacheService
                     'instance.embed.post',
 
                     'captcha.enabled',
-                    'captcha.secret',
-                    'captcha.sitekey',
+                    'captcha.driver',
+                    'captcha.hcaptcha.secret',
+                    'captcha.hcaptcha.sitekey',
+                    'captcha.turnstile.secret',
+                    'captcha.turnstile.sitekey',
+                    'captcha.cap.endpoint',
+                    'captcha.cap.sitekey',
+                    'captcha.cap.secret',
                     'captcha.active.login',
                     'captcha.active.register',
-                    'captcha.triggers.login.enabled',
-                    'captcha.triggers.login.attempts',
+                    'captcha.active.forgot_password',
+                    'captcha.active.password_reset',
+                    'captcha.active.forgot_email',
+                    'captcha.active.curated_register',
                     'federation.custom_emoji.enabled',
 
                     'pixelfed.optimize_image',
@@ -141,47 +156,41 @@ class ConfigCacheService
                     // 'system.user_mode'
                 ];
 
-                if (! config('instance.enable_cc')) {
-                    return config($key);
-                }
-
                 if (! in_array($key, $allowed)) {
-                    return config($key);
+                    return false;
                 }
 
-                $protect = false;
-                $protected = null;
-                if (in_array($key, self::PROTECTED_KEYS)) {
-                    $protect = true;
-                }
+                $protect = in_array($key, self::PROTECTED_KEYS);
 
                 $v = config($key);
                 $c = ConfigCacheModel::where('k', $key)->first();
 
                 if ($c) {
-                    if ($protect) {
-                        return decrypt($c->v) ?? config($key);
-                    } else {
-                        return $c->v ?? config($key);
-                    }
+                    return $c->v ?? ($v === null ? false : ($protect ? encrypt($v) : $v));
                 }
 
                 if ($v === null) {
-                    return;
+                    return false;
                 }
 
-                if ($protect && $v) {
-                    $protected = encrypt($v);
-                }
+                $stored = $protect ? encrypt($v) : $v;
 
                 $cc = new ConfigCacheModel;
                 $cc->k = $key;
-                $cc->v = $protect ? $protected : $v;
+                $cc->v = $stored;
                 $cc->save();
 
-                return $v;
-            });
-        } catch (Exception|QueryException $e) {
+                return $stored;
+            })();
+
+            if ($stored === false) {
+                return config($key);
+            }
+
+            Cache::put($cacheKey, $stored, $ttl);
+
+            return $protect ? decrypt($stored) : $stored;
+        } catch (Exception|QueryException) {
             return config($key);
         }
     }
@@ -190,27 +199,23 @@ class ConfigCacheService
     {
         $exists = ConfigCacheModel::whereK($key)->first();
 
-        $protect = false;
-        $protected = null;
-        if (in_array($key, self::PROTECTED_KEYS)) {
-            $protect = true;
-            $protected = encrypt($val);
-        }
+        $protect = in_array($key, self::PROTECTED_KEYS);
+        $stored = $protect ? encrypt($val) : $val;
 
         if ($exists) {
-            $exists->v = $protect ? $protected : $val;
+            $exists->v = $stored;
             $exists->save();
-            Cache::put(self::CACHE_KEY.$key, $val, now()->addHours(12));
+            Cache::put(self::CACHE_KEY.$key, $stored, now()->addHours(12));
 
             return self::get($key);
         }
 
         $cc = new ConfigCacheModel;
         $cc->k = $key;
-        $cc->v = $protect ? $protected : $val;
+        $cc->v = $stored;
         $cc->save();
 
-        Cache::put(self::CACHE_KEY.$key, $val, now()->addHours(12));
+        Cache::put(self::CACHE_KEY.$key, $stored, now()->addHours(12));
 
         return self::get($key);
     }

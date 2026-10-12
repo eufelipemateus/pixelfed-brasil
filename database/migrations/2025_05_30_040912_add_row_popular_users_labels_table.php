@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -18,7 +17,7 @@ return new class extends Migration
                     'label' => 'Popular',
                     'description' => 'Esta conta é popular no  Pixelfed Brasil.',
                     'background_color' => '#FEF9C3',
-                    'text_color' => '#CA8A04'
+                    'text_color' => '#CA8A04',
                 ],
             ]
         );

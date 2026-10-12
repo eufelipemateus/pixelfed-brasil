@@ -1,9 +1,10 @@
 <?php
+
 namespace App\Http\Middleware;
 
+use App\Services\SessionService;
 use Closure;
 use Illuminate\Support\Facades\Session;
-use App\Services\SessionService;
 
 class RefreshSessionActivity
 {
@@ -15,16 +16,17 @@ class RefreshSessionActivity
                 $sessionId = Session::getId();
                 $activeSessions = SessionService::getActiveSessions();
 
-                if (!isset($activeSessions[$sessionId]) && count($activeSessions) >= config('instance.limit_users_active.max_users_active')) {
+                if (! isset($activeSessions[$sessionId]) && count($activeSessions) >= config('instance.limit_users_active.max_users_active')) {
                     if ($request->routeIs('waiting-room')) {
                         return $next($request);
                     }
+
                     return redirect()->route('waiting-room');
                 }
 
                 SessionService::setActiveSession($sessionId, auth()->id());
 
-                if ($request->routeIs('waiting-room') ) {
+                if ($request->routeIs('waiting-room')) {
                     return redirect()->to(route('home'));
                 }
             }

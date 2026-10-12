@@ -14,8 +14,8 @@ use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use League\Flysystem\UnableToWriteFile;
-use Storage;
 
 class ImageS3UploadPipeline implements ShouldQueue
 {
@@ -99,7 +99,7 @@ class ImageS3UploadPipeline implements ShouldQueue
 
                 return $disk->url($file);
             } catch (S3Exception|ClientException|ConnectException|UnableToWriteFile|Exception $e) {
-                Log::warning("Groups ImageS3UploadPipeline: Failed to handle Resilient Store {$file} : ".$e->getMessage());
+                Log::warning('Groups ImageS3UploadPipeline: Failed to handle Resilient Store : '.$e->getMessage());
                 throw $e;
             }
         }, function (int $attempt, Exception $exception) {

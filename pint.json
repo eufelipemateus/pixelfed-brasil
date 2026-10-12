@@ -1,0 +1,8 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "bootstrap/cache",
+        "redis-data",
+        "storage"
+    ]
+}

@@ -11,14 +11,19 @@ class SoftwareUpdateService
 {
     const CACHE_KEY = 'pf:services:software-update:';
 
-    public static function cacheKey()
+    public static function cacheKey(): string
     {
         return self::CACHE_KEY.'latest:v1.0.0';
     }
 
-    public static function get()
+    public static function get($flushCache = false): array
     {
         $curVersion = config('pixelfed.version');
+
+        if ($flushCache) {
+            Cache::forget(self::cacheKey());
+            Cache::forget('api:nodeinfo');
+        }
 
         $versions = Cache::remember(self::cacheKey(), 1800, function () {
             return self::fetchLatest();
@@ -35,18 +40,36 @@ class SoftwareUpdateService
                     'url' => null,
                 ],
                 'running_latest' => $hideWarning ? true : null,
+                'ahead_of_latest' => false,
             ];
         }
+
+        $latestVersion = $versions['latest']['version'];
+        $cmp = self::compareVersions($curVersion, $latestVersion);
 
         return [
             'current' => $curVersion,
             'latest' => [
-                'version' => $versions['latest']['version'],
+                'version' => $latestVersion,
                 'published_at' => $versions['latest']['published_at'],
                 'url' => $versions['latest']['url'],
             ],
-            'running_latest' => strval($versions['latest']['version']) === strval($curVersion),
+            'running_latest' => $cmp >= 0,
+            'ahead_of_latest' => $cmp > 0,
         ];
+    }
+
+    public static function compareVersions($current, $latest): int
+    {
+        return version_compare(
+            self::normalizeVersion($current),
+            self::normalizeVersion($latest)
+        );
+    }
+
+    public static function normalizeVersion($version): string
+    {
+        return ltrim(trim((string) $version), 'vV');
     }
 
     public static function fetchLatest()
@@ -57,11 +80,7 @@ class SoftwareUpdateService
                 ->connectTimeout(5)
                 ->retry(2, 500)
                 ->get('https://versions.pixelfed.org/versions.json');
-        } catch (RequestException $e) {
-            return;
-        } catch (ConnectionException $e) {
-            return;
-        } catch (\Exception $e) {
+        } catch (RequestException|ConnectionException|\Exception) {
             return;
         }
 

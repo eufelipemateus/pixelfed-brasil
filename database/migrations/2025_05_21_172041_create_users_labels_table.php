@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -27,21 +27,21 @@ return new class extends Migration
                 'label' => 'Admin',
                 'description' => 'This Account is an administrator of the platform.',
                 'background_color' => '#FEE2E2',
-                'text_color' => '#B91C1C'
+                'text_color' => '#B91C1C',
             ],
             [
                 'name' => 'mod',
                 'label' => 'Moderator',
                 'description' => 'This Account is a moderator of the platform.',
                 'background_color' => '#E0F2FE',
-                'text_color' => '#1D4ED8'
+                'text_color' => '#1D4ED8',
             ],
             [
                 'name' => 'new',
                 'label' => 'New',
                 'description' => 'This Account is new to the platform.',
                 'background_color' => '#dcfce7',
-                'text_color' => '#15803d'
+                'text_color' => '#15803d',
             ],
         ]);
     }

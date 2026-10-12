@@ -2,14 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Activity;
-use App\Profile;
+use App\Models\Profile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ActivityFactory extends Factory
 {
-    protected $model = Activity::class;
-
     public function definition(): array
     {
         return [

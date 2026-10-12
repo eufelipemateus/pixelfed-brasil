@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Status;
+use App\Models\Status;
 use Illuminate\Support\Facades\Redis;
 
 class PublicTimelineService
@@ -24,9 +24,9 @@ class PublicTimelineService
             return [];
         }
 
-        return array_keys(Redis::zrevrangebyscore(self::CACHE_KEY, $start, '-inf', [
+        return array_keys(Redis::zrevrangebyscore(self::CACHE_KEY, '('.$start, '-inf', [
             'withscores' => true,
-            'limit' => [1, $limit],
+            'limit' => [0, $limit],
         ]));
     }
 
@@ -36,7 +36,7 @@ class PublicTimelineService
             return [];
         }
 
-        return array_keys(Redis::zrevrangebyscore(self::CACHE_KEY, '+inf', $end, [
+        return array_keys(Redis::zrevrangebyscore(self::CACHE_KEY, '+inf', '('.$end, [
             'withscores' => true,
             'limit' => [0, $limit],
         ]));
@@ -79,11 +79,17 @@ class PublicTimelineService
 
                 continue;
             }
+
+            if (! data_get($s, 'account.id')) {
+                self::rem($postId);
+
+                continue;
+            }
+
             if ($s['account']['id'] == $profileId) {
                 self::rem($postId);
             }
         }
-
     }
 
     public static function warmCache($force = false, $limit = 100)

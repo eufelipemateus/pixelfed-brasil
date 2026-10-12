@@ -2,14 +2,14 @@
 
 namespace App\Jobs\ImageOptimizePipeline;
 
-use App\Media;
+use App\Models\Media;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 
 class ImageOptimize implements ShouldQueue
 {
@@ -71,14 +71,12 @@ class ImageOptimize implements ShouldQueue
             }
         }
 
-        if ((bool) config_cache('pixelfed.optimize_image') == false) {
+        if ((bool) config_cache('pixelfed.optimize_image') === false) {
             ImageThumbnail::dispatch($media)->onQueue('mmo');
 
             return;
-        } else {
-            ImageResize::dispatch($media)->onQueue('mmo');
-
-            return;
         }
+        ImageResize::dispatch($media)->onQueue('mmo');
+
     }
 }

@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Hashtag;
-use App\HashtagFollow;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MastoApi\FollowedTagResource;
 use App\Jobs\HomeFeedPipeline\HashtagUnfollowPipeline;
+use App\Models\Hashtag;
+use App\Models\HashtagFollow;
 use App\Services\AccountService;
 use App\Services\HashtagFollowService;
 use App\Services\HashtagRelatedService;
 use App\Services\HashtagService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TagsController extends Controller
 {
     const PF_API_ENTITY_KEY = '_pe';
 
-    public function json($res, $code = 200, $headers = [])
+    public function json($res, $code = 200, $headers = []): JsonResponse
     {
         return response()->json($res, $code, $headers, JSON_UNESCAPED_SLASHES);
     }
@@ -40,18 +41,15 @@ class TagsController extends Controller
 
     /**
      * POST /api/v1/tags/:id/follow
-     *
-     *
-     * @return object
      */
-    public function followHashtag(Request $request, $id)
+    public function followHashtag(Request $request, $id): JsonResponse
     {
         abort_if(! $request->user(), 403);
 
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
 
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
@@ -82,9 +80,6 @@ class TagsController extends Controller
 
     /**
      * POST /api/v1/tags/:id/unfollow
-     *
-     *
-     * @return object
      */
     public function unfollowHashtag(Request $request, $id)
     {
@@ -93,7 +88,7 @@ class TagsController extends Controller
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
 
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
@@ -128,9 +123,6 @@ class TagsController extends Controller
 
     /**
      * GET /api/v1/tags/:id
-     *
-     *
-     * @return object
      */
     public function getHashtag(Request $request, $id)
     {
@@ -138,7 +130,7 @@ class TagsController extends Controller
 
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
@@ -168,11 +160,8 @@ class TagsController extends Controller
 
     /**
      * GET /api/v1/followed_tags
-     *
-     *
-     * @return array
      */
-    public function getFollowedTags(Request $request)
+    public function getFollowedTags(Request $request): JsonResponse
     {
         abort_if(! $request->user(), 403);
 
@@ -190,8 +179,8 @@ class TagsController extends Controller
             ->withQueryString();
 
         $pagination = false;
-        $prevPage = $res->nextPageUrl();
-        $nextPage = $res->previousPageUrl();
+        $nextPage = $res->nextPageUrl();
+        $prevPage = $res->previousPageUrl();
         if ($nextPage && $prevPage) {
             $pagination = '<'.$nextPage.'>; rel="next", <'.$prevPage.'>; rel="prev"';
         } elseif ($nextPage && ! $prevPage) {

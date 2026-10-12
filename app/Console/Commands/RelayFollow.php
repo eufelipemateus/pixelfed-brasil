@@ -54,36 +54,45 @@ class RelayFollow extends Command
         }
 
         $instanceActorUrl = $instanceActor->permalink();
-        $followId = $instanceActor->permalink('#follows/relay/' . hash('sha256', $actorUrl));
+        $followId = $instanceActor->permalink('#follows/relay/'.hash('sha256', $actorUrl));
         $isUndo = (bool) $this->option('undo');
 
         $payload = $isUndo
             ? $this->buildUndoPayload($instanceActorUrl, $followId, $actorUrl)
             : $this->buildFollowPayload($instanceActorUrl, $followId, $actorUrl);
+        $payloadJson = json_encode($payload);
+
+        if (! $payloadJson) {
+            $this->error('Failed to encode relay payload as JSON.');
+
+            return Command::FAILURE;
+        }
 
         $version = config('pixelfed.version');
         $appUrl = config('app.url');
 
-        $headers = HttpSignature::instanceActorSign($relay->inbox_url, $payload, [
-            'Content-Type' => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
+        $headers = HttpSignature::instanceActorSign($relay->inbox_url, $payloadJson, [
+            'Accept' => 'application/activity+json',
+            'Content-Type' => 'application/activity+json',
             'User-Agent' => "(Pixelfed/{$version}; +{$appUrl})",
         ]);
 
         $response = Http::withHeaders($headers)
             ->timeout(config('federation.activitypub.delivery.timeout', 30))
             ->withBody(
-                json_encode($payload, JSON_UNESCAPED_SLASHES),
-                'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+                $payloadJson,
+                'application/activity+json'
             )
             ->send('POST', $relay->inbox_url);
 
         if (! $response->successful()) {
-            $this->error('Relay request failed with HTTP ' . $response->status());
+            $this->error('Relay request failed with HTTP '.$response->status());
+            $this->line('Response: '.mb_substr($response->body(), 0, 800));
 
             return Command::FAILURE;
         }
 
-        $this->info(($isUndo ? 'Undo sent to relay inbox: ' : 'Follow sent to relay inbox: ') . $relay->inbox_url);
+        $this->info(($isUndo ? 'Undo sent to relay inbox: ' : 'Follow sent to relay inbox: ').$relay->inbox_url);
 
         return Command::SUCCESS;
     }
@@ -103,7 +112,7 @@ class RelayFollow extends Command
     {
         return [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $instanceActorUrl . '#undo/follows/' . hash('sha256', $followId),
+            'id' => $instanceActorUrl.'#undo/follows/'.hash('sha256', $followId),
             'type' => 'Undo',
             'actor' => $instanceActorUrl,
             'object' => [

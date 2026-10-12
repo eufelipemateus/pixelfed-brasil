@@ -2,31 +2,29 @@
 
 namespace App\Services;
 
-use App\Status;
+use App\Models\Status;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class StatusLabelService
 {
-    const CACHE_KEY = 'pf:services:status_label:_v0:';
+    public const CACHE_KEY = 'pf:services:status_label:_v0:';
 
-    public static function get(Status $status)
+    public static function get(?Status $status): array
     {
-        if (config('instance.label.covid.enabled') == false || ! $status) {
-            return [
-                'covid' => false,
-            ];
+        if (! config('instance.label.covid.enabled', false) || ! $status) {
+            return ['covid' => false];
         }
 
-        return Cache::remember(self::CACHE_KEY.$status->id, now()->addDays(7), function () use ($status) {
+        return Cache::remember(self::CACHE_KEY.$status->id, now()->addDays(7), function () use ($status): array {
             if (! $status->caption) {
-                return [
-                    'covid' => false,
-                ];
+                return ['covid' => false];
             }
 
             return [
-                'covid' => Str::of(strtolower($status->caption))->contains(['covid', 'corona', 'coronavirus', 'vaccine', 'vaxx', 'vaccination', 'plandemic']),
+                'covid' => Str::of(strtolower($status->caption))->contains([
+                    'covid', 'corona', 'coronavirus', 'vaccine', 'vaxx', 'vaccination', 'plandemic',
+                ]),
             ];
         });
     }

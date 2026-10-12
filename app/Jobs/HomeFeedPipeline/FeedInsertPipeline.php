@@ -2,11 +2,12 @@
 
 namespace App\Jobs\HomeFeedPipeline;
 
+use App\Models\Profile;
 use App\Models\UserDomainBlock;
+use App\Models\UserFilter;
 use App\Services\FollowerService;
 use App\Services\HomeTimelineService;
 use App\Services\StatusService;
-use App\UserFilter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -94,7 +95,7 @@ class FeedInsertPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
             return;
         }
 
-        if (! in_array($status['pf_type'], ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album'])) {
+        if (! in_array($status['pf_type'], ['photo', 'photo:album', 'video', 'video:album', 'photo:video:album', 'share'])) {
             Log::info("FeedInsertPipeline: Status {$sid} type {$status['pf_type']} not supported, skipping job");
 
             return;
@@ -115,11 +116,19 @@ class FeedInsertPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
             $skipIds = UserDomainBlock::where('domain', $domain)->pluck('profile_id')->toArray();
         }
 
-        $filters = UserFilter::whereFilterableType('App\Profile')
-            ->whereFilterableId($status['account']['id'])
+        $filterableIds = [$status['account']['id']];
+
+        // For a reblog, also honor mutes/blocks against the ORIGINAL author,
+        // not just the sharer — otherwise a blocked account's post reappears
+        // in a viewer's feed when a followed account boosts it.
+        if (isset($status['reblog']['account']['id'])) {
+            $filterableIds[] = $status['reblog']['account']['id'];
+        }
+
+        $filters = UserFilter::whereFilterableType(Profile::class)
+            ->whereIn('filterable_id', array_unique($filterableIds))
             ->whereIn('filter_type', ['mute', 'block'])
-            ->join('profiles', 'user_filters.user_id', '=', 'profiles.user_id')
-            ->pluck('profiles.id')
+            ->pluck('user_id')
             ->toArray();
 
         if ($filters && count($filters)) {

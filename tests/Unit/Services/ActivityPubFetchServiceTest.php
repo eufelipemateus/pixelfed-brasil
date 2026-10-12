@@ -25,9 +25,9 @@ it('rejects unsafe activitypub destinations', function (string $url) {
     'multicast ipv6' => ['https://[ff02::1]/activity'],
 ]);
 
-it('accepts a normalized public https destination', function () {
+it('rejects IP-literal destinations, including public addresses', function () {
     expect(ActivityPubFetchService::validateUrl('HTTPS://93.184.216.34/activity?x=1'))
-        ->toBe('https://93.184.216.34/activity?x=1');
+        ->toBeFalse();
 });
 
 it('validates destinations even when fetchRequest is called directly', function () {

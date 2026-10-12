@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Page;
+use App\Models\Page;
 use App\Services\ConfigCacheService;
-use Auth;
-use Cache;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class PageController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'admin']);
+        $this->middleware(['auth', 'admin', 'dangerzone']);
     }
 
-    protected function cacheKeys()
+    protected function cacheKeys(): array
     {
         // Resolução: Mantido os Slugs originais do seu fork,
         // mas adotado o padrão de array com vírgula no final (estilo upstream).
@@ -28,7 +31,7 @@ class PageController extends Controller
         ];
     }
 
-    protected function authCheck($admin_only = false)
+    protected function authCheck($admin_only = false): void
     {
         $auth = $admin_only ?
             Auth::check() && Auth::user()->is_admin == true :
@@ -38,22 +41,22 @@ class PageController extends Controller
         }
     }
 
-    public function edit(Request $request)
+    public function edit(Request $request): RedirectResponse|View
     {
         $this->authCheck(true);
         $this->validate($request, [
             'page' => 'required|string',
         ]);
         $slug = urldecode($request->page);
-        if (in_array($slug, array_keys($this->cacheKeys())) == false) {
+        if (in_array($slug, array_keys($this->cacheKeys())) === false) {
             return redirect(route('admin.settings.pages'));
         }
         $page = Page::firstOrCreate(['slug' => $slug]);
 
-        return view('admin.pages.edit', compact('page'));
+        return view('admin.pages.edit', ['page' => $page]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
             'slug' => 'required|string',
@@ -79,7 +82,7 @@ class PageController extends Controller
         return response()->json(['msg' => 200]);
     }
 
-    public function delete(Request $request)
+    public function delete(Request $request): RedirectResponse
     {
         $this->validate($request, [
             'id' => 'required|integer|min:1|exists:pages,id',
@@ -94,7 +97,7 @@ class PageController extends Controller
         return redirect(route('admin.settings.pages'));
     }
 
-    public function generatePage(Request $request)
+    public function generatePage(Request $request): RedirectResponse
     {
         $this->validate($request, [
             'page' => 'required|string|in:about,terms,privacy,community_guidelines,legal_notice',

@@ -4,7 +4,6 @@ namespace App\Jobs\VideoPipeline;
 
 use App\Services\MediaService;
 use App\Services\StatusService;
-use Cache;
 use FFMpeg;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Bus\Queueable;
@@ -14,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
 class VideoHlsPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
@@ -76,9 +76,9 @@ class VideoHlsPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
                 $version = $matches[1];
 
                 return (version_compare($version, config('laravel-ffmpeg.min_hls_version')) >= 0) ? 'ok' : false;
-            } else {
-                return false;
             }
+
+            return false;
         });
 
         if (! $depCheck || $depCheck !== 'ok') {

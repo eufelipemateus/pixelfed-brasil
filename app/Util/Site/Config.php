@@ -2,7 +2,7 @@
 
 namespace App\Util\Site;
 
-use Cache;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class Config
@@ -84,20 +84,13 @@ class Config
                         'network' => (bool) config('federation.network_timeline'),
                     ],
                     'mobile_apis' => (bool) config_cache('pixelfed.oauth_enabled'),
-                    'mobile_registration' => config('auth.in_app_registration'),
+                    'mobile_registration' => (bool) config_cache('pixelfed.open_registration') && config('auth.in_app_registration'),
                     'stories' => (bool) config_cache('instance.stories.enabled'),
                     'video' => Str::contains(config_cache('pixelfed.media_types'), 'video/mp4'),
                     'import' => [
                         'instagram' => (bool) config_cache('pixelfed.import.instagram.enabled'),
                         'mastodon' => false,
                         'pixelfed' => false,
-                    ],
-                    'label' => [
-                        'covid' => [
-                            'enabled' => (bool) config('instance.label.covid.enabled'),
-                            'org' => config('instance.label.covid.org'),
-                            'url' => config('instance.label.covid.url'),
-                        ],
                     ],
                     'hls' => $hls,
                     'groups' => (bool) config('groups.enabled'),

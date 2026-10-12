@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\CustomFilter;
-use App\User;
+use App\Models\User;
 
 class CustomFilterPolicy
 {
@@ -17,10 +17,8 @@ class CustomFilterPolicy
 
     /**
      * Determine whether the user can view the custom filter.
-     *
-     * @return bool
      */
-    public function view(User $user, CustomFilter $filter)
+    public function view(User $user, CustomFilter $filter): bool
     {
         return $user->profile_id === $filter->profile_id;
     }
@@ -35,20 +33,16 @@ class CustomFilterPolicy
 
     /**
      * Determine whether the user can update the custom filter.
-     *
-     * @return bool
      */
-    public function update(User $user, CustomFilter $filter)
+    public function update(User $user, CustomFilter $filter): bool
     {
         return $user->profile_id === $filter->profile_id;
     }
 
     /**
      * Determine whether the user can delete the custom filter.
-     *
-     * @return bool
      */
-    public function delete(User $user, CustomFilter $filter)
+    public function delete(User $user, CustomFilter $filter): bool
     {
         return $user->profile_id === $filter->profile_id;
     }

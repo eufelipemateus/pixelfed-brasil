@@ -2,12 +2,12 @@
 
 namespace App\Transformer\ActivityPub\Verb;
 
-use App\Profile;
+use App\Models\Profile;
 use League\Fractal;
 
 class DeleteActor extends Fractal\TransformerAbstract
 {
-    public function transform(Profile $profile)
+    public function transform(Profile $profile): array
     {
         $actorId = $profile->permalink();
 

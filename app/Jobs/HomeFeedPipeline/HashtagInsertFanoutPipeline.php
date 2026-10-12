@@ -2,13 +2,14 @@
 
 namespace App\Jobs\HomeFeedPipeline;
 
-use App\Hashtag;
+use App\Models\Hashtag;
+use App\Models\Profile;
+use App\Models\StatusHashtag;
 use App\Models\UserDomainBlock;
+use App\Models\UserFilter;
 use App\Services\HashtagFollowService;
 use App\Services\HomeTimelineService;
 use App\Services\StatusService;
-use App\StatusHashtag;
-use App\UserFilter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -113,8 +114,16 @@ class HashtagInsertFanoutPipeline implements ShouldBeUniqueUntilProcessing, Shou
             $skipIds = UserDomainBlock::where('domain', $domain)->pluck('profile_id')->toArray();
         }
 
-        $filters = UserFilter::whereFilterableType('App\Profile')
-            ->whereFilterableId($status['account']['id'])
+        $filterableIds = [$status['account']['id']];
+
+        // For a reblog, also honor mutes/blocks against the ORIGINAL author,
+        // not just the sharer.
+        if (isset($status['reblog']['account']['id'])) {
+            $filterableIds[] = $status['reblog']['account']['id'];
+        }
+
+        $filters = UserFilter::whereFilterableType(Profile::class)
+            ->whereIn('filterable_id', array_unique($filterableIds))
             ->whereIn('filter_type', ['mute', 'block'])
             ->pluck('user_id')
             ->toArray();

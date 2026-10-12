@@ -2,19 +2,19 @@
 
 namespace App\Observers;
 
-use App\Follower;
+use App\Enums\StatusEnums;
+use App\Http\Controllers\FollowerController;
 use App\Jobs\AvatarPipeline\CreateAvatar;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use App\Models\DefaultDomainBlock;
+use App\Models\Follower;
+use App\Models\FollowRequest;
+use App\Models\Profile;
+use App\Models\User;
 use App\Models\UserDomainBlock;
-use App\Profile;
+use App\Models\UserSetting;
 use App\Services\FollowerService;
-use App\User;
-use App\UserSetting;
-use DB;
-use App\Enums\StatusEnums;
-use App\Http\Controllers\FollowerController;
-use App\FollowRequest;
+use Illuminate\Support\Facades\DB;
 
 class UserObserver
 {
@@ -60,15 +60,39 @@ class UserObserver
 
     protected function handleUser($user)
     {
-        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
+        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE], true)) {
             return;
         }
 
-        if (Profile::whereUsername($user->username)->exists()) {
+        // Already linked: nothing to do.
+        if ($user->profile_id && $user->profile) {
+            $this->createSettingsIfMissing($user);
+
+            return;
+        }
+
+        // Recover from a partial-failure state: a profile for this user exists
+        // (its own row was created) but users.profile_id was never set. Adopt
+        // it instead of bailing out, which previously left the user stuck with
+        // a null profile_id forever.
+        $existing = Profile::whereUserId($user->id)->first();
+
+        if ($existing) {
+            DB::transaction(function () use ($user, $existing) {
+                $fresh = User::findOrFail($user->id);
+                $fresh->profile_id = $existing->id;
+                $fresh->save();
+            });
+            $user->profile_id = $existing->id;
+            $this->createSettingsIfMissing($user);
+
             return;
         }
 
         if (empty($user->profile)) {
+            // Create the profile AND link it to the user in a single
+            // transaction so a failure can't leave users.profile_id null while
+            // the profile row exists.
             $profile = DB::transaction(function () use ($user) {
                 $profile = new Profile;
                 $profile->user_id = $user->id;
@@ -90,23 +114,18 @@ class UserObserver
                 $profile->save();
                 $this->applyDefaultDomainBlocks($user);
 
+                $fresh = User::findOrFail($user->id);
+                $fresh->profile_id = $profile->id;
+                $fresh->save();
+
                 return $profile;
             });
 
-            DB::transaction(function () use ($user, $profile) {
-                $user = User::findOrFail($user->id);
-                $user->profile_id = $profile->id;
-                $user->save();
+            $user->profile_id = $profile->id;
 
-                // UserNotify::updateOrCreate([
-                //     'profile_id' => $profile->id,
-                //     'user_id' => $user->id,
-                // ]);
+            CreateAvatar::dispatch($profile);
 
-                CreateAvatar::dispatch($profile);
-            });
-
-            if ((bool) config_cache('account.autofollow') == true) {
+            if ((bool) config_cache('account.autofollow') === true) {
                 $names = config_cache('account.autofollow_usernames');
                 $names = explode(',', $names);
 
@@ -118,41 +137,52 @@ class UserObserver
 
                 if ($profiles) {
                     foreach ($profiles as $p) {
-                        if (empty($p->domain)) {
-                            $follower = new Follower;
-                            $follower->profile_id = $profile->id;
-                            $follower->following_id = $p->id;
-                            $follower->save();
+                        if ($p->domain) {
+                            FollowRequest::firstOrCreate([
+                                'follower_id' => $profile->id,
+                                'following_id' => $p->id,
+                            ]);
 
-                            FollowPipeline::dispatch($follower);
-                        } else {
-                            FollowRequest::firstOrCreate(
-                                [
-                                    'follower_id' => $profile->id,
-                                    'following_id' => $p->id,
-                                ]
-                            );
-
-                            if (config('federation.activitypub.remoteFollow') == true) {
+                            if ((bool) config('federation.activitypub.remoteFollow')) {
                                 (new FollowerController)->sendFollow($profile, $p);
                             }
+
+                            continue;
+                        }
+
+                        $follower = Follower::firstOrCreate([
+                            'profile_id' => $profile->id,
+                            'following_id' => $p->id,
+                        ]);
+
+                        if ($follower->wasRecentlyCreated) {
+                            FollowPipeline::dispatch($follower);
                         }
                     }
                 }
+            }
 
-                if (!empty($user->referred_by) && config('pixelfed.user_invites.enabled')) {
-                    $target = Profile::whereUserId($user->referred_by)->first();
+            if ($user->referred_by && config('pixelfed.user_invites.enabled')) {
+                $target = Profile::whereUserId($user->referred_by)->first();
 
-                    $follower = new Follower();
-                    $follower->profile_id = $profile->id;
-                    $follower->following_id = $target->id;
-                    $follower->save();
+                if ($target) {
+                    $follower = Follower::firstOrCreate([
+                        'profile_id' => $profile->id,
+                        'following_id' => $target->id,
+                    ]);
 
-                    FollowPipeline::dispatch($follower);
+                    if ($follower->wasRecentlyCreated) {
+                        FollowPipeline::dispatch($follower);
+                    }
                 }
             }
         }
 
+        $this->createSettingsIfMissing($user);
+    }
+
+    protected function createSettingsIfMissing($user): void
+    {
         if (empty($user->settings)) {
             DB::transaction(function () use ($user) {
                 UserSetting::firstOrCreate([

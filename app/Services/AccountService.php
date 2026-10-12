@@ -2,20 +2,21 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
+use App\Models\Profile;
+use App\Models\Status;
+use App\Models\User;
 use App\Models\UserDomainBlock;
-use App\Profile;
-use App\Status;
+use App\Models\UserSetting;
+use App\Services\Account\AccountStatService;
 use App\Transformer\Api\AccountTransformer;
-use App\User;
-use App\UserSetting;
-use Cache;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use League\Fractal;
 use League\Fractal\Serializer\ArraySerializer;
 use NumberFormatter;
-use App\Enums\StatusEnums;
-use Carbon\Carbon;
 
 class AccountService
 {
@@ -63,7 +64,8 @@ class AccountService
             $account['location'],
             $account['note_text'],
             $account['pronouns'],
-            $account['website']
+            $account['website'],
+            $account['has_story'],
         );
 
         $account['avatar_static'] = $account['avatar'];
@@ -94,7 +96,7 @@ class AccountService
 
             return collect($settings)
                 ->filter(function ($item, $key) {
-                    return in_array($key, array_keys(self::defaultSettings())) == true;
+                    return in_array($key, array_keys(self::defaultSettings())) === true;
                 })
                 ->map(function ($item, $key) {
                     if ($key == 'compose_settings') {
@@ -120,35 +122,43 @@ class AccountService
     {
         $key = self::CACHE_PF_ACCT_SETTINGS_KEY.$pid;
 
-        return Cache::remember($key, 14400, function () use ($pid) {
+        return Cache::remember($key, 604800, function () use ($pid) {
             $user = User::with('profile')->whereProfileId($pid)->whereNull('status')->first();
             if (! $user) {
                 return [];
             }
 
+            // A User can legitimately have no user_settings row (hasOne is
+            // nullable, no FK/backfill guarantee). Fall back to defaults for
+            // the scalar reads instead of dereferencing null, matching the
+            // sibling settings()/hiddenFollowers() methods.
             $settings = $user->settings;
-            $other = array_merge(self::defaultSettings()['other'], $settings->other ?? []);
+            $defaults = self::defaultSettings();
+            $other = array_merge($defaults['other'], $settings->other ?? []);
+            $compose = array_merge($defaults['compose_settings'], $settings->compose_settings ?? []);
 
             return [
-                'reduce_motion' => (bool) $settings->reduce_motion,
-                'high_contrast_mode' => (bool) $settings->high_contrast_mode,
-                'video_autoplay' => (bool) $settings->video_autoplay,
-                'media_descriptions' => (bool) $settings->media_descriptions,
-                'crawlable' => (bool) $settings->crawlable,
-                'show_profile_follower_count' => (bool) $settings->show_profile_follower_count,
-                'show_profile_following_count' => (bool) $settings->show_profile_following_count,
-                'public_dm' => (bool) $settings->public_dm,
+                'reduce_motion' => (bool) ($settings->reduce_motion ?? $defaults['reduce_motion']),
+                'high_contrast_mode' => (bool) ($settings->high_contrast_mode ?? $defaults['high_contrast_mode']),
+                'video_autoplay' => (bool) ($settings->video_autoplay ?? $defaults['video_autoplay']),
+                'media_descriptions' => (bool) $compose['media_descriptions'],
+                'default_scope' => (string) $compose['default_scope'],
+                'default_license' => (int) $compose['default_license'],
+                'crawlable' => (bool) ($settings->crawlable ?? $defaults['crawlable']),
+                'show_profile_follower_count' => (bool) ($settings->show_profile_follower_count ?? $defaults['show_profile_follower_count']),
+                'show_profile_following_count' => (bool) ($settings->show_profile_following_count ?? $defaults['show_profile_following_count']),
+                'public_dm' => (bool) ($settings->public_dm ?? $defaults['public_dm']),
                 'disable_embeds' => (bool) $other['disable_embeds'],
-                'show_atom' => (bool) $settings->show_atom,
+                'show_atom' => (bool) ($settings->show_atom ?? false),
                 'is_suggestable' => (bool) $user->profile->is_suggestable,
                 'indexable' => (bool) $user->profile->indexable,
-                'send_email_new_follower' => (bool) $settings->send_email_new_follower,
-                'send_email_new_follower_request' => (bool) $settings->send_email_new_follower_request,
-                'send_email_on_share' => (bool) $settings->send_email_on_share,
-                'send_email_on_like' => (bool) $settings->send_email_on_like,
-                'send_email_on_mention' => (bool) $settings->send_email_on_mention,
-                'send_weekly_email' => (bool) $settings->send_weekly_email,
-                'felipemateus_wants_updates' => (bool) $settings->felipemateus_wants_updates,
+                'send_email_new_follower' => (bool) $settings?->send_email_new_follower,
+                'send_email_new_follower_request' => (bool) $settings?->send_email_new_follower_request,
+                'send_email_on_share' => (bool) $settings?->send_email_on_share,
+                'send_email_on_like' => (bool) $settings?->send_email_on_like,
+                'send_email_on_mention' => (bool) $settings?->send_email_on_mention,
+                'send_weekly_email' => (bool) $settings?->send_weekly_email,
+                'felipemateus_wants_updates' => (bool) $settings?->felipemateus_wants_updates,
             ];
         });
     }
@@ -168,7 +178,7 @@ class AccountService
         return ! $res['disable_embeds'];
     }
 
-    public static function defaultSettings()
+    public static function defaultSettings(): array
     {
         return [
             'crawlable' => true,
@@ -207,16 +217,13 @@ class AccountService
         $key = self::CACHE_KEY.'pcs:'.$id;
 
         if (Cache::has($key)) {
-            return;
+            return null;
         }
 
-        $count = Status::whereProfileId($id)
-            ->whereNull(['in_reply_to_id', 'reblog_of_id'])
-            ->whereIn('scope', ['public', 'unlisted', 'private'])
-            ->count();
-
-        $profile->status_count = $count;
+        $profile->status_count = AccountStatService::recalculateStatusCount($id);
         $profile->save();
+
+        self::del($id);
 
         Cache::put($key, 1, 259200);
 
@@ -228,10 +235,15 @@ class AccountService
         $key = self::CACHE_KEY.'u2id:'.hash('sha256', $username);
 
         return Cache::remember($key, 14400, function () use ($username) {
-            $s = Str::of($username);
-            if ($s->contains('@') && ! $s->startsWith('@')) {
+            if (Str::contains($username, '@') && ! Str::startsWith($username, '@')) {
                 $username = "@{$username}";
             }
+            if (preg_match('/^@([^@]+)@'.preg_quote(config('pixelfed.domain.app')).'$/i', $username, $matches)) {
+                // The username is the fully qualified @user@example.com and the pixelfed site is example.com
+                // Normalize this username to just user
+                $username = $matches[1];
+            }
+
             $profile = DB::table('profiles')
                 ->whereUsername($username)
                 ->first();
@@ -319,19 +331,26 @@ class AccountService
         $num = intval($num);
         $formatter = new NumberFormatter('en_US', NumberFormatter::DECIMAL);
         $formatter->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 1);
-
         if ($num >= 1000000000) {
             return $formatter->format($num / 1000000000).'B';
-        } elseif ($num >= 1000000) {
-            return $formatter->format($num / 1000000).'M';
-        } elseif ($num >= 1000) {
-            return $formatter->format($num / 1000).'K';
-        } else {
-            return $formatter->format($num);
         }
+        if ($num >= 1000000) {
+            return $formatter->format($num / 1000000).'M';
+        }
+
+        if ($num >= 1000) {
+            return $formatter->format($num / 1000).'K';
+        }
+
+        return $formatter->format($num);
     }
 
-    public static function getMetaDescription($id)
+    public static function getUserIdFromProfileId($profileId): ?int
+    {
+        return Profile::whereKey($profileId)->value('user_id');
+    }
+
+    public static function getMetaDescription($id): string
     {
         $account = self::get($id, true);
 
@@ -398,10 +417,9 @@ class AccountService
         $limit = config('pixelfed.limit_daily_posts.limit');
         $userExceptionsEnabled = config('pixelfed.limit_daily_posts.user_exceptions');
 
-
         if ($limitEnabled) {
             if ($userExceptionsEnabled) {
-                $isUserException =  $user->settings['enable_limit_daily_posts_exception'] ?? false;
+                $isUserException = $user->settings['enable_limit_daily_posts_exception'] ?? false;
 
                 if ($isUserException) {
                     return true;
@@ -418,6 +436,7 @@ class AccountService
                 return false;
             }
         }
+
         return true;
     }
 }

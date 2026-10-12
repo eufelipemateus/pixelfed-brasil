@@ -9,8 +9,6 @@ use League\Flysystem\FilesystemException;
 use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToWriteFile;
-use League\Flysystem\UnableToReadFile;
-use League\Flysystem\UnableToDeleteFile;
 
 class FilesystemService
 {
@@ -37,6 +35,7 @@ class FilesystemService
         $filesystem = new Filesystem($adapter);
 
         $writable = false;
+        $res = [];
         try {
             $filesystem->write(self::VERIFY_FILE_NAME, 'ok', []);
             $writable = true;
@@ -56,14 +55,14 @@ class FilesystemService
             } else {
                 $writable = false;
             }
-        } catch (FilesystemException|UnableToReadFile $exception) {
+        } catch (FilesystemException|UnableToReadFile) {
             $writable = false;
         }
 
         if (in_array(self::VERIFY_FILE_NAME, $res)) {
             try {
                 $filesystem->delete(self::VERIFY_FILE_NAME);
-            } catch (FilesystemException|UnableToDeleteFile $exception) {
+            } catch (FilesystemException|UnableToDeleteFile) {
                 $writable = false;
             }
         }

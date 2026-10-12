@@ -2,11 +2,12 @@
 
 namespace App\Http\Requests\Status;
 
-use App\Media;
-use App\Status;
-use Closure;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Enums\StatusEnums;
+use App\Models\Media;
+use App\Models\Status;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStatusEditRequest extends FormRequest
 {
@@ -40,7 +41,7 @@ class StoreStatusEditRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
@@ -55,6 +56,7 @@ class StoreStatusEditRequest extends FormRequest
                 'max:'.(int) config_cache('pixelfed.max_album_length'),
                 function (string $attribute, mixed $value, Closure $fail) {
                     Media::whereProfileId($this->user()->profile_id)
+                        ->notInDirectMessage()
                         ->where(function ($query) {
                             return $query->whereNull('status_id')
                                 ->orWhere('status_id', '=', $this->route('id'));

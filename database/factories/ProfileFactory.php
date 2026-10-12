@@ -2,14 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Profile;
-use App\User;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProfileFactory extends Factory
 {
-    protected $model = Profile::class;
-
     public function definition(): array
     {
         return [
