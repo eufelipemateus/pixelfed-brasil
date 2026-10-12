@@ -2,28 +2,25 @@
 
 namespace App\Jobs\InternalPipeline;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
+use App\Mail\MonthlyPopularPostsMail;
+use App\Models\Profile;
 use App\Models\Status;
 use App\Models\User;
 use Carbon\Carbon;
-use App\Mail\MonthlyPopularPostsMail;
-use App\Models\Profile;
-use App\Jobs\InternalPipeline\DefinePopularUsers;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
-class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
+class SendMonthlyPopular implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-
     public $testing = false;
-
 
     /**
      * The number of seconds after which the job's unique lock will be released.
@@ -50,7 +47,6 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
         return date('W-Y');
     }
 
-
     /**
      * Execute the job.
      */
@@ -74,7 +70,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         ->startOfMonth()
                         ->subMonth()
                         ->endOfMonth()
-                        ->endOfDay()
+                        ->endOfDay(),
                 ]
             )
             ->leftJoin('likes', 'likes.status_id', '=', 'statuses.id')
@@ -102,6 +98,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
 
         if ($popularPosts->isEmpty()) {
             info('Nenhum post popular encontrado para enviar.');
+
             return;
         }
 
@@ -129,7 +126,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                     'photo:album',
                     'photo:video:album',
                     'video',
-                    'video:album'
+                    'video:album',
                 ]
             )->whereBetween(
                 'likes.created_at',
@@ -142,7 +139,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                         ->startOfMonth()
                         ->subMonth()
                         ->endOfMonth()
-                        ->endOfDay()
+                        ->endOfDay(),
                 ]
             )->groupBy('profiles.id')
             ->orderByDesc('total_likes')
@@ -150,7 +147,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
             ->get();
 
         $popularUsers = Profile::with('user')->whereIn('id', $profileIds->pluck('id'))
-            ->orderByRaw('ARRAY_POSITION(ARRAY[' . $profileIds->pluck('id')->implode(',') . ']::bigint[], id)')
+            ->orderByRaw('ARRAY_POSITION(ARRAY['.$profileIds->pluck('id')->implode(',').']::bigint[], id)')
             ->get();
 
         DefinePopularUsers::dispatch($popularUsers)
@@ -165,7 +162,7 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
                     10,
                     function ($users) use ($popularPosts, $popularUsers) {
                         foreach ($users as $user) {
-                            info('Sending popular posts email to ' . $user->username);
+                            info('Sending popular posts email to '.$user->username);
                             Mail::to($user->email)
                                 ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('email'));
                         }
@@ -174,12 +171,12 @@ class SendMonthlyPopular implements ShouldQueue, ShouldBeUnique
         } else {
             User::whereNull('status')
                 ->whereNull('deleted_at')
-                ->whereNotNull("email_verified_at")
+                ->whereNotNull('email_verified_at')
                 ->chunk(
                     1000,
                     function ($users) use ($popularPosts, $popularUsers) {
                         foreach ($users as $user) {
-                            info('Sending popular posts email to ' . $user->username);
+                            info('Sending popular posts email to '.$user->username);
                             Mail::to($user->email)
                                 ->queue((new MonthlyPopularPostsMail($popularPosts, $user, $popularUsers))->onQueue('email'));
                         }

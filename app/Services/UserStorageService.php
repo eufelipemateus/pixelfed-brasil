@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Models\Media;
 use App\Models\User;
 use Carbon\Carbon;
@@ -38,10 +39,10 @@ class UserStorageService
         return $updatedAt->lt(now()->subHours(self::STALE_AFTER_HOURS));
     }
 
-    public static function get($id)
+    public static function get($id): int
     {
         $user = User::find($id);
-        if (! $user || $user->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return -1;
         }
 
@@ -58,7 +59,7 @@ class UserStorageService
         return (int) $user->storage_used;
     }
 
-    public static function calculateStorageUsed($id)
+    public static function calculateStorageUsed($id): int
     {
         return (int) floor(Media::whereUserId($id)->sum('size') / 1000);
     }
@@ -66,7 +67,7 @@ class UserStorageService
     public static function recalculateUpdateStorageUsed($id)
     {
         $user = User::find($id);
-        if (! $user || $user->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return;
         }
         $updatedVal = (int) floor(Media::whereUserId($id)->sum('size') / 1000);
@@ -97,7 +98,7 @@ class UserStorageService
     public static function increaseStorageUsed($id, $sizeInBytes)
     {
         $user = User::find($id);
-        if (! $user || $user->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return null;
         }
 
@@ -137,7 +138,7 @@ class UserStorageService
     public static function decrementStorageUsed($id, $sizeInBytes)
     {
         $user = User::find($id);
-        if (! $user || $user->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $user || $user->status !== StatusEnums::ACTIVE) {
             return null;
         }
 

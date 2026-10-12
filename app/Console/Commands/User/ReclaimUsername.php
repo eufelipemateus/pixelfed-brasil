@@ -2,13 +2,12 @@
 
 namespace App\Console\Commands\User;
 
+use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Console\Command;
 
 use function Laravel\Prompts\confirm;
-use App\Enums\StatusEnums;
-
 use function Laravel\Prompts\search;
 
 class ReclaimUsername extends Command
@@ -30,11 +29,11 @@ class ReclaimUsername extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): int
     {
         $username = search(
             label: 'What username would you like to reclaim?',
-            options: fn (string $search) => strlen($search) > 0 ? $this->getUsernameOptions($search) : [],
+            options: fn (string $search): array => $search !== '' ? $this->getUsernameOptions($search) : [],
             required: true
         );
 

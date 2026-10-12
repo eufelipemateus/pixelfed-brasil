@@ -2,6 +2,7 @@
 
 namespace App\Util\ActivityPub\Inbox;
 
+use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Services\FeaturedCollectionService;
 use App\Util\ActivityPub\Helpers;
@@ -160,7 +161,7 @@ trait HandlesFeatureRequests
 
         $target = Helpers::profileFetch($localUrl);
 
-        if (! $target || $target->domain !== null || $target->status !== null || $target->deleted_at) {
+        if (! $target || $target->domain !== null || ! StatusEnums::isActive($target->status) || $target->deleted_at) {
             return null;
         }
 

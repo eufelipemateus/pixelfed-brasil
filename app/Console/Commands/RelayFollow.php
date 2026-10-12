@@ -54,7 +54,7 @@ class RelayFollow extends Command
         }
 
         $instanceActorUrl = $instanceActor->permalink();
-        $followId = $instanceActor->permalink('#follows/relay/' . hash('sha256', $actorUrl));
+        $followId = $instanceActor->permalink('#follows/relay/'.hash('sha256', $actorUrl));
         $isUndo = (bool) $this->option('undo');
 
         $payload = $isUndo
@@ -86,13 +86,13 @@ class RelayFollow extends Command
             ->send('POST', $relay->inbox_url);
 
         if (! $response->successful()) {
-            $this->error('Relay request failed with HTTP ' . $response->status());
-            $this->line('Response: ' . mb_substr($response->body(), 0, 800));
+            $this->error('Relay request failed with HTTP '.$response->status());
+            $this->line('Response: '.mb_substr($response->body(), 0, 800));
 
             return Command::FAILURE;
         }
 
-        $this->info(($isUndo ? 'Undo sent to relay inbox: ' : 'Follow sent to relay inbox: ') . $relay->inbox_url);
+        $this->info(($isUndo ? 'Undo sent to relay inbox: ' : 'Follow sent to relay inbox: ').$relay->inbox_url);
 
         return Command::SUCCESS;
     }
@@ -112,7 +112,7 @@ class RelayFollow extends Command
     {
         return [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $instanceActorUrl . '#undo/follows/' . hash('sha256', $followId),
+            'id' => $instanceActorUrl.'#undo/follows/'.hash('sha256', $followId),
             'type' => 'Undo',
             'actor' => $instanceActorUrl,
             'object' => [

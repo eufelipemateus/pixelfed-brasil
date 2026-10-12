@@ -2,14 +2,14 @@
 
 namespace App\Jobs\InternalPipeline;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Mail;
+use App\Enums\StatusEnums;
 use App\Mail\DesactiveInactiveAccountNotification;
 use App\Models\Profile;
 use App\Models\User;
 use App\Services\ModLogService;
-use App\Enums\StatusEnums;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Mail;
 
 class DesactiveInactiveUserJob implements ShouldQueue
 {
@@ -32,20 +32,20 @@ class DesactiveInactiveUserJob implements ShouldQueue
         User::whereNull('status')
             ->whereNull('deleted_at')
             ->whereNull('last_active_at')
-            ->whereNull("email_verified_at")
+            ->whereNull('email_verified_at')
             ->where('created_at', '<', now()->subDays(60))
             ->chunk(
                 100,
                 function ($users) {
                     foreach ($users as $user) {
-                        info('Disactive inactive user ' . $user->username);
+                        info('Disactive inactive user '.$user->username);
                         $profile = $user->profile;
                         $user->status = StatusEnums::DISABLED;
                         $profile->status = StatusEnums::DISABLED;
                         $user->save();
                         $profile->save();
                         Mail::to($user->email)
-                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
+                            ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
                         ModLogService::boot()
                             ->objectUid($profile->user->id)
                             ->objectId($profile->id)
@@ -67,14 +67,14 @@ class DesactiveInactiveUserJob implements ShouldQueue
                 100,
                 function ($users) {
                     foreach ($users as $user) {
-                        info('Disactive inactive user ' . $user->username);
-                            $profile = $user->profile;
-                            $user->status = StatusEnums::DISABLED;
-                            $profile->status = StatusEnums::DISABLED;
-                            $user->save();
-                            $profile->save();
+                        info('Disactive inactive user '.$user->username);
+                        $profile = $user->profile;
+                        $user->status = StatusEnums::DISABLED;
+                        $profile->status = StatusEnums::DISABLED;
+                        $user->save();
+                        $profile->save();
                         Mail::to($user->email)
-                        ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
+                            ->queue(((new DesactiveInactiveAccountNotification($user))->onQueue('email')));
                         ModLogService::boot()
                             ->objectUid($profile->id)
                             ->objectId($profile->id)

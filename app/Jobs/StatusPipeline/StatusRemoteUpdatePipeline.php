@@ -12,6 +12,7 @@ use App\Services\SanitizeService;
 use App\Services\SecureMediaFetchService;
 use App\Services\StatusService;
 use App\Util\ActivityPub\Helpers;
+use App\Util\Media\License;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,6 +57,7 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         $status = Status::with('media')->whereObjectUrl($activity['id'])->first();
         if (! $status) {
             Log::info("StatusRemoteUpdatePipeline: Status not found for activity {$activity['id']}, skipping job");
+
             return;
         }
 
@@ -173,6 +175,8 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
             $m->blurhash = isset($n['blurhash']) && (strlen($n['blurhash']) < 50) ? $n['blurhash'] : null;
             $m->width = isset($n['width']) && ! empty($n['width']) ? $n['width'] : null;
             $m->height = isset($n['height']) && ! empty($n['height']) ? $n['height'] : null;
+            $license = License::fromActivityPub($n['license'] ?? $activity['license'] ?? null);
+            $m->license = $license === null ? null : (string) $license;
             $m->skip_optimize = true;
             $m->order = $v['key'] + 1;
             $m->save();
@@ -181,7 +185,7 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         MediaService::del($status->id);
     }
 
-    static function htmlToPlainTextWithLineBreaks(string $html): string
+    public static function htmlToPlainTextWithLineBreaks(string $html): string
     {
         // Força UTF-8 e normaliza quebras
         $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -206,11 +210,20 @@ class StatusRemoteUpdatePipeline implements ShouldQueue
         }
 
         if (isset($activity['sensitive'])) {
-            if ((bool) $activity['sensitive'] == false) {
+            if ((bool) $activity['sensitive'] === false) {
                 $status->is_nsfw = false;
-                $exists = ModLog::whereIn('object_type', [Status::class, 'App\\Status::class'])
-                    ->whereObjectId($status->id)
-                    ->whereAction('admin.status.moderate')
+                // A remote sensitive:false edit must not clear an admin NSFW
+                // mark. Accept both object_type literals and both object_id
+                // conventions (report-handling rows were historically keyed by
+                // profile_id), and gate on metadata.action = 'cw' so only a
+                // genuine NSFW-add re-locks — not remove_cw/private/unlist.
+                $exists = ModLog::whereAction('admin.status.moderate')
+                    ->whereIn('object_type', ['App\Status::class', 'App\Models\Status::class'])
+                    ->where(function ($q) use ($status) {
+                        $q->where('object_id', $status->id)
+                            ->orWhere('object_id', $status->profile_id);
+                    })
+                    ->where('metadata->action', 'cw')
                     ->exists();
                 if ($exists == true) {
                     $status->is_nsfw = true;

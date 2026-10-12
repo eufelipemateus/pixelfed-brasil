@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusEnums;
 use App\Jobs\StoryPipeline\StoryViewDeliver;
 use App\Models\Profile;
 use App\Models\Story;
@@ -9,8 +10,8 @@ use App\Models\StoryView;
 use App\Services\AccountService;
 use App\Services\FollowerService;
 use App\Services\PollService;
-use App\Services\StoryIndexService;
 use App\Services\StoryService;
+use App\Services\StoryViewService;
 use App\Services\UserRoleService;
 use App\Transformer\ActivityPub\Verb\StoryVerb;
 use Illuminate\Contracts\View\View;
@@ -34,36 +35,27 @@ class StoryController extends StoryComposeController
         }
         $pid = $user->profile_id;
 
-        if (db_is_pgsql()) {
-            $s = Cache::remember('pf:stories:recent-by-id:'.$pid, 900, function () use ($pid) {
-                return Story::select('stories.*', 'followers.following_id')
-                    ->leftJoin('followers', 'followers.following_id', 'stories.profile_id')
-                    ->where('followers.profile_id', $pid)
-                    ->where('stories.active', true)
-                    ->get()
-                    ->map(function ($s) {
-                        $r = new \StdClass;
-                        $r->id = $s->id;
-                        $r->profile_id = $s->profile_id;
-                        $r->type = $s->type;
-                        $r->path = $s->path;
-
-                        return $r;
-                    })
-                    ->unique('profile_id');
-            });
-
-        } else {
-            $s = Cache::remember('pf:stories:recent-by-id:'.$pid, 900, function () use ($pid) {
-                return Story::select('stories.*', 'followers.following_id')
-                    ->leftJoin('followers', 'followers.following_id', 'stories.profile_id')
-                    ->where('followers.profile_id', $pid)
-                    ->where('stories.active', true)
-                    ->groupBy('followers.following_id')
-                    ->orderByDesc('id')
-                    ->get();
-            });
-        }
+        // One row per followed author: the author's newest active story
+        // (MAX(id), matching StoryService::latest()). Collapsing in SQL via a
+        // correlated MAX(id) is deterministic and portable across
+        // mysql/mariadb/pgsql/sqlite — the previous groupBy(stories.*) and
+        // unique() without ordering both left the kept row unspecified.
+        $s = Cache::remember('pf:stories:recent-by-id:'.$pid, 900, function () use ($pid) {
+            return Story::select('stories.*')
+                ->join('followers', 'followers.following_id', 'stories.profile_id')
+                ->join('profiles', 'profiles.id', 'stories.profile_id')
+                ->where('followers.profile_id', $pid)
+                ->whereNull('profiles.status')
+                ->where('stories.active', true)
+                ->whereRaw('stories.id = (
+                    select max(s2.id)
+                    from stories as s2
+                    where s2.profile_id = stories.profile_id
+                      and s2.active = ?
+                )', [true])
+                ->orderByDesc('stories.id')
+                ->get();
+        });
 
         $self = Cache::remember('pf:stories:recent-self:'.$pid, 21600, function () use ($pid) {
             return Story::whereProfileId($pid)
@@ -127,6 +119,10 @@ class StoryController extends StoryComposeController
         $authed = $user->profile_id;
         $profile = Profile::findOrFail($id);
 
+        // Suspended/deleted profiles are unavailable to everyone, including the
+        // account itself, matching the status gate on posts and other content.
+        abort_if(! StatusEnums::isActive($profile->status), 404);
+
         if ($authed != $profile->id && ! FollowerService::follows($authed, $profile->id)) {
             abort(403);
         }
@@ -162,7 +158,7 @@ class StoryController extends StoryComposeController
 
                 return $res;
             })->toArray();
-        if (count($stories) == 0) {
+        if (count($stories) === 0) {
             return [];
         }
         $cursor = count($stories) - 1;
@@ -204,23 +200,13 @@ class StoryController extends StoryComposeController
         $publicOnly = (bool) $profile->followedBy($authed);
         abort_if(! $publicOnly, 403);
 
-        $v = StoryView::firstOrCreate([
-            'story_id' => $id,
-            'profile_id' => $authed->id,
-        ]);
+        $recorded = app(StoryViewService::class)->record($story, (int) $authed->id);
 
-        if ($v->wasRecentlyCreated) {
-            Story::findOrFail($story->id)->increment('view_count');
-            $index = app(StoryIndexService::class);
-            $index->markSeen($authed->id, $story->profile_id, $story->id, $story->created_at);
-
-            if ($story->local == false) {
-                StoryViewDeliver::dispatch($story, $authed)->onQueue('story');
-            }
+        if ($recorded && $story->local == false) {
+            StoryViewDeliver::dispatch($story, $authed)->onQueue('story');
         }
 
-        Cache::forget('stories:recent:by_id:'.$authed->id);
-        StoryService::addSeen($authed->id, $story->id);
+        Cache::forget('pf:stories:recent-by-id:'.$authed->id);
 
         return ['code' => 200];
     }
@@ -290,7 +276,7 @@ class StoryController extends StoryComposeController
         }
         $pid = $profile->id;
 
-        return view('stories.show_remote', compact('pid'));
+        return view('stories.show_remote', ['pid' => $pid]);
     }
 
     public function pollResults(Request $request)

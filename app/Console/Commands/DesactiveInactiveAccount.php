@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Jobs\InternalPipeline\DesactiveInactiveUserJob;
+use Illuminate\Console\Command;
 
 class DesactiveInactiveAccount extends Command
 {

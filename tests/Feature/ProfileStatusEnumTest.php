@@ -6,8 +6,8 @@ use App\Enums\StatusEnums;
 use App\Models\Profile;
 use App\Services\ActivityPubDeliveryService;
 use App\Util\ActivityPub\Outbox;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
@@ -82,6 +82,15 @@ class ProfileStatusEnumTest extends TestCase
             $this->assertSame($status, $profile->fresh()->status);
             $this->assertSame($status->value(), $profile->fresh()->getRawOriginal('status'));
         }
+    }
+
+    public function test_upstream_guards_accept_the_local_active_enum_cast(): void
+    {
+        $profile = $this->createProfile(['status' => null]);
+
+        $this->assertTrue(StatusEnums::isActive($profile->fresh()->status));
+        $this->assertTrue(StatusEnums::isActive(StatusEnums::ACTIVE));
+        $this->assertFalse(StatusEnums::isActive(StatusEnums::SUSPENDED));
     }
 
     public function test_active_local_profile_can_queue_activitypub_delivery(): void

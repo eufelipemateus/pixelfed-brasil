@@ -22,9 +22,6 @@ return new class extends Migration
             $table->boolean('felipemateus_wants_updates')->default(true)->change();
         });
 
-
-
-
     }
 
     /**

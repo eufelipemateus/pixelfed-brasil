@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\FixBugs;
 
+use App\Enums\StatusEnums;
 use App\Jobs\AvatarPipeline\CreateAvatar;
 use App\Jobs\FollowPipeline\FollowPipeline;
 use App\Models\DefaultDomainBlock;
@@ -14,7 +15,6 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 use function Laravel\Prompts\search;
-USE App\Enums\StatusEnums;
 
 class FixMissingUserProfile extends Command
 {
@@ -39,7 +39,7 @@ class FixMissingUserProfile extends Command
     {
         $id = search(
             label: 'Search for the affected username',
-            options: fn (string $value) => strlen($value) > 0
+            options: fn (string $value) => $value !== ''
                 ? User::doesntHave('profile')->whereNull('status')->whereLike('username', "%{$value}%")->pluck('username', 'id')->all()
                 : []
         );
@@ -56,7 +56,7 @@ class FixMissingUserProfile extends Command
             return;
         }
 
-        if(in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
+        if (in_array($user->status, [StatusEnums::DELETED, StatusEnums::DELETE_QUEUE])) {
             $this->error('User has deleted account');
 
             return;
@@ -100,7 +100,7 @@ class FixMissingUserProfile extends Command
                 CreateAvatar::dispatch($profile);
             });
 
-            if ((bool) config_cache('account.autofollow') == true) {
+            if ((bool) config_cache('account.autofollow') === true) {
                 $names = config_cache('account.autofollow_usernames');
                 $names = explode(',', $names);
 

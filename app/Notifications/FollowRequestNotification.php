@@ -2,15 +2,15 @@
 
 namespace App\Notifications;
 
+use App\Models\Profile;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Profile;
 
 class FollowRequestNotification extends Notification
 {
     use Queueable;
+
     public $profile;
 
     /**
@@ -19,7 +19,7 @@ class FollowRequestNotification extends Notification
     public function __construct($actor_id)
     {
         //
-        $this->profile =  Profile::find($actor_id);
+        $this->profile = Profile::find($actor_id);
     }
 
     /**
@@ -39,7 +39,7 @@ class FollowRequestNotification extends Notification
     {
         return (new MailMessage)
             ->subject('[Notification] You have new follow request!')
-            ->line('**@'. $this->profile->username.'** has sent you a follow request');
+            ->line('**@'.$this->profile->username.'** has sent you a follow request');
     }
 
     /**

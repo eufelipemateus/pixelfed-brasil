@@ -18,16 +18,13 @@ return new class extends Migration
             ->where('slug', '/site/privacy')
             ->update(['slug' => '/privacy']);
 
-
         DB::table('pages')
             ->where('slug', '/site/terms')
             ->update(['slug' => '/terms']);
 
-
         DB::table('pages')
             ->where('slug', '/site/kb/community-guidelines')
             ->update(['slug' => '/kb/community-guidelines']);
-
 
         DB::table('pages')
             ->where('slug', '/site/legal-notice')
@@ -46,7 +43,6 @@ return new class extends Migration
         DB::table('pages')
             ->where('slug', '/privacy')
             ->update(['slug' => '/site/privacy']);
-
 
         DB::table('pages')
             ->where('slug', '/terms')

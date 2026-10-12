@@ -5,6 +5,7 @@ namespace App\Transformer\Api;
 use App\Models\CustomEmoji;
 use App\Models\Status;
 use App\Services\BookmarkService;
+use App\Services\ExtraFieldsService;
 use App\Services\HashidService;
 use App\Services\LikeService;
 use App\Services\MediaService;
@@ -20,12 +21,15 @@ use League\Fractal;
 
 class StatusTransformer extends Fractal\TransformerAbstract
 {
-    public function transform(Status $status)
+    public function transform(Status $status): array
     {
         $pid = request()->user()->profile_id;
         $taggedPeople = MediaTagService::get($status->id);
         $poll = $status->type === 'poll' ? PollService::get($status->id, $pid) : null;
-        $content = $status->caption ? nl2br(Autolink::create()->autolink($status->caption)) : '';
+        // Remote posts keep the HTML they arrived with, so the link targets survive
+        $content = $status->local || ! $status->rendered
+            ? ($status->caption ? nl2br(Autolink::create()->autolink($status->caption)) : '')
+            : $status->rendered;
 
         $res = [
             '_v' => 1,
@@ -74,8 +78,7 @@ class StatusTransformer extends Fractal\TransformerAbstract
             'pinned' => (bool) $status->pinned_order,
         ];
 
-
-        $extra = app(\App\Services\ExtraFieldsService::class)->getStatusExtraFields($status);
+        $extra = app(ExtraFieldsService::class)->getStatusExtraFields($status);
 
         return array_merge($res, $extra);
     }

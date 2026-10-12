@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Util\ActivityPub\Helpers;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use League\Uri\BaseUri;
 use Psr\Http\Message\ResponseInterface;
@@ -26,11 +27,11 @@ use Psr\Http\Message\ResponseInterface;
  */
 class SecureMediaFetchService
 {
-    private const MAX_REDIRECTS = 2;
+    private const int MAX_REDIRECTS = 2;
 
-    private const CONNECT_TIMEOUT = 5;
+    private const int CONNECT_TIMEOUT = 5;
 
-    private const TIMEOUT = 15;
+    private const int TIMEOUT = 15;
 
     /**
      * Perform a HEAD request through the pinned, validated path.
@@ -76,9 +77,10 @@ class SecureMediaFetchService
         // Host of the original request. Caller-supplied headers (e.g. an
         // Authorization bearer token) are only sent to this host and are
         // stripped on any cross-origin redirect hop, mirroring Guzzle's
-        // RedirectMiddleware credential-stripping behaviour.
-        $originHost = parse_url($url, PHP_URL_HOST);
-        $originHost = is_string($originHost) ? strtolower($originHost) : null;
+        // RedirectMiddleware credential-stripping behaviour. Captured from
+        // the first validated hop so the comparison uses the same host
+        // normalization (case, trailing dot, IDN punycode) as every hop.
+        $originHost = null;
 
         for ($redirects = 0; $redirects <= self::MAX_REDIRECTS; $redirects++) {
             $currentUrl = Helpers::validateUrl($currentUrl);
@@ -95,10 +97,23 @@ class SecureMediaFetchService
                 return false;
             }
 
+            // validateUrl() already rebuilt the url with a normalized host,
+            // but normalize again so the origin comparison is defensive and
+            // uses identical case/trailing-dot/punycode rules on every hop.
+            $host = Helpers::normalizeHostLoose($host);
+
+            if (! $host) {
+                return false;
+            }
+
+            if ($originHost === null) {
+                $originHost = $host;
+            }
+
             // Only forward caller headers when the current hop is the same host
             // as the original request; drop them across origins.
             $headers = ['User-Agent' => self::userAgent()];
-            if (! empty($extraHeaders) && strtolower((string) $host) === $originHost) {
+            if (! empty($extraHeaders) && $host === $originHost) {
                 $headers = array_merge($extraHeaders, $headers);
             }
 
@@ -111,34 +126,13 @@ class SecureMediaFetchService
             }
 
             try {
-                $res = Http::withOptions([
-                    'allow_redirects' => false,
-                    'sink' => null,
-                    'curl' => [
-                        CURLOPT_RESOLVE => [
-                            $this->buildResolveEntry($host, (int) $port, $ips),
-                        ],
-                        CURLOPT_FRESH_CONNECT => true,
-                        CURLOPT_FORBID_REUSE => true,
-                        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-                        CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
-                    ],
-                    'on_headers' => function (ResponseInterface $response) use ($maxBytes) {
-                        $length = $response->getHeaderLine('Content-Length');
-                        if ($length !== '' && ctype_digit($length) && (int) $length > $maxBytes) {
-                            throw new \RuntimeException('Remote media exceeds maximum size');
-                        }
-                    },
-                ])
-                    ->withHeaders($headers)
-                    ->timeout(self::TIMEOUT)
-                    ->connectTimeout(self::CONNECT_TIMEOUT)
-                    ->{$method}($currentUrl);
-            } catch (RequestException $e) {
-                return false;
-            } catch (ConnectionException $e) {
-                return false;
-            } catch (\Throwable $e) {
+                $res = $this->send($method, $currentUrl, $host, (int) $port, $ips, $headers, $maxBytes);
+
+                if ($method === 'head' && $this->shouldProbe($res)) {
+                    $res = $this->send('get', $currentUrl, $host, (int) $port, $ips, array_merge($headers, ['Range' => 'bytes=0-0']), $maxBytes, true);
+                    $res->close();
+                }
+            } catch (RequestException|ConnectionException|\Throwable) {
                 return false;
             }
 
@@ -165,10 +159,7 @@ class SecureMediaFetchService
             }
 
             $mime = $this->normalizeMime($res->header('Content-Type'));
-            $declaredLength = $res->header('Content-Length');
-            $declaredLength = ($declaredLength !== null && ctype_digit((string) $declaredLength))
-                ? (int) $declaredLength
-                : null;
+            $declaredLength = $this->declaredLength($res);
 
             if ($method === 'head') {
                 if ($declaredLength === null || $mime === null) {
@@ -206,6 +197,65 @@ class SecureMediaFetchService
         return false;
     }
 
+    protected function send(string $method, string $url, string $host, int $port, array $ips, array $headers, int $maxBytes, bool $stream = false): Response
+    {
+        return Http::withOptions([
+            'allow_redirects' => false,
+            'sink' => null,
+            'stream' => $stream,
+            'curl' => [
+                CURLOPT_RESOLVE => [
+                    $this->buildResolveEntry($host, $port, $ips),
+                ],
+                CURLOPT_FRESH_CONNECT => true,
+                CURLOPT_FORBID_REUSE => true,
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+                CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+            ],
+            'on_headers' => function (ResponseInterface $response) use ($maxBytes) {
+                $length = $response->getHeaderLine('Content-Length');
+                if ($length !== '' && ctype_digit($length) && (int) $length > $maxBytes) {
+                    throw new \RuntimeException('Remote media exceeds maximum size');
+                }
+            },
+        ])
+            ->withHeaders($headers)
+            ->timeout(self::TIMEOUT)
+            ->connectTimeout(self::CONNECT_TIMEOUT)
+            ->{$method}($url);
+    }
+
+    protected function shouldProbe(Response $res): bool
+    {
+        if (in_array($res->status(), [403, 405, 501], true)) {
+            return true;
+        }
+
+        if (! $res->successful()) {
+            return false;
+        }
+
+        return $this->declaredLength($res) === null
+            || $this->normalizeMime($res->header('Content-Type')) === null;
+    }
+
+    protected function declaredLength(Response $res): ?int
+    {
+        if ($res->status() === 206) {
+            $range = trim((string) $res->header('Content-Range'));
+
+            if (preg_match('#^bytes\s+\d+-\d+/(\d+)$#i', $range, $matches)) {
+                return (int) $matches[1];
+            }
+
+            return null;
+        }
+
+        $length = (string) $res->header('Content-Length');
+
+        return ctype_digit($length) ? (int) $length : null;
+    }
+
     protected function buildResolveEntry(string $host, int $port, array $ips): string
     {
         $addresses = array_map(function ($ip) {
@@ -227,7 +277,7 @@ class SecureMediaFetchService
             $resolved = (string) BaseUri::from($baseUrl)->resolve($location);
 
             return Helpers::validateUrl($resolved) ? $resolved : null;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return null;
         }
     }

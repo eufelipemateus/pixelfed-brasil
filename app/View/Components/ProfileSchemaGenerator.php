@@ -2,15 +2,13 @@
 
 namespace App\View\Components;
 
+use App\Models\Profile;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Models\Profile;
 
 class ProfileSchemaGenerator extends Component
 {
-
-
     /**
      * Create a new component instance.
      */

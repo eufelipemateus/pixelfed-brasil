@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StatusEnums;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -12,7 +13,7 @@ class StoreUserAppSettings extends FormRequest
      */
     public function authorize(): bool
     {
-        if (! $this->user() || $this->user()->status !== \App\Enums\StatusEnums::ACTIVE) {
+        if (! $this->user() || $this->user()->status !== StatusEnums::ACTIVE) {
             return false;
         }
 

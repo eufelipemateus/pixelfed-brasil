@@ -77,12 +77,13 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             NetworkTimelineService::del($status->id);
             StatusService::del($status->id, true);
             Bookmark::whereStatusId($status->id)->delete();
-            Notification::whereItemType(Status::class)
+            Notification::whereIn('item_type', ['App\Status', Status::class])
                 ->whereItemId($status->id)
                 ->forceDelete();
             DirectMessage::whereStatusId($status->id)->get()->each(function ($dm) {
                 DirectMessageService::deleteDm($dm);
             });
+            app(DirectMessageService::class)->deleteByStatusId($status->id);
             Like::whereStatusId($status->id)->forceDelete();
             MediaTag::whereStatusId($status->id)->delete();
             $media = Media::whereStatusId($status->id)->get();
@@ -97,7 +98,7 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
                 MediaDeletePipeline::dispatch($m)->onQueue('mmo');
             });
             Mention::whereStatusId($status->id)->forceDelete();
-            Report::whereObjectType(Status::class)->whereObjectId($status->id)->delete();
+            Report::whereIn('object_type', ['App\Status', Status::class])->whereObjectId($status->id)->delete();
             // Model-based delete so StatusHashtagObserver::deleted() runs and
             // decrements hashtags.cached_count (a query-builder delete bypasses it).
             StatusHashtag::whereStatusId($status->id)->get()->each->delete();
@@ -108,7 +109,5 @@ class DeleteRemoteStatusPipeline implements ShouldQueue
             Log::warning("DeleteRemoteStatusPipeline: Failed to delete status {$status->id}: ".$e->getMessage());
             throw $e;
         }
-
-        return 1;
     }
 }

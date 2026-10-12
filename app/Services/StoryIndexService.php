@@ -13,7 +13,7 @@ class StoryIndexService
 {
     public const STORY_TTL = 86400;
 
-    private const REBUILD_LOCK_TTL = 300;
+    private const int REBUILD_LOCK_TTL = 300;
 
     private function authorKey($authorId)
     {
@@ -258,6 +258,21 @@ class StoryIndexService
         Redis::expire($key, $finalTtl);
     }
 
+    public function incrementViewCount(string|int $storyId, int $by = 1): void
+    {
+        $key = $this->storyKey($storyId);
+
+        if (! $this->redisBool(fn () => Redis::exists($key))) {
+            return;
+        }
+
+        Redis::hincrby($key, 'view_count', $by);
+
+        if (! $this->redisBool(fn () => Redis::hexists($key, 'id'))) {
+            Redis::del($key);
+        }
+    }
+
     /**
      * Keep the cached following set in sync when a follow is created.
      * Only touches the key if it already exists; otherwise the next carousel
@@ -391,12 +406,27 @@ class StoryIndexService
 
     private function clearStoryCache(): void
     {
+        $lockKey = $this->rebuildLockKey();
+        $prefix = (string) config('database.redis.options.prefix');
+
         $storyKeys = $this->redisArray(fn () => Redis::keys('story:*'));
-        $storyKeys = array_filter($storyKeys, function ($key) {
-            return ! str_contains($key, 'following:');
+        $storyKeys = array_filter($storyKeys, function ($key) use ($lockKey) {
+            // Never delete follower carousels or the rebuild mutex itself, or we
+            // release the lock rebuildIndex() is holding.
+            return ! str_contains($key, 'following:')
+                && ! str_contains($key, $lockKey);
         });
 
         if (! empty($storyKeys)) {
+            // Redis::keys() returns prefixed key names, but Redis::del() re-adds
+            // the prefix. Strip it so del() targets the real keys instead of a
+            // double-prefixed no-op.
+            if ($prefix !== '') {
+                $storyKeys = array_map(function ($key) use ($prefix) {
+                    return str_starts_with($key, $prefix) ? substr($key, strlen($prefix)) : $key;
+                }, $storyKeys);
+            }
+
             $chunks = array_chunk($storyKeys, 1000);
             foreach ($chunks as $chunk) {
                 Redis::del(...$chunk);
@@ -471,7 +501,7 @@ class StoryIndexService
                         }
                     }
                 } else {
-                    $authorIds = array_filter($active, fn ($aid) => $this->redisBool(fn () => Redis::sismember("following:{$pid}", $aid)));
+                    $authorIds = array_filter($active, fn ($aid): bool => $this->redisBool(fn () => Redis::sismember("following:{$pid}", $aid)));
                 }
             }
         } else {
@@ -574,7 +604,7 @@ class StoryIndexService
                 'is_author' => $isAuthor,
                 'stories' => collect($storyItems)->sortBy('id')->values()->all(),
                 'url' => $url,
-                'hasViewed' => collect($storyItems)->every(fn ($s) => $s['viewed'] === true),
+                'hasViewed' => collect($storyItems)->every(fn ($s): bool => $s['viewed'] === true),
                 '_latest_ts' => $authorLatestTs[$aid] ?? 0,
             ];
         }
@@ -605,7 +635,7 @@ class StoryIndexService
         $following = DB::table('followers')
             ->where('profile_id', $viewerId)
             ->pluck('following_id')
-            ->map(fn ($id) => (string) $id)
+            ->map(fn ($id): string => (string) $id)
             ->toArray();
 
         $authorIds = array_merge([(string) $viewerId], $following);
@@ -700,7 +730,7 @@ class StoryIndexService
             ->orderBy('id')
             ->chunk(1000, function ($followers) use ($followingKey, &$hasResults) {
                 $hasResults = true;
-                $ids = $followers->map(fn ($f) => (string) $f->following_id)->all();
+                $ids = $followers->map(fn ($f): string => (string) $f->following_id)->all();
                 if (! empty($ids)) {
                     Redis::sadd($followingKey, ...$ids);
                 }

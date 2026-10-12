@@ -9,27 +9,44 @@ use Illuminate\View\Component;
 class StatusSchemaGenerator extends Component
 {
     public $type;
+
     public $url;
+
     public $creator;
+
     public $creatorUrl;
+
     public $caption;
+
     public $publishedAt;
+
     public $siteName;
+
     public $siteLogo;
 
     // Campos adicionais
     public $license;
+
     public $acquireLicensePage;
+
     public $creditText;
+
     public $copyrightNotice;
+
     public $locationName;
 
     public $name;
+
     public $description;
+
     public $duration;
+
     public $thumbnail;
+
     public $embedUrl;
+
     public $views;
+
     public $regionsAllowed;
 
     public function __construct(
@@ -37,10 +54,10 @@ class StatusSchemaGenerator extends Component
         $url,
         $creator,
         $creatorUrl,
-        $caption = "",
+        $caption = '',
         $publishedAt = null,
-        $siteName = "Pixelfed Brasil",
-        $siteLogo = "/logo.png",
+        $siteName = 'Pixelfed Brasil',
+        $siteLogo = '/logo.png',
         // Imagem
         $license = null,
         $acquireLicensePage = null,
