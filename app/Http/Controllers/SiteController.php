@@ -187,7 +187,7 @@ class SiteController extends Controller
 
     public function app(): string
     {
-        return Cache::remember('site.app:'.app()->getLocale(), now()->addMinutes(15), fn () => view('site.app')->render());
+        return Cache::remember('site.app_v2:'.app()->getLocale(), now()->addMinutes(15), fn () => view('site.app')->render());
     }
 
     public function curatedOnboarding(Request $request): RedirectResponse|View
