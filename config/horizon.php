@@ -282,7 +282,7 @@ return [
             'memory' => env('HORIZON_SUPERVISOR_MEMORY', 64),
             'tries' => env('HORIZON_SUPERVISOR_TRIES', 3),
             'nice' => env('HORIZON_SUPERVISOR_NICE', 0),
-            'timeout' => env('HORIZON_SUPERVISOR_TIMEOUT', 300),
+            'timeout' => env('HORIZON_SUPERVISOR_TIMEOUT', 3600),
         ],
     ],
 

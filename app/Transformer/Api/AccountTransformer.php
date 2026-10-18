@@ -76,6 +76,7 @@ class AccountTransformer extends Fractal\TransformerAbstract
             'pronouns' => PronounService::get($profile->id),
             'location' => $profile->location,
             'has_story' => app(StoryIndexService::class)->hasActiveStory($profile->id),
+            'label' => $local ? $profile->label : null,
         ];
 
         $moved = $this->resolveMoved($profile);
