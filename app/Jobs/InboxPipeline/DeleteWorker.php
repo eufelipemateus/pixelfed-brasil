@@ -4,6 +4,7 @@ namespace App\Jobs\InboxPipeline;
 
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Models\Profile;
+use App\Services\InstanceActivityService;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Bus\Queueable;
@@ -22,6 +23,8 @@ class DeleteWorker implements ShouldQueue
     protected $payload;
 
     protected $inboxPath = '/f/inbox';
+
+    protected ?string $verifiedActorDomain = null;
 
     public $timeout = 300;
 
@@ -82,6 +85,12 @@ class DeleteWorker implements ShouldQueue
             return;
         }
 
+        if (! $this->verifySignature($headers, $payload)) {
+            return;
+        }
+
+        InstanceActivityService::record($this->verifiedActorDomain);
+
         if (
             $payload['type'] === 'Delete' &&
             ((is_string($payload['object']) &&
@@ -93,37 +102,24 @@ class DeleteWorker implements ShouldQueue
                 ))
         ) {
             $actor = $payload['actor'];
-            if ($this->verifySignature($headers, $payload) == true) {
-                $actorDelete = Profile::whereRemoteUrl($actor)->exists();
-                if ($actorDelete) {
-                    if ($this->verifySignature($headers, $payload) == true) {
-                        $profile = Profile::whereNotNull('domain')
-                            ->whereNull('status')
-                            ->whereRemoteUrl($actor)
-                            ->first();
-                        if ($profile) {
-                            DeleteRemoteProfilePipeline::dispatch($profile)->onQueue('inbox');
-                        }
-
-                        return;
-                    }
-
-                    // Signature verification failed, exit.
-                    return;
+            $actorDelete = Profile::whereRemoteUrl($actor)->exists();
+            if ($actorDelete) {
+                $profile = Profile::whereNotNull('domain')
+                    ->whereNull('status')
+                    ->whereRemoteUrl($actor)
+                    ->first();
+                if ($profile) {
+                    DeleteRemoteProfilePipeline::dispatch($profile)->onQueue('inbox');
                 }
 
-                // Remote user doesn't exist, exit early.
                 return;
             }
 
+            // Remote user doesn't exist, exit early.
             return;
         }
         $profile = null;
-        if ($this->verifySignature($headers, $payload) == true) {
-            ActivityHandler::dispatch($headers, $profile, $payload)->onQueue('delete');
-
-            return;
-        }
+        ActivityHandler::dispatch($headers, $profile, $payload)->onQueue('delete');
     }
 
     protected function verifySignature($headers, $payload)
@@ -199,6 +195,8 @@ class DeleteWorker implements ShouldQueue
         }
         [$verified, $headers] = HttpSignature::verify($pkey, $signatureData, $headers, $this->inboxPath, $body);
         if ($verified == 1) {
+            $this->verifiedActorDomain = strtolower($keyDomain);
+
             return true;
         }
 

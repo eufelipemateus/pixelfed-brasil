@@ -51,6 +51,7 @@ if ((bool) config('scheduledtasks.account_storage_reconcile')) {
 }
 
 $schedule->command('app:instance-update-total-local-posts')->twiceDailyAt(1, 13, 45)->onOneServer();
+$schedule->command('instances:purge-inactive')->dailyAt('04:00')->withoutOverlapping()->onOneServer();
 $schedule->command('app:update-pages-view-statitics')->everyTenMinutes()->onOneServer();
 $schedule->command('app:desactive-inactive-account')->weeklyOn(6, '03:00')->onOneServer();
 

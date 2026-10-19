@@ -93,6 +93,12 @@ return [
 
     'migration' => env('PF_ACCT_MIGRATION_ENABLED', true),
 
+    'purge_inactive_after_years' => env('PURGE_INACTIVE_INSTANCES_AFTER_YEARS', 2),
+    'purge_inactive_grace_days' => env('PURGE_INACTIVE_INSTANCES_GRACE_DAYS', 30),
+    'purge_inactive_profiles_per_run' => env('PURGE_INACTIVE_INSTANCES_PROFILES_PER_RUN', 100),
+    'purge_inactive_profile_retention_days' => env('PURGE_INACTIVE_PROFILE_RETENTION_DAYS', 30),
+    'purge_inactive_profile_retry_hours' => env('PURGE_INACTIVE_PROFILE_RETRY_HOURS', 24),
+
     'url_validation' => [
 
         /*

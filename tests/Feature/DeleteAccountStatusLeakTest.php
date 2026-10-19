@@ -66,6 +66,24 @@ it('dispatches deletion for every status when a remote profile is deleted', func
     expect(Status::whereProfileId($pid)->count())->toBe(0);
 });
 
+it('physically removes statuses that were already soft deleted', function () {
+    $profile = Profile::factory()->remote()->create([
+        'domain' => 'remote.example',
+        'private_key' => null,
+    ]);
+    $status = Status::factory()->create([
+        'profile_id' => $profile->id,
+        'type' => 'text',
+        'scope' => 'public',
+        'local' => false,
+    ]);
+    $status->delete();
+
+    (new DeleteRemoteProfilePipeline($profile))->handle();
+
+    expect(Status::withTrashed()->find($status->id))->toBeNull();
+});
+
 it('force-deletes every notification tied to a deleted remote profile', function () {
     $profile = Profile::factory()->remote()->create([
         'domain' => 'remote.example',

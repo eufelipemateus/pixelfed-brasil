@@ -3,14 +3,13 @@
 namespace App\Jobs\DeletePipeline;
 
 use App\Enums\StatusEnums;
+use App\Jobs\InstancePipeline\FinalizePurgeInactiveProfileJob;
 use App\Jobs\StatusPipeline\RemoteStatusDelete;
-use App\Models\Avatar;
 use App\Models\Conversation;
 use App\Models\DirectMessage;
 use App\Models\Follower;
 use App\Models\FollowRequest;
 use App\Models\Like;
-use App\Models\Media;
 use App\Models\MediaTag;
 use App\Models\Mention;
 use App\Models\Notification;
@@ -26,18 +25,22 @@ use App\Models\StoryView;
 use App\Models\UserFilter;
 use App\Services\AccountService;
 use App\Services\DirectMessageService;
+use App\Services\InstancePurgeService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class DeleteRemoteProfilePipeline implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $profile;
+
+    protected ?int $purgeInstanceId = null;
 
     public $timeout = 900;
 
@@ -47,9 +50,10 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(Profile $profile)
+    public function __construct(Profile $profile, ?int $purgeInstanceId = null)
     {
         $this->profile = $profile;
+        $this->purgeInstanceId = $purgeInstanceId;
     }
 
     public function handle()
@@ -69,6 +73,18 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
             return null;
         }
 
+        if ($this->purgeInstanceId !== null && ! $this->purgeIsAuthorizedFor($profile)) {
+            InstancePurgeService::releaseProfileClaim($pid, $this->purgeInstanceId);
+
+            Log::info('DeleteRemoteProfilePipeline: purge cancelado após revalidação', [
+                'instance_id' => $this->purgeInstanceId,
+                'profile_id' => $pid,
+                'domain' => $profile->domain,
+            ]);
+
+            return null;
+        }
+
         $profile->status = StatusEnums::DELETE_QUEUE;
         $profile->save();
 
@@ -77,10 +93,11 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         // Delete statuses. chunkById, not chunk: RemoteStatusDelete
         // soft-deletes the rows it is handed, so OFFSET paging would skip rows
         // as the live set shrinks. Keyset paging on the monotonic id is stable.
-        Status::whereProfileId($pid)
+        Status::withTrashed()
+            ->whereProfileId($pid)
             ->chunkById(50, function ($statuses) {
                 foreach ($statuses as $status) {
-                    RemoteStatusDelete::dispatch($status)->onQueue('delete');
+                    RemoteStatusDelete::dispatch($status, $this->purgeInstanceId)->onQueue('delete');
                 }
             });
 
@@ -95,7 +112,9 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         Poll::whereProfileId($pid)->delete();
 
         // Delete Avatar
-        $profile->avatar->forceDelete();
+        if ($profile->avatar && $profile->avatar->exists) {
+            $profile->avatar->forceDelete();
+        }
 
         // Delete media tags
         MediaTag::whereProfileId($pid)->delete();
@@ -165,8 +184,44 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         Report::whereProfileId($pid)->orWhere('reported_profile_id', $pid)->forceDelete();
 
         // Delete profile
-        Profile::findOrFail($profile->id)->delete();
+        $storedProfile = Profile::withTrashed()->findOrFail($profile->id);
+        if (! $storedProfile->trashed()) {
+            $storedProfile->delete();
+        }
+
+        if ($this->purgeInstanceId !== null) {
+            FinalizePurgeInactiveProfileJob::dispatch($pid, $this->purgeInstanceId)
+                ->delay(now()->addMinutes(10))
+                ->onQueue('delete');
+        }
 
         return 1;
+    }
+
+    private function purgeIsAuthorizedFor(Profile $profile): bool
+    {
+        return InstancePurgeService::isPurgeAuthorizedForProfile(
+            $this->purgeInstanceId,
+            $profile->id
+        );
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        if ($this->purgeInstanceId !== null && $this->profile) {
+            InstancePurgeService::recordProfileFailure(
+                $this->profile->id,
+                $this->purgeInstanceId,
+                $exception
+            );
+        }
+
+        Log::error('DeleteRemoteProfilePipeline: exclusão do perfil falhou', [
+            'instance_id' => $this->purgeInstanceId,
+            'profile_id' => $this->profile?->id,
+            'attempt' => $this->attempts(),
+            'exception_class' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+        ]);
     }
 }

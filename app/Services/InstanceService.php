@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Instance;
+use App\Models\InstanceModerationRule;
 use App\Util\Media\Blurhash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -45,21 +46,36 @@ class InstanceService
     public static function getBannedDomains()
     {
         return Cache::remember(self::CACHE_KEY_BANNED_DOMAINS, 1209600, function () {
-            return Instance::whereBanned(true)->pluck('domain')->toArray();
+            return Instance::whereBanned(true)
+                ->pluck('domain')
+                ->merge(InstanceModerationRule::whereBanned(true)->pluck('domain'))
+                ->unique()
+                ->values()
+                ->toArray();
         });
     }
 
     public static function getUnlistedDomains()
     {
         return Cache::remember(self::CACHE_KEY_UNLISTED_DOMAINS, 1209600, function () {
-            return Instance::whereUnlisted(true)->pluck('domain')->toArray();
+            return Instance::whereUnlisted(true)
+                ->pluck('domain')
+                ->merge(InstanceModerationRule::whereUnlisted(true)->pluck('domain'))
+                ->unique()
+                ->values()
+                ->toArray();
         });
     }
 
     public static function getNsfwDomains()
     {
         return Cache::remember(self::CACHE_KEY_NSFW_DOMAINS, 1209600, function () {
-            return Instance::whereAutoCw(true)->pluck('domain')->toArray();
+            return Instance::whereAutoCw(true)
+                ->pluck('domain')
+                ->merge(InstanceModerationRule::whereAutoCw(true)->pluck('domain'))
+                ->unique()
+                ->values()
+                ->toArray();
         });
     }
 
@@ -83,8 +99,8 @@ class InstanceService
             return [
                 'total_count' => Instance::count(),
                 'new_count' => Instance::where('created_at', '>', now()->subDays(14))->count(),
-                'banned_count' => Instance::whereBanned(true)->count(),
-                'nsfw_count' => Instance::whereAutoCw(true)->count(),
+                'banned_count' => count(self::getBannedDomains()),
+                'nsfw_count' => count(self::getNsfwDomains()),
             ];
         });
     }

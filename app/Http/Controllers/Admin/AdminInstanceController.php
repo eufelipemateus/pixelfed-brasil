@@ -267,9 +267,9 @@ trait AdminInstanceController
         return response()->streamDownload(function () {
             $json = [
                 'version' => 1,
-                'auto_cw' => Instance::whereAutoCw(true)->pluck('domain')->toArray(),
-                'unlisted' => Instance::whereUnlisted(true)->pluck('domain')->toArray(),
-                'banned' => Instance::whereBanned(true)->pluck('domain')->toArray(),
+                'auto_cw' => InstanceService::getNsfwDomains(),
+                'unlisted' => InstanceService::getUnlistedDomains(),
+                'banned' => InstanceService::getBannedDomains(),
                 'created_at' => now()->format('c'),
             ];
             $chk = hash('sha256', json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
