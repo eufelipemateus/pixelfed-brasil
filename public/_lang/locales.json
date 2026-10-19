@@ -177,7 +177,7 @@
     {
         "code": "ku-TR",
         "name": "Kurdish (Türkiye)",
-        "nativeName": "kurdî (kurmancî) (Tirkiye)"
+        "nativeName": "kurdî (kurmancî) (Tirkîye)"
     },
     {
         "code": "lo-LA",
@@ -258,6 +258,11 @@
         "code": "pl-PL",
         "name": "Polish (Poland)",
         "nativeName": "polski (Polska)"
+    },
+    {
+        "code": "pt-BR",
+        "name": "Portuguese (Brazil)",
+        "nativeName": "português (Brasil)"
     },
     {
         "code": "pt-PT",
