@@ -2,22 +2,24 @@
 
 namespace App\Jobs\MentionPipeline;
 
-use App\Mention;
-use App\Notification;
-use App\Status;
-use App\User;
+use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
+use App\Models\Mention;
+use App\Models\Notification;
+use App\Models\Profile;
+use App\Models\Status;
+use App\Models\User;
+use App\Notifications\MentionNotification;
+use App\Services\AccountService;
+use App\Services\NotificationAppGatewayService;
+use App\Services\NotificationService;
+use App\Services\PushNotificationService;
+use App\Services\StatusService;
+use App\Services\UserFilterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Jobs\PushNotificationPipeline\MentionPushNotifyPipeline;
-use App\Services\NotificationAppGatewayService;
-use App\Services\PushNotificationService;
-use App\Services\StatusService;
-use App\Services\AccountService;
-use App\Notifications\MentionNotification;
-use App\Profile;
 use Illuminate\Support\Facades\Log;
 
 class MentionPipeline implements ShouldQueue
@@ -25,6 +27,7 @@ class MentionPipeline implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $status;
+
     protected $mention;
 
     /**
@@ -56,14 +59,16 @@ class MentionPipeline implements ShouldQueue
         $mention = $this->mention;
 
         // Verify status exists
-        if (!$status) {
-            Log::info("MentionPipeline: Status no longer exists, skipping job");
+        if (! $status) {
+            Log::info('MentionPipeline: Status no longer exists, skipping job');
+
             return;
         }
 
         // Verify mention exists
-        if (!$mention) {
-            Log::info("MentionPipeline: Mention no longer exists, skipping job");
+        if (! $mention) {
+            Log::info('MentionPipeline: Mention no longer exists, skipping job');
+
             return;
         }
 
@@ -71,39 +76,42 @@ class MentionPipeline implements ShouldQueue
         $target = $mention->profile_id;
 
         // Verify actor profile exists
-        if (!$actor) {
+        if (! $actor) {
             Log::info("MentionPipeline: Actor profile no longer exists for status {$status->id}, skipping job");
+
             return;
         }
 
         // Verify target profile ID exists
-        if (!$target) {
+        if (! $target) {
             Log::info("MentionPipeline: Target profile ID missing for mention {$mention->id}, skipping job");
+
+            return;
+        }
+
+        // Suppress the mention notification when the target has blocked the
+        // actor. This is the shared sink for every mention path (including AP
+        // ingest, which dispatches without a block check), so a blocked account
+        // could otherwise still ping and push-notify the target.
+        $blocks = UserFilterService::blocks($target);
+        if ($blocks && in_array($actor->id, $blocks)) {
             return;
         }
 
         $exists = Notification::whereProfileId($target)
-                  ->whereActorId($actor->id)
-                  ->whereIn('action', ['mention', 'comment'])
-                  ->whereItemId($status->id)
-                  ->whereItemType('App\Status')
-                  ->count();
+            ->whereActorId($actor->id)
+            ->whereIn('action', ['mention', 'comment'])
+            ->whereItemId($status->id)
+            ->whereItemType(Status::class)
+            ->count();
 
         if ($actor->id === $target || $exists !== 0) {
             return;
         }
 
-        Notification::firstOrCreate(
-            [
-                'profile_id' => $target,
-                'actor_id' => $actor->id,
-                'action' => 'mention',
-                'item_type' => 'App\Status',
-                'item_id' => $status->id,
-            ]
-        );
+        NotificationService::firstOrCreateNotification($target, $actor->id, 'mention', $status->id, Status::class);
 
-        if (!empty($target->user_id)  &&   AccountService::getAccountSettings($target)["send_email_on_mention"]) {
+        if (! empty($target->user_id) && AccountService::getAccountSettings($target)['send_email_on_mention']) {
             Profile::find($target)->user->notify(new MentionNotification($mention->profile_id, $status->id));
         }
 

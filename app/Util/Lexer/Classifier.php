@@ -8,170 +8,178 @@ use Illuminate\Support\Str;
 
 class Classifier
 {
-	/**
-	 * @var ?callable(string): array<int, string>
-	 */
-	private $tokenizer;
+    /**
+     * @var ?callable(string): array<int, string>
+     */
+    private $tokenizer;
 
-	/**
-	 * @var array<string, array<string, int>>
-	 */
-	private array $words = [];
+    /**
+     * @var array<string, array<string, int>>
+     */
+    private array $words = [];
 
-	/**
-	 * @var array<string, int>
-	 */
-	private array $documents = [];
+    /**
+     * @var array<string, int>
+     */
+    private array $documents = [];
 
-	private bool $uneven = false;
+    private bool $uneven = false;
 
-	/**
-	 * @param callable(string): array<int, string> $tokenizer
-	 */
-	public function setTokenizer(callable $tokenizer): void
-	{
-		$this->tokenizer = $tokenizer;
-	}
+    /**
+     * @param  callable(string): array<int, string>  $tokenizer
+     */
+    public function setTokenizer(callable $tokenizer): void
+    {
+        $this->tokenizer = $tokenizer;
+    }
 
-	/**
-	 * @return Collection<int, string>
-	 */
-	public function tokenize(string $string): Collection
-	{
-		if ($this->tokenizer) {
-			$tokens = call_user_func($this->tokenizer, $string);
+    /**
+     * @return Collection<int, string>
+     */
+    public function tokenize(string $string): Collection
+    {
+        $ignored = $this->ignoredTokens();
 
-			return collect($tokens);
-		}
+        if ($this->tokenizer) {
+            $tokens = call_user_func($this->tokenizer, $string);
 
-		return Str::of($string)
-			->lower()
-			->matchAll('/[[:alpha:]]+/u');
-	}
+            return collect($tokens)->reject(fn ($t) => in_array($t, $ignored, true))->values();
+        }
 
-	/**
-	 * @return $this
-	 */
-	public function learn(string $statement, string $type): self
-	{
-		foreach ($this->tokenize($statement) as $word) {
-			$this->incrementWord($type, $word);
-		}
+        return Str::matchAll('/[[:alpha:]]+/u', Str::lower($string))
+            ->reject(fn ($t) => in_array($t, $ignored, true))
+            ->values();
+    }
 
-		$this->incrementType($type);
+    /**
+     * Stop-words dropped from both training and inference for every class, so
+     * the spam and ham lexicons stay symmetric and stop-words never enter the
+     * likelihood product.
+     *
+     * @return array<int, string>
+     */
+    private function ignoredTokens(): array
+    {
+        $ignored = config('autospam.ignored_tokens');
 
-		return $this;
-	}
+        return $ignored ? explode(',', $ignored) : ['the', 'a', 'of', 'and'];
+    }
 
-	/**
-	 * @return Collection<string, string>
-	 */
-	public function guess(string $statement): Collection
-	{
-		$words = $this->tokenize($statement);
+    /**
+     * @return $this
+     */
+    public function learn(string $statement, string $type): self
+    {
+        foreach ($this->tokenize($statement) as $word) {
+            $this->incrementWord($type, $word);
+        }
 
-		return collect($this->documents)
-			->map(function ($count, string $type) use ($words) {
-				$likelihood = $this->pTotal($type);
+        $this->incrementType($type);
 
-				foreach ($words as $word) {
-					$likelihood *= $this->p($word, $type);
-				}
+        return $this;
+    }
 
-				return (string) BigDecimal::of($likelihood);
-			})
-			->sortDesc();
-	}
+    /**
+     * @return Collection<string, string>
+     */
+    public function guess(string $statement): Collection
+    {
+        $words = $this->tokenize($statement);
 
-	public function most(string $statement): string
-	{
-		/** @var string */
-		return $this->guess($statement)->keys()->first();
-	}
+        return collect($this->documents)
+            ->map(function ($count, string $type) use ($words) {
+                $likelihood = $this->pTotal($type);
 
-	/**
-	 * @return self
-	 */
-	public function uneven(bool $enabled = false): self
-	{
-		$this->uneven = $enabled;
+                foreach ($words as $word) {
+                    $likelihood *= $this->p($word, $type);
+                }
 
-		return $this;
-	}
+                return (string) BigDecimal::of((string) $likelihood);
+            })
+            ->sortDesc();
+    }
 
-	/**
-	 * Increment the document count for the type
-	 */
-	private function incrementType(string $type): void
-	{
-		if (! isset($this->documents[$type])) {
-			$this->documents[$type] = 0;
-		}
+    public function most(string $statement): string
+    {
+        /** @var string */
+        return $this->guess($statement)->keys()->first();
+    }
 
-		$this->documents[$type]++;
-	}
+    public function uneven(bool $enabled = false): self
+    {
+        $this->uneven = $enabled;
 
-	/**
-	 * Increment the word count for the given type
-	 */
-	private function incrementWord(string $type, string $word): void
-	{
-		$ignored = config('autospam.ignored_tokens');
-		if(!$ignored) {
-			$ignored = ['the', 'a', 'of', 'and'];
-		} else {
-			$ignored = explode(',', $ignored);
-		}
-		if ($type == 'spam' && in_array($word, $ignored)) {
-			return;
-		}
-		if (! isset($this->words[$type][$word])) {
-			$this->words[$type][$word] = 0;
-		}
+        return $this;
+    }
 
-		$this->words[$type][$word]++;
-	}
+    /**
+     * Increment the document count for the type
+     */
+    private function incrementType(string $type): void
+    {
+        if (! isset($this->documents[$type])) {
+            $this->documents[$type] = 0;
+        }
 
-	/**
-	 * @return float|int
-	 */
-	private function p(string $word, string $type)
-	{
-		$count = $this->words[$type][$word] ?? 0;
+        $this->documents[$type]++;
+    }
 
-		return ($count + 1) / (array_sum($this->words[$type]) + 1);
-	}
+    /**
+     * Increment the word count for the given type
+     */
+    private function incrementWord(string $type, string $word): void
+    {
+        // Stop-words are already dropped in tokenize() for every class, so no
+        // per-class filtering is needed here.
+        if (! isset($this->words[$type][$word])) {
+            $this->words[$type][$word] = 0;
+        }
 
-	/**
-	 * @return float|int
-	 */
-	private function pTotal(string $type)
-	{
-		return $this->uneven
-			? ($this->documents[$type] + 1) / (array_sum($this->documents) + 1)
-			: 1;
-	}
+        $this->words[$type][$word]++;
+    }
 
-	public function export()
-	{
-		$words = $this->words;
-		$words = collect($words)
-			->map(function($w) {
-				arsort($w);
-				return $w;
-			})
-			->all();
-		return json_encode([
-			'_ns' => 'https://pixelfed.org/ns/nlp',
-			'_v' => '1.0',
-			'documents' => $this->documents,
-			'words' => $words
-		], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
-	}
+    /**
+     * @return float|int
+     */
+    private function p(string $word, string $type)
+    {
+        $count = $this->words[$type][$word] ?? 0;
 
-	public function import($documents, $words)
-	{
-		$this->documents = $documents;
-		$this->words = $words;
-	}
+        return ($count + 1) / (array_sum($this->words[$type]) + 1);
+    }
+
+    /**
+     * @return float|int
+     */
+    private function pTotal(string $type)
+    {
+        return $this->uneven
+            ? ($this->documents[$type] + 1) / (array_sum($this->documents) + 1)
+            : 1;
+    }
+
+    public function export()
+    {
+        $words = $this->words;
+        $words = collect($words)
+            ->map(function ($w) {
+                arsort($w);
+
+                return $w;
+            })
+            ->all();
+
+        return json_encode([
+            '_ns' => 'https://pixelfed.org/ns/nlp',
+            '_v' => '1.0',
+            'documents' => $this->documents,
+            'words' => $words,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    }
+
+    public function import($documents, $words)
+    {
+        $this->documents = $documents;
+        $this->words = $words;
+    }
 }

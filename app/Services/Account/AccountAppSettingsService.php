@@ -2,11 +2,9 @@
 
 namespace App\Services\Account;
 
-use App\Models\UserAppSettings;
-
 class AccountAppSettingsService
 {
-    public static function default()
+    public static function default(): array
     {
         return [
             'timelines' => [
@@ -37,7 +35,7 @@ class AccountAppSettingsService
 
                 // App theme, can be 'light', 'dark' or 'system'
                 'theme' => 'system',
-            ]
+            ],
         ];
     }
 }

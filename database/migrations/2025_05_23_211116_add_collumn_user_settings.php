@@ -22,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-         Schema::table('user_settings', function (Blueprint $table) {
+        Schema::table('user_settings', function (Blueprint $table) {
             $table->dropColumn(['enable_translate']);
-         });
+        });
     }
 };

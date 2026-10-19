@@ -3,17 +3,12 @@
 namespace App\Services;
 
 use Aws\S3\S3Client;
-use Aws\S3\Exception\S3Exception;
-use GuzzleHttp\Exception\ConnectException;
 use League\Flysystem\AwsS3V3\AwsS3V3Adapter;
 use League\Flysystem\Filesystem;
-use League\Flysystem\UnableToRetrieveMetadata;
 use League\Flysystem\FilesystemException;
-use League\Flysystem\UnableToListContents;
-use League\Flysystem\FileAttributes;
-use League\Flysystem\UnableToWriteFile;
-use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToDeleteFile;
+use League\Flysystem\UnableToReadFile;
+use League\Flysystem\UnableToWriteFile;
 
 class FilesystemService
 {
@@ -28,7 +23,7 @@ class FilesystemService
             'credentials' => [
                 'key' => $key,
                 'secret' => $secret,
-            ]
+            ],
         ]);
 
         $adapter = new AwsS3V3Adapter(
@@ -40,42 +35,43 @@ class FilesystemService
         $filesystem = new Filesystem($adapter);
 
         $writable = false;
+        $res = [];
         try {
             $filesystem->write(self::VERIFY_FILE_NAME, 'ok', []);
             $writable = true;
-        } catch (FilesystemException | UnableToWriteFile $exception) {
+        } catch (FilesystemException|UnableToWriteFile $exception) {
             $writable = false;
         }
 
-        if(!$writable) {
+        if (! $writable) {
             return false;
         }
 
         try {
             $response = $filesystem->read(self::VERIFY_FILE_NAME);
-            if($response === 'ok') {
+            if ($response === 'ok') {
                 $writable = true;
                 $res[] = self::VERIFY_FILE_NAME;
             } else {
                 $writable = false;
             }
-        } catch (FilesystemException | UnableToReadFile $exception) {
+        } catch (FilesystemException|UnableToReadFile) {
             $writable = false;
         }
 
-        if(in_array(self::VERIFY_FILE_NAME, $res)) {
+        if (in_array(self::VERIFY_FILE_NAME, $res)) {
             try {
                 $filesystem->delete(self::VERIFY_FILE_NAME);
-            } catch (FilesystemException | UnableToDeleteFile $exception) {
+            } catch (FilesystemException|UnableToDeleteFile) {
                 $writable = false;
             }
         }
 
-        if(!$writable) {
+        if (! $writable) {
             return false;
         }
 
-        if(in_array(self::VERIFY_FILE_NAME, $res)) {
+        if (in_array(self::VERIFY_FILE_NAME, $res)) {
             return true;
         }
 

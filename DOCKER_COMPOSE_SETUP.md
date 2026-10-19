@@ -1,11 +1,11 @@
 # Pixelfed Docker Compose Setup with serversideup/php container
 
-This setup uses `serversideup/php:8.4-fpm-nginx` as the base image and is designed to work behind a reverse proxy like Cloudflare Tunnel, or Nginx (Proxy Manager) for HTTPS termination.
+This setup uses `serversideup/php:8.5-frankenphp` as the base image and is designed to work behind a reverse proxy like Cloudflare Tunnel, or Nginx (Proxy Manager) for HTTPS termination.
 
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- A reverse proxy (e.g., Nginx Proxy Manager) for HTTPS
+- A reverse proxy (e.g., Nginx Proxy Manager or Cloudflare tunnel) for HTTPS
 - Domain name
 - Email Provider for sending emails
 
@@ -54,6 +54,7 @@ This setup uses `serversideup/php:8.4-fpm-nginx` as the base image and is design
    docker compose exec pixelfed php artisan instance:actor
    docker compose exec pixelfed php artisan import:cities
    docker compose exec pixelfed php artisan passport:keys
+   docker compose exec pixelfed php artisan passport:client --personal
    ```
 
 6. **Create admin user:**

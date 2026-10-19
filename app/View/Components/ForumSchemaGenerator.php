@@ -2,27 +2,37 @@
 
 namespace App\View\Components;
 
+use App\Models\Status;
+use App\Services\StatusService;
 use Closure;
+use DateTime;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use App\Services\StatusService;
-use DateTime;
-use App\Status;
 
 class ForumSchemaGenerator extends Component
 {
-
     public string $datePublished;
+
     public string $mainEntityOfPage;
+
     public string $url;
+
     public ?string $headline = null;
+
     public ?string $articleBody = null;
+
     public ?array $creator = null;
+
     public ?array $video = null;
+
     public ?array $image = null;
+
     public int $totalLikes = 0;
+
     public int $totalComments = 0;
+
     public int $totalShares = 0;
+
     public array $comments = [];
 
     /**
@@ -33,19 +43,19 @@ class ForumSchemaGenerator extends Component
     ) {
         //
 
-        $original = $status['in_reply_to_id'] ?  StatusService::get($status['in_reply_to_id'])  :  $status;
+        $original = $status['in_reply_to_id'] ? StatusService::get($status['in_reply_to_id']) : $status;
 
-        $this->datePublished = ($status['created_at'] ?? (new \DateTime())->format(DATE_ATOM));
-        $this->mainEntityOfPage = $original['url'];
-        $this->url = $status['url'];
+        $this->datePublished = ($status['created_at'] ?? (new DateTime)->format(DATE_ATOM));
+        $this->mainEntityOfPage = $original['url'] ?? '';
+        $this->url = $status['url'] ?? '';
 
         $domain = '';
-        if (isset($original['account']) && isset($original['account']['url'])) {
-            $domain =  '@' . parse_url($original['account']['url'], PHP_URL_HOST);
+        if (isset($original['account']['url'])) {
+            $domain = '@'.parse_url($original['account']['url'], PHP_URL_HOST);
         }
 
         $username = $original['account']['username'] ?? 'desconhecido';
-        $this->headline = 'Imagem por @' . $username . $domain . ', via Pixelfed Brasil';
+        $this->headline = 'Imagem por @'.$username.$domain.', via Pixelfed Brasil';
         $this->articleBody = $original['content_text'] ?? '';
 
         $this->creator = [
@@ -53,60 +63,79 @@ class ForumSchemaGenerator extends Component
             'url' => $original['account']['url'] ?? null,
         ];
 
-        $mediaCount = $original['media_attachments'] && count($original['media_attachments']) ? count($original['media_attachments']) : 0;
+        $mediaCount = isset($original['media_attachments']) && is_array($original['media_attachments']) && count($original['media_attachments']) ? count($original['media_attachments']) : 0;
 
-        if ($mediaCount && ($original['pf_type'] === "photo" || $original['pf_type'] === "photo:album")) {
+        if (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === 'photo' || $original['pf_type'] === 'photo:album'))) {
             $this->getImage($original);
-        } elseif ($mediaCount && ($original['pf_type'] === "video" || $original['pf_type'] === "video:album")) {
+        } elseif (! ($original['sensitive'] ?? false) && $mediaCount && (isset($original['pf_type']) && ($original['pf_type'] === 'video' || $original['pf_type'] === 'video:album'))) {
             $this->getVideo($original);
             $this->getImage($original, true);
         }
 
+        $this->totalShares = $original['reblogs_count'] ?? 0;
+        $this->totalLikes = $original['favourites_count'] ?? 0;
+        $this->totalComments = $original['reply_count'] ?? 0;
 
-        $this->totalShares = $original['reblogs_count'];
-        $this->totalLikes = $original['favourites_count'];
-        $this->totalComments = $original['reply_count'];
-
-        $this->getComments($original['id'], $status['id']);
+        $this->getComments($original['id'] ?? null, $status['id'] ?? null);
     }
-
 
     public function getVideo($status)
     {
-        $this->video = count($status['media_attachments']) ?  [
-            "@type" => "VideoObject",
-            "contentUrl" => $status['media_attachments'][0]['url'],
-            "name" => $this->headline,
-            "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
-            "description" => $this->articleBody,
+        if ($status['sensitive'] ?? false) {
+            $this->video = null;
+
+            return;
+        }
+
+        $this->video = count($status['media_attachments']) ? [
+            '@type' => 'VideoObject',
+            'contentUrl' => $status['media_attachments'][0]['url'],
+            'name' => $this->headline,
+            'uploadDate' => (new DateTime($status['created_at']))->format(DateTime::ATOM),
+            'thumbnailUrl' => $status['media_attachments'][0]['preview_url'] ?? null,
+            'description' => $this->articleBody,
         ] : null;
     }
 
     public function getImage($status, $forceThumbnail = false)
     {
-        $this->image = count($status['media_attachments']) ?  [
-            "@type" => "ImageObject",
-            "contentUrl" => $forceThumbnail ? $status['media_attachments'][0]['preview_url'] : $status['media_attachments'][0]['url'],
-            "name" => $this->headline,
-            "uploadDate" => (new DateTime($status['created_at']))->format(DateTime::ATOM),
-            "thumbnailUrl" => $status['media_attachments'][0]['preview_url'] ?? null,
+        if ($status['sensitive'] ?? false) {
+            $this->image = null;
+
+            return;
+        }
+
+        $this->image = count($status['media_attachments']) ? [
+            '@type' => 'ImageObject',
+            'contentUrl' => $forceThumbnail ? $status['media_attachments'][0]['preview_url'] : $status['media_attachments'][0]['url'],
+            'name' => $this->headline,
+            'uploadDate' => (new DateTime($status['created_at']))->format(DateTime::ATOM),
+            'thumbnailUrl' => $status['media_attachments'][0]['preview_url'] ?? null,
         ] : null;
     }
 
     public function getComments($originalID, $statusID)
     {
-        $commentIds = Status::find($originalID)
+
+        $statusObj = $originalID ? Status::find($originalID) : null;
+        if (! $statusObj) {
+            $this->comments = [];
+
+            return;
+        }
+
+        $commentIds = $statusObj
             ->comments()
             ->limit(10)
             ->pluck('id');
 
         if ($commentIds->isEmpty()) {
             $this->comments = [];
+
             return;
         }
 
-        if ($statusID !== null && $statusID != $originalID && !$commentIds->contains($statusID)) {
+        if ($statusID !== null && $statusID != $originalID && ! $commentIds->contains($statusID)) {
             $commentIds->push($statusID);
         }
 
@@ -116,34 +145,34 @@ class ForumSchemaGenerator extends Component
 
         $this->comments = $commentsData->map(function ($comment) {
             return [
-                "@type" => "Comment",
-                "author" => [
-                    "@type" => "Person",
-                    "name" => $comment['account']['display_name']
+                '@type' => 'Comment',
+                'author' => [
+                    '@type' => 'Person',
+                    'name' => $comment['account']['display_name']
                         ?? $comment['account']['username']
                         ?? 'desconhecido',
-                    "url" => $comment['account']['url'] ?? null,
+                    'url' => $comment['account']['url'] ?? null,
                 ],
-                "datePublished" => (new DateTime($comment['created_at']))->format(DateTime::ATOM),
-                "url" => $comment['url'] ?? null,
-                "text" => $comment['content_text'] ?? '',
-                "interactionStatistic" => [
+                'datePublished' => (new DateTime($comment['created_at']))->format(DateTime::ATOM),
+                'url' => $comment['url'] ?? null,
+                'text' => $comment['content_text'] ?? '',
+                'interactionStatistic' => [
                     [
-                        "@type" => "InteractionCounter",
-                        "interactionType" => "https://schema.org/LikeAction",
-                        "userInteractionCount" => $comment['favourites_count'] ?? 0,
+                        '@type' => 'InteractionCounter',
+                        'interactionType' => 'https://schema.org/LikeAction',
+                        'userInteractionCount' => $comment['favourites_count'] ?? 0,
                     ],
                     [
-                        "@type" => "InteractionCounter",
-                        "interactionType" => "https://schema.org/ShareAction",
-                        "userInteractionCount" => $comment['reblogs_count'] ?? 0,
+                        '@type' => 'InteractionCounter',
+                        'interactionType' => 'https://schema.org/ShareAction',
+                        'userInteractionCount' => $comment['reblogs_count'] ?? 0,
                     ],
 
                     [
-                        "@type" => "InteractionCounter",
-                        "interactionType" => "https://schema.org/CommentAction",
-                        "userInteractionCount" => $comment['reply_count'] ?? 0,
-                    ]
+                        '@type' => 'InteractionCounter',
+                        'interactionType' => 'https://schema.org/CommentAction',
+                        'userInteractionCount' => $comment['reply_count'] ?? 0,
+                    ],
                 ],
             ];
         })->toArray();

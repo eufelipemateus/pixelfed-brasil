@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -50,18 +49,15 @@ return new class extends Migration
     {
         $suffix = 1;
 
-        while (DB::table('users')->where('username', $base . '_reserved_' . $suffix)->exists()) {
+        while (DB::table('users')->where('username', $base.'_reserved_'.$suffix)->exists()) {
             $suffix++;
         }
 
-        return $base . '_reserved_' . $suffix;
+        return $base.'_reserved_'.$suffix;
     }
 
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
-        return;
-    }
+    public function down(): void {}
 };

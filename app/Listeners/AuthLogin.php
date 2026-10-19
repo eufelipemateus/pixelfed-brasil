@@ -2,19 +2,14 @@
 
 namespace App\Listeners;
 
-use DB, Cache;
-use App\{
-    Follower,
-    Profile,
-    User,
-    UserDevice,
-    UserFilter,
-    UserSetting
-};
-use Illuminate\Queue\InteractsWithQueue;
-use App\Jobs\AvatarPipeline\CreateAvatar;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Enums\StatusEnums;
+use App\Jobs\AvatarPipeline\CreateAvatar;
+use App\Models\Profile;
+use App\Models\UserDevice;
+use App\Models\UserSetting;
+use App\Util\Localization\Localization;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AuthLogin
 {
@@ -28,7 +23,7 @@ class AuthLogin
     {
         $user = $event->user;
 
-        if(!$user) {
+        if (! $user) {
             return;
         }
 
@@ -43,20 +38,21 @@ class AuthLogin
     protected function userProfile($user)
     {
         if (empty($user->profile)) {
-            if($user->created_at->lt(now()->subDays(1)) && empty($user->status)) {
+            if ($user->created_at->lt(now()->subDays(1)) && $user->status === StatusEnums::ACTIVE) {
                 $p = Profile::withTrashed()->whereUserId($user->id)->first();
-                if($p) {
+                if ($p) {
                     $p->restore();
+
                     return;
                 }
             }
-            DB::transaction(function() use($user) {
+            DB::transaction(function () use ($user) {
                 $profile = Profile::firstOrCreate(['user_id' => $user->id]);
-                if($profile->wasRecentlyCreated == true) {
+                if ($profile->wasRecentlyCreated == true) {
                     $profile->username = $user->username;
                     $profile->name = $user->name;
                     $pkiConfig = [
-                        'digest_alg'       => 'sha512',
+                        'digest_alg' => 'sha512',
                         'private_key_bits' => 2048,
                         'private_key_type' => OPENSSL_KEYTYPE_RSA,
                     ];
@@ -79,9 +75,9 @@ class AuthLogin
     protected function userSettings($user)
     {
         if (empty($user->settings)) {
-            DB::transaction(function() use($user) {
+            DB::transaction(function () use ($user) {
                 UserSetting::firstOrCreate([
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
                 ]);
             });
         }
@@ -89,9 +85,9 @@ class AuthLogin
 
     protected function userState($user)
     {
-        if($user->status != StatusEnums::ACTIVE) {
+        if ($user->status !== StatusEnums::ACTIVE) {
             $profile = $user->profile;
-            if(!$profile) {
+            if (! $profile) {
                 return;
             }
             switch ($user->status) {
@@ -112,7 +108,7 @@ class AuthLogin
                     break;
 
                 default:
-                    # code...
+                    // code...
                     break;
             }
         }
@@ -120,21 +116,21 @@ class AuthLogin
 
     protected function userDevice($user)
     {
-        $device = DB::transaction(function() use($user) {
+        $device = DB::transaction(function () use ($user) {
             return UserDevice::firstOrCreate([
-                'user_id'       => $user->id,
-                'ip'            => request()->ip(),
-                'user_agent'    => str_limit(request()->userAgent(), 180),
+                'user_id' => $user->id,
+                'ip' => request()->ip(),
+                'user_agent' => Str::limit(request()->userAgent(), 180),
             ]);
         });
     }
 
     protected function userProfileId($user)
     {
-        if($user->profile_id == null) {
-            DB::transaction(function() use($user) {
+        if ($user->profile_id == null) {
+            DB::transaction(function () use ($user) {
                 $profile = $user->profile;
-                if($profile) {
+                if ($profile) {
                     $user->profile_id = $profile->id;
                     $user->save();
                 }
@@ -144,6 +140,6 @@ class AuthLogin
 
     protected function userLanguage($user)
     {
-        session()->put('locale', $user->language ?? config('app.locale'));
+        session()->put('locale', Localization::normalizeLocale($user->language ?? config('app.locale')));
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Util\Site;
 
+use App\Models\User;
 use App\Services\InstanceService;
-use App\User;
 use Illuminate\Support\Facades\Cache;
 
 class Nodeinfo
@@ -20,7 +20,7 @@ class Nodeinfo
 
             $statuses = InstanceService::totalLocalStatuses();
 
-            $features = ['features' => \App\Util\Site\Config::get()['features']];
+            $features = ['features' => Config::get()['features']];
             unset($features['features']['hls']);
 
             return [
@@ -31,6 +31,7 @@ class Nodeinfo
                         'repo' => 'https://github.com/eufelipemateus/pixelfed-brasil',
                     ],
                     'config' => $features,
+                    'localBubbleInstances' => ['felipemateus.com'],
                 ],
                 'protocols' => [
                     'activitypub',
@@ -40,7 +41,7 @@ class Nodeinfo
                     'outbound' => [],
                 ],
                 'software' => [
-                    'name' => 'pixelfed', /// Change to pixelfed-brasil
+                    'name' => 'pixelfed', // / Change to pixelfed-brasil
                     'version' => config('pixelfed.version'),
                 ],
                 'usage' => [
@@ -60,7 +61,7 @@ class Nodeinfo
         return $res;
     }
 
-    public static function wellKnown()
+    public static function wellKnown(): array
     {
         return [
             'links' => [
@@ -80,7 +81,7 @@ class Nodeinfo
                 ->whereNull('status')
                 ->where(function ($query) {
                     $query->where('updated_at', '>', now()->subWeeks(5))
-                    ->orWhere('last_active_at', '>', now()->subWeeks(5));
+                        ->orWhere('last_active_at', '>', now()->subWeeks(5));
                 })
                 ->count();
         });

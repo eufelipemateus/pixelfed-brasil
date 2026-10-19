@@ -2,20 +2,19 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Foundation\Events\Dispatchable;
+use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use App\User;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 class NewMention implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     protected $user;
+
     protected $data;
 
     /**
@@ -36,10 +35,10 @@ class NewMention implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return new PrivateChannel('App.User.' . $this->user->id);
+        return new PrivateChannel('App.User.'.$this->user->id);
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
         return ['id' => $this->user->id];
     }

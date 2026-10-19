@@ -2,24 +2,22 @@
 
 namespace App\Events\Notification;
 
+use App\Models\Status;
+use App\Transformer\Api\StatusTransformer;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use App\Status;
-use App\Transformer\Api\StatusTransformer;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
-use League\Fractal\Pagination\IlluminatePaginatorAdapter;
 
 class NewPublicPost implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     protected $status;
+
+    protected $fractal;
 
     /**
      * Create a new event instance.
@@ -29,6 +27,7 @@ class NewPublicPost implements ShouldBroadcastNow
     public function __construct(Status $status)
     {
         $this->status = $status;
+        $this->fractal = new Fractal\Manager;
     }
 
     public function broadcastAs()
@@ -41,12 +40,13 @@ class NewPublicPost implements ShouldBroadcastNow
         return new Channel('firehost.public');
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
-        $resource = new Fractal\Resource\Item($this->status, new StatusTransformer());
+        $resource = new Fractal\Resource\Item($this->status, new StatusTransformer);
         $res = $this->fractal->createData($resource)->toArray();
+
         return [
-            'entity' => $res
+            'entity' => $res,
         ];
     }
 

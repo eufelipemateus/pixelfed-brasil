@@ -3,12 +3,12 @@
 namespace App\Jobs\MovePipeline;
 
 use App\Util\ActivityPub\HttpSignature;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MoveSendUndoFollowPipeline implements ShouldQueue
@@ -72,22 +72,26 @@ class MoveSendUndoFollowPipeline implements ShouldQueue
         $actor = $this->actor;
 
         // Verify follower and actor exists
-        if (!$follower) {
-            Log::info("MoveSendUndoFollowPipeline: Follower no longer exists, skipping job");
+        if (! $follower) {
+            Log::info('MoveSendUndoFollowPipeline: Follower no longer exists, skipping job');
+
             return;
         }
-        if (!$actor) {
-            Log::info("MoveSendUndoFollowPipeline: Actor no longer exists, skipping job");
+        if (! $actor) {
+            Log::info('MoveSendUndoFollowPipeline: Actor no longer exists, skipping job');
+
             return;
         }
 
         // Verify follower username and private_key exists
         if (! $follower->username) {
-            Log::info("MoveSendUndoFollowPipeline: Follower may no longer exists, skipping job");
+            Log::info('MoveSendUndoFollowPipeline: Follower may no longer exists, skipping job');
+
             return;
         }
         if (! $follower->private_key) {
-            Log::info("MoveSendUndoFollowPipeline: Follower may no longer exists, skipping job");
+            Log::info('MoveSendUndoFollowPipeline: Follower may no longer exists, skipping job');
+
             return;
         }
 
@@ -115,21 +119,22 @@ class MoveSendUndoFollowPipeline implements ShouldQueue
 
         $keyId = $permalink.'#main-key';
         $payload = json_encode($activity);
-        $headers = HttpSignature::signRaw($follower->private_key, $keyId, $targetInbox, $activity, $addlHeaders);
+        $curlHeaders = HttpSignature::signRaw($follower->private_key, $keyId, $targetInbox, $activity, $addlHeaders);
 
-        $client = new Client([
-            'timeout' => config('federation.activitypub.delivery.timeout'),
-        ]);
+        $headers = [];
+        foreach ($curlHeaders as $header) {
+            $parts = explode(': ', $header, 2);
+            if (count($parts) === 2) {
+                $headers[$parts[0]] = $parts[1];
+            }
+        }
 
         try {
-            $client->post($targetInbox, [
-                'curl' => [
-                    CURLOPT_HTTPHEADER => $headers,
-                    CURLOPT_POSTFIELDS => $payload,
-                    CURLOPT_HEADER => true,
-                ],
-            ]);
-        } catch (ClientException $e) {
+            Http::withHeaders($headers)
+                ->timeout(config('federation.activitypub.delivery.timeout'))
+                ->withBody($payload, 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"')
+                ->post($targetInbox);
+        } catch (ConnectionException) {
 
         }
     }

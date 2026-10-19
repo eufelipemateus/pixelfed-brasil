@@ -56,8 +56,6 @@
                 hlsConfig: window.App.config.features.hls,
                 liveSyncDurationCount: 7,
                 isHlsSupported: false,
-                isP2PSupported: false,
-                engine: undefined,
             }
         },
 
@@ -71,7 +69,6 @@
             handleShouldPlay(){
                 this.shouldPlay = true;
                 this.isHlsSupported = false;
-                this.isP2PSupported = false;
                 this.$nextTick(() => {
                     this.init();
                 })
@@ -89,30 +86,6 @@
             },
 
             initHls() {
-                let loader;
-                if(this.isP2PSupported) {
-                    const config = {
-                        loader: {
-                            trackerAnnounce: [this.hlsConfig.tracker],
-                            rtcConfig: {
-                                iceServers: [
-                                    {
-                                        urls: [this.hlsConfig.ice]
-                                    }
-                                ],
-                            }
-                        }
-                    };
-                    var engine = new Engine(config);
-                    if(this.hlsConfig.p2p_debug) {
-                        engine.on("peer_connect", peer => console.log("peer_connect", peer.id, peer.remoteAddress));
-                        engine.on("peer_close", peerId => console.log("peer_close", peerId));
-                        engine.on("segment_loaded", (segment, peerId) => console.log("segment_loaded from", peerId ? `peer ${peerId}` : "HTTP", segment.url));
-                    }
-                    loader = engine.createLoaderClass();
-                } else {
-                    loader = Hls.DefaultConfig.loader;
-                }
                 const video = this.$refs.video;
                 const source = this.status.media_attachments[0].hls_manifest;
                 const player = new Plyr(video, {
@@ -124,7 +97,7 @@
 
                 const hls = new Hls({
                     liveSyncDurationCount: this.liveSyncDurationCount,
-                    loader: loader,
+                    loader: Hls.DefaultConfig.loader,
                 });
                 let self = this;
                 initHlsJsPlayer(hls);

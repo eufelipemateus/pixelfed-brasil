@@ -2,140 +2,125 @@
 
 namespace App\Http\Controllers\Admin;
 
-use DB, Cache;
-use App\{
-	AccountInterstitial,
-	DiscoverCategory,
-	DiscoverCategoryHashtag,
-	Hashtag,
-	Media,
-	Profile,
-	Status,
-	StatusHashtag,
-	User
-};
-use App\Models\ConfigCache;
-use App\Models\AutospamCustomTokens;
-use App\Services\AccountService;
-use App\Services\ConfigCacheService;
-use App\Services\StatusService;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use League\ISO3166\ISO3166;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Http;
-use App\Http\Controllers\PixelfedDirectoryController;
-use \DateInterval;
-use \DatePeriod;
 use App\Http\Resources\AdminSpamReport;
-use App\Util\Lexer\Classifier;
-use App\Jobs\AutospamPipeline\AutospamPretrainPipeline;
 use App\Jobs\AutospamPipeline\AutospamPretrainNonSpamPipeline;
+use App\Jobs\AutospamPipeline\AutospamPretrainPipeline;
 use App\Jobs\AutospamPipeline\AutospamUpdateCachedDataPipeline;
-use Illuminate\Support\Facades\URL;
+use App\Models\AccountInterstitial;
+use App\Models\AutospamCustomTokens;
+use App\Models\Profile;
+use App\Models\Status;
+use App\Services\AccountService;
 use App\Services\AutospamService;
+use App\Services\ConfigCacheService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 trait AdminAutospamController
 {
-	public function autospamHome(Request $request)
-	{
-		return view('admin.autospam.home');
-	}
+    public function autospamHome(Request $request)
+    {
+        return view('admin.autospam.home');
+    }
 
-	public function getAutospamConfigApi(Request $request)
-	{
-		$open = Cache::remember('admin-dash:reports:spam-count', 3600, function() {
-			return AccountInterstitial::whereType('post.autospam')->whereNull('appeal_handled_at')->count();
-		});
+    public function getAutospamConfigApi(Request $request): array
+    {
+        $open = Cache::remember('admin-dash:reports:spam-count', 3600, function () {
+            return AccountInterstitial::whereType('post.autospam')->whereNull('appeal_handled_at')->count();
+        });
 
-		$closed = Cache::remember('admin-dash:reports:spam-count-closed', 3600, function() {
-			return AccountInterstitial::whereType('post.autospam')->whereNotNull('appeal_handled_at')->count();
-		});
+        $closed = Cache::remember('admin-dash:reports:spam-count-closed', 3600, function () {
+            return AccountInterstitial::whereType('post.autospam')->whereNotNull('appeal_handled_at')->count();
+        });
 
-		$thisWeek = Cache::remember('admin-dash:reports:spam-count-stats-this-week ', 86400, function() {
-			$sr = config('database.default') == 'pgsql' ? "to_char(created_at, 'MM-YYYY')" : "DATE_FORMAT(created_at, '%m-%Y')";
-			$gb = config('database.default') == 'pgsql' ? [DB::raw($sr)] : DB::raw($sr);
-			$s = AccountInterstitial::select(
-					DB::raw('count(id) as count'),
-					DB::raw($sr . " as month_year")
-				)
-				->where('created_at', '>=', now()->subWeeks(52))
-				->groupBy($gb)
-				->get()
-				->map(function($s) {
-					$dt = now()->parse('01-' . $s->month_year);
-					return [
-						'id' => $dt->format('Ym'),
-						'x' => $dt->format('M Y'),
-						'y' => $s->count
-					];
-				})
-				->sortBy('id')
-				->values()
-				->toArray();
-			return $s;
-		});
+        $thisWeek = Cache::remember('admin-dash:reports:spam-count-stats-this-week ', 86400, function () {
+            $isPgsql = db_is_pgsql();
+            $sr = $isPgsql ? "to_char(created_at, 'MM-YYYY')" : "DATE_FORMAT(created_at, '%m-%Y')";
+            $gb = $isPgsql ? [DB::raw($sr)] : DB::raw($sr);
+            $s = AccountInterstitial::select(
+                DB::raw('count(id) as count'),
+                DB::raw($sr.' as month_year')
+            )
+                ->where('created_at', '>=', now()->subWeeks(52))
+                ->groupBy($gb)
+                ->get()
+                ->map(function ($s) {
+                    // @phpstan-ignore-next-line
+                    $dt = now()->parse('01-'.$s->month_year);
 
-		$files = [
-			'spam' => [
-				'exists' => Storage::exists(AutospamService::MODEL_SPAM_PATH),
-				'size' => 0
-			],
-			'ham' => [
-				'exists' => Storage::exists(AutospamService::MODEL_HAM_PATH),
-				'size' => 0
-			],
-			'combined' => [
-				'exists' => Storage::exists(AutospamService::MODEL_FILE_PATH),
-				'size' => 0
-			]
-		];
+                    return [
+                        'id' => $dt->format('Ym'),
+                        'x' => $dt->format('M Y'),
+                        // @phpstan-ignore-next-line
+                        'y' => $s->count,
+                    ];
+                })
+                ->sortBy('id')
+                ->values()
+                ->toArray();
 
-		if($files['spam']['exists']) {
-			$files['spam']['size'] = Storage::size(AutospamService::MODEL_SPAM_PATH);
-		}
+            return $s;
+        });
 
-		if($files['ham']['exists']) {
-			$files['ham']['size'] = Storage::size(AutospamService::MODEL_HAM_PATH);
-		}
+        $files = [
+            'spam' => [
+                'exists' => Storage::exists(AutospamService::MODEL_SPAM_PATH),
+                'size' => 0,
+            ],
+            'ham' => [
+                'exists' => Storage::exists(AutospamService::MODEL_HAM_PATH),
+                'size' => 0,
+            ],
+            'combined' => [
+                'exists' => Storage::exists(AutospamService::MODEL_FILE_PATH),
+                'size' => 0,
+            ],
+        ];
 
-		if($files['combined']['exists']) {
-			$files['combined']['size'] = Storage::size(AutospamService::MODEL_FILE_PATH);
-		}
+        if ($files['spam']['exists']) {
+            $files['spam']['size'] = Storage::size(AutospamService::MODEL_SPAM_PATH);
+        }
 
-		return [
-			'autospam_enabled' => (bool) config_cache('pixelfed.bouncer.enabled') ?? false,
-			'nlp_enabled' => (bool) AutospamService::active(),
-			'files' => $files,
-			'open' => $open,
-			'closed' => $closed,
-			'graph' => collect($thisWeek)->map(fn($s) => $s['y'])->values(),
-			'graphLabels' => collect($thisWeek)->map(fn($s) => $s['x'])->values()
-		];
-	}
+        if ($files['ham']['exists']) {
+            $files['ham']['size'] = Storage::size(AutospamService::MODEL_HAM_PATH);
+        }
+
+        if ($files['combined']['exists']) {
+            $files['combined']['size'] = Storage::size(AutospamService::MODEL_FILE_PATH);
+        }
+
+        return [
+            'autospam_enabled' => (bool) config_cache('pixelfed.bouncer.enabled') ?? false,
+            'nlp_enabled' => (bool) AutospamService::active(),
+            'files' => $files,
+            'open' => $open,
+            'closed' => $closed,
+            'graph' => collect($thisWeek)->map(fn ($s): mixed => $s['y'])->values(),
+            'graphLabels' => collect($thisWeek)->map(fn ($s): mixed => $s['x'])->values(),
+        ];
+    }
 
     public function getAutospamReportsClosedApi(Request $request)
     {
-		$appeals = AdminSpamReport::collection(
-			AccountInterstitial::orderBy('id', 'desc')
-			->whereType('post.autospam')
-			->whereIsSpam(true)
-			->whereNotNull('appeal_handled_at')
-			->cursorPaginate(6)
-			->withQueryString()
-		);
+        $appeals = AdminSpamReport::collection(
+            AccountInterstitial::orderBy('id', 'desc')
+                ->whereType('post.autospam')
+                ->whereIsSpam(true)
+                ->whereNotNull('appeal_handled_at')
+                ->cursorPaginate(6)
+                ->withQueryString()
+        );
 
-		return $appeals;
+        return $appeals;
     }
 
-    public function postAutospamTrainSpamApi(Request $request)
+    public function postAutospamTrainSpamApi(Request $request): array
     {
-    	$aiCount = AccountInterstitial::whereItemType('App\Status')
-        	->whereIsSpam(true)
-        	->count();
+        $aiCount = AccountInterstitial::whereItemType(Status::class)
+            ->whereIsSpam(true)
+            ->count();
         abort_if($aiCount < 100, 422, 'You don\'t have enough data to pre-train against.');
 
         $existing = Cache::get('pf:admin:autospam:pretrain:recent');
@@ -144,112 +129,121 @@ trait AdminAutospamController
         Cache::put('pf:admin:autospam:pretrain:recent', 1, 1440);
 
         return [
-        	'msg' => 'Success!'
+            'msg' => 'Success!',
         ];
     }
 
     public function postAutospamTrainNonSpamSearchApi(Request $request)
     {
-    	$this->validate($request, [
-    		'q' => 'required|string|min:1'
-    	]);
+        $this->validate($request, [
+            'q' => 'required|string|min:1',
+        ]);
 
-    	$q = $request->input('q');
+        $q = $request->input('q');
 
-    	$res = Profile::whereNull(['status', 'domain'])
-    		->where('username', 'like', '%' . $q . '%')
-    		->orderByDesc('followers_count')
-    		->take(10)
-    		->get()
-    		->map(function($p) {
-    			$acct = AccountService::get($p->id, true);
-    			return [
-    				'id' => (string) $p->id,
-    				'avatar' => $acct['avatar'],
-    				'username' => $p->username
-    			];
-    		})
-    		->values();
-    	return $res;
+        $res = Profile::whereNull(['status', 'domain'])
+            ->where('username', 'like', '%'.$q.'%')
+            ->orderByDesc('followers_count')
+            ->take(10)
+            ->get()
+            ->map(function ($p) {
+                $acct = AccountService::get($p->id, true);
+
+                return [
+                    'id' => (string) $p->id,
+                    'avatar' => $acct['avatar'],
+                    'username' => $p->username,
+                ];
+            })
+            ->values();
+
+        return $res;
     }
 
     public function postAutospamTrainNonSpamSubmitApi(Request $request)
     {
-    	$this->validate($request, [
-    		'accounts' => 'required|array|min:1|max:10'
-    	]);
+        $this->validate($request, [
+            'accounts' => 'required|array|min:1|max:10',
+        ]);
 
-    	$accts = $request->input('accounts');
+        $accts = $request->input('accounts');
 
-    	$accounts = Profile::whereNull(['domain', 'status'])->find(collect($accts)->map(function($a) { return $a['id'];}));
+        $accounts = Profile::whereNull(['domain', 'status'])->find(collect($accts)->map(function ($a) {
+            return $a['id'];
+        }));
 
-    	abort_if(!$accounts || !$accounts->count(), 422, 'One or more of the selected accounts are not valid');
+        abort_if(! $accounts || ! $accounts->count(), 422, 'One or more of the selected accounts are not valid');
 
-    	AutospamPretrainNonSpamPipeline::dispatch($accounts);
-    	return $accounts;
+        AutospamPretrainNonSpamPipeline::dispatch($accounts);
+
+        return $accounts;
     }
 
     public function getAutospamCustomTokensApi(Request $request)
     {
-		return AutospamCustomTokens::latest()->cursorPaginate(6);
+        return AutospamCustomTokens::latest()->cursorPaginate(6);
     }
 
     public function saveNewAutospamCustomTokensApi(Request $request)
     {
-    	$this->validate($request, [
-    		'token' => 'required|unique:autospam_custom_tokens,token',
-    	]);
+        $this->validate($request, [
+            'token' => 'required|unique:autospam_custom_tokens,token',
+        ]);
 
-    	$ct = new AutospamCustomTokens;
-    	$ct->token = $request->input('token');
-    	$ct->weight = $request->input('weight');
-    	$ct->category = $request->input('category') === 'spam' ? 'spam' : 'ham';
-    	$ct->note = $request->input('note');
-    	$ct->active = $request->input('active');
-    	$ct->save();
+        $ct = new AutospamCustomTokens;
+        $ct->token = $request->input('token');
+        $ct->weight = $request->input('weight');
+        $ct->category = $request->input('category') === 'spam' ? 'spam' : 'ham';
+        $ct->note = $request->input('note');
+        $ct->active = $request->input('active');
+        $ct->save();
 
-    	AutospamUpdateCachedDataPipeline::dispatch();
-    	return $ct;
+        AutospamUpdateCachedDataPipeline::dispatch();
+
+        return $ct;
     }
 
     public function updateAutospamCustomTokensApi(Request $request)
     {
-    	$this->validate($request, [
-    		'id' => 'required',
-    		'token' => 'required',
-    		'category' => 'required|in:spam,ham',
-    		'active' => 'required|boolean'
-    	]);
+        $this->validate($request, [
+            'id' => 'required',
+            'token' => 'required',
+            'category' => 'required|in:spam,ham',
+            'active' => 'required|boolean',
+        ]);
 
-    	$ct = AutospamCustomTokens::findOrFail($request->input('id'));
-    	$ct->weight = $request->input('weight');
-    	$ct->category = $request->input('category');
-    	$ct->note = $request->input('note');
-    	$ct->active = $request->input('active');
-    	$ct->save();
+        $ct = AutospamCustomTokens::findOrFail($request->input('id'));
+        $ct->weight = $request->input('weight');
+        $ct->category = $request->input('category');
+        $ct->note = $request->input('note');
+        $ct->active = $request->input('active');
+        $ct->save();
 
-    	AutospamUpdateCachedDataPipeline::dispatch();
+        AutospamUpdateCachedDataPipeline::dispatch();
 
-    	return $ct;
+        return $ct;
     }
 
     public function exportAutospamCustomTokensApi(Request $request)
     {
-    	abort_if(!Storage::exists(AutospamService::MODEL_SPAM_PATH), 422, 'Autospam Dataset does not exist, please train spam before attempting to export');
-    	return Storage::download(AutospamService::MODEL_SPAM_PATH);
+        abort_if(! Storage::exists(AutospamService::MODEL_SPAM_PATH), 422, 'Autospam Dataset does not exist, please train spam before attempting to export');
+
+        return Storage::download(AutospamService::MODEL_SPAM_PATH);
     }
 
-    public function enableAutospamApi(Request $request)
+    public function enableAutospamApi(Request $request): array
     {
-    	ConfigCacheService::put('autospam.nlp.enabled', true);
-    	Cache::forget(AutospamService::CHCKD_CACHE_KEY);
-    	return ['msg' => 'Success'];
+        ConfigCacheService::put('autospam.nlp.enabled', true);
+        Cache::forget(AutospamService::CHCKD_CACHE_KEY);
+
+        return ['msg' => 'Success'];
     }
 
-    public function disableAutospamApi(Request $request)
+    public function disableAutospamApi(Request $request): array
     {
-    	ConfigCacheService::put('autospam.nlp.enabled', false);
-    	Cache::forget(AutospamService::CHCKD_CACHE_KEY);
-    	return ['msg' => 'Success'];
+        ConfigCacheService::put('autospam.nlp.enabled', false);
+        Cache::forget(AutospamService::CHCKD_CACHE_KEY);
+
+        return ['msg' => 'Success'];
     }
 }

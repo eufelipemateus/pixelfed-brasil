@@ -2,219 +2,197 @@
 
 namespace App\Jobs\InboxPipeline;
 
-use Cache;
-use App\Profile;
-use App\Util\ActivityPub\{
-    Helpers,
-    HttpSignature,
-    Inbox
-};
+use App\Enums\StatusEnums;
+use App\Jobs\InboxPipeline\Concerns\RetriesWhenActorUnavailable;
+use App\Models\Profile;
+use App\Services\BlockSyncService;
+use App\Services\FollowersSyncService;
+use App\Util\ActivityPub\Helpers;
+use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Lottery;
-use App\Enums\StatusEnums;
 
 class InboxValidator implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use RetriesWhenActorUnavailable;
 
-	protected $username;
-	protected $headers;
-	protected $payload;
+    protected $username;
 
-	public $timeout = 300;
-	public $tries = 1;
-	public $maxExceptions = 1;
+    protected $headers;
 
-	/**
-	 * Create a new job instance.
-	 *
-	 * @return void
-	 */
-	public function __construct($username, $headers, $payload)
-	{
-		$this->username = $username;
-		$this->headers = $headers;
-		$this->payload = $payload;
-	}
+    protected $payload;
 
-	/**
-	 * Execute the job.
-	 *
-	 * @return void
-	 */
-	public function handle()
-	{
-		$username = $this->username;
-		$headers = $this->headers;
+    public $timeout = 300;
 
-		if(empty($headers) || empty($this->payload) || !isset($headers['signature']) || !isset($headers['date'])) {
-			return;
-		}
+    // One attempt plus the retries in RetriesWhenActorUnavailable. Exceptions
+    // still fail the job immediately because of $maxExceptions below.
+    public $tries = 4;
 
-		$payload = json_decode($this->payload, true, 8);
+    public $maxExceptions = 1;
 
-		if(isset($payload['id'])) {
-			$lockKey = 'pf:ap:user-inbox:activity:' . hash('sha256', $payload['id']);
-			if(Cache::get($lockKey) !== null) {
-				// Job processed already
-				return 1;
-			}
-			Cache::put($lockKey, 1, 3600);
-		}
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($username, $headers, $payload)
+    {
+        $this->username = $username;
+        $this->headers = $headers;
+        $this->payload = $payload;
+    }
 
-		$profile = Profile::whereNull('domain')->whereUsername($username)->first();
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $username = $this->username;
+        $headers = $this->headers;
 
-		if(empty($profile) || empty($headers) || empty($payload)) {
-			return;
-		}
+        if (empty($headers) || empty($this->payload) || ! isset($headers['signature']) || ! isset($headers['date'])) {
+            return;
+        }
 
-		if($profile->status != StatusEnums::ACTIVE) {
-			return;
-		}
+        $payload = json_decode($this->payload, true, 8);
 
-		if($this->verifySignature($headers, $profile, $payload) == true) {
-			if(isset($payload['type']) && in_array($payload['type'], ['Follow', 'Accept']) ) {
-				ActivityHandler::dispatch($headers, $profile, $payload)->onQueue('follow');
-			} else {
-				$onQueue = Lottery::odds(1, 12)->winner(fn () => 'high')->loser(fn () => 'inbox')->choose();
-				ActivityHandler::dispatch($headers, $profile, $payload)->onQueue($onQueue);
-			}
-			return;
-		} else {
-			return;
-		}
+        $profile = Profile::whereNull('domain')->whereUsername($username)->first();
 
-	}
+        if (empty($profile) || empty($headers) || empty($payload)) {
+            return;
+        }
 
-	protected function verifySignature($headers, $profile, $payload)
-	{
-		$body = $this->payload;
-		$bodyDecoded = $payload;
-		$signature = is_array($headers['signature']) ? $headers['signature'][0] : $headers['signature'];
-		$date = is_array($headers['date']) ? $headers['date'][0] : $headers['date'];
-		if(!$signature) {
-			return false;
-		}
-		if(!$date) {
-			return false;
-		}
-		if(!now()->parse($date)->gt(now()->subDays(1)) ||
-		   !now()->parse($date)->lt(now()->addDays(1))
-	   ) {
-			return false;
-		}
-		if(!isset($bodyDecoded['id'])) {
-			return false;
-		}
-		$signatureData = HttpSignature::parseSignatureHeader($signature);
+        // Verifica se o perfil está ativo usando o Enum (Sua lógica customizada)
+        if ($profile->status != StatusEnums::ACTIVE) {
+            return;
+        }
 
-		if(!isset($signatureData['keyId'], $signatureData['signature'], $signatureData['headers']) || isset($signatureData['error'])) {
-			return false;
-		}
+        if ($this->verifySignature($headers, $profile, $payload) == true) {
+            if (isset($payload['id'])) {
+                $lockKey = 'pf:ap:user-inbox:activity:'.hash('sha256', $payload['id']);
+                if (! Cache::add($lockKey, 1, 3600)) {
+                    // Already processed after valid signature check
+                    return;
+                }
+            }
 
-		$keyId = Helpers::validateUrl($signatureData['keyId']);
-		$id = Helpers::validateUrl($bodyDecoded['id']);
-		$keyDomain = parse_url($keyId, PHP_URL_HOST);
-		$idDomain = parse_url($id, PHP_URL_HOST);
-		if(isset($bodyDecoded['object'])
-			&& is_array($bodyDecoded['object'])
-			&& isset($bodyDecoded['object']['attributedTo'])
-		) {
-			$attr = Helpers::pluckval($bodyDecoded['object']['attributedTo']);
-			if(is_array($attr)) {
-				if(isset($attr['id'])) {
-					$attr = $attr['id'];
-				} else {
-					$attr = "";
-				}
-			}
-			if(parse_url($attr, PHP_URL_HOST) !== $keyDomain) {
-				return false;
-			}
-		}
-		if(!$keyDomain || !$idDomain || $keyDomain !== $idDomain) {
-			return false;
-		}
-		$actor = Profile::whereKeyId($keyId)->first();
-		if(!$actor) {
-			$actorUrl = Helpers::pluckval($bodyDecoded['actor']);
-			$actor = Helpers::profileFirstOrNew($actorUrl);
-		}
-		if(!$actor) {
-			return false;
-		}
-		$pkey = openssl_pkey_get_public($actor->public_key);
-		if(!$pkey) {
-			return false;
-		}
-		$inboxPath = "/users/{$profile->username}/inbox";
-		list($verified, $headers) = HttpSignature::verify($pkey, $signatureData, $headers, $inboxPath, $body);
-		if($verified == 1) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+            // FEP-8fcf: compare the sender's followers digest with our copy
+            FollowersSyncService::handleInboundHeaders($headers);
 
-	protected function blindKeyRotation($headers, $profile, $payload)
-	{
-		$signature = is_array($headers['signature']) ? $headers['signature'][0] : $headers['signature'];
-		$date = is_array($headers['date']) ? $headers['date'][0] : $headers['date'];
-		if(!$signature) {
-			return;
-		}
-		if(!$date) {
-			return;
-		}
-		if(!now()->parse($date)->gt(now()->subDays(1)) ||
-		   !now()->parse($date)->lt(now()->addDays(1))
-	   ) {
-			return;
-		}
-		$signatureData = HttpSignature::parseSignatureHeader($signature);
+            // FEP-070c: compare the sender's block digest with our copy
+            BlockSyncService::handleInboundHeaders($headers);
 
-		if(!isset($signatureData['keyId'], $signatureData['signature'], $signatureData['headers']) || isset($signatureData['error'])) {
-			return;
-		}
+            if (isset($payload['type']) && in_array($payload['type'], ['Follow', 'Accept'])) {
+                ActivityHandler::dispatch($headers, $profile, $payload)->onQueue('follow');
+            } else {
+                $onQueue = Lottery::odds(1, 12)->winner(fn (): string => 'high')->loser(fn (): string => 'inbox')->choose();
+                ActivityHandler::dispatch($headers, $profile, $payload)->onQueue($onQueue);
+            }
 
-		$keyId = Helpers::validateUrl($signatureData['keyId']);
-		$actor = Profile::whereKeyId($keyId)->whereNotNull('remote_url')->first();
-		if(!$actor) {
-			return;
-		}
-		if(Helpers::validateUrl($actor->remote_url) == false) {
-			return;
-		}
+            return;
+        }
 
-		try {
-			$res = Http::withOptions(['allow_redirects' => false])->timeout(20)->withHeaders([
-			  'Accept'     => 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
-			  'User-Agent' => 'PixelfedBot v0.1 - https://pixelfed.org',
-			])->get($actor->remote_url);
-		} catch (ConnectionException $e) {
-			return false;
-		}
+        $this->retryLaterIfActorUnavailable();
+    }
 
-		if(!$res->ok()) {
-			return false;
-		}
+    protected function verifySignature($headers, $profile, $payload)
+    {
+        $body = $this->payload;
+        $bodyDecoded = $payload;
+        $signature = is_array($headers['signature']) ? $headers['signature'][0] : $headers['signature'];
+        $date = is_array($headers['date']) ? $headers['date'][0] : $headers['date'];
+        if (! $signature) {
+            return false;
+        }
+        if (! $date) {
+            return false;
+        }
+        if (
+            ! now()->parse($date)->gt(now()->subDays(1)) ||
+            ! now()->parse($date)->lt(now()->addDays(1))
+        ) {
+            return false;
+        }
+        if (! isset($bodyDecoded['id'])) {
+            return false;
+        }
+        $signatureData = HttpSignature::parseSignatureHeader($signature);
 
-		$res = json_decode($res->body(), true, 8);
-		if(!$res || empty($res) || !isset($res['publicKey']) || !isset($res['publicKey']['id'])) {
-			return;
-		}
-		if($res['publicKey']['id'] !== $actor->key_id) {
-			return;
-		}
-		$actor->public_key = $res['publicKey']['publicKeyPem'];
-		$actor->save();
-		return $this->verifySignature($headers, $profile, $payload);
-	}
+        if (! isset($signatureData['keyId'], $signatureData['signature'], $signatureData['headers']) || isset($signatureData['error'])) {
+            return false;
+        }
+
+        $keyId = Helpers::validateUrl($signatureData['keyId']);
+        $id = Helpers::validateUrl($bodyDecoded['id']);
+        $keyDomain = parse_url($keyId, PHP_URL_HOST);
+        $idDomain = parse_url($id, PHP_URL_HOST);
+        $claimedActor = Helpers::pluckval($bodyDecoded['actor'] ?? null);
+        if (is_array($claimedActor)) {
+            $claimedActor = $claimedActor['id'] ?? null;
+        }
+        if (! $claimedActor && self::actorOptionalFor($bodyDecoded)) {
+            $claimedActor = $keyId ? strtok($keyId, '#') : null;
+        }
+        $actorDomain = parse_url((string) $claimedActor, PHP_URL_HOST);
+        if (
+            isset($bodyDecoded['object'])
+            && is_array($bodyDecoded['object'])
+            && isset($bodyDecoded['object']['attributedTo'])
+        ) {
+            $attr = Helpers::pluckval($bodyDecoded['object']['attributedTo']);
+            if (is_array($attr)) {
+                if (isset($attr['id'])) {
+                    $attr = $attr['id'];
+                } else {
+                    $attr = '';
+                }
+            }
+            if (parse_url($attr, PHP_URL_HOST) !== $keyDomain) {
+                return false;
+            }
+        }
+        if (
+            ! $keyDomain || ! $idDomain || ! $actorDomain
+            || $keyDomain !== $idDomain || $keyDomain !== $actorDomain
+        ) {
+            return false;
+        }
+        $actor = Profile::whereKeyId($keyId)->first();
+        if (! $actor) {
+            $actor = Helpers::profileFirstOrNew($claimedActor);
+        }
+        if (! $actor) {
+            $this->markActorUnavailable($claimedActor);
+
+            return false;
+        }
+        // Rebind: the profile resolved by keyId must belong to the keyId host.
+        // This rejects a poisoned or stale row whose remote_url host differs
+        // from the request's keyId host, so a planted key_id -> attacker key
+        // binding cannot authenticate.
+        if (parse_url($actor->remote_url, PHP_URL_HOST) !== $keyDomain) {
+            return false;
+        }
+        $pkey = openssl_pkey_get_public($actor->public_key);
+        if (! $pkey) {
+            return false;
+        }
+        $inboxPath = "/users/{$profile->username}/inbox";
+        [$verified, $headers] = HttpSignature::verify($pkey, $signatureData, $headers, $inboxPath, $body);
+
+        return $verified == 1;
+    }
+
+    public static function actorOptionalFor(array $payload): bool
+    {
+        return isset($payload['type']) && $payload['type'] === 'FeatureRequest';
+    }
 }

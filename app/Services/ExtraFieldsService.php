@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use App\Profile;
-use App\Status;
-
-
+use App\Models\Profile;
+use App\Models\Status;
 
 class ExtraFieldsService
 {
@@ -18,5 +16,4 @@ class ExtraFieldsService
     {
         return [];
     }
-
 }

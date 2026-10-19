@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Instance;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Jobs\InstancePipeline\FinalizePurgeInactiveInstanceJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstanceJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstancesJob;
+use App\Models\Instance;
 use App\Models\InstanceModerationRule;
 use App\Services\InstancePurgeService;
 use App\Services\InstanceService;
@@ -27,7 +27,7 @@ class PurgeInactiveInstancesTest extends TestCase
         config(['federation.purge_inactive_after_years' => 2]);
     }
 
-    public function testActiveInstanceIsNotSelected(): void
+    public function test_active_instance_is_not_selected(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'active.example',
@@ -39,7 +39,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertFalse($selected->contains($instance->id));
     }
 
-    public function testInstanceWithNullNodeinfoIsNotSelected(): void
+    public function test_instance_with_null_nodeinfo_is_not_selected(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'null-nodeinfo.example',
@@ -53,7 +53,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertFalse($selected->contains($instance->id));
     }
 
-    public function testInactiveInstanceIsSelectedForPurge(): void
+    public function test_inactive_instance_is_selected_for_purge(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'inactive.example',
@@ -65,7 +65,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertTrue($selected->contains($instance->id));
     }
 
-    public function testRevalidationIgnoresInstanceThatBecameActive(): void
+    public function test_revalidation_ignores_instance_that_became_active(): void
     {
         Queue::fake();
 
@@ -85,7 +85,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertDatabaseHas('profiles', ['id' => $profileId]);
     }
 
-    public function testFinalizeDeletesNormalInstanceWhenNoProfilesRemain(): void
+    public function test_finalize_deletes_normal_instance_when_no_profiles_remain(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'normal.example',
@@ -102,7 +102,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertDatabaseMissing('instance_moderation_rules', ['domain' => 'normal.example']);
     }
 
-    public function testBannedInstancePreservesMinimalModerationRule(): void
+    public function test_banned_instance_preserves_minimal_moderation_rule(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'banned.example',
@@ -126,7 +126,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertContains('banned.example', InstanceService::getBannedDomains());
     }
 
-    public function testInstanceIsNotDeletedWhenProfilesStillExist(): void
+    public function test_instance_is_not_deleted_when_profiles_still_exist(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'partial-failure.example',
@@ -140,7 +140,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertDatabaseHas('instances', ['id' => $instance->id]);
     }
 
-    public function testUniqueLockKeyIsStableForSameInstance(): void
+    public function test_unique_lock_key_is_stable_for_same_instance(): void
     {
         $jobA = new PurgeInactiveInstanceJob(55);
         $jobB = new PurgeInactiveInstanceJob(55);
@@ -149,7 +149,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertSame('purge-inactive-instance:55', $jobA->uniqueId());
     }
 
-    public function testDryRunDoesNotDispatchDestructiveJobsOrMutateData(): void
+    public function test_dry_run_does_not_dispatch_destructive_jobs_or_mutate_data(): void
     {
         Queue::fake();
 
@@ -171,7 +171,7 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertDatabaseHas('profiles', ['id' => $profileId]);
     }
 
-    public function testIdempotentResumeAfterPartialState(): void
+    public function test_idempotent_resume_after_partial_state(): void
     {
         $instance = Instance::query()->create([
             'domain' => 'idempotent.example',
@@ -202,7 +202,7 @@ class PurgeInactiveInstancesTest extends TestCase
 
     private function insertRemoteProfile(string $domain, string $username): int
     {
-        $id = (int) (Carbon::now()->valueOf() . random_int(10, 99));
+        $id = (int) (Carbon::now()->valueOf().random_int(10, 99));
 
         DB::table('profiles')->insert([
             'id' => $id,

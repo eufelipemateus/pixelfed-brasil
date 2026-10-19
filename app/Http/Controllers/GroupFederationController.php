@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\GroupPost;
 use App\Models\InstanceActor;
+use App\Models\Status;
 use App\Services\MediaService;
-use App\Status;
 use App\Util\Lexer\Autolink;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class GroupFederationController extends Controller
 {
-    public function getGroupObject(Request $request, $id)
+    public function getGroupObject(Request $request, $id): JsonResponse
     {
         $group = Group::whereLocal(true)->whereActivitypub(true)->findOrFail($id);
         $res = $this->showGroupObject($group);
@@ -48,7 +49,7 @@ class GroupFederationController extends Controller
                 'url' => $group->permalink(),
             ];
 
-            //Dead - after a return
+            // Dead - after a return
             // if ($group->metadata && isset($group->metadata['avatar'])) {
             //     $res['icon'] = [
             //         'type' => 'Image',
@@ -68,7 +69,7 @@ class GroupFederationController extends Controller
         });
     }
 
-    public function getStatusObject(Request $request, $gid, $sid)
+    public function getStatusObject(Request $request, $gid, $sid): JsonResponse
     {
         $group = Group::whereLocal(true)->whereActivitypub(true)->findOrFail($gid);
         $gp = GroupPost::whereGroupId($gid)->findOrFail($sid);

@@ -2,242 +2,188 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AdminInvite;
-use App\Profile;
-use App\User;
-use Purify;
-use App\Util\Lexer\RestrictedNames;
-use Illuminate\Foundation\Auth\RegistersUsers;
+use App\Models\User;
+use App\Rules\ValidUsername;
+use App\Services\EmailService;
+use App\Services\EmailVerificationService;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Auth\Events\Registered;
-use App\Services\EmailService;
-use App\Http\Controllers\Auth\RegisterController;
+use Purify;
 
 class AdminInviteController extends Controller
 {
-	public function __construct()
-	{
-		abort_if(!config('instance.admin_invites.enabled'), 404);
-	}
+    public function __construct()
+    {
+        abort_if(! config('instance.admin_invites.enabled'), 404);
+    }
 
-	public function index(Request $request, $code)
-	{
-		if($request->user()) {
-			return redirect('/');
-		}
-		return view('invite.admin_invite', compact('code'));
-	}
+    public function index(Request $request, $code): RedirectResponse|View
+    {
+        if ($request->user()) {
+            return redirect('/');
+        }
 
-	public function apiVerifyCheck(Request $request)
-	{
-		$this->validate($request, [
-			'token' => 'required',
-		]);
+        return view('invite.admin_invite', ['code' => $code]);
+    }
 
-		$invite = AdminInvite::whereInviteCode($request->input('token'))->first();
-		abort_if(!$invite, 404);
-		abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
-		abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
-		$res = [
-			'message' => $invite->message,
-			'max_uses' => $invite->max_uses,
-			'sev' => $invite->skip_email_verification
-		];
-		return response()->json($res);
-	}
+    public function apiVerifyCheck(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'token' => 'required',
+        ]);
 
-	public function apiUsernameCheck(Request $request)
-	{
-		$this->validate($request, [
-			'token' => 'required',
-			'username' => 'required'
-		]);
+        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        abort_if(! $invite, 404);
+        abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
+        abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
+        $res = [
+            'message' => $invite->message,
+            'max_uses' => $invite->max_uses,
+            'sev' => $invite->skip_email_verification,
+        ];
 
-		$invite = AdminInvite::whereInviteCode($request->input('token'))->first();
-		abort_if(!$invite, 404);
-		abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
-		abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
+        return response()->json($res);
+    }
 
-		$usernameRules = [
-			'required',
-			'min:2',
-			'max:30',
-			'unique:users',
-			function ($attribute, $value, $fail) {
-				$dash = substr_count($value, '-');
-				$underscore = substr_count($value, '_');
-				$period = substr_count($value, '.');
+    public function apiUsernameCheck(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'token' => 'required',
+            'username' => 'required',
+        ]);
 
-				if(ends_with($value, ['.php', '.js', '.css'])) {
-					return $fail('Username is invalid.');
-				}
+        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        abort_if(! $invite, 404);
+        abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
+        abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
 
-				if(($dash + $underscore + $period) > 1) {
-					return $fail('Username is invalid. Can only contain one dash (-), period (.) or underscore (_).');
-				}
+        $usernameRules = [
+            'required',
+            'min:2',
+            'max:30',
+            'unique:users',
+            new ValidUsername,
+        ];
 
-				if (!ctype_alnum($value[0])) {
-					return $fail('Username is invalid. Must start with a letter or number.');
-				}
+        $rules = ['username' => $usernameRules];
+        $validator = Validator::make($request->all(), $rules);
 
-				if (!ctype_alnum($value[strlen($value) - 1])) {
-					return $fail('Username is invalid. Must end with a letter or number.');
-				}
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
-				$val = str_replace(['_', '.', '-'], '', $value);
-				if(!ctype_alnum($val)) {
-					return $fail('Username is invalid. Username must be alpha-numeric and may contain dashes (-), periods (.) and underscores (_).');
-				}
+        return response()->json([]);
+    }
 
-				$restricted = RestrictedNames::get();
-				if (in_array(strtolower($value), array_map('strtolower', $restricted))) {
-					return $fail('Username cannot be used.');
-				}
-			},
-		];
+    public function apiEmailCheck(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'token' => 'required',
+            'email' => 'required',
+        ]);
 
-		$rules = ['username' => $usernameRules];
-		$validator = Validator::make($request->all(), $rules);
+        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        abort_if(! $invite, 404);
+        abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
+        abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
 
-		if($validator->fails()) {
-			return response()->json($validator->errors(), 400);
-		}
+        $emailRules = [
+            'required',
+            'string',
+            'email:strict,rfc,dns,spoof,filter',
+            'max:255',
+            'unique:users',
+            function ($attribute, $value, $fail) {
+                $banned = EmailService::isBanned($value);
+                if ($banned) {
+                    return $fail('Email is invalid.');
+                }
+            },
+        ];
 
-		return response()->json([]);
-	}
+        $rules = ['email' => $emailRules];
+        $validator = Validator::make($request->all(), $rules);
 
-	public function apiEmailCheck(Request $request)
-	{
-		$this->validate($request, [
-			'token' => 'required',
-			'email' => 'required'
-		]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
 
-		$invite = AdminInvite::whereInviteCode($request->input('token'))->first();
-		abort_if(!$invite, 404);
-		abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
-		abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
+        return response()->json([]);
+    }
 
-		$emailRules = [
-			'required',
-			'string',
-			'email',
-			'max:255',
-			'unique:users',
-			function ($attribute, $value, $fail) {
-				$banned = EmailService::isBanned($value);
-				if($banned) {
-					return $fail('Email is invalid.');
-				}
-			},
-		];
+    public function apiRegister(Request $request): JsonResponse|RedirectResponse
+    {
+        $this->validate($request, [
+            'token' => 'required',
+            'username' => [
+                'required',
+                'min:2',
+                'max:30',
+                'unique:users',
+                new ValidUsername,
+            ],
+            'name' => 'nullable|string|max:'.config('pixelfed.max_name_length'),
+            'email' => [
+                'required',
+                'string',
+                'email:strict,rfc,dns,spoof,filter',
+                'max:255',
+                'unique:users',
+                function ($attribute, $value, $fail) {
+                    $banned = EmailService::isBanned($value);
+                    if ($banned) {
+                        return $fail('Email is invalid.');
+                    }
+                },
+            ],
+            'password' => 'required|string|min:'.config('pixelfed.min_password_length'),
+            'password_confirm' => 'required',
+        ]);
 
-		$rules = ['email' => $emailRules];
-		$validator = Validator::make($request->all(), $rules);
+        $invite = AdminInvite::whereInviteCode($request->input('token'))->firstOrFail();
+        abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite expired');
+        abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
 
-		if($validator->fails()) {
-			return response()->json($validator->errors(), 400);
-		}
+        $invite->uses = $invite->uses + 1;
 
-		return response()->json([]);
-	}
+        event(new Registered($user = User::create([
+            'name' => Purify::clean($request->input('name')) ?? $request->input('username'),
+            'username' => $request->input('username'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
+        ])));
 
-	public function apiRegister(Request $request)
-	{
-		$this->validate($request, [
-			'token' => 'required',
-			'username' => [
-				'required',
-				'min:2',
-				'max:30',
-				'unique:users',
-				function ($attribute, $value, $fail) {
-					$dash = substr_count($value, '-');
-					$underscore = substr_count($value, '_');
-					$period = substr_count($value, '.');
+        sleep(5);
 
-					if(ends_with($value, ['.php', '.js', '.css'])) {
-						return $fail('Username is invalid.');
-					}
+        $invite->used_by = array_merge($invite->used_by ?? [], [[
+            'user_id' => $user->id,
+            'username' => $user->username,
+        ]]);
+        $invite->save();
 
-					if(($dash + $underscore + $period) > 1) {
-						return $fail('Username is invalid. Can only contain one dash (-), period (.) or underscore (_).');
-					}
+        if ($invite->skip_email_verification) {
+            $user->email_verified_at = now();
+            $user->save();
+        } else {
+            EmailVerificationService::send($user);
+        }
 
-					if (!ctype_alnum($value[0])) {
-						return $fail('Username is invalid. Must start with a letter or number.');
-					}
+        if (Auth::attempt([
+            'email' => $request->input('email'),
+            'password' => $request->input('password'),
+        ])) {
+            $request->session()->regenerate();
 
-					if (!ctype_alnum($value[strlen($value) - 1])) {
-						return $fail('Username is invalid. Must end with a letter or number.');
-					}
+            return redirect()->intended('/');
+        }
 
-					$val = str_replace(['_', '.', '-'], '', $value);
-					if(!ctype_alnum($val)) {
-						return $fail('Username is invalid. Username must be alpha-numeric and may contain dashes (-), periods (.) and underscores (_).');
-					}
-
-					$restricted = RestrictedNames::get();
-					if (in_array(strtolower($value), array_map('strtolower', $restricted))) {
-						return $fail('Username cannot be used.');
-					}
-				},
-			],
-			'name' => 'nullable|string|max:'.config('pixelfed.max_name_length'),
-			'email' => [
-				'required',
-				'string',
-				'email',
-				'max:255',
-				'unique:users',
-				function ($attribute, $value, $fail) {
-					$banned = EmailService::isBanned($value);
-					if($banned) {
-						return $fail('Email is invalid.');
-					}
-				},
-			],
-			'password' => 'required',
-			'password_confirm' => 'required'
-		]);
-
-		$invite = AdminInvite::whereInviteCode($request->input('token'))->firstOrFail();
-		abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite expired');
-		abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
-
-		$invite->uses = $invite->uses + 1;
-
-		event(new Registered($user = User::create([
-			'name'     => Purify::clean($request->input('name')) ?? $request->input('username'),
-			'username' => $request->input('username'),
-			'email'    => $request->input('email'),
-			'password' => Hash::make($request->input('password')),
-		])));
-
-		sleep(5);
-
-		$invite->used_by = array_merge($invite->used_by ?? [], [[
-			'user_id' => $user->id,
-			'username' => $user->username
-		]]);
-		$invite->save();
-
-		if($invite->skip_email_verification) {
-			$user->email_verified_at = now();
-			$user->save();
-		}
-
-		if(Auth::attempt([
-			'email' => $request->input('email'),
-			'password' => $request->input('password')
-		])) {
-			$request->session()->regenerate();
-			return redirect()->intended('/');
-		} else {
-			return response()->json([], 400);
-		}
-	}
+        return response()->json([], 400);
+    }
 }

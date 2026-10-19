@@ -2,10 +2,9 @@
 
 namespace App\Observers;
 
-use App\Notification;
-use App\ModLog;
+use App\Models\ModLog;
 use App\Services\ModLogService;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class ModLogObserver
 {
@@ -19,7 +18,6 @@ class ModLogObserver
     /**
      * Handle the mod log "created" event.
      *
-     * @param  \App\ModLog  $modLog
      * @return void
      */
     public function created(ModLog $modLog)
@@ -30,7 +28,6 @@ class ModLogObserver
     /**
      * Handle the mod log "updated" event.
      *
-     * @param  \App\ModLog  $modLog
      * @return void
      */
     public function updated(ModLog $modLog)
@@ -41,7 +38,6 @@ class ModLogObserver
     /**
      * Handle the mod log "deleted" event.
      *
-     * @param  \App\ModLog  $modLog
      * @return void
      */
     public function deleted(ModLog $modLog)
@@ -52,7 +48,6 @@ class ModLogObserver
     /**
      * Handle the mod log "restored" event.
      *
-     * @param  \App\ModLog  $modLog
      * @return void
      */
     public function restored(ModLog $modLog)
@@ -63,7 +58,6 @@ class ModLogObserver
     /**
      * Handle the mod log "force deleted" event.
      *
-     * @param  \App\ModLog  $modLog
      * @return void
      */
     public function forceDeleted(ModLog $modLog)

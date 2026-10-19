@@ -3,8 +3,8 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +29,7 @@ class InAppRegisterEmailVerify extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: config('app.name'). ' - Verifique seu Email',
+            subject: config('pixelfed.domain.app').__('auth.verifyYourEmailAddress'),
         );
     }
 
@@ -46,7 +46,7 @@ class InAppRegisterEmailVerify extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

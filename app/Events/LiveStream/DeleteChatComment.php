@@ -2,20 +2,19 @@
 
 namespace App\Events\LiveStream;
 
+use App\Models\LiveStream;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\LiveStream;
 
 class DeleteChatComment implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $livestream;
+
     public $chatmsg;
 
     /**
@@ -32,11 +31,11 @@ class DeleteChatComment implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return \Illuminate\Broadcasting\Channel|array
+     * @return Channel|array
      */
     public function broadcastOn()
     {
-        return new Channel('live.chat.' . $this->livestream->profile_id);
+        return new Channel('live.chat.'.$this->livestream->profile_id);
     }
 
     public function broadcastAs()
@@ -44,7 +43,7 @@ class DeleteChatComment implements ShouldBroadcast
         return 'chat.delete-message';
     }
 
-    public function broadcastWith()
+    public function broadcastWith(): array
     {
         return ['id' => $this->chatmsg['id']];
     }

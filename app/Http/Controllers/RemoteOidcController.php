@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\UserOidcMapping;
-use Purify;
+use App\Rules\EmailNotBanned;
+use App\Rules\ValidUsername;
 use App\Services\EmailService;
 use App\Services\UserOidcService;
-use App\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Rules\EmailNotBanned;
-use App\Rules\PixelfedUsername;
+use Purify;
 
 class RemoteOidcController extends Controller
 {
     protected $fractal;
 
-    public function start(UserOidcService $provider, Request $request)
+    public function start(UserOidcService $provider, Request $request): RedirectResponse
     {
         abort_unless((bool) config('remote-auth.oidc.enabled'), 404);
         if ($request->user()) {
@@ -35,7 +36,7 @@ class RemoteOidcController extends Controller
         return redirect($url);
     }
 
-    public function handleCallback(UserOidcService $provider, Request $request)
+    public function handleCallback(UserOidcService $provider, Request $request): RedirectResponse
     {
         abort_unless((bool) config('remote-auth.oidc.enabled'), 404);
 
@@ -43,13 +44,13 @@ class RemoteOidcController extends Controller
             return redirect('/');
         }
 
-        abort_unless($request->input("state"), 400);
-        abort_unless($request->input("code"), 400);
+        abort_unless($request->input('state'), 400);
+        abort_unless($request->input('code'), 400);
 
-        abort_unless(hash_equals($request->session()->pull('oauth2state'), $request->input("state")), 400, "invalid state");
+        abort_unless(hash_equals((string) $request->session()->pull('oauth2state'), (string) $request->input('state')), 400, 'invalid state');
 
         $accessToken = $provider->getAccessToken('authorization_code', [
-            'code' => $request->get('code')
+            'code' => $request->input('code'),
         ]);
 
         $userInfo = $provider->getResourceOwner($accessToken);
@@ -59,21 +60,32 @@ class RemoteOidcController extends Controller
         $mappedUser = UserOidcMapping::where('oidc_id', $userInfoId)->first();
         if ($mappedUser) {
             $this->guarder()->login($mappedUser->user);
+
+            // OIDC accounts have a random, unknowable password, so they can
+            // never satisfy the sudo-mode (RequirePassword / dangerzone) prompt.
+            // Mark the session password-confirmed at SSO login so they can reach
+            // dangerzone-gated settings within the normal confirmation window.
+            $request->session()->passwordConfirmed();
+
             return redirect('/');
         }
 
-        abort_if(EmailService::isBanned($userInfoData["email"]), 400, 'Banned email.');
+        abort_if(EmailService::isBanned($userInfoData['email']), 400, 'Banned email.');
 
         $user = $this->createUser([
-            'username' => $userInfoData[config('remote-auth.oidc.field_username')],
-            'name' => $userInfoData["name"] ?? $userInfoData["display_name"] ?? $userInfoData[config('remote-auth.oidc.field_username')] ?? null,
-            'email' => $userInfoData["email"],
+            'username' => $this->ensure_valid_username($userInfoData[config('remote-auth.oidc.field_username')]),
+            'name' => $userInfoData['name'] ?? $userInfoData['display_name'] ?? $userInfoData[config('remote-auth.oidc.field_username')] ?? null,
+            'email' => $userInfoData['email'],
         ]);
 
         UserOidcMapping::create([
             'user_id' => $user->id,
             'oidc_id' => $userInfoId,
         ]);
+
+        // See note above: mark the freshly-registered OIDC session
+        // password-confirmed so dangerzone routes are reachable.
+        $request->session()->passwordConfirmed();
 
         return redirect('/');
     }
@@ -87,14 +99,14 @@ class RemoteOidcController extends Controller
                 'email:strict,filter_unicode,dns,spoof',
                 'max:255',
                 'unique:users',
-                new EmailNotBanned(),
+                new EmailNotBanned,
             ],
             'username' => [
                 'required',
                 'min:2',
                 'max:30',
                 'unique:users,username',
-                new PixelfedUsername(),
+                new ValidUsername,
             ],
             'name' => 'nullable|max:30',
         ]);
@@ -117,5 +129,19 @@ class RemoteOidcController extends Controller
     protected function guarder()
     {
         return Auth::guard();
+    }
+
+    private function ensure_valid_username($starting_username): string
+    {
+        $starting_username = explode('@', $starting_username)[0];
+        $temp_username = preg_replace('/[^a-z0-9_]+/i', '', $starting_username);
+        // Strip underscores too: preg_replace keeps them, but ValidUsername
+        // allows at most one separator total, so a multi-underscore IdP
+        // preferred_username (a_b_c) would fail validation and permanently
+        // lock the user out of OIDC provisioning. Removing all underscores
+        // guarantees a zero-separator, validator-safe username.
+        $temp_username = str_replace('_', '', $temp_username);
+
+        return substr($temp_username, 0, 30);
     }
 }

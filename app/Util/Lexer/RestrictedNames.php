@@ -99,7 +99,7 @@ class RestrictedNames
         'mix-manifest.json',
         'robots.txt',
 
-        // Laravel Horizon
+        // Horizon
         'horizon',
 
         // Reserved routes
@@ -374,10 +374,14 @@ class RestrictedNames
         'contact',
         'legal-notice',
         'sitemap',
-        'donate'
+        'donate',
+        'app',
     ];
 
-    public static function get()
+    /**
+     * @return mixed[]
+     */
+    public static function get(): array
     {
         $banned = [];
 

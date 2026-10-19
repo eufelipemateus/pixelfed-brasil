@@ -2,8 +2,9 @@
 
 namespace App\Rules;
 
-use Illuminate\Support\Str;
 use Illuminate\Contracts\Validation\InvokableRule;
+use Illuminate\Support\Str;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 class MaxMultiLine implements InvokableRule
 {
@@ -19,15 +20,14 @@ class MaxMultiLine implements InvokableRule
      *
      * @param  string  $attribute
      * @param  mixed  $value
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  \Closure(string): PotentiallyTranslatedString  $fail
      * @return void
      */
     public function __invoke($attribute, $value, $fail)
     {
         $realCount = Str::length($value) - Str::substrCount($value, "\r\n");
 
-        if($realCount > $this->maxCharacters)
-        {
+        if ($realCount > $this->maxCharacters) {
             $fail('validation.max.string')->translate(['max' => $this->maxCharacters]);
         }
     }

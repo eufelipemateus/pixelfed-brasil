@@ -2,60 +2,58 @@
 
 namespace App\Transformer\Api\Mastodon\v1;
 
-use App\{
-	Notification,
-	Status
-};
+use App\Models\Notification;
+use App\Models\Status;
 use League\Fractal;
 
 class NotificationTransformer extends Fractal\TransformerAbstract
 {
-	protected $defaultIncludes = [
-		'account',
-		'status',
-	];
+    protected $defaultIncludes = [
+        'account',
+        'status',
+    ];
 
-	public function transform(Notification $notification)
-	{
-		return [
-			'id'       		=> (string) $notification->id,
-			'type'       	=> $this->replaceTypeVerb($notification->action),
-			'created_at' 	=> (string) $notification->created_at->toJSON(),
-		];
-	}
+    public function transform(Notification $notification): array
+    {
+        return [
+            'id' => (string) $notification->id,
+            'type' => $this->replaceTypeVerb($notification->action),
+            'created_at' => (string) $notification->created_at->toJSON(),
+        ];
+    }
 
-	public function includeAccount(Notification $notification)
-	{
-		return $this->item($notification->actor, new AccountTransformer());
-	}
+    public function includeAccount(Notification $notification)
+    {
+        return $this->item($notification->actor, new AccountTransformer);
+    }
 
-	public function includeStatus(Notification $notification)
-	{
-		$item = $notification;
-		if($item->item_id && $item->item_type == 'App\Status') {
-			$status = Status::with('media')->find($item->item_id);
-			if($status) {
-				return $this->item($status, new StatusTransformer());
-			} else {
-				return;
-			}
-		} else {
-			return;
-		}
-	}
+    public function includeStatus(Notification $notification)
+    {
+        $item = $notification;
+        if ($item->item_id && in_array($item->item_type, ['App\Status', Status::class])) {
+            $status = Status::with('media')->find($item->item_id);
+            if ($status) {
+                return $this->item($status, new StatusTransformer);
+            }
 
-	public function replaceTypeVerb($verb)
-	{
-		$verbs = [
-			'dm'	=> 'direct',
-			'follow' => 'follow',
-			'mention' => 'mention',
-			'share' => 'reblog',
-			'like' => 'favourite',
-			'comment' => 'mention',
-			'admin.user.modlog.comment' => 'modlog',
-			'tagged' => 'tagged'
-		];
-		return $verbs[$verb];
-	}
+            return;
+        }
+
+    }
+
+    public function replaceTypeVerb($verb): string
+    {
+        $verbs = [
+            'dm' => 'direct',
+            'follow' => 'follow',
+            'mention' => 'mention',
+            'share' => 'reblog',
+            'like' => 'favourite',
+            'comment' => 'mention',
+            'admin.user.modlog.comment' => 'modlog',
+            'tagged' => 'tagged',
+        ];
+
+        return $verbs[$verb];
+    }
 }

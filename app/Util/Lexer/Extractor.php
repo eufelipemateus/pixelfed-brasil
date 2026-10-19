@@ -9,8 +9,7 @@
 
 namespace App\Util\Lexer;
 
-use Illuminate\Support\Str;
-use App\Status;
+use App\Models\Status;
 use App\Services\AutolinkService;
 use App\Services\TrendingHashtagService;
 
@@ -35,12 +34,13 @@ class Extractor extends Regex
      * @var bool
      */
     protected $extractURLWithoutProtocol = true;
+
     protected $activeUsersOnly = false;
 
     /**
      * Provides fluent method chaining.
      *
-     * @param string $tweet The tweet to be converted.
+     * @param  string  $tweet  The tweet to be converted.
      *
      * @see  __construct()
      *
@@ -53,8 +53,9 @@ class Extractor extends Regex
 
     public function setActiveUsersOnly($active)
     {
-    	$this->activeUsersOnly = $active;
-    	return $this;
+        $this->activeUsersOnly = $active;
+
+        return $this;
     }
 
     /**
@@ -62,7 +63,7 @@ class Extractor extends Regex
      *
      * Extracts various parts of a tweet including URLs, usernames, hashtags...
      *
-     * @param string $tweet The tweet to extract.
+     * @param  string  $tweet  The tweet to extract.
      */
     public function __construct($tweet = null)
     {
@@ -73,32 +74,30 @@ class Extractor extends Regex
      * Extracts all parts of a tweet and returns an associative array containing
      * the extracted elements.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The elements in the tweet.
      */
-    public function extract($tweet = null)
+    public function extract($tweet = null): array
     {
         if (is_null($tweet)) {
             $tweet = $this->tweet;
         }
 
         return [
-            'hashtags'              => $this->extractHashtags($tweet),
-            'urls'                  => $this->extractURLs($tweet),
-            'mentions'              => $this->extractMentionedUsernames($tweet),
-            'replyto'               => $this->extractRepliedUsernames($tweet),
+            'hashtags' => $this->extractHashtags($tweet),
+            'urls' => $this->extractURLs($tweet),
+            'mentions' => $this->extractMentionedUsernames($tweet),
+            'replyto' => $this->extractRepliedUsernames(),
             'hashtags_with_indices' => $this->extractHashtagsWithIndices($tweet),
-            'urls_with_indices'     => $this->extractURLsWithIndices($tweet),
-            'mentions_with_indices' => $this->extractMentionedUsernamesWithIndices($tweet),
+            'urls_with_indices' => $this->extractURLsWithIndices($tweet),
+            'mentions_with_indices' => $this->extractMentionedUsernamesWithIndices(),
         ];
     }
 
     /**
      * Extract URLs, @mentions, lists and #hashtag from a given text/tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array list of extracted entities
      */
     public function extractEntitiesWithIndices($tweet = null)
@@ -118,8 +117,7 @@ class Extractor extends Regex
     /**
      * Extracts all the hashtags from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The hashtag elements in the tweet.
      */
     public function extractHashtags($tweet = null)
@@ -137,21 +135,20 @@ class Extractor extends Regex
     /**
      * Extracts all the cashtags from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The cashtag elements in the tweet.
      */
-    public function extractCashtags($tweet = null)
+    public function extractCashtags($tweet = null): array
     {
         $cashtagsOnly = [];
+
         return $cashtagsOnly;
     }
 
     /**
      * Extracts all the URLs from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The URL elements in the tweet.
      */
     public function extractURLs($tweet = null)
@@ -171,24 +168,23 @@ class Extractor extends Regex
      *
      * A mention is an occurrence of a username anywhere in a tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The usernames elements in the tweet.
      */
-    public function extractMentionedScreennames($tweet = null)
+    public function extractMentionedScreennames($tweet = null): array
     {
         $usernamesOnly = [];
         $mentionsWithIndices = $this->extractMentionsOrListsWithIndices($tweet);
 
         foreach ($mentionsWithIndices as $mentionWithIndex) {
-        	if($this->activeUsersOnly == true) {
-        		if(!AutolinkService::mentionedUsernameExists($mentionWithIndex['screen_name'])) {
-        			continue;
-        		}
-        	}
+            if ($this->activeUsersOnly == true) {
+                if (! AutolinkService::mentionedUsernameExists($mentionWithIndex['screen_name'])) {
+                    continue;
+                }
+            }
 
             $screen_name = mb_strtolower($mentionWithIndex['screen_name']);
-            if (empty($screen_name) or in_array($screen_name, $usernamesOnly)) {
+            if (empty($screen_name) || in_array($screen_name, $usernamesOnly)) {
                 continue;
             }
             $usernamesOnly[] = $screen_name;
@@ -218,9 +214,7 @@ class Extractor extends Regex
      *
      * A reply is an occurrence of a username at the beginning of a tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
-     * @return array The usernames replied to in a tweet.
+     * @param  string  $tweet  The tweet to extract.
      */
     public function extractReplyScreenname($tweet = null)
     {
@@ -253,18 +247,17 @@ class Extractor extends Regex
     /**
      * Extracts all the hashtags and the indices they occur at from the tweet.
      *
-     * @param string $tweet           The tweet to extract.
-     * @param bool   $checkUrlOverlap if true, check if extracted hashtags overlap URLs and remove overlapping ones
-     *
+     * @param  string  $tweet  The tweet to extract.
+     * @param  bool  $checkUrlOverlap  if true, check if extracted hashtags overlap URLs and remove overlapping ones
      * @return array The hashtag elements in the tweet.
      */
-    public function extractHashtagsWithIndices($tweet = null, $checkUrlOverlap = true)
+    public function extractHashtagsWithIndices($tweet = null, $checkUrlOverlap = true): array
     {
         if (is_null($tweet)) {
             $tweet = $this->tweet;
         }
 
-        if (!preg_match('/[#＃]/iu', $tweet)) {
+        if (! preg_match('/[#＃]/iu', $tweet)) {
             return [];
         }
 
@@ -274,7 +267,7 @@ class Extractor extends Regex
         $tags = [];
 
         foreach ($matches as $match) {
-            list($all, $before, $hash, $hashtag, $outer) = array_pad($match, 3, ['', 0]);
+            [$all, $before, $hash, $hashtag, $outer] = array_pad($match, 3, ['', 0]);
             $start_position = $hash[1] > 0 ? StringUtils::strlen(substr($tweet, 0, $hash[1])) : $hash[1];
             $end_position = $start_position + StringUtils::strlen($hash[0].$hashtag[0]);
 
@@ -282,7 +275,7 @@ class Extractor extends Regex
                 continue;
             }
             if (count($bannedTags)) {
-                if(in_array(strtolower($hashtag[0]), array_map('strtolower', $bannedTags))) {
+                if (in_array(strtolower($hashtag[0]), array_map('strtolower', $bannedTags))) {
                     continue;
                 }
             }
@@ -295,7 +288,7 @@ class Extractor extends Regex
             ];
         }
 
-        if (!$checkUrlOverlap) {
+        if (! $checkUrlOverlap) {
             return array_slice($tags, 0, Status::MAX_HASHTAGS);
         }
 
@@ -317,29 +310,28 @@ class Extractor extends Regex
     /**
      * Extracts all the cashtags and the indices they occur at from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The cashtag elements in the tweet.
      */
-    public function extractCashtagsWithIndices($tweet = null)
+    public function extractCashtagsWithIndices($tweet = null): array
     {
+        return [];
     }
 
     /**
      * Extracts all the URLs and the indices they occur at from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The URLs elements in the tweet.
      */
-    public function extractURLsWithIndices($tweet = null)
+    public function extractURLsWithIndices($tweet = null): array
     {
         if (is_null($tweet)) {
             $tweet = $this->tweet;
         }
 
         $needle = $this->extractURLWithoutProtocol() ? '.' : ':';
-        if (strpos($tweet, $needle) === false) {
+        if (! str_contains($tweet, $needle)) {
             return [];
         }
 
@@ -347,7 +339,7 @@ class Extractor extends Regex
         preg_match_all(self::$patterns['valid_url'], $tweet, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
 
         foreach ($matches as $match) {
-            list($all, $before, $url, $protocol, $domain, $port, $path, $query) = array_pad($match, 8, ['']);
+            [$all, $before, $url, $protocol, $domain, $port, $path, $query] = array_pad($match, 8, ['']);
             $start_position = $url[1] > 0 ? StringUtils::strlen(substr($tweet, 0, $url[1])) : $url[1];
             $end_position = $start_position + StringUtils::strlen($url[0]);
 
@@ -363,7 +355,7 @@ class Extractor extends Regex
             // If protocol is missing and domain contains non-ASCII characters,
             // extract ASCII-only domains.
             if (empty($protocol)) {
-                if (!$this->extractURLWithoutProtocol || preg_match(self::$patterns['invalid_url_without_protocol_preceding_chars'], $before)) {
+                if (! $this->extractURLWithoutProtocol || preg_match(self::$patterns['invalid_url_without_protocol_preceding_chars'], $before)) {
                     continue;
                 }
 
@@ -375,12 +367,12 @@ class Extractor extends Regex
                     $ascii_start_position = StringUtils::strpos($domain, $asciiDomain[0], $ascii_end_position);
                     $ascii_end_position = $ascii_start_position + StringUtils::strlen($asciiDomain[0]);
                     $last_url = [
-                        'url'     => $asciiDomain[0],
+                        'url' => $asciiDomain[0],
                         'indices' => [$start_position + $ascii_start_position, $start_position + $ascii_end_position],
                     ];
-                    if (!empty($path)
+                    if (! empty($path)
                         || preg_match(self::$patterns['valid_special_short_domain'], $asciiDomain[0])
-                        || !preg_match(self::$patterns['invalid_short_domain'], $asciiDomain[0])) {
+                        || ! preg_match(self::$patterns['invalid_short_domain'], $asciiDomain[0])) {
                         $urls[] = $last_url;
                     }
                 }
@@ -391,7 +383,7 @@ class Extractor extends Regex
                 }
 
                 // $last_url only contains domain. Need to add path and query if they exist.
-                if (!empty($path)) {
+                if (! empty($path)) {
                     // last_url was not added. Add it to urls here.
                     $last_url['url'] = preg_replace('/'.preg_quote($domain, '/').'/u', $last_url['url'], $url);
                     $last_url['indices'][1] = $end_position;
@@ -403,7 +395,7 @@ class Extractor extends Regex
                     $end_position = $start_position + StringUtils::strlen($url);
                 }
                 $urls[] = [
-                    'url'     => $url,
+                    'url' => $url,
                     'indices' => [$start_position, $end_position],
                 ];
             }
@@ -415,8 +407,7 @@ class Extractor extends Regex
     /**
      * Extracts all the usernames and the indices they occur at from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The username elements in the tweet.
      */
     public function extractMentionedScreennamesWithIndices($tweet = null)
@@ -452,17 +443,16 @@ class Extractor extends Regex
     /**
      * Extracts all the usernames and the indices they occur at from the tweet.
      *
-     * @param string $tweet The tweet to extract.
-     *
+     * @param  string  $tweet  The tweet to extract.
      * @return array The username elements in the tweet.
      */
-    public function extractMentionsOrListsWithIndices($tweet = null)
+    public function extractMentionsOrListsWithIndices($tweet = null): array
     {
         if (is_null($tweet)) {
             $tweet = $this->tweet;
         }
 
-        if (!preg_match('/[@＠]/iu', $tweet)) {
+        if (! preg_match('/[@＠]/iu', $tweet)) {
             return [];
         }
 
@@ -470,28 +460,28 @@ class Extractor extends Regex
         $results = [];
 
         foreach ($matches as $match) {
-            list($all, $before, $at, $username, $list_slug, $outer) = array_pad($match, 6, ['', 0]);
+            [$all, $before, $at, $username, $list_slug, $outer] = array_pad($match, 6, ['', 0]);
             $start_position = $at[1] > 0 ? StringUtils::strlen(substr($tweet, 0, $at[1])) : $at[1];
             $end_position = $start_position + StringUtils::strlen($at[0]) + StringUtils::strlen($username[0]);
-            $screenname = trim($all[0]) == '@'.$username[0] ? $username[0] : trim($all[0]);
+            $screenname = trim($all[0]) === '@'.$username[0] ? $username[0] : trim($all[0]);
 
-            if($this->activeUsersOnly == true) {
-        		if(!AutolinkService::mentionedUsernameExists($screenname)) {
-        			continue;
-        		}
-        	}
+            if ($this->activeUsersOnly == true) {
+                if (! AutolinkService::mentionedUsernameExists($screenname)) {
+                    continue;
+                }
+            }
 
             $entity = [
                 'screen_name' => $screenname,
-                'list_slug'   => $list_slug[0],
-                'indices'     => [$start_position, $end_position],
+                'list_slug' => $list_slug[0],
+                'indices' => [$start_position, $end_position],
             ];
 
             if (preg_match(self::$patterns['end_mention_match'], $outer[0])) {
                 continue;
             }
 
-            if (!empty($list_slug[0])) {
+            if (! empty($list_slug[0])) {
                 $entity['indices'][1] = $end_position + StringUtils::strlen($list_slug[0]);
             }
 
@@ -516,9 +506,7 @@ class Extractor extends Regex
     /**
      * setter/getter for extractURLWithoutProtocol.
      *
-     * @param bool $flag
-     *
-     * @return Extractor
+     * @param  bool  $flag
      */
     public function extractURLWithoutProtocol($flag = null)
     {
@@ -534,11 +522,9 @@ class Extractor extends Regex
      * Remove overlapping entities.
      * This returns a new array with no overlapping entities.
      *
-     * @param array $entities
-     *
-     * @return array
+     * @param  array  $entities
      */
-    public function removeOverlappingEntities($entities)
+    public function removeOverlappingEntities($entities): array
     {
         $result = [];
         usort($entities, [$this, 'sortEntites']);
@@ -557,13 +543,8 @@ class Extractor extends Regex
 
     /**
      * sort by entity start index.
-     *
-     * @param array $a
-     * @param array $b
-     *
-     * @return int
      */
-    protected function sortEntites($a, $b)
+    protected function sortEntites($a, $b): int
     {
         if ($a['indices'][0] == $b['indices'][0]) {
             return 0;

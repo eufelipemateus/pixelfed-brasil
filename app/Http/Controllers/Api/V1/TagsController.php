@@ -2,76 +2,73 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Hashtag;
-use App\HashtagFollow;
-use App\StatusHashtag;
+use App\Http\Resources\MastoApi\FollowedTagResource;
+use App\Jobs\HomeFeedPipeline\HashtagUnfollowPipeline;
+use App\Models\Hashtag;
+use App\Models\HashtagFollow;
 use App\Services\AccountService;
-use App\Services\HashtagService;
 use App\Services\HashtagFollowService;
 use App\Services\HashtagRelatedService;
-use App\Http\Resources\MastoApi\FollowedTagResource;
-use App\Jobs\HomeFeedPipeline\FeedWarmCachePipeline;
-use App\Jobs\HomeFeedPipeline\HashtagUnfollowPipeline;
+use App\Services\HashtagService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TagsController extends Controller
 {
-    const PF_API_ENTITY_KEY = "_pe";
+    const PF_API_ENTITY_KEY = '_pe';
 
-    public function json($res, $code = 200, $headers = [])
+    public function json($res, $code = 200, $headers = []): JsonResponse
     {
         return response()->json($res, $code, $headers, JSON_UNESCAPED_SLASHES);
     }
 
     /**
-    * GET /api/v1/tags/:id/related
-    *
-    *
-    * @return array
-    */
+     * GET /api/v1/tags/:id/related
+     *
+     *
+     * @return array
+     */
     public function relatedTags(Request $request, $tag)
     {
-        abort_if(!$request->user() || !$request->user()->token(), 403);
+        abort_if(! $request->user() || ! $request->user()->token(), 403);
         abort_unless($request->user()->tokenCan('read'), 403);
 
         $tag = Hashtag::whereSlug($tag)->firstOrFail();
+
         return HashtagRelatedService::get($tag->id);
     }
 
     /**
-    * POST /api/v1/tags/:id/follow
-    *
-    *
-    * @return object
-    */
-    public function followHashtag(Request $request, $id)
+     * POST /api/v1/tags/:id/follow
+     */
+    public function followHashtag(Request $request, $id): JsonResponse
     {
-        abort_if(!$request->user(), 403);
+        abort_if(! $request->user(), 403);
 
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
 
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
 
-        abort_if(!$tag, 422, 'Unknown hashtag');
+        abort_if(! $tag, 422, 'Unknown hashtag');
 
         abort_if(
             HashtagFollow::whereProfileId($pid)->count() >= HashtagFollow::MAX_LIMIT,
             422,
-            'You cannot follow more than ' . HashtagFollow::MAX_LIMIT . ' hashtags.'
+            'You cannot follow more than '.HashtagFollow::MAX_LIMIT.' hashtags.'
         );
 
         $follows = HashtagFollow::updateOrCreate(
             [
                 'profile_id' => $account['id'],
-                'hashtag_id' => $tag->id
+                'hashtag_id' => $tag->id,
             ],
             [
-                'user_id' => $request->user()->id
+                'user_id' => $request->user()->id,
             ]
         );
 
@@ -82,39 +79,36 @@ class TagsController extends Controller
     }
 
     /**
-    * POST /api/v1/tags/:id/unfollow
-    *
-    *
-    * @return object
-    */
+     * POST /api/v1/tags/:id/unfollow
+     */
     public function unfollowHashtag(Request $request, $id)
     {
-        abort_if(!$request->user(), 403);
+        abort_if(! $request->user(), 403);
 
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
 
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
 
-        abort_if(!$tag, 422, 'Unknown hashtag');
+        abort_if(! $tag, 422, 'Unknown hashtag');
 
         $follows = HashtagFollow::whereProfileId($pid)
             ->whereHashtagId($tag->id)
             ->first();
 
-        if(!$follows) {
+        if (! $follows) {
             return [
                 'name' => $tag->name,
-                'url' => config('app.url') . '/i/web/hashtag/' . $tag->slug,
+                'url' => config('app.url').'/i/web/hashtag/'.$tag->slug,
                 'history' => [],
-                'following' => false
+                'following' => false,
             ];
         }
 
-        if($follows) {
+        if ($follows) {
             HashtagService::unfollow($pid, $tag->id);
             HashtagFollowService::unfollow($tag->id, $pid);
             HashtagUnfollowPipeline::dispatch($tag->id, $pid, $tag->slug)->onQueue('feed');
@@ -123,43 +117,41 @@ class TagsController extends Controller
 
         $res = FollowedTagResource::make($follows)->toArray($request);
         $res['following'] = false;
+
         return response()->json($res);
     }
 
     /**
-    * GET /api/v1/tags/:id
-    *
-    *
-    * @return object
-    */
+     * GET /api/v1/tags/:id
+     */
     public function getHashtag(Request $request, $id)
     {
-        abort_if(!$request->user(), 403);
+        abort_if(! $request->user(), 403);
 
         $pid = $request->user()->profile_id;
         $account = AccountService::get($pid);
-        $operator = config('database.default') == 'pgsql' ? 'ilike' : 'like';
+        $operator = db_is_pgsql() ? 'ilike' : 'like';
         $tag = Hashtag::where('name', $operator, $id)
             ->orWhere('slug', $operator, $id)
             ->first();
 
-        if(!$tag) {
+        if (! $tag) {
             return [
                 'name' => $id,
-                'url' => config('app.url') . '/i/web/hashtag/' . $id,
+                'url' => config('app.url').'/i/web/hashtag/'.$id,
                 'history' => [],
-                'following' => false
+                'following' => false,
             ];
         }
 
         $res = [
             'name' => $tag->name,
-            'url' => config('app.url') . '/i/web/hashtag/' . $tag->slug,
+            'url' => config('app.url').'/i/web/hashtag/'.$tag->slug,
             'history' => [],
-            'following' => HashtagService::isFollowing($pid, $tag->id)
+            'following' => HashtagService::isFollowing($pid, $tag->id),
         ];
 
-        if($request->has(self::PF_API_ENTITY_KEY)) {
+        if ($request->has(self::PF_API_ENTITY_KEY)) {
             $res['count'] = HashtagService::count($tag->id);
         }
 
@@ -167,20 +159,17 @@ class TagsController extends Controller
     }
 
     /**
-    * GET /api/v1/followed_tags
-    *
-    *
-    * @return array
-    */
-    public function getFollowedTags(Request $request)
+     * GET /api/v1/followed_tags
+     */
+    public function getFollowedTags(Request $request): JsonResponse
     {
-        abort_if(!$request->user(), 403);
+        abort_if(! $request->user(), 403);
 
         $account = AccountService::get($request->user()->profile_id);
 
         $this->validate($request, [
             'cursor' => 'sometimes',
-            'limit' => 'sometimes|integer|min:1|max:200'
+            'limit' => 'sometimes|integer|min:1|max:200',
         ]);
         $limit = $request->input('limit', 100);
 
@@ -190,20 +179,21 @@ class TagsController extends Controller
             ->withQueryString();
 
         $pagination = false;
-        $prevPage = $res->nextPageUrl();
-        $nextPage = $res->previousPageUrl();
-        if($nextPage && $prevPage) {
-            $pagination = '<' . $nextPage . '>; rel="next", <' . $prevPage . '>; rel="prev"';
-        } else if($nextPage && !$prevPage) {
-            $pagination = '<' . $nextPage . '>; rel="next"';
-        } else if(!$nextPage && $prevPage) {
-            $pagination = '<' . $prevPage . '>; rel="prev"';
+        $nextPage = $res->nextPageUrl();
+        $prevPage = $res->previousPageUrl();
+        if ($nextPage && $prevPage) {
+            $pagination = '<'.$nextPage.'>; rel="next", <'.$prevPage.'>; rel="prev"';
+        } elseif ($nextPage && ! $prevPage) {
+            $pagination = '<'.$nextPage.'>; rel="next"';
+        } elseif (! $nextPage && $prevPage) {
+            $pagination = '<'.$prevPage.'>; rel="prev"';
         }
 
-        if($pagination) {
+        if ($pagination) {
             return response()->json(FollowedTagResource::collection($res)->collection)
                 ->header('Link', $pagination);
         }
+
         return response()->json(FollowedTagResource::collection($res)->collection);
     }
 }

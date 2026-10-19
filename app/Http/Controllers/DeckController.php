@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Contracts\View\View;
 
 class DeckController extends Controller
 {
@@ -11,13 +11,12 @@ class DeckController extends Controller
         $this->middleware('auth');
     }
 
-    public function home()
+    public function home(): View
     {
         return view('deck.index');
     }
 
-
-    public function insights()
+    public function insights(): View
     {
         return view('deck.insights.index');
     }

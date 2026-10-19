@@ -3,26 +3,24 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Auth;
-use App\User;
+use Illuminate\Http\Request;
 
 class AccountInterstitial
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
         $ar = [
-            'login', 
+            'login',
             'logout',
-            'password*', 
-            'loginAs*', 
-            'i/warning*', 
+            'password*',
+            'loginAs*',
+            'i/warning*',
             'i/auth/checkpoint',
             'i/auth/sudo',
             'site/privacy',
@@ -30,19 +28,20 @@ class AccountInterstitial
             'site/kb/community-guidelines',
         ];
 
-        if(Auth::check() && !$request->is($ar)) {
-            if($request->user()->has_interstitial) {
-                if($request->wantsJson()) {
-                    $res = ['_refresh'=>true,'error' => 403, 'message' => \App\AccountInterstitial::JSON_MESSAGE];
+        if ($request->user() !== null && ! $request->is($ar)) {
+            if ($request->user()->has_interstitial) {
+                if ($request->wantsJson()) {
+                    $res = ['_refresh' => true, 'error' => 403, 'message' => \App\Models\AccountInterstitial::JSON_MESSAGE];
+
                     return response()->json($res, 403);
-                } else {
-                    return redirect('/i/warning');
                 }
-            } else {
-                return $next($request);
+
+                return redirect('/i/warning');
             }
-        } else {
+
             return $next($request);
         }
+
+        return $next($request);
     }
 }

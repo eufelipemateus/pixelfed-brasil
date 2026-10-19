@@ -2,29 +2,36 @@
 
 namespace App\Jobs\FollowPipeline;
 
+use App\Models\Profile;
+use App\Services\AccountService;
+use App\Services\FollowerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use App\Services\AccountService;
-use App\Services\FollowerService;
-use Cache;
-use DB;
-use Storage;
-use App\Follower;
-use App\Profile;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class FollowServiceWarmCache implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	public $profileId;
-	public $tries = 5;
-	public $timeout = 5000;
-	public $failOnTimeout = false;
+    private const INLINE_LIMIT = 100;
+
+    private const SYNC_TTL = 604800; // 7 days
+
+    private const PROCESSING_TTL = 21600; // 6 hours
+
+    public $profileId;
+
+    public $tries = 5;
+
+    public $timeout = 300;
+
+    public $failOnTimeout = false;
 
     /**
      * Get the middleware the job should pass through.
@@ -33,98 +40,203 @@ class FollowServiceWarmCache implements ShouldQueue
      */
     public function middleware(): array
     {
-        return [(new WithoutOverlapping($this->profileId))->dontRelease()];
+        return [
+            (new WithoutOverlapping('follow-warm-cache:'.$this->profileId))
+                ->expireAfter($this->timeout + 60)
+                ->dontRelease(),
+        ];
     }
 
-	/**
-	 * Create a new job instance.
-	 *
-	 * @return void
-	 */
-	public function __construct($profileId)
-	{
-		$this->profileId = $profileId;
-	}
+    /**
+     * Create a new job instance.
+     */
+    public function __construct($profileId)
+    {
+        $this->profileId = $profileId;
+    }
 
-	/**
-	 * Execute the job.
-	 *
-	 * @return void
-	 */
-	public function handle()
-	{
-		$id = $this->profileId;
+    /**
+     * Execute the job.
+     */
+    public function handle(): void
+    {
+        $id = (int) $this->profileId;
 
-        if(Cache::has(FollowerService::FOLLOWERS_SYNC_KEY . $id) && Cache::has(FollowerService::FOLLOWING_SYNC_KEY . $id)) {
+        if ($id <= 0) {
             return;
         }
 
-		$account = AccountService::get($id, true);
+        $followersReady = $this->isReady($id, 'followers');
+        $followingReady = $this->isReady($id, 'following');
 
-		if(!$account) {
-			Cache::put(FollowerService::FOLLOWERS_SYNC_KEY . $id, 1, 604800);
-			Cache::put(FollowerService::FOLLOWING_SYNC_KEY . $id, 1, 604800);
-			return;
-		}
+        if ($followersReady && $followingReady) {
+            return;
+        }
 
-        $hasFollowerPostProcessing = false;
-        $hasFollowingPostProcessing = false;
+        $account = AccountService::get($id, true);
 
-        if(Follower::whereProfileId($id)->orWhere('following_id', $id)->count()) {
-            $following = [];
-            $followers = [];
-    		foreach(Follower::where('following_id', $id)->orWhere('profile_id', $id)->lazyById(500) as $follow) {
-                if($follow->following_id != $id && $follow->profile_id != $id) {
-                    continue;
+        if (! $account) {
+            $this->markSynced($id, 'followers');
+            $this->markSynced($id, 'following');
+
+            return;
+        }
+
+        /*
+         * Keep these as separate queries.
+         *
+         * This lets the database use the indexes on profile_id and
+         * following_id independently instead of doing the previous OR scan.
+         */
+        $followingCount = DB::table('followers')
+            ->where('profile_id', $id)
+            ->count();
+
+        $followersCount = DB::table('followers')
+            ->where('following_id', $id)
+            ->count();
+
+        /*
+         * Refresh the denormalized counters without hydrating the full model.
+         */
+        Profile::query()
+            ->whereKey($id)
+            ->update([
+                'following_count' => $followingCount,
+                'followers_count' => $followersCount,
+            ]);
+
+        /*
+         * Only warm directions that are not already synced or currently
+         * being processed.
+         */
+        if (! $followingReady) {
+            $this->warmDirection(
+                profileId: $id,
+                type: 'following',
+                count: $followingCount
+            );
+        }
+
+        if (! $followersReady) {
+            $this->warmDirection(
+                profileId: $id,
+                type: 'followers',
+                count: $followersCount
+            );
+        }
+
+        AccountService::del($id);
+    }
+
+    private function warmDirection(
+        int $profileId,
+        string $type,
+        int $count
+    ): void {
+        if ($count === 0) {
+            $this->markSynced($profileId, $type);
+
+            return;
+        }
+
+        /*
+         * Tiny accounts can be handled immediately without the overhead
+         * of another queue job.
+         */
+        if ($count <= self::INLINE_LIMIT) {
+            if ($type === 'followers') {
+                $ids = DB::table('followers')
+                    ->where('following_id', $profileId)
+                    ->orderBy('id')
+                    ->limit(self::INLINE_LIMIT)
+                    ->pluck('profile_id');
+
+                foreach ($ids as $followerId) {
+                    FollowerService::add(
+                        (int) $followerId,
+                        $profileId
+                    );
                 }
-                if($follow->profile_id == $id) {
-                    $following[] = $follow->following_id;
-                } else {
-                    $followers[] = $follow->profile_id;
-                }
-            }
-
-            if(count($followers) > 100) {
-                // store follower ids and process in another job
-                Storage::put('follow-warm-cache/' . $id . '/followers.json', json_encode($followers));
-                $hasFollowerPostProcessing = true;
             } else {
-                foreach($followers as $follower) {
-                    FollowerService::add($follower, $id);
+                $ids = DB::table('followers')
+                    ->where('profile_id', $profileId)
+                    ->orderBy('id')
+                    ->limit(self::INLINE_LIMIT)
+                    ->pluck('following_id');
+
+                foreach ($ids as $followingId) {
+                    FollowerService::add(
+                        $profileId,
+                        (int) $followingId
+                    );
                 }
             }
 
-            if(count($following) > 100) {
-                // store following ids and process in another job
-                Storage::put('follow-warm-cache/' . $id . '/following.json', json_encode($following));
-                $hasFollowingPostProcessing = true;
-            } else {
-                foreach($following as $following) {
-                    FollowerService::add($id, $following);
-                }
-            }
+            $this->markSynced($profileId, $type);
+
+            return;
         }
 
-		Cache::put(FollowerService::FOLLOWERS_SYNC_KEY . $id, 1, 604800);
-		Cache::put(FollowerService::FOLLOWING_SYNC_KEY . $id, 1, 604800);
+        /*
+         * Large graphs are paginated directly from the database.
+         *
+         * Cache::add() is atomic with Redis and prevents repeated
+         * FollowServiceWarmCache jobs from starting duplicate pipelines.
+         */
+        $processingKey =
+            FollowServiceWarmCacheLargeIngestPipeline::processingKey(
+                $profileId,
+                $type
+            );
 
-		$profile = Profile::find($id);
-		if($profile) {
-			$profile->following_count = DB::table('followers')->whereProfileId($id)->count();
-			$profile->followers_count = DB::table('followers')->whereFollowingId($id)->count();
-			$profile->save();
-		}
-
-		AccountService::del($id);
-
-        if($hasFollowingPostProcessing) {
-            FollowServiceWarmCacheLargeIngestPipeline::dispatch($id, 'following')->onQueue('follow');
+        if (! Cache::add(
+            $processingKey,
+            1,
+            self::PROCESSING_TTL
+        )) {
+            return;
         }
 
-        if($hasFollowerPostProcessing) {
-            FollowServiceWarmCacheLargeIngestPipeline::dispatch($id, 'followers')->onQueue('follow');
+        try {
+            FollowServiceWarmCacheLargeIngestPipeline::dispatch(
+                $profileId,
+                $type
+            )->onQueue('follow');
+        } catch (Throwable $e) {
+            Cache::forget($processingKey);
+
+            throw $e;
+        }
+    }
+
+    private function isReady(int $profileId, string $type): bool
+    {
+        if (Cache::has($this->syncKey($profileId, $type))) {
+            return true;
         }
 
-		return;
-	}
+        return Cache::has(
+            FollowServiceWarmCacheLargeIngestPipeline::processingKey(
+                $profileId,
+                $type
+            )
+        );
+    }
+
+    private function markSynced(int $profileId, string $type): void
+    {
+        Cache::put(
+            $this->syncKey($profileId, $type),
+            1,
+            self::SYNC_TTL
+        );
+    }
+
+    private function syncKey(int $profileId, string $type): string
+    {
+        return $type === 'followers'
+            ? FollowerService::FOLLOWERS_SYNC_KEY.$profileId
+            : FollowerService::FOLLOWING_SYNC_KEY.$profileId;
+    }
 }

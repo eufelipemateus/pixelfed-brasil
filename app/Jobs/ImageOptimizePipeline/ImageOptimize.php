@@ -2,14 +2,14 @@
 
 namespace App\Jobs\ImageOptimizePipeline;
 
-use App\Media;
+use App\Models\Media;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 
 class ImageOptimize implements ShouldQueue
 {
@@ -42,16 +42,18 @@ class ImageOptimize implements ShouldQueue
     public function handle()
     {
         $media = $this->media;
-        
+
         // Verify media exists
-        if (!$media) {
-            Log::info("ImageOptimize: Media no longer exists, skipping job");
+        if (! $media) {
+            Log::info('ImageOptimize: Media no longer exists, skipping job');
+
             return;
         }
 
         // Verify media has required path
-        if (!$media->media_path) {
+        if (! $media->media_path) {
             Log::info("ImageOptimize: Media {$media->id} has no media_path, skipping job");
+
             return;
         }
 
@@ -69,14 +71,12 @@ class ImageOptimize implements ShouldQueue
             }
         }
 
-        if ((bool) config_cache('pixelfed.optimize_image') == false) {
+        if ((bool) config_cache('pixelfed.optimize_image') === false) {
             ImageThumbnail::dispatch($media)->onQueue('mmo');
 
             return;
-        } else {
-            ImageResize::dispatch($media)->onQueue('mmo');
-
-            return;
         }
+        ImageResize::dispatch($media)->onQueue('mmo');
+
     }
 }

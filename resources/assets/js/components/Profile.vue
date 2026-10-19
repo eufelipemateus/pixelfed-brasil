@@ -137,8 +137,8 @@
                                         <div class="font-weight-bold mr-1">{{profile.display_name}}</div>
                                         <div v-if="profile.pronouns" class="text-muted small">{{profile.pronouns.join('/')}}</div>
                                     </div>
-                                    <p v-if="profile.note" class="mb-0" v-html="profile.note"></p>
-                                    <p v-if="profile.website" class="small">
+                                    <p v-if="profile.note && canShowProfileDetails()" class="mb-0" v-html="profile.note"></p>
+                                    <p v-if="profile.website && canShowProfileDetails()" class="small">
                                         <span v-if="profile.no_autolink" class="profile-website">{{ formatWebsite(profile.website) }}</span>
                                         <a v-else
                                             :href="profile.website"
@@ -150,7 +150,6 @@
                                     </p>
                                     <p class="d-flex small text-muted align-items-center">
                                         <span v-if="profile.label" class="btn  btn-sm py-0 mr-3"   :class="'btn-outline'" :style="'border: 1px solid '+profile.label.text_color+'; color:'+ profile.label.text_color +';'" :title="profile.label.description" v-html="profile.label.label"></span>
-
                                         <span v-if="relationship && relationship.followed_by" class="btn btn-outline-muted btn-sm py-0 mr-3">{{ $t("profile.followYou") }}</span>
                                         <span>
                                             {{$t("profile.joined")}} {{joinedAtFormat(profile.created_at)}}
@@ -732,6 +731,12 @@
         },
 
         methods: {
+            canShowProfileDetails() {
+                return Boolean(this.user)
+                    || this.profile.followers_count > 10
+                    || this.profile.statuses_count > 10;
+            },
+
             fetchProfile() {
                 axios.get('/api/pixelfed/v1/accounts/' + this.profileId).then(res => {
                     this.profile = res.data;

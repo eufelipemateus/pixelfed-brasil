@@ -1,5 +1,5 @@
 @section('schema')
-@if($settings['crawlable'])
+@if($indexable)
 <script type="application/ld+json">
 {!! json_encode([
     '@@context' => 'https://schema.org',

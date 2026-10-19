@@ -8,8 +8,8 @@ use Illuminate\View\Component;
 
 class UsersPopularComponent extends Component
 {
-
     public $users;
+
     /**
      * Create a new component instance.
      */

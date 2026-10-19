@@ -3,8 +3,8 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +29,7 @@ class CuratedRegisterSendMessage extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your ' . config('pixelfed.domain.app') . ' Registration Update',
+            subject: 'Your '.config('pixelfed.domain.app').' Registration Update',
         );
     }
 
@@ -46,7 +46,7 @@ class CuratedRegisterSendMessage extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

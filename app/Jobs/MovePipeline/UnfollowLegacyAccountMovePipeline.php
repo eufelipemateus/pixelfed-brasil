@@ -4,12 +4,12 @@ namespace App\Jobs\MovePipeline;
 
 use App\Util\ActivityPub\Helpers;
 use DateTime;
-use DB;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptions;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\DB;
 
 class UnfollowLegacyAccountMovePipeline implements ShouldQueue
 {
@@ -68,7 +68,7 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
      */
     public function handle(): void
     {
-        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') === false) {
             throw new Exception('Activitypub not enabled');
         }
 
@@ -97,10 +97,11 @@ class UnfollowLegacyAccountMovePipeline implements ShouldQueue
             ->where('followers.following_id', $actorAccount['id'])
             ->whereNotNull('profiles.user_id')
             ->whereNull('profiles.deleted_at')
+            ->whereNull('profiles.status')
             ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status')
             ->chunkById(100, function ($followers) use ($actor, $targetInbox, $targetPid) {
                 foreach ($followers as $follower) {
-                    if (! $follower->id || ! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                    if (! $follower->id || ! $follower->private_key || ! $follower->username || ! $follower->user_id) {
                         continue;
                     }
 

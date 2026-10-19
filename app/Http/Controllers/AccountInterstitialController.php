@@ -2,44 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AccountInterstitial;
+use App\Models\Status;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-
-use App\Status;
-use App\AccountInterstitial;
 
 class AccountInterstitialController extends Controller
 {
-	public function __construct()
-	{
-		$this->middleware('auth');
-	}
-
-    public function get(Request $request)
+    public function __construct()
     {
-    	$interstitial = $request->user()
+        $this->middleware('auth');
+    }
+
+    public function get(Request $request): RedirectResponse|View
+    {
+        $interstitial = $request->user()
             ->interstitials()
             ->whereNull('read_at')
             ->first();
 
-        if(!$interstitial) {
+        if (! $interstitial) {
             $user = $request->user();
             $user->has_interstitial = false;
             $user->save();
+
             return redirect('/');
         }
 
         $meta = json_decode($interstitial->meta);
         $view = $interstitial->view;
-    	return view($view, compact('interstitial', 'meta'));
+
+        return view($view, ['interstitial' => $interstitial, 'meta' => $meta]);
     }
 
-    public function read(Request $request)
+    public function read(Request $request): RedirectResponse
     {
         $this->validate($request, [
             'id' => 'required',
             'type' => 'required|in:post.cw,post.removed,post.unlist,post.autospam',
             'action' => 'required|in:appeal,confirm',
-            'appeal_message' => 'nullable|max:500'
+            'appeal_message' => 'nullable|max:500',
         ]);
 
         $redirect = '/';
@@ -52,7 +55,7 @@ class AccountInterstitialController extends Controller
             ->whereType($request->input('type'))
             ->findOrFail($id);
 
-        if($action == 'appeal') {
+        if ($action == 'appeal') {
             $ai->appeal_requested_at = now();
             $ai->appeal_message = $request->input('appeal_message');
         }
@@ -64,12 +67,12 @@ class AccountInterstitialController extends Controller
             ->whereNull('read_at')
             ->exists();
 
-        if(!$more) {
+        if (! $more) {
             $user->has_interstitial = false;
             $user->save();
         }
 
-        if(in_array($ai->type, ['post.cw', 'post.unlist'])) {
+        if (in_array($ai->type, ['post.cw', 'post.unlist'])) {
             $redirect = Status::findOrFail($ai->item_id)->url();
         }
 

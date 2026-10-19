@@ -2,15 +2,15 @@
 
 namespace App\Jobs\GroupPipeline;
 
+use App\Models\Group;
+use App\Models\GroupMember;
+use App\Services\GroupService;
+use App\Services\NotificationService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\GroupMember;
-use App\Notification;
-use App\Services\GroupService;
 
 class JoinApproved implements ShouldQueue
 {
@@ -41,12 +41,7 @@ class JoinApproved implements ShouldQueue
         $member->role = 'member';
         $member->save();
 
-        $n = new Notification;
-        $n->profile_id = $member->profile_id;
-        $n->actor_id = $member->profile_id;
-        $n->item_id = $member->group_id;
-        $n->item_type = 'App\Models\Group';
-        $n->save();
+        NotificationService::createNotification($member->profile_id, $member->profile_id, 'group.join.approved', $member->group_id, Group::class);
 
         GroupService::del($member->group_id);
         GroupService::delSelf($member->group_id, $member->profile_id);

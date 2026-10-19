@@ -2,17 +2,18 @@
 
 namespace App\Jobs\MovePipeline;
 
-use App\Follower;
 use App\Http\Controllers\FollowerController;
-use App\Profile;
+use App\Models\Follower;
+use App\Models\Profile;
 use App\Util\ActivityPub\Helpers;
 use DateTime;
-use DB;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\ThrottlesExceptionsWithRedis;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MoveMigrateFollowersPipeline implements ShouldQueue
@@ -79,7 +80,7 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
      */
     public function handle(): void
     {
-        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') == false) {
+        if (config('app.env') !== 'production' || (bool) config_cache('federation.activitypub.enabled') === false) {
             throw new Exception('Activitypub not enabled');
         }
 
@@ -87,25 +88,27 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
         $actor = $this->activity;
 
         // Verify target and actor are provided
-        if (!$target) {
-            Log::info("MoveMigrateFollowersPipeline: No target provided, skipping job");
+        if (! $target) {
+            Log::info('MoveMigrateFollowersPipeline: No target provided, skipping job');
+
             return;
         }
-        if (!$actor) {
-            Log::info("MoveMigrateFollowersPipeline: No actor provided, skipping job");
+        if (! $actor) {
+            Log::info('MoveMigrateFollowersPipeline: No actor provided, skipping job');
+
             return;
         }
 
         try {
             $targetAccount = Helpers::profileFetch($target);
             $actorAccount = Helpers::profileFetch($actor);
-        } catch (\Exception $e) {
-            Log::warning("MoveMigrateFollowersPipeline: Failed to fetch profiles: " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::warning('MoveMigrateFollowersPipeline: Failed to fetch profiles: '.$e->getMessage());
             throw $e;
         }
 
         if (! $targetAccount || ! $actorAccount) {
-            Log::warning("MoveMigrateFollowersPipeline: Could not fetch target or actor accounts");
+            Log::warning('MoveMigrateFollowersPipeline: Could not fetch target or actor accounts');
             throw new Exception('Invalid move accounts');
         }
 
@@ -131,10 +134,11 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
             ->where('followers.following_id', $actorAccount['id'])
             ->whereNotNull('profiles.user_id')
             ->whereNull('profiles.deleted_at')
+            ->whereNull('profiles.status')
             ->select('profiles.id', 'profiles.user_id', 'profiles.username', 'profiles.private_key', 'profiles.status', 'followers.local_profile')
             ->chunkById(100, function ($followers) use ($targetInbox, $targetPid, $targetAccount) {
                 foreach ($followers as $follower) {
-                    if (! $follower->private_key || ! $follower->username || ! $follower->user_id || $follower->status === 'delete') {
+                    if (! $follower->private_key || ! $follower->username || ! $follower->user_id) {
                         continue;
                     }
 
@@ -142,6 +146,13 @@ class MoveMigrateFollowersPipeline implements ShouldQueue
                         'profile_id' => $follower->id,
                         'following_id' => $targetPid,
                     ]);
+
+                    $followerProfile = Profile::find($follower->id);
+                    if ($followerProfile) {
+                        $followerProfile->following_count = Follower::where('profile_id', $follower->id)->count();
+                        $followerProfile->save();
+                        Cache::forget('profile:following_count:'.$follower->id);
+                    }
 
                     // If the remote user has migrated to a different instance,
                     // send a follow request for each local follower to the new

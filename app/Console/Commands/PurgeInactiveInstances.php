@@ -2,16 +2,17 @@
 
 namespace App\Console\Commands;
 
-use App\Media;
 use App\Jobs\InstancePipeline\PurgeInactiveInstancesJob;
-use App\Profile;
+use App\Models\Media;
+use App\Models\Profile;
+use App\Models\Status;
 use App\Services\InstancePurgeService;
-use App\Status;
 use Illuminate\Console\Command;
 
 class PurgeInactiveInstances extends Command
 {
     protected $signature = 'instances:purge-inactive {--dry-run : Exibe candidatos sem apagar dados}';
+
     protected $description = 'Remove dados de instâncias federadas inativas com segurança e em fases';
 
     public function handle()

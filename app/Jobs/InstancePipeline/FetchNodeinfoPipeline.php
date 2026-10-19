@@ -2,21 +2,17 @@
 
 namespace App\Jobs\InstancePipeline;
 
+use App\Models\Instance;
+use App\Models\Profile;
+use App\Services\NodeinfoService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
-use App\Instance;
-use App\Profile;
-use App\Services\NodeinfoService;
-use Illuminate\Contracts\Cache\Repository;
-use Illuminate\Support\Facades\Cache;
 
-class FetchNodeinfoPipeline implements ShouldQueue, ShouldBeUniqueUntilProcessing
+class FetchNodeinfoPipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -56,33 +52,42 @@ class FetchNodeinfoPipeline implements ShouldQueue, ShouldBeUniqueUntilProcessin
     {
         $instance = $this->instance;
 
-        if( $instance->nodeinfo_last_fetched &&
+        if ($instance->nodeinfo_last_fetched &&
             $instance->nodeinfo_last_fetched->gt(now()->subHours(12)) ||
-            $instance->delivery_timeout &&
-            $instance->delivery_next_after->gt(now())
+            $instance->nodeinfo_timeout &&
+            $instance->nodeinfo_next_after &&
+            $instance->nodeinfo_next_after->gt(now())
         ) {
             return;
         }
 
         $ni = NodeinfoService::get($instance->domain);
         $instance->last_crawled_at = now();
-        if($ni) {
-            if(isset($ni['software']) && is_array($ni['software']) && isset($ni['software']['name'])) {
+        if ($ni) {
+            if (isset($ni['software']) && is_array($ni['software']) && isset($ni['software']['name'])) {
                 $software = $ni['software']['name'];
                 $instance->software = strtolower(strip_tags($software));
                 $instance->user_count = Profile::whereDomain($instance->domain)->count();
                 $instance->nodeinfo_last_fetched = now();
                 $instance->last_crawled_at = now();
+                $instance->nodeinfo_timeout = 0;
                 $instance->delivery_timeout = 0;
                 $profile = Profile::whereDomain($instance->domain)
-                    ->whereNotNull("sharedInbox")->first();
-                $instance->shared_inbox = $profile ? $profile->sharedInbox : null;
+                    ->where(function ($query) {
+                        $query->whereNotNull('sharedInbox')
+                            ->orWhereNotNull('inbox_url');
+                    })
+                    ->first();
+                $instance->shared_inbox = $profile
+                    ? ($profile->sharedInbox ?: $profile->inbox_url)
+                    : null;
                 $instance->save();
             }
         } else {
-            $instance->delivery_timeout = 1;
+            $instance->user_count = Profile::whereDomain($instance->domain)->count();
+            $instance->nodeinfo_timeout = 1;
             $instance->last_crawled_at = now();
-            $instance->delivery_next_after = now()->addHours(14);
+            $instance->nodeinfo_next_after = now()->addHours(14);
             $instance->save();
         }
     }

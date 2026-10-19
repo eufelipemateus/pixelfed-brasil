@@ -2,24 +2,24 @@
 
 namespace App\Transformer\Api;
 
-use App\Instance;
+use App\Models\Instance;
 use League\Fractal;
 
 class InstanceTransformer extends Fractal\TransformerAbstract
 {
-    public function transform(Instance $instance)
+    public function transform(Instance $instance): array
     {
         return [
-            'uri'               => $instance->url,
-            'title'             => null,
-            'description'       => null,
-            'email'             => null,
-            'version'           => null,
-            'thumbnail'         => null,
-            'urls'              => [],
-            'stats'             => [],
-            'languages'         => null,
-            'contact_account'   => null
+            'uri' => $instance->url,
+            'title' => null,
+            'description' => null,
+            'email' => null,
+            'version' => null,
+            'thumbnail' => null,
+            'urls' => [],
+            'stats' => [],
+            'languages' => null,
+            'contact_account' => null,
         ];
     }
 }

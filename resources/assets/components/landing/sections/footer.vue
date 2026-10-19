@@ -1,11 +1,15 @@
 <template>
 	<div class="footer-component">
 		<div class="footer-component-links">
+            <a href="/about">{{ $t('navmenu.about') }}</a>
+            <div class="spacer">·</div>
 			<a href="/help">{{ $t('navmenu.help') }}</a>
 			<div class="spacer">·</div>
 			<a href="/terms">{{ $t('navmenu.terms') }}</a>
 			<div class="spacer">·</div>
 			<a href="/privacy">{{ $t('navmenu.privacy') }}</a>
+            <div class="spacer">·</div>
+            <a href="/app">App</a>
             <div class="spacer">·</div>
             <a v-if="config.show_legal_notice_link" href="/legal-notice">Legal Notice</a>
             <div v-if="config.show_legal_notice_link" class="spacer">·</div>

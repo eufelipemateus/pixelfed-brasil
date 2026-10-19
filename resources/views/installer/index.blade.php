@@ -58,7 +58,7 @@
 					<div class="col-12">
 						<p class="text-center py-3">
 							<a href="/installer">
-								<img src="/img/pixelfed-icon-color.svg" width="60" height="60">
+								<img src="{{ config('app.logo') }}" width="60" height="60">
 							</a>
 						</p>
 

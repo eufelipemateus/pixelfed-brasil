@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\StatusEnums;
 use App\Models\ProfileMigration;
-use App\Services\FetchCacheService;
+use App\Services\ActivityPubFetchService;
 use App\Services\WebfingerService;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -15,11 +17,13 @@ class ProfileMigrationStoreRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        if ((bool) config_cache('federation.activitypub.enabled') === false ||
-            (bool) config_cache('federation.migration') === false) {
+        if (
+            (bool) config_cache('federation.activitypub.enabled') === false ||
+            (bool) config_cache('federation.migration') === false
+        ) {
             return false;
         }
-        if (! $this->user() || $this->user()->status) {
+        if (! $this->user() || $this->user()->status !== StatusEnums::ACTIVE) {
             return false;
         }
 
@@ -29,7 +33,7 @@ class ProfileMigrationStoreRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -63,7 +67,11 @@ class ProfileMigrationStoreRequest extends FormRequest
         if (! $acct) {
             return 'The new account you provided is not responding to our requests.';
         }
-        $pr = FetchCacheService::getJson($acct);
+        $prRes = ActivityPubFetchService::get($acct, true);
+        if (empty($prRes)) {
+            return 'Invalid response.';
+        }
+        $pr = json_decode($prRes, true);
         if (! $pr || ! isset($pr['alsoKnownAs'])) {
             return 'Invalid account lookup response.';
         }
@@ -71,7 +79,9 @@ class ProfileMigrationStoreRequest extends FormRequest
             return 'The new account does not contain an alias to your current account.';
         }
         $curAcctUrl = $this->user()->profile->permalink();
-        if (! in_array($curAcctUrl, $pr['alsoKnownAs'])) {
+        $aka = (array) $pr['alsoKnownAs'];
+
+        if (empty($aka) || ! in_array($curAcctUrl, $aka)) {
             return 'The new account does not contain an alias to your current account.';
         }
 

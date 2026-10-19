@@ -32,7 +32,7 @@ class PurgeInactiveInstancesJob implements ShouldQueue
 
         InstancePurgeService::inactiveInstancesQuery($threshold)
             ->orderBy('id')
-            ->chunkById(100, function ($instances) use ($threshold) {
+            ->chunkById(100, function ($instances) {
                 foreach ($instances as $instance) {
                     PurgeInactiveInstanceJob::dispatch($instance->id)
                         ->onQueue('delete');

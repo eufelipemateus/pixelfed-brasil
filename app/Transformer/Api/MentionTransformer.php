@@ -2,18 +2,18 @@
 
 namespace App\Transformer\Api;
 
-use App\Profile;
+use App\Models\Profile;
 use League\Fractal;
 
 class MentionTransformer extends Fractal\TransformerAbstract
 {
-    public function transform(Profile $profile)
+    public function transform(Profile $profile): array
     {
         return [
-            'id'       => (string) $profile->id,
-            'url'      => $profile->url(),
+            'id' => (string) $profile->id,
+            'url' => $profile->url(),
             'username' => $profile->username,
-            'acct'     => $profile->username,
+            'acct' => $profile->username,
         ];
     }
 }

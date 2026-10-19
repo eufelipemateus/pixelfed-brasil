@@ -2,7 +2,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container" style="max-width: 600px;">
             <router-link to="/" class="navbar-brand">
-                <img src="/img/pixelfed-icon-color.svg" width="40" height="40" alt="Logo">
+                <img :src="config.logo" width="40" height="40" alt="Logo">
                 <span class="mr-3">{{ name }}</span>
             </router-link>
             <ul class="navbar-nav mr-auto">

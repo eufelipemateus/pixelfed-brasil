@@ -2,10 +2,8 @@
 
 namespace App\Listeners;
 
-use App\AccountLog;
-use App\User;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Models\AccountLog;
+use App\Models\User;
 
 class LogFailedLogin
 {
@@ -30,14 +28,14 @@ class LogFailedLogin
         $user = $event->user;
         $request = request();
 
-        if(!$user) {
+        if (! $user) {
             return;
         }
-        
-        $log = new AccountLog();
+
+        $log = new AccountLog;
         $log->user_id = $user->id;
         $log->item_id = $user->id;
-        $log->item_type = 'App\User';
+        $log->item_type = User::class;
         $log->action = 'auth.failed';
         $log->message = 'Failed login attempt';
         $log->link = null;

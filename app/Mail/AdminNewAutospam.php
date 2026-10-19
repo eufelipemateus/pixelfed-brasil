@@ -2,14 +2,14 @@
 
 namespace App\Mail;
 
+use App\Models\Status;
+use App\Services\AccountService;
+use App\Services\StatusService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Services\AccountService;
-use App\Services\StatusService;
 
 class AdminNewAutospam extends Mailable
 {
@@ -30,49 +30,47 @@ class AdminNewAutospam extends Mailable
     /**
      * Get the message envelope.
      *
-     * @return \Illuminate\Mail\Mailables\Envelope
+     * @return Envelope
      */
     public function envelope()
     {
         return new Envelope(
-            subject: '[' . config('pixelfed.domain.app') . '] Spam Post Detected (Ref: autospam-' . $this->report->id . ')',
+            subject: '['.config('pixelfed.domain.app').'] Spam Post Detected (Ref: autospam-'.$this->report->id.')',
         );
     }
 
     /**
      * Get the message content definition.
      *
-     * @return \Illuminate\Mail\Mailables\Content
+     * @return Content
      */
     public function content()
     {
-    	$data = $this->report->toArray();
-    	$reported_status = null;
-    	$reported_account = null;
-    	$url = url('/i/admin/reports/autospam/' . $this->report->id . '?ref=email');
+        $data = $this->report->toArray();
+        $reported_status = null;
+        $reported_account = null;
+        $url = url('/i/admin/reports/autospam/'.$this->report->id.'?ref=email');
 
-    	if($data['item_type'] === 'App\Status') {
-    		$reported_status = StatusService::get($this->report->item_id, false);
-    		$reported_account = AccountService::get($reported_status['account']['id'], true);
-    	}
+        if ($data['item_type'] === Status::class) {
+            $reported_status = StatusService::get($this->report->item_id, false);
+            $reported_account = AccountService::get($reported_status['account']['id'], true);
+        }
 
         return new Content(
             markdown: 'emails.admin.new_autospam',
             with: [
-            	'report' => $data,
-            	'url' => $url,
-            	'reported_status' => $reported_status,
-            	'reported_account' => $reported_account
+                'report' => $data,
+                'url' => $url,
+                'reported_status' => $reported_status,
+                'reported_account' => $reported_account,
             ]
         );
     }
 
     /**
      * Get the attachments for the message.
-     *
-     * @return array
      */
-    public function attachments()
+    public function attachments(): array
     {
         return [];
     }

@@ -14,13 +14,13 @@
 	            	<a href="/">
 	                	<img src="/img/pixelfed-icon-white.svg" height="60px">
 	            	</a>
-	                <h1 class="pt-4 pb-1">2FA Checkpoint</h1>
-		            <p class="font-weight-light lead">
-		            	Enter the 2FA code from your device.
-		            </p>
-		            <p class="text-muted small pb-3">
-		                If you lose access to your 2FA device, contact the admins.
-		            </p>
+					<h1 class="pt-4 pb-1">{{ trans('auth.2fa_checkpoint') }}</h1>
+					<p class="font-weight-light lead">
+						{{ trans('auth.enter_2fa_code') }}
+					</p>
+					<p class="text-muted small pb-3">
+						{{ trans('auth.lost_2fa_device') }}
+					</p>
 	            </div>
 	            <div class="card bg-glass">
 	                <div class="card-body">
@@ -30,7 +30,7 @@
 	                        <div class="form-group row">
 
 	                            <div class="col-md-12">
-	                            	<label class="font-weight-bold small text-muted">2FA Code</label>
+									<label class="font-weight-bold small text-muted">{{ trans('auth.2fa_code') }}</label>
 	                                <input
 	                                	id="code"
 	                                	type="text"
@@ -69,12 +69,12 @@
 	            </div>
 	           	<div class="d-flex justify-content-between my-3">
 	            	<p class="mb-0 small">
-	            		<span class="text-muted">Logged in as:</span> {{request()->user()->username}}
+									<span class="text-muted">{{ trans('auth.logged_in_as') }}</span> {{request()->user()->username}}
 	            	</p>
 
 	                <form action="/logout" method="post">
 	            		@csrf
-	            		<button type="submit" class="btn btn-link p-0 btn-sm text-white font-weight-bold">Logout</button>
+									<button type="submit" class="btn btn-link p-0 btn-sm text-white font-weight-bold">{{ trans('auth.logout') }}</button>
 	            	</form>
 	            </div>
 	        </div>

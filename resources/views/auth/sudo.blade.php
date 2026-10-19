@@ -23,7 +23,7 @@
 	                        @csrf
 
 	                        <div class="form-group">
-	                        	<label class="font-weight-bold small text-muted">Confirm Password</label>
+	                        <label class="font-weight-bold small text-muted">Confirm Password</label>
 	                            <input
 	                            	id="password"
 	                            	type="password"
@@ -40,20 +40,13 @@
 	                            @endif
 	                        </div>
 
-	                        <div class="form-group" id="trusted-device-wrapper">
-	                            <div class="custom-control custom-checkbox">
-	                              <input type="checkbox" class="custom-control-input" name="trustDevice" id="trusted-device">
-	                              <label class="custom-control-label text-muted" for="trusted-device">Trust this device and don't ask again</label>
-	                            </div>
-	                        </div>
-
 	                        <div class="form-group row mb-0">
 	                            <div class="col-md-12">
 	                                <button
-	                                	type="button"
-	                                	id="sbtn"
-	                                	class="btn btn-success rounded-pill btn-block font-weight-bold"
-	                                	onclick="event.preventDefault();handleSubmit()">
+	                                type="button"
+	                                id="sbtn"
+	                                class="btn btn-success rounded-pill btn-block font-weight-bold"
+	                                onclick="event.preventDefault();handleSubmit()">
 	                                    {{ __('Confirm Password') }}
 	                                </button>
 
@@ -65,12 +58,12 @@
 
 	            <div class="d-flex justify-content-between my-3">
 	            	<p class="mb-0 small">
-	            		<span class="text-muted">Logged in as:</span> {{request()->user()->username}}
+	            <span class="text-muted">Logged in as:</span> {{request()->user()->username}}
 	            	</p>
 
 	            	<form action="/logout" method="post">
 	            		@csrf
-	            		<button type="submit" class="btn btn-link p-0 btn-sm text-white font-weight-bold">Logout</button>
+	            <button type="submit" class="btn btn-link p-0 btn-sm text-white font-weight-bold">Logout</button>
 	            	</form>
 	            </div>
 	        </div>
@@ -90,9 +83,6 @@
 		let email = document.getElementById('password');
 		email.setAttribute('readonly', 'readonly');
 		email.style.opacity = '20%';
-
-		let trustedDevice = document.getElementById('trusted-device-wrapper');
-		trustedDevice.style.opacity = '20%';
 
 		let btn = document.getElementById('sbtn');
 		btn.classList.add('disabled');

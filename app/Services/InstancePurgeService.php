@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Instance;
+use App\Models\Instance;
 use App\Models\InstanceModerationRule;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;

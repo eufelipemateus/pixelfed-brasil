@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Instance;
+use App\Models\Instance;
 use App\Models\InstanceModerationRule;
-use App\Util\Blurhash\Blurhash;
+use App\Util\Media\Blurhash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +37,9 @@ class InstanceService
     public static function getByDomain($domain)
     {
         return Cache::remember(self::CACHE_KEY_BY_DOMAIN.$domain, 3600, function () use ($domain) {
-            return Instance::whereDomain($domain)->first();
+            $instance = Instance::whereDomain($domain)->first();
+
+            return $instance ? $instance->toArray() : null;
         });
     }
 
@@ -147,32 +149,12 @@ class InstanceService
 
             $file = config_cache('app.banner_image') ?? url(Storage::url('public/headers/default.jpg'));
 
-            $image = imagecreatefromstring(file_get_contents($file));
-            if (! $image) {
-                return 'UzJR]l{wHZRjM}R%XRkCH?X9xaWEjZj]kAjt';
-            }
-            $width = imagesx($image);
-            $height = imagesy($image);
-
-            $pixels = [];
-            for ($y = 0; $y < $height; $y++) {
-                $row = [];
-                for ($x = 0; $x < $width; $x++) {
-                    $index = imagecolorat($image, $x, $y);
-                    $colors = imagecolorsforindex($image, $index);
-
-                    $row[] = [$colors['red'], $colors['green'], $colors['blue']];
-                }
-                $pixels[] = $row;
-            }
-
-            // Free the allocated GdImage object from memory:
-            imagedestroy($image);
-
-            $components_x = 4;
-            $components_y = 4;
-            $blurhash = Blurhash::encode($pixels, $components_x, $components_y);
-            if (strlen($blurhash) > 191) {
+            // Goes through the configured image driver (and a downscaled sample)
+            // rather than raw GD calls at full resolution, so this no longer
+            // fatals on hosts that run vips without ext-gd.
+            $contents = @file_get_contents($file);
+            $blurhash = $contents ? Blurhash::fromBinary($contents) : null;
+            if (! $blurhash) {
                 return 'UzJR]l{wHZRjM}R%XRkCH?X9xaWEjZj]kAjt';
             }
 
@@ -186,11 +168,13 @@ class InstanceService
     {
         return Cache::remember(self::CACHE_KEY_SHARED_INBOXES_PUBLIC, 432000, function () {
             $bannedDomains = InstanceService::getBannedDomains();
-            return  Instance::whereNotNull('shared_inbox')->where('nodeinfo_last_fetched', '>', now()->subMonths(3))
+
+            return Instance::whereNotNull('shared_inbox')->where('nodeinfo_last_fetched', '>', now()->subMonths(3))
                 ->pluck('shared_inbox')
                 ->filter(function ($url) use ($bannedDomains) {
                     $domain = parse_url($url, PHP_URL_HOST);
-                    return $url && !in_array($domain, $bannedDomains);
+
+                    return $url && ! in_array($domain, $bannedDomains);
                 })
                 ->toArray();
         });

@@ -2,130 +2,146 @@
 
 namespace App\Jobs\ImportPipeline;
 
-use DB;
+use App\Jobs\ImageOptimizePipeline\ImageOptimize;
+use App\Models\ImportData;
+use App\Models\ImportJob;
+use App\Models\Media;
+use App\Models\Profile;
+use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Jobs\ImageOptimizePipeline\ImageOptimize;
-use App\{
-	ImportJob,
-	ImportData,
-	Media,
-	Profile,
-	Status,
-};
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class ImportInstagram implements ShouldQueue
 {
-	use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-	protected $import;
+    protected $import;
 
-	/**
-	 * Delete the job if its models no longer exist.
-	 *
-	 * @var bool
-	 */
-	public $deleteWhenMissingModels = true;
+    /**
+     * Delete the job if its models no longer exist.
+     *
+     * @var bool
+     */
+    public $deleteWhenMissingModels = true;
 
-	/**
-	 * Create a new job instance.
-	 *
-	 * @return void
-	 */
-	public function __construct(ImportJob $import)
-	{
-		$this->import = $import;
-	}
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct(ImportJob $import)
+    {
+        $this->import = $import;
+    }
 
-	/**
-	 * Execute the job.
-	 *
-	 * @return void
-	 */
-	public function handle()
-	{
-		if(config_cache('pixelfed.import.instagram.enabled') != true) {
-			return;
-		}
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        if (config_cache('pixelfed.import.instagram.enabled') != true) {
+            return;
+        }
 
-		$job = ImportJob::findOrFail($this->import->id);
-		$profile = Profile::findOrFail($job->profile_id);
-		$user = $profile->user;
-		$json = $job->mediaJson();
-		$collection = array_reverse($json['photos']);
-		$files = $job->files;
-		$monthHash = hash('sha1', date('Y').date('m'));
-		$userHash = hash('sha1', $user->id . (string) $user->created_at);
-		$fs = new Filesystem;
+        $job = ImportJob::find($this->import->id);
+        if (! $job) {
+            return;
+        }
 
-		foreach($collection as $import)
-		{
-			$caption = $import['caption'];
-			try {
-				$min = Carbon::create(2010, 10, 6, 0, 0, 0);
-				$taken_at = Carbon::parse($import['taken_at']);
-				if(!$min->lt($taken_at)) {
-					$taken_at = Carbon::now();
-				}
-			} catch (\Exception $e) {
+        // The profile may have been soft-deleted (e.g. account deletion) after
+        // this job was queued. findOrFail would throw inside handle() and the
+        // job would retry until it lands in failed_jobs; drop it cleanly instead.
+        $profile = Profile::find($job->profile_id);
+        if (! $profile) {
+            $job->delete();
 
-			}
-			$filename = last( explode('/', $import['path']) );
-			$importData = ImportData::whereJobId($job->id)
-				->whereOriginalName($filename)
-				->first();
+            return;
+        }
 
-			if(empty($importData) || is_file(storage_path("app/$importData->path")) == false) {
-				continue;
-			}
+        $user = $profile->user;
+        if (! $user) {
+            $job->delete();
 
-			DB::transaction(function() use(
-				$fs, $profile, $caption, $taken_at, $filename,
-				$monthHash, $userHash, $importData
-			) {
-				$status = new Status();
-				$status->profile_id = $profile->id;
-				$status->caption = strip_tags($caption);
-				$status->is_nsfw = false;
-				$status->type = 'photo';
-				$status->scope = 'unlisted';
-				$status->visibility = 'unlisted';
-				$status->created_at = $taken_at;
-				$status->save();
+            return;
+        }
+        $json = $job->mediaJson();
+        $collection = array_reverse($json['photos']);
+        $files = $job->files;
+        $monthHash = hash('sha1', date('Y').date('m'));
+        $userHash = hash('sha1', $user->id.(string) $user->created_at);
+        $fs = new Filesystem;
 
+        foreach ($collection as $import) {
+            $caption = $import['caption'];
+            $taken_at = now();
+            try {
+                $min = Carbon::create(2010, 10, 6, 0, 0, 0);
+                $taken_at = Carbon::parse($import['taken_at']);
+                if (! $min->lt($taken_at)) {
+                    $taken_at = now();
+                }
+            } catch (\Exception) {
 
-				$path = storage_path("app/$importData->path");
-				$storagePath = "public/m/{$monthHash}/{$userHash}";
-				$dir = "app/$storagePath";
-				if(!is_dir(storage_path($dir))) {
-					mkdir(storage_path($dir), 0755, true);
-				}
-				$newPath = "$dir/$filename";
-				$fs->move($path,storage_path($newPath));
-				$path = $newPath;
-				$hash = \hash_file('sha256', storage_path($path));
-				$media = new Media();
-				$media->status_id = $status->id;
-				$media->profile_id = $profile->id;
-				$media->user_id = $profile->user->id;
-				$media->media_path = "$storagePath/$filename";
-				$media->original_sha256 = $hash;
-				$media->size = $fs->size(storage_path($path));
-				$media->mime = $fs->mimeType(storage_path($path));
-				$media->filter_class = null;
-				$media->filter_name = null;
-				$media->order = 1;
-				$media->save();
-				ImageOptimize::dispatch($media);
-			});
-		}
+            }
+            $filename = last(explode('/', $import['path']));
+            $importData = ImportData::whereJobId($job->id)
+                ->whereOriginalName($filename)
+                ->first();
 
-		$job->completed_at = Carbon::now();
-		$job->save();
-	}
+            if (empty($importData) || is_file(storage_path("app/$importData->path")) === false) {
+                continue;
+            }
+
+            DB::transaction(function () use (
+                $fs, $profile, $caption, $taken_at, $filename,
+                $monthHash, $userHash, $importData
+            ) {
+                $status = new Status;
+                $status->profile_id = $profile->id;
+                $status->caption = strip_tags($caption);
+                $status->rendered = '';
+                $status->is_nsfw = false;
+                $status->type = 'photo';
+                $status->scope = 'unlisted';
+                $status->visibility = 'unlisted';
+                $status->created_at = $taken_at;
+                $status->save();
+
+                $path = storage_path("app/$importData->path");
+                $storagePath = "public/m/{$monthHash}/{$userHash}";
+                $dir = "app/$storagePath";
+                if (! is_dir(storage_path($dir))) {
+                    mkdir(storage_path($dir), 0755, true);
+                }
+                $newPath = "$dir/$filename";
+                $fs->move($path, storage_path($newPath));
+                $path = $newPath;
+                $hash = \hash_file('sha256', storage_path($path));
+                $media = new Media;
+                $media->status_id = $status->id;
+                $media->profile_id = $profile->id;
+                $media->user_id = $profile->user->id;
+                $media->media_path = "$storagePath/$filename";
+                $media->original_sha256 = $hash;
+                $media->size = $fs->size(storage_path($path));
+                $media->mime = $fs->mimeType(storage_path($path));
+                $media->filter_class = null;
+                $media->filter_name = null;
+                $media->order = 1;
+                $media->save();
+                ImageOptimize::dispatch($media);
+            });
+        }
+
+        $job->completed_at = now();
+        $job->save();
+    }
 }

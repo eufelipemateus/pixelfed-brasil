@@ -2,20 +2,22 @@
 
 namespace App\Mail;
 
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Carbon\Carbon;
 
 class MonthlyPopularPostsMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $posts;
+
     public $user;
+
     public $popularUsers;
 
     /**
@@ -45,10 +47,10 @@ class MonthlyPopularPostsMail extends Mailable
     {
         return new Content(
             view: 'emails.monthly_popular_posts',
-            with:[
-                'mes'=> Carbon::now()->subMonth()->locale('pt')->translatedFormat('F'),
-                'user'=> $this->user,
-                'posts'=> $this->posts,
+            with: [
+                'mes' => Carbon::now()->subMonth()->locale('pt')->translatedFormat('F'),
+                'user' => $this->user,
+                'posts' => $this->posts,
                 'popularUsers' => $this->popularUsers,
             ]
         );
@@ -57,7 +59,7 @@ class MonthlyPopularPostsMail extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

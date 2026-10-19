@@ -2,18 +2,16 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use Illuminate\Support\Facades\Log;
-use App\Status;
+use App\Models\Status;
+use App\Services\ActivityPubDeliveryService;
+use App\Services\FractalService;
+use App\Transformer\ActivityPub\Verb\UpdateNote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use League\Fractal;
-use League\Fractal\Serializer\ArraySerializer;
-use App\Transformer\ActivityPub\Verb\UpdateNote;
-use App\Jobs\ActivityPub\PubDeliver;
-
+use Illuminate\Support\Facades\Log;
 
 class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
 {
@@ -46,56 +44,42 @@ class StatusLocalUpdateActivityPubDeliverPipeline implements ShouldQueue
     public function handle()
     {
         $status = $this->status;
-		// Verify status exists
-		if (!$status) {
-			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Status no longer exists, skipping job");
-			return;
-		}
 
-		$profile = $status->profile;
-		// Verify profile exists
-		if (!$profile) {
-			Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
-			return;
-		}
+        if (! $status) {
+            Log::info('StatusLocalUpdateActivityPubDeliverPipeline: Status no longer exists, skipping job');
 
-        // ignore group posts
-        // if($status->group_id != null) {
-        //     return;
-        // }
+            return;
+        }
+
+        $profile = $status->profile;
+
+        if (! $profile) {
+            Log::info("StatusLocalUpdateActivityPubDeliverPipeline: Profile no longer exists for status {$status->id}, skipping job");
+
+            return;
+        }
 
         if ($status->local == false || $status->url || $status->uri) {
             return;
         }
 
-        $audience = $status->profile->getAudienceInbox($status->scope);
+        $audience = $status->profile->getAudienceInbox();
 
-        if (empty($audience) || !in_array($status->scope, ['public', 'unlisted', 'private'])) {
-            // Return on profiles with no remote followers
+        if (empty($audience) || ! in_array($status->scope, ['public', 'unlisted', 'private'])) {
             return;
         }
 
         switch ($status->type) {
             case 'poll':
-                // Polls not yet supported
                 return;
-                break;
 
             default:
-                $activitypubObject = new UpdateNote();
+                $activitypubObject = new UpdateNote;
                 break;
         }
 
+        $activity = FractalService::item($status, $activitypubObject);
 
-        $fractal = new Fractal\Manager();
-        $fractal->setSerializer(new ArraySerializer());
-        $resource = new Fractal\Resource\Item($status, $activitypubObject);
-        $activity = $fractal->createData($resource)->toArray();
-
-        $payload = json_encode($activity);
-
-        foreach (array_chunk($audience, 100) as $chunk) {
-            PubDeliver::dispatch($activity, $profile, $payload, $chunk)->onQueue('deliver');
-        }
+        ActivityPubDeliveryService::pool($profile, $audience, $activity);
     }
 }

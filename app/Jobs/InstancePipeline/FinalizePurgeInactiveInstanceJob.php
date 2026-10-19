@@ -2,8 +2,8 @@
 
 namespace App\Jobs\InstancePipeline;
 
-use App\Instance;
-use App\Profile;
+use App\Models\Instance;
+use App\Models\Profile;
 use App\Services\InstancePurgeService;
 use App\Services\InstanceService;
 use Illuminate\Bus\Queueable;

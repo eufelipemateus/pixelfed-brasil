@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Bookmark;
+use App\Models\Bookmark;
+use App\Models\Status;
 use App\Services\AccountService;
 use App\Services\BookmarkService;
 use App\Services\FollowerService;
 use App\Services\UserRoleService;
-use App\Status;
 use Illuminate\Http\Request;
 
 class BookmarkController extends Controller
@@ -40,17 +40,18 @@ class BookmarkController extends Controller
 
                     if ($request->ajax()) {
                         return ['code' => 200, 'msg' => 'Bookmark removed!'];
-                    } else {
-                        return redirect()->back();
                     }
+
+                    return redirect()->back();
                 }
                 abort(404, 'Error: You cannot bookmark private posts from accounts you do not follow.');
             }
         }
 
-        $bookmark = Bookmark::firstOrCreate(
-            ['status_id' => $status->id], ['profile_id' => $user->profile_id]
-        );
+        $bookmark = Bookmark::firstOrCreate([
+            'status_id' => $status->id,
+            'profile_id' => $user->profile_id,
+        ]);
 
         if (! $bookmark->wasRecentlyCreated) {
             BookmarkService::del($user->profile_id, $status->id);

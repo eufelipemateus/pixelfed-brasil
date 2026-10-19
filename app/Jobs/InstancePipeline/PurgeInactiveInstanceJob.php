@@ -2,9 +2,9 @@
 
 namespace App\Jobs\InstancePipeline;
 
-use App\Instance;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
-use App\Profile;
+use App\Models\Instance;
+use App\Models\Profile;
 use App\Services\InstancePurgeService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
