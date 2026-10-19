@@ -99,8 +99,8 @@ class InstanceService
             return [
                 'total_count' => Instance::count(),
                 'new_count' => Instance::where('created_at', '>', now()->subDays(14))->count(),
-                'banned_count' => Instance::whereBanned(true)->count(),
-                'nsfw_count' => Instance::whereAutoCw(true)->count(),
+                'banned_count' => count(self::getBannedDomains()),
+                'nsfw_count' => count(self::getNsfwDomains()),
             ];
         });
     }

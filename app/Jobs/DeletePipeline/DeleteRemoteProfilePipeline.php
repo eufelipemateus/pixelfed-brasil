@@ -3,11 +3,13 @@
 namespace App\Jobs\DeletePipeline;
 
 use App\Enums\StatusEnums;
+use App\Jobs\InstancePipeline\FinalizePurgeInactiveProfileJob;
 use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Models\Conversation;
 use App\Models\DirectMessage;
 use App\Models\Follower;
 use App\Models\FollowRequest;
+use App\Models\Instance;
 use App\Models\Like;
 use App\Models\MediaTag;
 use App\Models\Mention;
@@ -24,6 +26,7 @@ use App\Models\StoryView;
 use App\Models\UserFilter;
 use App\Services\AccountService;
 use App\Services\DirectMessageService;
+use App\Services\InstancePurgeService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,6 +40,8 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 
     protected $profile;
 
+    protected ?int $purgeInstanceId;
+
     public $timeout = 900;
 
     public $tries = 3;
@@ -45,9 +50,10 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
 
     public $deleteWhenMissingModels = true;
 
-    public function __construct(Profile $profile)
+    public function __construct(Profile $profile, ?int $purgeInstanceId = null)
     {
         $this->profile = $profile;
+        $this->purgeInstanceId = $purgeInstanceId;
     }
 
     public function handle()
@@ -67,6 +73,16 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
             return null;
         }
 
+        if ($this->purgeInstanceId !== null && ! $this->purgeIsAuthorizedFor($profile)) {
+            Log::info('DeleteRemoteProfilePipeline: purge cancelado após revalidação', [
+                'instance_id' => $this->purgeInstanceId,
+                'profile_id' => $pid,
+                'domain' => $profile->domain,
+            ]);
+
+            return null;
+        }
+
         $profile->status = StatusEnums::DELETE_QUEUE;
         $profile->save();
 
@@ -75,7 +91,8 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         // Delete statuses. chunkById, not chunk: RemoteStatusDelete
         // soft-deletes the rows it is handed, so OFFSET paging would skip rows
         // as the live set shrinks. Keyset paging on the monotonic id is stable.
-        Status::whereProfileId($pid)
+        Status::withTrashed()
+            ->whereProfileId($pid)
             ->chunkById(50, function ($statuses) {
                 foreach ($statuses as $status) {
                     RemoteStatusDelete::dispatch($status)->onQueue('delete');
@@ -165,8 +182,26 @@ class DeleteRemoteProfilePipeline implements ShouldQueue
         Report::whereProfileId($pid)->orWhere('reported_profile_id', $pid)->forceDelete();
 
         // Delete profile
-        Profile::findOrFail($profile->id)->delete();
+        $storedProfile = Profile::withTrashed()->findOrFail($profile->id);
+        if (! $storedProfile->trashed()) {
+            $storedProfile->delete();
+        }
+
+        if ($this->purgeInstanceId !== null) {
+            FinalizePurgeInactiveProfileJob::dispatch($pid, $this->purgeInstanceId)
+                ->delay(now()->addMinutes(10))
+                ->onQueue('delete');
+        }
 
         return 1;
+    }
+
+    private function purgeIsAuthorizedFor(Profile $profile): bool
+    {
+        $instance = Instance::find($this->purgeInstanceId);
+
+        return $instance
+            && strtolower($instance->domain) === strtolower($profile->domain)
+            && InstancePurgeService::isPurgeAuthorized($instance->id);
     }
 }

@@ -64,6 +64,8 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         $threshold = InstancePurgeService::threshold();
 
         if (! InstancePurgeService::isStillInactive($instance->id, $threshold)) {
+            InstancePurgeService::resetProgress($instance->id);
+
             Log::info('PurgeInactiveInstanceJob: instância voltou a ficar ativa, ignorando', [
                 'instance_id' => $instance->id,
                 'domain' => $instance->domain,
@@ -72,28 +74,61 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
+        if ($instance->purge_candidate_at === null) {
+            InstancePurgeService::markCandidate($instance->id);
+
+            Log::info('PurgeInactiveInstanceJob: instância marcada como candidata', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'grace_days' => InstancePurgeService::graceDays(),
+            ]);
+
+            return;
+        }
+
+        if (! InstancePurgeService::beginPurge($instance->id)) {
+            Log::info('PurgeInactiveInstanceJob: instância ainda está na janela de carência', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'candidate_at' => $instance->purge_candidate_at?->toDateTimeString(),
+            ]);
+
+            return;
+        }
+
+        $dispatched = 0;
+
         Profile::query()
             ->where('domain', $instance->domain)
             ->orderBy('id')
-            ->chunkById(100, function ($profiles) use ($instance) {
-                foreach ($profiles as $profile) {
-                    try {
-                        DeleteRemoteProfilePipeline::dispatch($profile)->onQueue('delete');
-                    } catch (Throwable $e) {
-                        Log::error('PurgeInactiveInstanceJob: falha ao despachar exclusão de perfil remoto', [
-                            'instance_id' => $instance->id,
-                            'domain' => $instance->domain,
-                            'profile_id' => $profile->id,
-                            'exception_class' => get_class($e),
-                            'exception_message' => $e->getMessage(),
-                        ]);
+            ->limit(InstancePurgeService::profileBatchSize())
+            ->get()
+            ->each(function (Profile $profile) use ($instance, &$dispatched) {
+                try {
+                    DeleteRemoteProfilePipeline::dispatch($profile, $instance->id)->onQueue('delete');
+                    $dispatched++;
+                } catch (Throwable $e) {
+                    Log::error('PurgeInactiveInstanceJob: falha ao despachar exclusão de perfil remoto', [
+                        'instance_id' => $instance->id,
+                        'domain' => $instance->domain,
+                        'profile_id' => $profile->id,
+                        'exception_class' => get_class($e),
+                        'exception_message' => $e->getMessage(),
+                    ]);
 
-                        throw $e;
-                    }
+                    throw $e;
                 }
             });
 
-        FinalizePurgeInactiveInstanceJob::dispatch($instance->id)->onQueue('delete');
+        Log::info('PurgeInactiveInstanceJob: lote de perfis despachado', [
+            'instance_id' => $instance->id,
+            'domain' => $instance->domain,
+            'profiles_dispatched' => $dispatched,
+        ]);
+
+        FinalizePurgeInactiveInstanceJob::dispatch($instance->id)
+            ->delay(now()->addMinutes(10))
+            ->onQueue('delete');
     }
 
     public function failed(Throwable $exception): void

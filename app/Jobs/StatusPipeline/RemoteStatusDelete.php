@@ -106,10 +106,6 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             return;
         }
 
-        if ($status->deleted_at) {
-            return;
-        }
-
         StatusService::del($status->id, true);
 
         // AccountStatService::decrementPostCount($status->profile_id);

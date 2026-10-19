@@ -27,7 +27,7 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
 
     public $timeout = 120;
 
-    public $tries = 24;
+    public $tries = 0;
 
     public $maxExceptions = 3;
 
@@ -59,8 +59,8 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
             return;
         }
 
-        if (! InstancePurgeService::isStillInactive($instance->id)) {
-            Log::info('FinalizePurgeInactiveInstanceJob: instância não está mais inativa', [
+        if (! InstancePurgeService::isPurgeAuthorized($instance->id)) {
+            Log::info('FinalizePurgeInactiveInstanceJob: purge não está mais autorizado', [
                 'instance_id' => $instance->id,
                 'domain' => $instance->domain,
             ]);
@@ -68,7 +68,23 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
             return;
         }
 
-        $remainingProfiles = Profile::query()->where('domain', $instance->domain)->count();
+        $activeProfiles = Profile::where('domain', $instance->domain)->count();
+
+        if ($activeProfiles > 0) {
+            PurgeInactiveInstanceJob::dispatch($instance->id)
+                ->delay(now()->addMinute())
+                ->onQueue('delete');
+
+            Log::info('FinalizePurgeInactiveInstanceJob: próximo lote de perfis agendado', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'remaining_active_profiles' => $activeProfiles,
+            ]);
+
+            return;
+        }
+
+        $remainingProfiles = Profile::withTrashed()->where('domain', $instance->domain)->count();
 
         if ($remainingProfiles > 0) {
             Log::info('FinalizePurgeInactiveInstanceJob: aguardando limpeza completa de perfis', [

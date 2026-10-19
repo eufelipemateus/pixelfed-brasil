@@ -4,6 +4,7 @@ use App\Jobs\InboxPipeline\ActivityHandler;
 use App\Jobs\InboxPipeline\InboxValidator;
 use App\Jobs\InboxPipeline\InboxWorker;
 use App\Jobs\QuotePipeline\DeliverQuoteActivityPipeline;
+use App\Models\Instance;
 use App\Models\Profile;
 use App\Models\QuoteAuthorization;
 use App\Models\Status;
@@ -260,6 +261,7 @@ describe('first contact', function () {
         $accept = fcSentOfType('Accept');
 
         expect(Profile::whereRemoteUrl($alice['actor'])->exists())->toBeTrue()
+            ->and(Instance::whereDomain('remote.example')->whereNotNull('last_active_at')->exists())->toBeTrue()
             ->and(QuoteAuthorization::approved()->count())->toBe(1)
             ->and($accept)->toHaveCount(1)
             ->and($accept[0]['object']['id'])->toBe(json_decode($body, true)['id'])

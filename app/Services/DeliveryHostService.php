@@ -194,6 +194,8 @@ class DeliveryHostService
                     'delivery_failures' => 0,
                     'delivery_timeout' => false,
                     'delivery_next_after' => null,
+                    'purge_candidate_at' => null,
+                    'purge_started_at' => null,
                 ]);
         } catch (Throwable $e) {
             Log::warning('Unable to clear delivery failures', [

@@ -51,16 +51,17 @@ class PurgeInactiveInstances extends Command
             ->orderBy('id')
             ->chunkById(100, function ($instances) use (&$totalProfiles, &$totalStatuses, &$totalMedia) {
                 foreach ($instances as $instance) {
-                    $profileIds = Profile::query()
+                    $profileIds = Profile::withTrashed()
+                        ->select('id')
                         ->where('domain', $instance->domain)
-                        ->pluck('id');
+                        ->toBase();
 
-                    $profileCount = $profileIds->count();
+                    $profileCount = (clone $profileIds)->count();
                     $statusCount = $profileCount > 0
-                        ? Status::query()->whereIn('profile_id', $profileIds)->count()
+                        ? Status::withTrashed()->whereIn('profile_id', clone $profileIds)->count()
                         : 0;
                     $mediaCount = $profileCount > 0
-                        ? Media::query()->whereIn('profile_id', $profileIds)->count()
+                        ? Media::withTrashed()->whereIn('profile_id', clone $profileIds)->count()
                         : 0;
 
                     $totalProfiles += $profileCount;

@@ -2,16 +2,21 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\AdminController;
 use App\Jobs\DeletePipeline\DeleteRemoteProfilePipeline;
 use App\Jobs\InstancePipeline\FinalizePurgeInactiveInstanceJob;
+use App\Jobs\InstancePipeline\FinalizePurgeInactiveProfileJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstanceJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstancesJob;
 use App\Models\Instance;
 use App\Models\InstanceModerationRule;
+use App\Models\Profile;
+use App\Services\InstanceActivityService;
 use App\Services\InstancePurgeService;
 use App\Services\InstanceService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -24,14 +29,22 @@ class PurgeInactiveInstancesTest extends TestCase
     {
         parent::setUp();
 
-        config(['federation.purge_inactive_after_years' => 2]);
+        config([
+            'federation.purge_inactive_after_years' => 2,
+            'federation.purge_inactive_grace_days' => 30,
+            'federation.purge_inactive_profiles_per_run' => 100,
+            'federation.purge_inactive_profile_retention_days' => 0,
+            'federation.activitypub.delivery.failure_threshold' => 5,
+        ]);
     }
 
     public function test_active_instance_is_not_selected(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'active.example',
+        $instance = $this->createInactiveInstance('active.example', [
+            'last_active_at' => now(),
             'nodeinfo_last_fetched' => now(),
+            'delivery_timeout' => false,
+            'delivery_failures' => 0,
         ]);
 
         $selected = InstancePurgeService::inactiveInstancesQuery()->pluck('id');
@@ -41,11 +54,31 @@ class PurgeInactiveInstancesTest extends TestCase
 
     public function test_instance_with_null_nodeinfo_is_not_selected(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'null-nodeinfo.example',
+        $instance = $this->createInactiveInstance('null-nodeinfo.example', [
             'nodeinfo_last_fetched' => null,
-            'created_at' => now()->subYears(8),
-            'updated_at' => now()->subYears(8),
+        ]);
+
+        $selected = InstancePurgeService::inactiveInstancesQuery()->pluck('id');
+
+        $this->assertFalse($selected->contains($instance->id));
+    }
+
+    public function test_instance_without_observed_federated_activity_is_not_selected(): void
+    {
+        $instance = $this->createInactiveInstance('unknown-activity.example', [
+            'last_active_at' => null,
+        ]);
+
+        $selected = InstancePurgeService::inactiveInstancesQuery()->pluck('id');
+
+        $this->assertFalse($selected->contains($instance->id));
+    }
+
+    public function test_instance_without_delivery_failures_is_not_selected(): void
+    {
+        $instance = $this->createInactiveInstance('reachable.example', [
+            'delivery_timeout' => false,
+            'delivery_failures' => 0,
         ]);
 
         $selected = InstancePurgeService::inactiveInstancesQuery()->pluck('id');
@@ -55,10 +88,7 @@ class PurgeInactiveInstancesTest extends TestCase
 
     public function test_inactive_instance_is_selected_for_purge(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'inactive.example',
-            'nodeinfo_last_fetched' => now()->subYears(3),
-        ]);
+        $instance = $this->createInactiveInstance('inactive.example');
 
         $selected = InstancePurgeService::inactiveInstancesQuery()->pluck('id');
 
@@ -69,15 +99,11 @@ class PurgeInactiveInstancesTest extends TestCase
     {
         Queue::fake();
 
-        $instance = Instance::query()->create([
-            'domain' => 'race.example',
-            'nodeinfo_last_fetched' => now()->subYears(3),
-        ]);
+        $instance = $this->createInactiveInstance('race.example');
 
         $profileId = $this->insertRemoteProfile('race.example', 'race-user');
 
-        $instance->nodeinfo_last_fetched = now();
-        $instance->save();
+        InstanceActivityService::record($instance->domain);
 
         (new PurgeInactiveInstanceJob($instance->id))->handle();
 
@@ -85,11 +111,77 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertDatabaseHas('profiles', ['id' => $profileId]);
     }
 
+    public function test_first_pass_only_marks_a_candidate(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('candidate.example', [
+            'purge_candidate_at' => null,
+            'purge_started_at' => null,
+        ]);
+        $this->insertRemoteProfile('candidate.example', 'candidate-user');
+
+        (new PurgeInactiveInstanceJob($instance->id))->handle();
+
+        $this->assertNotNull($instance->refresh()->purge_candidate_at);
+        $this->assertNull($instance->purge_started_at);
+        Queue::assertNotPushed(DeleteRemoteProfilePipeline::class);
+    }
+
+    public function test_profile_dispatch_is_limited_per_run(): void
+    {
+        Queue::fake();
+        config(['federation.purge_inactive_profiles_per_run' => 2]);
+
+        $instance = $this->createInactiveInstance('bounded.example');
+        Profile::factory()->remote()->count(3)->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+
+        (new PurgeInactiveInstanceJob($instance->id))->handle();
+
+        Queue::assertPushed(DeleteRemoteProfilePipeline::class, 2);
+        Queue::assertPushed(FinalizePurgeInactiveInstanceJob::class, 1);
+        $this->assertNotNull($instance->refresh()->purge_started_at);
+    }
+
+    public function test_activity_cancels_a_candidate_and_resets_delivery_failures(): void
+    {
+        $instance = $this->createInactiveInstance('resumed.example');
+
+        InstanceActivityService::record($instance->domain);
+
+        $instance->refresh();
+        $this->assertTrue($instance->last_active_at->isToday());
+        $this->assertNull($instance->purge_candidate_at);
+        $this->assertNull($instance->purge_started_at);
+        $this->assertFalse((bool) $instance->delivery_timeout);
+        $this->assertSame(0, (int) $instance->delivery_failures);
+    }
+
+    public function test_queued_profile_delete_revalidates_before_mutating_data(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('queued-race.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+
+        InstanceActivityService::record($instance->domain);
+        (new DeleteRemoteProfilePipeline($profile, $instance->id))->handle();
+
+        $this->assertDatabaseHas('profiles', [
+            'id' => $profile->id,
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_finalize_deletes_normal_instance_when_no_profiles_remain(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'normal.example',
-            'nodeinfo_last_fetched' => now()->subYears(4),
+        $instance = $this->createInactiveInstance('normal.example', [
             'banned' => false,
             'unlisted' => false,
             'auto_cw' => false,
@@ -104,9 +196,7 @@ class PurgeInactiveInstancesTest extends TestCase
 
     public function test_banned_instance_preserves_minimal_moderation_rule(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'banned.example',
-            'nodeinfo_last_fetched' => now()->subYears(4),
+        $instance = $this->createInactiveInstance('banned.example', [
             'banned' => true,
             'unlisted' => false,
             'auto_cw' => true,
@@ -128,16 +218,84 @@ class PurgeInactiveInstancesTest extends TestCase
 
     public function test_instance_is_not_deleted_when_profiles_still_exist(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'partial-failure.example',
-            'nodeinfo_last_fetched' => now()->subYears(4),
-        ]);
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('partial-failure.example');
 
         $this->insertRemoteProfile('partial-failure.example', 'keep-user');
 
         (new FinalizePurgeInactiveInstanceJob($instance->id))->handle();
 
         $this->assertDatabaseHas('instances', ['id' => $instance->id]);
+    }
+
+    public function test_soft_deleted_profile_prevents_instance_finalization(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('soft-deleted.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $profile->delete();
+
+        (new FinalizePurgeInactiveInstanceJob($instance->id))->handle();
+
+        $this->assertDatabaseHas('instances', ['id' => $instance->id]);
+        $this->assertDatabaseHas('profiles', ['id' => $profile->id]);
+    }
+
+    public function test_profile_finalizer_physically_removes_confirmed_profile(): void
+    {
+        $instance = $this->createInactiveInstance('finalize-profile.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $profile->delete();
+
+        (new FinalizePurgeInactiveProfileJob($profile->id, $instance->id))->handle();
+
+        $this->assertNull(Profile::withTrashed()->find($profile->id));
+    }
+
+    public function test_persisted_moderation_is_applied_and_removed_when_unblocked(): void
+    {
+        InstanceModerationRule::create([
+            'domain' => 'recreated.example',
+            'banned' => true,
+        ]);
+
+        $instance = Instance::create(['domain' => 'recreated.example']);
+        $this->assertTrue((bool) $instance->banned);
+
+        $instance->forceFill([
+            'banned' => false,
+            'unlisted' => false,
+            'auto_cw' => false,
+            'notes' => null,
+        ])->save();
+
+        $this->assertDatabaseMissing('instance_moderation_rules', [
+            'domain' => 'recreated.example',
+        ]);
+    }
+
+    public function test_moderation_backup_includes_rules_without_instance_rows(): void
+    {
+        InstanceModerationRule::create([
+            'domain' => 'rule-only.example',
+            'banned' => true,
+        ]);
+        InstanceService::refresh();
+
+        $response = (new AdminController)->downloadBackup(Request::create('/'));
+        ob_start();
+        $response->sendContent();
+        $json = json_decode((string) ob_get_clean(), true);
+
+        $this->assertContains('rule-only.example', $json['banned']);
     }
 
     public function test_unique_lock_key_is_stable_for_same_instance(): void
@@ -153,10 +311,7 @@ class PurgeInactiveInstancesTest extends TestCase
     {
         Queue::fake();
 
-        $instance = Instance::query()->create([
-            'domain' => 'dry-run.example',
-            'nodeinfo_last_fetched' => now()->subYears(3),
-        ]);
+        $instance = $this->createInactiveInstance('dry-run.example');
 
         $profileId = $this->insertRemoteProfile('dry-run.example', 'dry-user');
 
@@ -173,9 +328,9 @@ class PurgeInactiveInstancesTest extends TestCase
 
     public function test_idempotent_resume_after_partial_state(): void
     {
-        $instance = Instance::query()->create([
-            'domain' => 'idempotent.example',
-            'nodeinfo_last_fetched' => now()->subYears(4),
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('idempotent.example', [
             'banned' => true,
             'notes' => 'must persist',
         ]);
@@ -215,5 +370,21 @@ class PurgeInactiveInstancesTest extends TestCase
         ]);
 
         return $id;
+    }
+
+    private function createInactiveInstance(string $domain, array $attributes = []): Instance
+    {
+        $instance = Instance::create(['domain' => $domain]);
+
+        $instance->forceFill(array_merge([
+            'last_active_at' => now()->subYears(3),
+            'nodeinfo_last_fetched' => now()->subYears(3),
+            'delivery_timeout' => true,
+            'delivery_failures' => 5,
+            'purge_candidate_at' => now()->subDays(31),
+            'purge_started_at' => now()->subDay(),
+        ], $attributes))->save();
+
+        return $instance->refresh();
     }
 }

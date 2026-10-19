@@ -7,6 +7,7 @@ use App\Jobs\InboxPipeline\Concerns\RetriesWhenActorUnavailable;
 use App\Models\Profile;
 use App\Services\BlockSyncService;
 use App\Services\FollowersSyncService;
+use App\Services\InstanceActivityService;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Bus\Queueable;
@@ -27,6 +28,8 @@ class InboxValidator implements ShouldQueue
     protected $headers;
 
     protected $payload;
+
+    protected ?string $verifiedActorDomain = null;
 
     public $timeout = 300;
 
@@ -76,6 +79,8 @@ class InboxValidator implements ShouldQueue
         }
 
         if ($this->verifySignature($headers, $profile, $payload) == true) {
+            InstanceActivityService::record($this->verifiedActorDomain);
+
             if (isset($payload['id'])) {
                 $lockKey = 'pf:ap:user-inbox:activity:'.hash('sha256', $payload['id']);
                 if (! Cache::add($lockKey, 1, 3600)) {
@@ -187,6 +192,10 @@ class InboxValidator implements ShouldQueue
         }
         $inboxPath = "/users/{$profile->username}/inbox";
         [$verified, $headers] = HttpSignature::verify($pkey, $signatureData, $headers, $inboxPath, $body);
+
+        if ($verified == 1) {
+            $this->verifiedActorDomain = strtolower($keyDomain);
+        }
 
         return $verified == 1;
     }

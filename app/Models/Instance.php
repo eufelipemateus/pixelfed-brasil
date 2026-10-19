@@ -32,6 +32,9 @@ use Illuminate\Support\Carbon;
  * @property int $list_limitation
  * @property int|null $valid_nodeinfo
  * @property Carbon|null $nodeinfo_last_fetched
+ * @property Carbon|null $last_active_at
+ * @property Carbon|null $purge_candidate_at
+ * @property Carbon|null $purge_started_at
  * @property int $delivery_timeout
  * @property Carbon|null $delivery_next_after
  * @property string|null $shared_inbox
@@ -97,6 +100,9 @@ class Instance extends Model
             'actors_last_synced_at' => 'datetime',
             'notes' => 'array',
             'nodeinfo_last_fetched' => 'datetime',
+            'last_active_at' => 'datetime',
+            'purge_candidate_at' => 'datetime',
+            'purge_started_at' => 'datetime',
             'delivery_next_after' => 'datetime',
             'nodeinfo_next_after' => 'datetime',
         ];
