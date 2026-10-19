@@ -141,7 +141,7 @@ return [
         'applicationApproved' => 'foi aprovada!',
         'applicationRejected' => 'foi rejeitada. Você pode tentar novamente em 6 meses.',
 
-        'dm' => 'mensagem direta',
+        'dm' => 'Mensagem Direta',
         'groupPost' => 'publicação em grupo',
         'modlog' => 'registro de moderação',
         'post' => 'publicação',
