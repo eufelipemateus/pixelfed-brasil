@@ -22,6 +22,14 @@ test('login page loads', function () {
         ->assertStatus(200);
 });
 
+test('app page uses official store badges', function () {
+    $this->get('/app')
+        ->assertStatus(200)
+        ->assertSee('https://assets.ubuntu.com/v1/b16729d2-snap-store-black.svg', false)
+        ->assertSee('https://get.microsoft.com/images/pt-br%20dark.svg', false)
+        ->assertSee('https://play.google.com/intl/en_us/badges/static/images/badges/pt-br_badge_web_generic.png', false);
+});
+
 test('well-known nodeinfo returns json', function () {
     $this->getJson('/.well-known/nodeinfo')
         ->assertStatus(200)

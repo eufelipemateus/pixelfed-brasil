@@ -59,6 +59,26 @@
         }
     </script>
     <link href="{{ mix('css/app.css') }}" rel="stylesheet">
+    <style>
+        .app-store-mark {
+            align-items: center;
+            display: flex;
+            height: 56px;
+            justify-content: center;
+        }
+
+        .app-store-mark img {
+            height: 56px;
+            max-width: 100%;
+            object-fit: contain;
+            width: 182px;
+        }
+
+        .app-store-mark-web {
+            font-size: 2.5em;
+            line-height: 56px;
+        }
+    </style>
 </head>
 <body>
     <main id="content">
@@ -83,36 +103,42 @@
             </div>
             <div class="row justify-content-center">
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <a href="https://pixelfed.app.br" class="text-decoration-none" target="_blank">
+                    <a href="https://pixelfed.app.br" class="text-decoration-none" target="_blank" rel="noopener noreferrer">
                         <div class="card h-100 text-center shadow-sm p-4">
-                            <div style="font-size:2.5em;">🌐</div>
+                            <div class="app-store-mark app-store-mark-web" aria-hidden="true">🌐</div>
                             <h3 class="h5 mt-3 mb-2">{{ __('site.app_download_web') }}</h3>
                             <p class="mb-0 text-muted">{{ __('site.app_download_web_desc') }}</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <a href="https://snapcraft.io/pixelfed-brasil" class="text-decoration-none" target="_blank">
+                    <a href="https://snapcraft.io/pixelfed-brasil" class="text-decoration-none" target="_blank" rel="noopener noreferrer">
                         <div class="card h-100 text-center shadow-sm p-4">
-                            <div style="font-size:2.5em;">🐧</div>
+                            <div class="app-store-mark">
+                                <img src="https://assets.ubuntu.com/v1/b16729d2-snap-store-black.svg" alt="Snap Store" width="182" height="56">
+                            </div>
                             <h3 class="h5 mt-3 mb-2">{{ __('site.app_download_linux') }}</h3>
                             <p class="mb-0 text-muted">{{ __('site.app_download_linux_desc') }}</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <a href="https://apps.microsoft.com/detail/9ntgldsdchpx" class="text-decoration-none" target="_blank">
+                    <a href="https://apps.microsoft.com/detail/9ntgldsdchpx" class="text-decoration-none" target="_blank" rel="noopener noreferrer">
                         <div class="card h-100 text-center shadow-sm p-4">
-                            <div style="font-size:2.5em;">🪟</div>
+                            <div class="app-store-mark">
+                                <img src="https://get.microsoft.com/images/pt-br%20dark.svg" alt="Microsoft Store" width="161" height="44">
+                            </div>
                             <h3 class="h5 mt-3 mb-2">{{ __('site.app_download_windows') }}</h3>
                             <p class="mb-0 text-muted">{{ __('site.app_download_windows_desc') }}</p>
                         </div>
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3 mb-4">
-                    <a href="https://play.google.com/store/apps/details?id=br.com.pixelfed.app" class="text-decoration-none" target="_blank">
+                    <a href="https://play.google.com/store/apps/details?id=br.com.pixelfed.app" class="text-decoration-none" target="_blank" rel="noopener noreferrer">
                         <div class="card h-100 text-center shadow-sm p-4">
-                            <div style="font-size:2.5em;">🤳</div>
+                            <div class="app-store-mark">
+                                <img src="https://play.google.com/intl/en_us/badges/static/images/badges/pt-br_badge_web_generic.png" alt="Google Play" width="646" height="250">
+                            </div>
                             <h3 class="h5 mt-3 mb-2">{{ __('site.app_download_android') }}</h3>
                             <p class="mb-0 text-muted">{{ __('site.app_download_android_desc') }}</p>
                         </div>
