@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Instance;
+use App\Models\Profile;
 
 class InstanceActivityService
 {
@@ -19,6 +20,18 @@ class InstanceActivityService
         }
 
         $instance = Instance::firstOrCreate(['domain' => $domain]);
+
+        if ($instance->purge_candidate_at !== null || $instance->purge_started_at !== null) {
+            Profile::withTrashed()
+                ->where('domain', $domain)
+                ->where('purge_instance_id', $instance->id)
+                ->update([
+                    'purge_instance_id' => null,
+                    'purge_queued_at' => null,
+                    'purge_retry_count' => 0,
+                    'purge_last_error' => null,
+                ]);
+        }
 
         if (
             $instance->last_active_at?->gte(now()->subHour())

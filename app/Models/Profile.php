@@ -166,6 +166,8 @@ class Profile extends Model
             'deleted_at' => 'datetime',
             'last_fetched_at' => 'datetime',
             'last_status_at' => 'datetime',
+            'purge_queued_at' => 'datetime',
+            'purge_retry_count' => 'integer',
             'status' => StatusEnumCast::class,
         ];
     }

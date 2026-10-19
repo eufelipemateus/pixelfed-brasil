@@ -71,14 +71,23 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
         $activeProfiles = Profile::where('domain', $instance->domain)->count();
 
         if ($activeProfiles > 0) {
-            PurgeInactiveInstanceJob::dispatch($instance->id)
-                ->delay(now()->addMinute())
-                ->onQueue('delete');
+            $actionableProfiles = InstancePurgeService::profilesReadyForDispatch(
+                $instance->domain,
+                $instance->id
+            )
+                ->exists();
 
-            Log::info('FinalizePurgeInactiveInstanceJob: próximo lote de perfis agendado', [
+            if ($actionableProfiles) {
+                PurgeInactiveInstanceJob::dispatch($instance->id)
+                    ->delay(now()->addMinute())
+                    ->onQueue('delete');
+            }
+
+            Log::info('FinalizePurgeInactiveInstanceJob: lote de perfis ainda em andamento', [
                 'instance_id' => $instance->id,
                 'domain' => $instance->domain,
                 'remaining_active_profiles' => $activeProfiles,
+                'has_actionable_profiles' => $actionableProfiles,
             ]);
 
             return;
@@ -93,8 +102,6 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
                 'remaining_profiles' => $remainingProfiles,
                 'attempt' => $this->attempts(),
             ]);
-
-            $this->release(600);
 
             return;
         }

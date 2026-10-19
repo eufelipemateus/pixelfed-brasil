@@ -97,17 +97,23 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         }
 
         $dispatched = 0;
+        $batchSize = InstancePurgeService::profileBatchSize();
 
-        Profile::query()
-            ->where('domain', $instance->domain)
+        InstancePurgeService::profilesReadyForDispatch($instance->domain, $instance->id)
             ->orderBy('id')
-            ->limit(InstancePurgeService::profileBatchSize())
+            ->limit($batchSize)
             ->get()
             ->each(function (Profile $profile) use ($instance, &$dispatched) {
+                if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id)) {
+                    return;
+                }
+
                 try {
                     DeleteRemoteProfilePipeline::dispatch($profile, $instance->id)->onQueue('delete');
                     $dispatched++;
                 } catch (Throwable $e) {
+                    InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $e);
+
                     Log::error('PurgeInactiveInstanceJob: falha ao despachar exclusão de perfil remoto', [
                         'instance_id' => $instance->id,
                         'domain' => $instance->domain,
@@ -119,6 +125,30 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
                     throw $e;
                 }
             });
+
+        $remainingCapacity = $batchSize - $dispatched;
+
+        if ($remainingCapacity > 0) {
+            InstancePurgeService::profilesReadyForFinalization($instance->domain, $instance->id)
+                ->orderBy('id')
+                ->limit($remainingCapacity)
+                ->get()
+                ->each(function (Profile $profile) use ($instance, &$dispatched) {
+                    if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id)) {
+                        return;
+                    }
+
+                    try {
+                        FinalizePurgeInactiveProfileJob::dispatch($profile->id, $instance->id)
+                            ->onQueue('delete');
+                        $dispatched++;
+                    } catch (Throwable $e) {
+                        InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $e);
+
+                        throw $e;
+                    }
+                });
+        }
 
         Log::info('PurgeInactiveInstanceJob: lote de perfis despachado', [
             'instance_id' => $instance->id,

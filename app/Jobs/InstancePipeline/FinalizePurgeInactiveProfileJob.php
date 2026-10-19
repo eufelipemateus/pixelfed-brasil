@@ -3,6 +3,7 @@
 namespace App\Jobs\InstancePipeline;
 
 use App\Jobs\MediaPipeline\MediaDeletePipeline;
+use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Models\Media;
 use App\Models\Profile;
 use App\Models\Status;
@@ -16,6 +17,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
@@ -62,30 +64,50 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
         }
 
         if (! $profile->trashed() || $profile->deleted_at->gt(InstancePurgeService::profileRetentionThreshold())) {
-            $this->release(600);
+            return;
+        }
+
+        $statusesDispatched = 0;
+
+        Status::withTrashed()
+            ->whereProfileId($this->profileId)
+            ->chunkById(50, function ($statuses) use (&$statusesDispatched) {
+                foreach ($statuses as $status) {
+                    RemoteStatusDelete::dispatch($status, $this->instanceId)->onQueue('delete');
+                    $statusesDispatched++;
+                }
+            });
+
+        if ($statusesDispatched > 0) {
+            Log::info('FinalizePurgeInactiveProfileJob: exclusões de posts recuperadas', [
+                'instance_id' => $this->instanceId,
+                'profile_id' => $this->profileId,
+                'statuses_dispatched' => $statusesDispatched,
+            ]);
 
             return;
         }
 
-        if (Status::withTrashed()->whereProfileId($this->profileId)->exists()) {
-            $this->release(600);
-
-            return;
-        }
+        $mediaDispatched = 0;
 
         Media::whereProfileId($this->profileId)
             ->whereNull('status_id')
             ->cursor()
-            ->each(function (Media $media) {
+            ->each(function (Media $media) use (&$mediaDispatched) {
                 if ($media->media_path) {
-                    MediaDeletePipeline::dispatch($media)->onQueue('mmo');
+                    MediaDeletePipeline::dispatch($media, $this->instanceId)->onQueue('mmo');
+                    $mediaDispatched++;
                 } else {
                     $media->forceDelete();
                 }
             });
 
         if (Media::whereProfileId($this->profileId)->exists()) {
-            $this->release(600);
+            Log::info('FinalizePurgeInactiveProfileJob: exclusões de mídia recuperadas', [
+                'instance_id' => $this->instanceId,
+                'profile_id' => $this->profileId,
+                'media_dispatched' => $mediaDispatched,
+            ]);
 
             return;
         }
@@ -93,5 +115,22 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
         Media::onlyTrashed()->whereProfileId($this->profileId)->forceDelete();
         AccountService::del($this->profileId);
         $profile->forceDelete();
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        InstancePurgeService::recordProfileFailure(
+            $this->profileId,
+            $this->instanceId,
+            $exception
+        );
+
+        Log::error('FinalizePurgeInactiveProfileJob: recuperação do perfil falhou', [
+            'instance_id' => $this->instanceId,
+            'profile_id' => $this->profileId,
+            'attempt' => $this->attempts(),
+            'exception_class' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+        ]);
     }
 }

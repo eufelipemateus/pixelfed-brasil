@@ -8,9 +8,13 @@ use App\Jobs\InstancePipeline\FinalizePurgeInactiveInstanceJob;
 use App\Jobs\InstancePipeline\FinalizePurgeInactiveProfileJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstanceJob;
 use App\Jobs\InstancePipeline\PurgeInactiveInstancesJob;
+use App\Jobs\MediaPipeline\MediaDeletePipeline;
+use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Models\Instance;
 use App\Models\InstanceModerationRule;
+use App\Models\Media;
 use App\Models\Profile;
+use App\Models\Status;
 use App\Services\InstanceActivityService;
 use App\Services\InstancePurgeService;
 use App\Services\InstanceService;
@@ -146,9 +150,53 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertNotNull($instance->refresh()->purge_started_at);
     }
 
+    public function test_freshly_queued_profile_is_not_dispatched_twice(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('queued.example');
+        Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+            'purge_instance_id' => $instance->id,
+            'purge_queued_at' => now(),
+            'purge_retry_count' => 1,
+        ]);
+
+        (new PurgeInactiveInstanceJob($instance->id))->handle();
+
+        Queue::assertNotPushed(DeleteRemoteProfilePipeline::class);
+    }
+
+    public function test_stale_queued_profile_is_dispatched_again_for_recovery(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('stale-queued.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+            'purge_instance_id' => $instance->id,
+            'purge_queued_at' => now()->subDays(2),
+            'purge_retry_count' => 1,
+        ]);
+
+        (new PurgeInactiveInstanceJob($instance->id))->handle();
+
+        Queue::assertPushed(DeleteRemoteProfilePipeline::class, 1);
+        $this->assertSame(2, $profile->refresh()->purge_retry_count);
+    }
+
     public function test_activity_cancels_a_candidate_and_resets_delivery_failures(): void
     {
         $instance = $this->createInactiveInstance('resumed.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+            'purge_instance_id' => $instance->id,
+            'purge_queued_at' => now(),
+            'purge_retry_count' => 1,
+        ]);
 
         InstanceActivityService::record($instance->domain);
 
@@ -158,6 +206,9 @@ class PurgeInactiveInstancesTest extends TestCase
         $this->assertNull($instance->purge_started_at);
         $this->assertFalse((bool) $instance->delivery_timeout);
         $this->assertSame(0, (int) $instance->delivery_failures);
+        $this->assertNull($profile->refresh()->purge_instance_id);
+        $this->assertNull($profile->purge_queued_at);
+        $this->assertSame(0, $profile->purge_retry_count);
     }
 
     public function test_queued_profile_delete_revalidates_before_mutating_data(): void
@@ -244,6 +295,97 @@ class PurgeInactiveInstancesTest extends TestCase
 
         $this->assertDatabaseHas('instances', ['id' => $instance->id]);
         $this->assertDatabaseHas('profiles', ['id' => $profile->id]);
+    }
+
+    public function test_old_soft_deleted_profile_is_sent_to_recovery(): void
+    {
+        Queue::fake();
+        config(['federation.purge_inactive_profile_retention_days' => 30]);
+
+        $instance = $this->createInactiveInstance('recover-soft-deleted.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $profile->delete();
+        DB::table('profiles')->where('id', $profile->id)->update([
+            'deleted_at' => now()->subDays(31),
+        ]);
+
+        (new PurgeInactiveInstanceJob($instance->id))->handle();
+
+        Queue::assertPushed(FinalizePurgeInactiveProfileJob::class, 1);
+        Queue::assertNotPushed(DeleteRemoteProfilePipeline::class);
+    }
+
+    public function test_profile_retention_wait_does_not_release_job_repeatedly(): void
+    {
+        config(['federation.purge_inactive_profile_retention_days' => 30]);
+
+        $instance = $this->createInactiveInstance('retention.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $profile->delete();
+
+        $job = (new FinalizePurgeInactiveProfileJob($profile->id, $instance->id))
+            ->withFakeQueueInteractions();
+        $job->handle();
+
+        $job->assertNotReleased();
+        $this->assertNotNull(Profile::withTrashed()->find($profile->id));
+    }
+
+    public function test_profile_finalizer_recovers_remaining_status_jobs(): void
+    {
+        Queue::fake();
+
+        $instance = $this->createInactiveInstance('recover-status.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $status = Status::factory()->create([
+            'profile_id' => $profile->id,
+            'local' => false,
+        ]);
+        $profile->delete();
+
+        (new FinalizePurgeInactiveProfileJob($profile->id, $instance->id))->handle();
+
+        Queue::assertPushed(RemoteStatusDelete::class, 1);
+        $this->assertNotNull(Status::withTrashed()->find($status->id));
+        $this->assertNotNull(Profile::withTrashed()->find($profile->id));
+    }
+
+    public function test_queued_status_and_media_deletes_stop_when_instance_becomes_active(): void
+    {
+        $instance = $this->createInactiveInstance('cancel-children.example');
+        $profile = Profile::factory()->remote()->create([
+            'domain' => $instance->domain,
+            'private_key' => null,
+        ]);
+        $status = Status::factory()->create([
+            'profile_id' => $profile->id,
+            'local' => false,
+        ]);
+        $media = Media::create([
+            'status_id' => null,
+            'profile_id' => $profile->id,
+            'media_path' => 'public/m/cancelled.jpg',
+            'mime' => 'image/jpeg',
+            'size' => 1,
+            'order' => 1,
+        ]);
+
+        InstanceActivityService::record($instance->domain);
+
+        (new RemoteStatusDelete($status, $instance->id))->handle();
+        (new MediaDeletePipeline($media, $instance->id))->handle();
+
+        $this->assertNotNull(Status::find($status->id));
+        $this->assertNotNull(Media::find($media->id));
     }
 
     public function test_profile_finalizer_physically_removes_confirmed_profile(): void
