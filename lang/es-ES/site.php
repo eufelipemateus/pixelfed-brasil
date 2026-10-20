@@ -91,4 +91,5 @@ return [
     'app_schema_rating' => 'Valoración',
     'app_schema_review_count' => '100 valoraciones',
     'app_schema_publisher' => 'Pixelfed Brasil',
+
 ];

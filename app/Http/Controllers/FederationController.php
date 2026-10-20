@@ -85,7 +85,8 @@ class FederationController extends Controller
                 ],
             ];
 
-            return response()->json($res, 200, [], JSON_UNESCAPED_SLASHES);
+            return response()->json($res, 200, [], JSON_UNESCAPED_SLASHES)
+                ->header('Access-Control-Allow-Origin', '*');
         }
 
         if (str_starts_with($resource, 'https://')) {
@@ -100,7 +101,8 @@ class FederationController extends Controller
                 }
                 $key = 'federation:webfinger:sha256:url-username:'.$username;
                 if ($cached = Cache::get($key)) {
-                    return response()->json($cached, 200, [], JSON_UNESCAPED_SLASHES);
+                    return response()->json($cached, 200, [], JSON_UNESCAPED_SLASHES)
+                        ->header('Access-Control-Allow-Origin', '*');
                 }
                 $profile = Profile::whereUsername($username)->first();
                 if (! $profile || $profile->status !== StatusEnums::ACTIVE || $profile->domain) {
@@ -118,7 +120,8 @@ class FederationController extends Controller
         $hash = hash('sha256', $resource);
         $key = 'federation:webfinger:sha256:'.$hash;
         if ($cached = Cache::get($key)) {
-            return response()->json($cached, 200, [], JSON_UNESCAPED_SLASHES);
+            return response()->json($cached, 200, [], JSON_UNESCAPED_SLASHES)
+                ->header('Access-Control-Allow-Origin', '*');
         }
         if (! str_contains($resource, $domain)) {
             return response('', 400);
@@ -214,6 +217,16 @@ class FederationController extends Controller
                 }
             }
 
+            if (
+                is_string($obj['object'] ?? null)
+                && $obj['object'] === ($obj['actor'] ?? null)
+                && Profile::whereRemoteUrl($obj['object'])->exists()
+            ) {
+                dispatch(new DeleteWorker($headers, $payload, $request->getPathInfo()))->onQueue('inbox');
+
+                return;
+            }
+
             return;
         }
 
@@ -283,6 +296,16 @@ class FederationController extends Controller
 
                     return;
                 }
+            }
+
+            if (
+                is_string($obj['object'] ?? null)
+                && $obj['object'] === ($obj['actor'] ?? null)
+                && Profile::whereRemoteUrl($obj['object'])->exists()
+            ) {
+                dispatch(new DeleteWorker($headers, $payload))->onQueue('inbox');
+
+                return;
             }
 
             return;

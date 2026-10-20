@@ -34,7 +34,9 @@ class DeliverQuoteActivityPipeline implements ShouldQueue
     public const RETRY_DELAYS = [30, 120, 600, 3600];
 
     /**
-     * Statuses below 500 that are still worth another attempt.
+     * Statuses below 500 that are still worth another attempt. A 3xx is also
+     * retried: redirects are not followed (the signature covers Host and
+     * (request-target)), so a redirect means the activity was not delivered.
      */
     private const array RETRYABLE_STATUSES = [408, 425, 429];
 
@@ -122,6 +124,8 @@ class DeliverQuoteActivityPipeline implements ShouldQueue
 
     private static function shouldRetry(int $status): bool
     {
-        return $status >= 500 || in_array($status, self::RETRYABLE_STATUSES, true);
+        return $status >= 500
+            || ($status >= 300 && $status < 400)
+            || in_array($status, self::RETRYABLE_STATUSES, true);
     }
 }

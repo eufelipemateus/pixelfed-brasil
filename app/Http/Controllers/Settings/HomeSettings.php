@@ -59,9 +59,8 @@ trait HomeSettings
         ]);
 
         $changes = false;
-        $name = htmlspecialchars_decode(
-            strip_tags(Purify::clean($request->input('name'))),
-            ENT_QUOTES | ENT_HTML5
+        $name = trim(
+            preg_replace('/[\x00-\x1F\x7F]/u', '', (string) $request->input('name'))
         );
         $bio = $request->filled('bio') ? strip_tags(Purify::clean($request->input('bio'))) : null;
         $website = $request->input('website');
@@ -95,7 +94,8 @@ trait HomeSettings
                 $profile->bio = Autolink::create()->autolink($bio);
             }
 
-            if ($user->language != $language &&
+            if (
+                $user->language != $language &&
                 in_array($language, Localization::languages())
             ) {
                 $changes = true;
@@ -260,7 +260,6 @@ trait HomeSettings
         }
 
         return redirect('/settings/email');
-
     }
 
     public function emailConfigUpdate(Request $request)
