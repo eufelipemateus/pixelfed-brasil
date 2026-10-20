@@ -7,9 +7,12 @@ use App\Models\ModLog;
 use App\Models\Profile;
 use App\Models\Status;
 use App\Models\StatusEdit;
+use App\Services\AdminShadowFilterService;
 use App\Services\MediaService;
 use App\Services\MediaStorageService;
+use App\Services\NetworkTimelineService;
 use App\Services\PlaceService;
+use App\Services\PublicTimelineService;
 use App\Services\StatusService;
 use App\Util\Lexer\Autolink;
 use Purify;
@@ -21,9 +24,12 @@ class UpdateStatusService
         self::createPreviousEdit($status);
         self::updateMediaAttachements($status, $attributes);
         self::handleImmediateAttributes($status, $attributes);
+        if (isset($attributes['status'])) {
+            StatusEntityReconciler::reconcile($status);
+        }
         self::createEdit($status, $attributes);
 
-        return StatusService::get($status->id);
+        return StatusService::get($status->id, false);
     }
 
     public static function updateMediaAttachements(Status $status, $attributes)
@@ -65,6 +71,8 @@ class UpdateStatusService
 
     public static function handleImmediateAttributes(Status $status, $attributes)
     {
+        $wasNsfw = (bool) $status->getOriginal('is_nsfw');
+
         if (isset($attributes['status'])) {
             $cleaned = Purify::clean($attributes['status']);
             $status->caption = $cleaned;
@@ -121,6 +129,43 @@ class UpdateStatusService
             }
         }
         StatusService::del($status->id);
+
+        self::reconcileFeedEligibility($status, $wasNsfw);
+    }
+
+    protected static function reconcileFeedEligibility(Status $status, bool $wasNsfw): void
+    {
+        if (! config('instance.hide_nsfw_on_public_feeds')) {
+            return;
+        }
+
+        $isNsfw = (bool) $status->is_nsfw;
+
+        if ($isNsfw === $wasNsfw) {
+            return;
+        }
+
+        if ($status->scope !== 'public' || $status->in_reply_to_id !== null || $status->reblog_of_id !== null) {
+            return;
+        }
+
+        $service = $status->uri ? NetworkTimelineService::class : PublicTimelineService::class;
+
+        $types = [
+            'photo',
+            'photo:album',
+            'video',
+            'video:album',
+            'photo:video:album',
+        ];
+
+        if ($isNsfw) {
+            $service::rem($status->id);
+        } elseif (in_array($status->type, $types) &&
+            AdminShadowFilterService::canAddToPublicFeedByProfileId($status->profile_id)
+        ) {
+            $service::add($status->id);
+        }
     }
 
     public static function createPreviousEdit(Status $status)
