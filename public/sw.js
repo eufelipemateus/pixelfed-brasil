@@ -16,30 +16,43 @@ self.addEventListener("activate", (event) => {
 	event.waitUntil(
 		(async () => {
 			if ("navigationPreload" in self.registration) {
-				await self.registration.navigationPreload.enable();
+				// A preload follows redirects through fetch(), which cannot hand
+				// custom schemes such as pixelfed:// back to the operating system.
+				await self.registration.navigationPreload.disable();
 			}
+			await self.clients.claim();
 		})()
 	);
-	self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+	if (event.data && event.data.type === "pixelfed:oauth-navigation-bypass" && event.ports[0]) {
+		event.ports[0].postMessage({ supported: true });
+	}
 });
 
 self.addEventListener("fetch", (event) => {
-	if (event.request.mode === "navigate") {
-		event.respondWith(
-			(async () => {
-				try {
-					const preloadResponse = await event.preloadResponse;
-					if (preloadResponse) {
-						return preloadResponse;
-					}
-					const networkResponse = await fetch(event.request);
-					return networkResponse;
-				} catch (error) {
-					const cache = await caches.open(CACHE_NAME);
-					const cachedResponse = await cache.match(OFFLINE_URL);
-					return cachedResponse;
-				}
-			})()
-		);
+	if (event.request.mode !== "navigate") {
+		return;
 	}
+
+	const requestUrl = new URL(event.request.url);
+
+	// Let the browser own OAuth and form navigations. In particular, the
+	// authorization response may redirect to pixelfed://login; following that
+	// redirect inside fetch() fails before the OS can open the client app.
+	if (event.request.method !== "GET" || requestUrl.pathname === "/oauth/authorize") {
+		return;
+	}
+
+	event.respondWith(
+		(async () => {
+			try {
+				return await fetch(event.request);
+			} catch (error) {
+				const cache = await caches.open(CACHE_NAME);
+				return await cache.match(OFFLINE_URL);
+			}
+		})()
+	);
 });
