@@ -32,13 +32,14 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
     public function __construct(
         public int $profileId,
         public int $instanceId,
+        public string $generation,
     ) {
         $this->onQueue('delete');
     }
 
     public function uniqueId(): string
     {
-        return "purge-inactive-profile-finalize:{$this->profileId}";
+        return "purge-inactive-profile-finalize:{$this->profileId}:{$this->generation}";
     }
 
     public function middleware(): array
@@ -48,7 +49,11 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
 
     public function handle(): void
     {
-        if (! InstancePurgeService::isPurgeAuthorized($this->instanceId)) {
+        if (! InstancePurgeService::isPurgeAuthorizedForProfile(
+            $this->instanceId,
+            $this->profileId,
+            $this->generation
+        )) {
             Log::info('FinalizePurgeInactiveProfileJob: purge não está mais autorizado', [
                 'instance_id' => $this->instanceId,
                 'profile_id' => $this->profileId,
@@ -71,11 +76,16 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
 
         Status::withTrashed()
             ->whereProfileId($this->profileId)
-            ->chunkById(50, function ($statuses) use (&$statusesDispatched) {
-                foreach ($statuses as $status) {
-                    RemoteStatusDelete::dispatch($status, $this->instanceId)->onQueue('delete');
-                    $statusesDispatched++;
-                }
+            ->orderBy('id')
+            ->limit(InstancePurgeService::statusBatchSize())
+            ->get()
+            ->each(function ($status) use (&$statusesDispatched) {
+                RemoteStatusDelete::dispatch(
+                    $status,
+                    $this->instanceId,
+                    $this->generation
+                )->onQueue('delete');
+                $statusesDispatched++;
             });
 
         if ($statusesDispatched > 0) {
@@ -85,21 +95,56 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
                 'statuses_dispatched' => $statusesDispatched,
             ]);
 
+            $this->dispatchNextBatch();
+
             return;
         }
 
         $mediaDispatched = 0;
+        $mediaProcessed = 0;
 
         Media::whereProfileId($this->profileId)
-            ->whereNull('status_id')
-            ->cursor()
-            ->each(function (Media $media) use (&$mediaDispatched) {
+            ->where(function ($query) {
+                $query->whereNull('status_id')
+                    ->orWhereNotExists(function ($statuses) {
+                        $statuses->selectRaw('1')
+                            ->from('statuses')
+                            ->whereColumn('statuses.id', 'media.status_id');
+                    });
+            })
+            ->orderBy('id')
+            ->limit(InstancePurgeService::mediaBatchSize())
+            ->get()
+            ->each(function (Media $media) use (&$mediaDispatched, &$mediaProcessed) {
+                if ($media->status_id !== null) {
+                    $detached = Media::whereKey($media->id)
+                        ->where('status_id', $media->status_id)
+                        ->whereNotExists(function ($statuses) {
+                            $statuses->selectRaw('1')
+                                ->from('statuses')
+                                ->whereColumn('statuses.id', 'media.status_id');
+                        })
+                        ->update(['status_id' => null]);
+
+                    if ($detached !== 1) {
+                        return;
+                    }
+
+                    $media->status_id = null;
+                }
+
                 if ($media->media_path) {
-                    MediaDeletePipeline::dispatch($media, $this->instanceId)->onQueue('mmo');
+                    MediaDeletePipeline::dispatch(
+                        $media,
+                        $this->instanceId,
+                        $this->generation
+                    )->onQueue('mmo');
                     $mediaDispatched++;
                 } else {
-                    $media->forceDelete();
+                    $this->forceDeletePathlessMedia($media);
                 }
+
+                $mediaProcessed++;
             });
 
         if (Media::whereProfileId($this->profileId)->exists()) {
@@ -109,12 +154,46 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
                 'media_dispatched' => $mediaDispatched,
             ]);
 
+            if ($mediaProcessed > 0) {
+                $this->dispatchNextBatch();
+            }
+
             return;
         }
 
-        Media::onlyTrashed()->whereProfileId($this->profileId)->forceDelete();
-        AccountService::del($this->profileId);
-        $profile->forceDelete();
+        $trashedMedia = Media::onlyTrashed()
+            ->whereProfileId($this->profileId)
+            ->orderBy('id')
+            ->limit(InstancePurgeService::mediaBatchSize())
+            ->get();
+
+        if ($trashedMedia->isNotEmpty()) {
+            $trashedMedia->each(function (Media $media) {
+                if ($media->media_path) {
+                    MediaDeletePipeline::dispatch(
+                        $media,
+                        $this->instanceId,
+                        $this->generation
+                    )->onQueue('mmo');
+                } else {
+                    $this->forceDeletePathlessMedia($media);
+                }
+            });
+
+            $this->dispatchNextBatch();
+
+            return;
+        }
+
+        InstancePurgeService::authorizeDestructiveProfileStep(
+            $this->instanceId,
+            $this->profileId,
+            $this->generation,
+            function (Profile $storedProfile) {
+                AccountService::del($this->profileId);
+                $storedProfile->forceDelete();
+            }
+        );
     }
 
     public function failed(Throwable $exception): void
@@ -122,6 +201,7 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
         InstancePurgeService::recordProfileFailure(
             $this->profileId,
             $this->instanceId,
+            $this->generation,
             $exception
         );
 
@@ -132,5 +212,22 @@ class FinalizePurgeInactiveProfileJob implements ShouldBeUniqueUntilProcessing, 
             'exception_class' => get_class($exception),
             'exception_message' => $exception->getMessage(),
         ]);
+    }
+
+    private function dispatchNextBatch(): void
+    {
+        self::dispatch($this->profileId, $this->instanceId, $this->generation)
+            ->delay(now()->addMinutes(10))
+            ->onQueue('delete');
+    }
+
+    private function forceDeletePathlessMedia(Media $media): void
+    {
+        InstancePurgeService::authorizeDestructiveProfileStep(
+            $this->instanceId,
+            $this->profileId,
+            $this->generation,
+            fn () => Media::withTrashed()->whereKey($media->id)->forceDelete()
+        );
     }
 }

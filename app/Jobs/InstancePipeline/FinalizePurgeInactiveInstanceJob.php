@@ -35,7 +35,7 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
 
     public $uniqueFor = 3600;
 
-    public function __construct(int $instanceId)
+    public function __construct(int $instanceId, public string $generation)
     {
         $this->instanceId = $instanceId;
         $this->onQueue('delete');
@@ -43,7 +43,7 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
 
     public function uniqueId(): string
     {
-        return sprintf('purge-inactive-instance-finalize:%d', $this->instanceId);
+        return sprintf('purge-inactive-instance-finalize:%d:%s', $this->instanceId, $this->generation);
     }
 
     public function middleware(): array
@@ -59,7 +59,7 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
             return;
         }
 
-        if (! InstancePurgeService::isPurgeAuthorized($instance->id)) {
+        if (! InstancePurgeService::isPurgeAuthorized($instance->id, $this->generation)) {
             Log::info('FinalizePurgeInactiveInstanceJob: purge não está mais autorizado', [
                 'instance_id' => $instance->id,
                 'domain' => $instance->domain,
@@ -73,7 +73,8 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
         if ($activeProfiles > 0) {
             $actionableProfiles = InstancePurgeService::profilesReadyForDispatch(
                 $instance->domain,
-                $instance->id
+                $instance->id,
+                $this->generation
             )
                 ->exists();
 
@@ -107,11 +108,31 @@ class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing,
         }
 
         try {
-            if (InstancePurgeService::hasModerationData($instance)) {
-                InstancePurgeService::persistModerationRule($instance);
+            $deleted = InstancePurgeService::authorizeDestructiveInstanceStep(
+                $instance->id,
+                $this->generation,
+                function (Instance $lockedInstance) {
+                    if (Profile::withTrashed()->where('domain', $lockedInstance->domain)->exists()) {
+                        return false;
+                    }
+
+                    if (InstancePurgeService::hasModerationData($lockedInstance)) {
+                        InstancePurgeService::persistModerationRule($lockedInstance);
+                    }
+
+                    $lockedInstance->delete();
+                }
+            );
+
+            if (! $deleted) {
+                Log::info('FinalizePurgeInactiveInstanceJob: geração invalidada antes da exclusão', [
+                    'instance_id' => $instance->id,
+                    'domain' => $instance->domain,
+                ]);
+
+                return;
             }
 
-            $instance->delete();
             InstanceService::refresh();
 
             Log::info('FinalizePurgeInactiveInstanceJob: instância removida com sucesso', [

@@ -25,6 +25,8 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
 
     protected ?int $purgeInstanceId = null;
 
+    protected ?string $purgeGeneration = null;
+
     public $timeout = 300;
 
     public $tries = 3;
@@ -60,10 +62,14 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
         return [(new WithoutOverlapping("media:purge-job:id-{$this->media->id}"))->shared()->dontRelease()];
     }
 
-    public function __construct(Media $media, ?int $purgeInstanceId = null)
-    {
+    public function __construct(
+        Media $media,
+        ?int $purgeInstanceId = null,
+        ?string $purgeGeneration = null
+    ) {
         $this->media = $media;
         $this->purgeInstanceId = $purgeInstanceId;
+        $this->purgeGeneration = $purgeGeneration;
     }
 
     public function handle()
@@ -73,22 +79,6 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
         // Verify media exists
         if (! $media) {
             Log::info('MediaDeletePipeline: Media no longer exists, skipping job');
-
-            return 1;
-        }
-
-        if (
-            $this->purgeInstanceId !== null
-            && ! InstancePurgeService::isPurgeAuthorizedForProfile(
-                $this->purgeInstanceId,
-                $media->profile_id
-            )
-        ) {
-            Log::info('MediaDeletePipeline: purge cancelado após revalidação', [
-                'instance_id' => $this->purgeInstanceId,
-                'profile_id' => $media->profile_id,
-                'media_id' => $media->id,
-            ]);
 
             return 1;
         }
@@ -133,6 +123,30 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
             return 1;
         }
 
+        if ($this->purgeInstanceId !== null) {
+            $authorized = InstancePurgeService::authorizeDestructiveProfileStep(
+                $this->purgeInstanceId,
+                $media->profile_id,
+                $this->purgeGeneration ?? '',
+                function () use ($media) {
+                    Media::withTrashed()
+                        ->whereKey($media->id)
+                        ->whereNull('deleted_at')
+                        ->update(['deleted_at' => now()]);
+                }
+            );
+
+            if (! $authorized) {
+                Log::info('MediaDeletePipeline: purge cancelado após revalidação', [
+                    'instance_id' => $this->purgeInstanceId,
+                    'profile_id' => $media->profile_id,
+                    'media_id' => $media->id,
+                ]);
+
+                return 1;
+            }
+        }
+
         $e = explode('/', $path);
         array_pop($e);
         $i = implode('/', $e);
@@ -169,7 +183,11 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
                 }
             }
 
-            $media->delete();
+            if ($this->purgeInstanceId !== null) {
+                $media->forceDelete();
+            } else {
+                $media->delete();
+            }
 
             if ($ownerUserId) {
                 UserStorageService::decrementStorageUsed($ownerUserId, $ownerMediaSize);
@@ -195,6 +213,7 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
             InstancePurgeService::recordProfileFailure(
                 $this->media->profile_id,
                 $this->purgeInstanceId,
+                $this->purgeGeneration ?? '',
                 $exception
             );
         }

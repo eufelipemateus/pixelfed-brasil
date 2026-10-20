@@ -35,6 +35,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $last_active_at
  * @property Carbon|null $purge_candidate_at
  * @property Carbon|null $purge_started_at
+ * @property string|null $purge_generation
  * @property int $delivery_timeout
  * @property Carbon|null $delivery_next_after
  * @property string|null $shared_inbox
