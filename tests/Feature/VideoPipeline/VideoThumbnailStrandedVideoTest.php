@@ -10,6 +10,10 @@ use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 uses(LazilyRefreshDatabase::class);
 
+beforeEach(function () {
+    config(['filesystems.cloud' => 'local']);
+});
+
 // Builds the media row the job deserializes. A status_id is set so the job's
 // cache-busting branch runs, matching production.
 function strandedVideoMedia(): Media
@@ -56,7 +60,7 @@ it('generates a frame-0 thumbnail for a sub-1s video and dispatches storage', fu
     (new VideoThumbnail($media))->handle();
 
     expect($requestedSeconds)->toBe(0);
-    expect($media->fresh()->thumbnail_path)->toBe('public/m/_v2/1/aa/bb/clip_thumb.jpeg');
+    expect($media->fresh()->thumbnail_path)->toBe('public/m/_v2/1/aa/bb/clip_thumb.jpg');
 
     Bus::assertDispatched(MediaStoragePipeline::class);
 });
