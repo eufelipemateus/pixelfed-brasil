@@ -190,10 +190,17 @@ class DeliveryHostService
         try {
             Instance::query()
                 ->whereIn('domain', $domains)
+                ->pluck('id')
+                ->each(fn (int $instanceId) => InstancePurgeService::resetProgress($instanceId));
+
+            Instance::query()
+                ->whereIn('domain', $domains)
                 ->update([
                     'delivery_failures' => 0,
                     'delivery_timeout' => false,
                     'delivery_next_after' => null,
+                    'purge_candidate_at' => null,
+                    'purge_started_at' => null,
                 ]);
         } catch (Throwable $e) {
             Log::warning('Unable to clear delivery failures', [

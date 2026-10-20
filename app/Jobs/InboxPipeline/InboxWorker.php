@@ -6,6 +6,7 @@ use App\Jobs\InboxPipeline\Concerns\RetriesWhenActorUnavailable;
 use App\Models\Profile;
 use App\Services\BlockSyncService;
 use App\Services\FollowersSyncService;
+use App\Services\InstanceActivityService;
 use App\Util\ActivityPub\Helpers;
 use App\Util\ActivityPub\HttpSignature;
 use Illuminate\Bus\Queueable;
@@ -23,6 +24,8 @@ class InboxWorker implements ShouldQueue
     protected $headers;
 
     protected $payload;
+
+    protected ?string $verifiedActorDomain = null;
 
     public $timeout = 300;
 
@@ -60,6 +63,8 @@ class InboxWorker implements ShouldQueue
         $payload = json_decode($this->payload, true, 8);
 
         if ($this->verifySignature($headers, $payload) == true) {
+            InstanceActivityService::record($this->verifiedActorDomain);
+
             if (isset($payload['id'])) {
                 $lockKey = 'pf:ap:user-inbox:activity:'.hash('sha256', $payload['id']);
                 if (! Cache::add($lockKey, 1, 3600)) {
@@ -172,6 +177,8 @@ class InboxWorker implements ShouldQueue
         $inboxPath = '/f/inbox';
         [$verified, $headers] = HttpSignature::verify($pkey, $signatureData, $headers, $inboxPath, $body);
         if ($verified == 1) {
+            $this->verifiedActorDomain = strtolower($keyDomain);
+
             return true;
         }
 

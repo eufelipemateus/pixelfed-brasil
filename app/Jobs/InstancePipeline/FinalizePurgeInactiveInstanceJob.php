@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Jobs\InstancePipeline;
+
+use App\Models\Instance;
+use App\Models\Profile;
+use App\Services\InstancePurgeService;
+use App\Services\InstanceService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+
+class FinalizePurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
+{
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+
+    public int $instanceId;
+
+    public $timeout = 120;
+
+    public $tries = 0;
+
+    public $maxExceptions = 3;
+
+    public $failOnTimeout = true;
+
+    public $uniqueFor = 3600;
+
+    public function __construct(int $instanceId, public string $generation)
+    {
+        $this->instanceId = $instanceId;
+        $this->onQueue('delete');
+    }
+
+    public function uniqueId(): string
+    {
+        return sprintf('purge-inactive-instance-finalize:%d:%s', $this->instanceId, $this->generation);
+    }
+
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping($this->uniqueId()))->shared()->dontRelease()];
+    }
+
+    public function handle(): void
+    {
+        $instance = Instance::query()->find($this->instanceId);
+
+        if (! $instance) {
+            return;
+        }
+
+        if (! InstancePurgeService::isPurgeAuthorized($instance->id, $this->generation)) {
+            Log::info('FinalizePurgeInactiveInstanceJob: purge não está mais autorizado', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+            ]);
+
+            return;
+        }
+
+        $activeProfiles = Profile::where('domain', $instance->domain)->count();
+
+        if ($activeProfiles > 0) {
+            $actionableProfiles = InstancePurgeService::profilesReadyForDispatch(
+                $instance->domain,
+                $instance->id,
+                $this->generation
+            )
+                ->exists();
+
+            if ($actionableProfiles) {
+                PurgeInactiveInstanceJob::dispatch($instance->id)
+                    ->delay(now()->addMinute())
+                    ->onQueue('delete');
+            }
+
+            Log::info('FinalizePurgeInactiveInstanceJob: lote de perfis ainda em andamento', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'remaining_active_profiles' => $activeProfiles,
+                'has_actionable_profiles' => $actionableProfiles,
+            ]);
+
+            return;
+        }
+
+        $remainingProfiles = Profile::withTrashed()->where('domain', $instance->domain)->count();
+
+        if ($remainingProfiles > 0) {
+            Log::info('FinalizePurgeInactiveInstanceJob: aguardando limpeza completa de perfis', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'remaining_profiles' => $remainingProfiles,
+                'attempt' => $this->attempts(),
+            ]);
+
+            return;
+        }
+
+        try {
+            $deleted = InstancePurgeService::authorizeDestructiveInstanceStep(
+                $instance->id,
+                $this->generation,
+                function (Instance $lockedInstance) {
+                    if (Profile::withTrashed()->where('domain', $lockedInstance->domain)->exists()) {
+                        return false;
+                    }
+
+                    if (InstancePurgeService::hasModerationData($lockedInstance)) {
+                        InstancePurgeService::persistModerationRule($lockedInstance);
+                    }
+
+                    $lockedInstance->delete();
+                }
+            );
+
+            if (! $deleted) {
+                Log::info('FinalizePurgeInactiveInstanceJob: geração invalidada antes da exclusão', [
+                    'instance_id' => $instance->id,
+                    'domain' => $instance->domain,
+                ]);
+
+                return;
+            }
+
+            InstanceService::refresh();
+
+            Log::info('FinalizePurgeInactiveInstanceJob: instância removida com sucesso', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+            ]);
+        } catch (Throwable $e) {
+            Log::error('FinalizePurgeInactiveInstanceJob: falha ao finalizar purge da instância', [
+                'instance_id' => $instance->id,
+                'domain' => $instance->domain,
+                'exception_class' => get_class($e),
+                'exception_message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('FinalizePurgeInactiveInstanceJob: job finalizador falhou', [
+            'instance_id' => $this->instanceId,
+            'exception_class' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+        ]);
+    }
+}

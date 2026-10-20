@@ -22,29 +22,31 @@ return [
     |
     */
     'loginTitle' => 'Acessar conta',
-    'failed' => 'As credenciais introduzidas não correspondem aos nossos registos.',
-    'throttle' => 'Varias tentativas de login. Tente novamente em :seconds segundos.',
+    'failed' => 'As credenciais informadas não correspondem aos nossos registros.',
+    'throttle' => 'Muitas tentativas de login. Tente novamente em :seconds segundos.',
     'password' => 'Senha',
-    'remember' => 'Lembrar-Me',
-    'forgot' => 'Esqueceu a senha? ',
+    'remember' => 'Lembrar de mim',
+    'forgot' => 'Esqueceu a senha?',
     'login' => 'Entrar',
     'reset' => 'Recuperar Senha',
     'register' => 'Cadastrar',
 
     'name' => 'Nome',
     'username' => 'Usuário',
-    'confirm-password' => 'Confrime a senha',
+    'confirm-password' => 'Confirme a senha',
 
     'age' => 'Eu tenho pelo menos 18 anos',
 
-    'terms' => 'Ao Cadastrar, você concorda com nossos termos <a href="'.route('site.terms').'" class="font-weight-bold text-dark">Termos de Uso</a> e <a href="'.route('site.privacy').'" class="font-weight-bold text-dark">Politica de Privacidade</a>.',
+    'terms' => 'Ao se cadastrar, você concorda com nossos <a href="'.route('site.terms').'" class="font-weight-bold text-dark">Termos de Uso</a> e com a <a href="'.route('site.privacy').'" class="font-weight-bold text-dark">Política de Privacidade</a>.',
 
-    'emailAddress' => 'Endereço de Email',
+    'email' => 'E-mail',
+    'emailAddress' => 'Endereço de e-mail',
+    'forgotEmail' => 'Esqueci meu e-mail',
 
     'registerTitle' => 'Cadastrar uma nova conta',
 
-    'sendReset' => 'Enviar Link de Recuperação de Senha',
-    'backLogin' => 'Back to Login',
+    'sendReset' => 'Enviar link de recuperação de senha',
+    'backLogin' => 'Voltar para o login',
 
     'signInMastodon' => 'Entrar com Mastodon',
     'verifyYourEmailAddress' => ' - Verifique seu endereço de e-mail',

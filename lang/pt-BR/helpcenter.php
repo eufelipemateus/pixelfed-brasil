@@ -13,7 +13,7 @@ return [
     'discover' => 'Descobrir',
     'directMessages' => 'Mensagens Diretas',
     'timelines' => 'Linha do Tempo',
-    'embed' => 'Embed',
+    'embed' => 'Incorporar',
 
     'communityGuidelines' => 'Directrizes da Comunidade',
     'whatIsTheFediverse' => 'O que é o fediverse?',

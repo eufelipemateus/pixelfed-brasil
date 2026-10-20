@@ -8,7 +8,7 @@ return [
     'about' => 'Sobre',
     'help' => 'Ajuda',
     'language' => 'Idioma',
-    'fediverse' => 'Fediverse',
+    'fediverse' => 'Fediverso',
     'opensource' => 'Código Aberto',
     'terms' => 'Termos',
     'privacy' => 'Privacidade',
@@ -75,6 +75,7 @@ return [
     'warning_fork' => 'Este site executa uma versão modificada do pixelfed que esta disponivel em <a href="https://github.com/eufelipemateus/pixelfed" target="_blank"  rel="noopener noreferrer">github.com/eufelipemateus/pixelfed</a> para ser revisado e executado.',
 
     // site/about custom history page
+    'manifest_history_badge' => 'MANIFESTO E HISTÓRIA',
     'about_title' => 'Sobre o Pixelfed Brasil',
     'about_journey' => 'Uma jornada de soberania digital, iniciada com o propósito de devolver a fotografia aos fotógrafos.',
     'about_intro' => 'O <strong>Pixelfed Brasil</strong> (<a href="https://pixelfed.com.br" target="_blank">pixelfed.com.br</a>) é a maior instância brasileira dedicada ao Pixelfed. Somos uma plataforma de compartilhamento de fotos federada, ética e totalmente livre de algoritmos de manipulação, integrando o ecossistema global do Fediverso.',

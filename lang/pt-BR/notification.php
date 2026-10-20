@@ -2,11 +2,11 @@
 
 return [
 
-    'likedPhoto' => 'gostou da tua publicação.',
-    'likedComment' => 'gostou do teu comentário.',
-    'startedFollowingYou' => 'começou a seguir-te.',
-    'commented' => 'comentou na tua publicação.',
-    'mentionedYou' => 'mencionou-te.',
-    'shared' => 'partilhou a tua publicação.',
+    'likedPhoto' => 'curtiu sua publicação.',
+    'likedComment' => 'curtiu seu comentário.',
+    'startedFollowingYou' => 'começou a seguir você.',
+    'commented' => 'comentou na sua publicação.',
+    'mentionedYou' => 'mencionou você.',
+    'shared' => 'compartilhou sua publicação.',
 
 ];

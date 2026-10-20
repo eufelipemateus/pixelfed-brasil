@@ -51,6 +51,11 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property int|null $purge_instance_id
+ * @property string|null $purge_generation
+ * @property Carbon|null $purge_queued_at
+ * @property int $purge_retry_count
+ * @property string|null $purge_last_error
  * @property string|null $delete_after
  * @property int $is_suggestable
  * @property Carbon|null $last_fetched_at
@@ -166,6 +171,8 @@ class Profile extends Model
             'deleted_at' => 'datetime',
             'last_fetched_at' => 'datetime',
             'last_status_at' => 'datetime',
+            'purge_queued_at' => 'datetime',
+            'purge_retry_count' => 'integer',
             'status' => StatusEnumCast::class,
         ];
     }

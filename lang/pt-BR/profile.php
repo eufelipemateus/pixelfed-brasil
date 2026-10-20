@@ -1,14 +1,14 @@
 <?php
 
 return [
-    'emptyTimeline' => 'Este utilizador não fez nenhuma publicação!',
-    'emptyFollowers' => 'Este utilizador não tem seguidores!',
-    'emptyFollowing' => 'Este utilizador ainda não segue ninguém!',
-    'emptySaved' => 'Ainda não salvaste nenhuma publicação!',
-    'savedWarning' => 'Apenas tu podes ver o que foi salvo',
+    'emptyTimeline' => 'Este usuário não fez nenhuma publicação!',
+    'emptyFollowers' => 'Este usuário não tem seguidores!',
+    'emptyFollowing' => 'Este usuário ainda não segue ninguém!',
+    'emptySaved' => 'Você ainda não salvou nenhuma publicação!',
+    'savedWarning' => 'Somente você pode ver o que foi salvo',
     'privateProfileWarning' => 'Esta conta é privada',
-    'alreadyFollow' => 'Já segues :username?',
-    'loginToSeeProfile' => 'para veres as suas fotos e vídeos.',
+    'alreadyFollow' => 'Você já segue :username?',
+    'loginToSeeProfile' => 'para ver as fotos e os vídeos desta conta.',
 
     'status.disabled.header' => 'Perfil Indisponível',
     'status.disabled.body' => 'Desculpe, este perfil não está disponível neste momento. Por favor, tente novamente mais tarde.',

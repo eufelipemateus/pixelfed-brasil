@@ -353,6 +353,77 @@
             @csrf
         </form>
     </div>
+    <script>
+        var oauthNavigationReady = true;
+        var oauthActionButtons = document.querySelectorAll('.passport-authorize .row button');
+
+        function setOauthNavigationReady(ready) {
+            oauthNavigationReady = ready;
+            oauthActionButtons.forEach(function (button) {
+                button.disabled = !ready;
+            });
+        }
+
+        // Older service workers intercepted the redirect to pixelfed://. Ask
+        // the active worker whether it supports the OAuth bypass; if it does
+        // not answer, unregister it and reload this page without a controller.
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            setOauthNavigationReady(false);
+
+            var capabilityCheckFinished = false;
+            var capabilityChannel = new MessageChannel();
+            var finishCapabilityCheck = function (supported) {
+                if (capabilityCheckFinished) {
+                    return;
+                }
+
+                capabilityCheckFinished = true;
+
+                if (supported) {
+                    setOauthNavigationReady(true);
+                    return;
+                }
+
+                navigator.serviceWorker.getRegistration().then(function (registration) {
+                    return registration ? registration.unregister() : false;
+                }).then(function (unregistered) {
+                    if (unregistered) {
+                        window.location.reload();
+                        return;
+                    }
+
+                    setOauthNavigationReady(true);
+                }).catch(function () {
+                    setOauthNavigationReady(true);
+                });
+            };
+
+            capabilityChannel.port1.onmessage = function (event) {
+                finishCapabilityCheck(event.data && event.data.supported === true);
+            };
+            navigator.serviceWorker.controller.postMessage(
+                { type: 'pixelfed:oauth-navigation-bypass' },
+                [capabilityChannel.port2]
+            );
+            window.setTimeout(function () {
+                finishCapabilityCheck(false);
+            }, 500);
+        }
+
+        // auth_token is single-use; a second submit would fail with 403.
+        document.querySelectorAll('.passport-authorize .row form').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!oauthNavigationReady || form.dataset.submitted) {
+                    event.preventDefault();
+                    return;
+                }
+                form.dataset.submitted = '1';
+                oauthActionButtons.forEach(function (button) {
+                    button.disabled = true;
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

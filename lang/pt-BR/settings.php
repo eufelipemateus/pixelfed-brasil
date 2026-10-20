@@ -3,7 +3,7 @@
 return [
     'account' => 'Conta',
     'accessibility' => 'Acessibilidade',
-    'email' => 'Email',
+    'email' => 'E-mail',
     'invites' => 'Convites',
     'media' => 'Mídia',
     'filters' => 'Filtros',

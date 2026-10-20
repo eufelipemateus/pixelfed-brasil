@@ -22,6 +22,7 @@ use App\Services\Account\AccountStatService;
 use App\Services\AccountService;
 use App\Services\CollectionService;
 use App\Services\DirectMessageService;
+use App\Services\InstancePurgeService;
 use App\Services\NotificationService;
 use App\Services\Status\ReplyCleanupService;
 use App\Services\StatusService;
@@ -33,12 +34,17 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $status;
+
+    protected ?int $purgeInstanceId = null;
+
+    protected ?string $purgeGeneration = null;
 
     /**
      * Delete the job if its models no longer exist.
@@ -85,9 +91,14 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
      *
      * @return void
      */
-    public function __construct(Status $status)
-    {
+    public function __construct(
+        Status $status,
+        ?int $purgeInstanceId = null,
+        ?string $purgeGeneration = null
+    ) {
         $this->status = $status->withoutRelations();
+        $this->purgeInstanceId = $purgeInstanceId;
+        $this->purgeGeneration = $purgeGeneration;
     }
 
     /**
@@ -106,8 +117,28 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             return;
         }
 
-        if ($status->deleted_at) {
-            return;
+        if ($this->purgeInstanceId !== null) {
+            $authorized = InstancePurgeService::authorizeDestructiveProfileStep(
+                $this->purgeInstanceId,
+                $status->profile_id,
+                $this->purgeGeneration ?? '',
+                function () use ($status) {
+                    Status::withTrashed()
+                        ->whereKey($status->id)
+                        ->whereNull('deleted_at')
+                        ->update(['deleted_at' => now()]);
+                }
+            );
+
+            if (! $authorized) {
+                Log::info('RemoteStatusDelete: purge cancelado após revalidação', [
+                    'instance_id' => $this->purgeInstanceId,
+                    'profile_id' => $status->profile_id,
+                    'status_id' => $status->id,
+                ]);
+
+                return;
+            }
         }
 
         StatusService::del($status->id, true);
@@ -159,7 +190,11 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         Media::whereStatusId($status->id)->update(['status_id' => null]);
         $media->each(function ($m) {
             $m->status_id = null;
-            MediaDeletePipeline::dispatch($m)->onQueue('mmo');
+            MediaDeletePipeline::dispatch(
+                $m,
+                $this->purgeInstanceId,
+                $this->purgeGeneration
+            )->onQueue('mmo');
         });
         $mediaTagIds = MediaTag::where('status_id', $status->id)->pluck('id');
         if ($mediaTagIds->isNotEmpty()) {
@@ -203,5 +238,26 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         $status->forceDelete();
 
         return 1;
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        if ($this->purgeInstanceId !== null && $this->status) {
+            InstancePurgeService::recordProfileFailure(
+                $this->status->profile_id,
+                $this->purgeInstanceId,
+                $this->purgeGeneration ?? '',
+                $exception
+            );
+        }
+
+        Log::error('RemoteStatusDelete: exclusão do post falhou', [
+            'instance_id' => $this->purgeInstanceId,
+            'profile_id' => $this->status?->profile_id,
+            'status_id' => $this->status?->id,
+            'attempt' => $this->attempts(),
+            'exception_class' => get_class($exception),
+            'exception_message' => $exception->getMessage(),
+        ]);
     }
 }

@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Laravel\Passport\Exceptions\InvalidAuthTokenException;
 use Laravel\Passport\Http\Middleware\CheckToken;
 use Laravel\Passport\Http\Middleware\CheckTokenForAnyScope;
 use Laravel\Passport\Http\Middleware\CreateFreshApiToken;
@@ -197,6 +198,31 @@ $app = Application::configure(basePath: dirname(__DIR__))
             return redirect()->route('login')->withErrors([
                 'login' => __('Your sign-in session expired. Please sign in again.'),
             ]);
+        });
+
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 403 || ! $e->getPrevious() instanceof InvalidAuthTokenException) {
+                return null;
+            }
+
+            if ($request->wantsJson() || ! $request->is('oauth/authorize')) {
+                return null;
+            }
+
+            // A stale/reused auth_token (double submit or another tab) cannot
+            // be replayed. Restart the original authorization request instead.
+            $previous = parse_url((string) $request->headers->get('referer'));
+
+            if (! is_array($previous) ||
+                ! in_array(strtolower($previous['scheme'] ?? ''), ['http', 'https'], true) ||
+                strcasecmp($previous['host'] ?? '', $request->getHost()) !== 0 ||
+                ($previous['path'] ?? '') !== '/oauth/authorize') {
+                return null;
+            }
+
+            $query = isset($previous['query']) ? '?'.$previous['query'] : '';
+
+            return redirect('/oauth/authorize'.$query);
         });
 
         $exceptions->render(function (Throwable $e, $request) {
