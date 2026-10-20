@@ -86,7 +86,9 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             return;
         }
 
-        if (! InstancePurgeService::beginPurge($instance->id)) {
+        $generation = InstancePurgeService::beginPurge($instance->id);
+
+        if ($generation === null) {
             Log::info('PurgeInactiveInstanceJob: instância ainda está na janela de carência', [
                 'instance_id' => $instance->id,
                 'domain' => $instance->domain,
@@ -99,20 +101,20 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         $dispatched = 0;
         $batchSize = InstancePurgeService::profileBatchSize();
 
-        InstancePurgeService::profilesReadyForDispatch($instance->domain, $instance->id)
+        InstancePurgeService::profilesReadyForDispatch($instance->domain, $instance->id, $generation)
             ->orderBy('id')
             ->limit($batchSize)
             ->get()
-            ->each(function (Profile $profile) use ($instance, &$dispatched) {
-                if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id)) {
+            ->each(function (Profile $profile) use ($instance, $generation, &$dispatched) {
+                if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id, $generation)) {
                     return;
                 }
 
                 try {
-                    DeleteRemoteProfilePipeline::dispatch($profile, $instance->id)->onQueue('delete');
+                    DeleteRemoteProfilePipeline::dispatch($profile, $instance->id, $generation)->onQueue('delete');
                     $dispatched++;
                 } catch (Throwable $e) {
-                    InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $e);
+                    InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $generation, $e);
 
                     Log::error('PurgeInactiveInstanceJob: falha ao despachar exclusão de perfil remoto', [
                         'instance_id' => $instance->id,
@@ -129,21 +131,21 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
         $remainingCapacity = $batchSize - $dispatched;
 
         if ($remainingCapacity > 0) {
-            InstancePurgeService::profilesReadyForFinalization($instance->domain, $instance->id)
+            InstancePurgeService::profilesReadyForFinalization($instance->domain, $instance->id, $generation)
                 ->orderBy('id')
                 ->limit($remainingCapacity)
                 ->get()
-                ->each(function (Profile $profile) use ($instance, &$dispatched) {
-                    if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id)) {
+                ->each(function (Profile $profile) use ($instance, $generation, &$dispatched) {
+                    if (! InstancePurgeService::claimProfileForPurge($profile, $instance->id, $generation)) {
                         return;
                     }
 
                     try {
-                        FinalizePurgeInactiveProfileJob::dispatch($profile->id, $instance->id)
+                        FinalizePurgeInactiveProfileJob::dispatch($profile->id, $instance->id, $generation)
                             ->onQueue('delete');
                         $dispatched++;
                     } catch (Throwable $e) {
-                        InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $e);
+                        InstancePurgeService::releaseProfileClaim($profile->id, $instance->id, $generation, $e);
 
                         throw $e;
                     }
@@ -156,7 +158,7 @@ class PurgeInactiveInstanceJob implements ShouldBeUniqueUntilProcessing, ShouldQ
             'profiles_dispatched' => $dispatched,
         ]);
 
-        FinalizePurgeInactiveInstanceJob::dispatch($instance->id)
+        FinalizePurgeInactiveInstanceJob::dispatch($instance->id, $generation)
             ->delay(now()->addMinutes(10))
             ->onQueue('delete');
     }

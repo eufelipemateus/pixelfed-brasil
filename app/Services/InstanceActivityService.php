@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Instance;
 use App\Models\Profile;
+use Illuminate\Support\Facades\DB;
 
 class InstanceActivityService
 {
@@ -19,37 +20,43 @@ class InstanceActivityService
             return;
         }
 
-        $instance = Instance::firstOrCreate(['domain' => $domain]);
+        $instanceId = Instance::firstOrCreate(['domain' => $domain])->id;
 
-        if ($instance->purge_candidate_at !== null || $instance->purge_started_at !== null) {
-            Profile::withTrashed()
-                ->where('domain', $domain)
-                ->where('purge_instance_id', $instance->id)
-                ->update([
-                    'purge_instance_id' => null,
-                    'purge_queued_at' => null,
-                    'purge_retry_count' => 0,
-                    'purge_last_error' => null,
-                ]);
-        }
+        DB::transaction(function () use ($domain, $instanceId) {
+            $instance = Instance::whereKey($instanceId)->lockForUpdate()->firstOrFail();
 
-        if (
-            $instance->last_active_at?->gte(now()->subHour())
-            && $instance->purge_candidate_at === null
-            && $instance->purge_started_at === null
-            && ! $instance->delivery_timeout
-            && (int) $instance->delivery_failures === 0
-        ) {
-            return;
-        }
+            if ($instance->purge_candidate_at !== null || $instance->purge_started_at !== null) {
+                Profile::withTrashed()
+                    ->where('domain', $domain)
+                    ->where('purge_instance_id', $instance->id)
+                    ->update([
+                        'purge_instance_id' => null,
+                        'purge_generation' => null,
+                        'purge_queued_at' => null,
+                        'purge_retry_count' => 0,
+                        'purge_last_error' => null,
+                    ]);
+            }
 
-        $instance->forceFill([
-            'last_active_at' => now(),
-            'purge_candidate_at' => null,
-            'purge_started_at' => null,
-            'delivery_failures' => 0,
-            'delivery_timeout' => false,
-            'delivery_next_after' => null,
-        ])->save();
+            if (
+                $instance->last_active_at?->gte(now()->subHour())
+                && $instance->purge_candidate_at === null
+                && $instance->purge_started_at === null
+                && ! $instance->delivery_timeout
+                && (int) $instance->delivery_failures === 0
+            ) {
+                return;
+            }
+
+            $instance->forceFill([
+                'last_active_at' => now(),
+                'purge_candidate_at' => null,
+                'purge_started_at' => null,
+                'purge_generation' => null,
+                'delivery_failures' => 0,
+                'delivery_timeout' => false,
+                'delivery_next_after' => null,
+            ])->save();
+        });
     }
 }

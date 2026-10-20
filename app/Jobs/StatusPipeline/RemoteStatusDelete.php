@@ -44,6 +44,8 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
 
     protected ?int $purgeInstanceId = null;
 
+    protected ?string $purgeGeneration = null;
+
     /**
      * Delete the job if its models no longer exist.
      *
@@ -89,10 +91,14 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
      *
      * @return void
      */
-    public function __construct(Status $status, ?int $purgeInstanceId = null)
-    {
+    public function __construct(
+        Status $status,
+        ?int $purgeInstanceId = null,
+        ?string $purgeGeneration = null
+    ) {
         $this->status = $status->withoutRelations();
         $this->purgeInstanceId = $purgeInstanceId;
+        $this->purgeGeneration = $purgeGeneration;
     }
 
     /**
@@ -111,20 +117,28 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             return;
         }
 
-        if (
-            $this->purgeInstanceId !== null
-            && ! InstancePurgeService::isPurgeAuthorizedForProfile(
+        if ($this->purgeInstanceId !== null) {
+            $authorized = InstancePurgeService::authorizeDestructiveProfileStep(
                 $this->purgeInstanceId,
-                $status->profile_id
-            )
-        ) {
-            Log::info('RemoteStatusDelete: purge cancelado após revalidação', [
-                'instance_id' => $this->purgeInstanceId,
-                'profile_id' => $status->profile_id,
-                'status_id' => $status->id,
-            ]);
+                $status->profile_id,
+                $this->purgeGeneration ?? '',
+                function () use ($status) {
+                    Status::withTrashed()
+                        ->whereKey($status->id)
+                        ->whereNull('deleted_at')
+                        ->update(['deleted_at' => now()]);
+                }
+            );
 
-            return;
+            if (! $authorized) {
+                Log::info('RemoteStatusDelete: purge cancelado após revalidação', [
+                    'instance_id' => $this->purgeInstanceId,
+                    'profile_id' => $status->profile_id,
+                    'status_id' => $status->id,
+                ]);
+
+                return;
+            }
         }
 
         StatusService::del($status->id, true);
@@ -176,7 +190,11 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         Media::whereStatusId($status->id)->update(['status_id' => null]);
         $media->each(function ($m) {
             $m->status_id = null;
-            MediaDeletePipeline::dispatch($m, $this->purgeInstanceId)->onQueue('mmo');
+            MediaDeletePipeline::dispatch(
+                $m,
+                $this->purgeInstanceId,
+                $this->purgeGeneration
+            )->onQueue('mmo');
         });
         $mediaTagIds = MediaTag::where('status_id', $status->id)->pluck('id');
         if ($mediaTagIds->isNotEmpty()) {
@@ -228,6 +246,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             InstancePurgeService::recordProfileFailure(
                 $this->status->profile_id,
                 $this->purgeInstanceId,
+                $this->purgeGeneration ?? '',
                 $exception
             );
         }
