@@ -171,7 +171,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
             });
         $dmIds = DirectMessage::whereStatusId($status->id)->pluck('id');
         if ($dmIds->isNotEmpty()) {
-            Notification::whereItemType(DirectMessage::class)
+            Notification::whereIn('item_type', ['App\DirectMessage', DirectMessage::class])
                 ->whereIn('item_id', $dmIds)
                 ->cursor()
                 ->each(function ($not) {
@@ -198,7 +198,7 @@ class RemoteStatusDelete implements ShouldBeUniqueUntilProcessing, ShouldQueue
         });
         $mediaTagIds = MediaTag::where('status_id', $status->id)->pluck('id');
         if ($mediaTagIds->isNotEmpty()) {
-            Notification::whereItemType(MediaTag::class)
+            Notification::whereIn('item_type', ['App\MediaTag', MediaTag::class])
                 ->whereIn('item_id', $mediaTagIds)
                 ->cursor()
                 ->each(function ($not) {

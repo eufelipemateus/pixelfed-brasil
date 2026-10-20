@@ -209,7 +209,7 @@ class BlockSyncService
         return DB::table('user_filters as uf')
             ->join('profiles as blocker', 'blocker.id', '=', 'uf.user_id')
             ->join('profiles as blocked', 'blocked.id', '=', 'uf.filterable_id')
-            ->where('uf.filterable_type', Profile::class)
+            ->whereIn('uf.filterable_type', ['App\Profile', Profile::class])
             ->where('uf.filter_type', 'block')
             ->whereNull('blocker.domain')
             ->whereNull('blocker.deleted_at')
@@ -380,7 +380,7 @@ class BlockSyncService
     public static function localBlockChanged(UserFilter $filter, bool $created): void
     {
         try {
-            if ($filter->filterable_type !== Profile::class || $filter->filter_type !== 'block') {
+            if (! in_array($filter->filterable_type, ['App\Profile', Profile::class], true) || $filter->filter_type !== 'block') {
                 return;
             }
 
@@ -430,7 +430,7 @@ class BlockSyncService
         return DB::table('user_filters as uf')
             ->join('profiles as blocker', 'blocker.id', '=', 'uf.user_id')
             ->join('profiles as blocked', 'blocked.id', '=', 'uf.filterable_id')
-            ->where('uf.filterable_type', Profile::class)
+            ->whereIn('uf.filterable_type', ['App\Profile', Profile::class])
             ->where('uf.filter_type', 'block')
             ->where('blocker.domain', strtolower($host))
             ->whereNotNull('blocker.remote_url')
@@ -951,7 +951,7 @@ class BlockSyncService
 
         $exists = UserFilter::whereUserId($blocker->id)
             ->whereFilterableId($blocked->id)
-            ->whereFilterableType(Profile::class)
+            ->whereIn('filterable_type', ['App\Profile', Profile::class])
             ->whereFilterType('block')
             ->exists();
 
@@ -1002,7 +1002,7 @@ class BlockSyncService
 
         $filter = UserFilter::whereUserId($blocker->id)
             ->whereFilterableId($blocked->id)
-            ->whereFilterableType(Profile::class)
+            ->whereIn('filterable_type', ['App\Profile', Profile::class])
             ->whereFilterType('block')
             ->first();
 
@@ -1024,7 +1024,7 @@ class BlockSyncService
         $filter = UserFilter::whereKey($filterId)
             ->whereUserId($blockerId)
             ->whereFilterableId($blockedId)
-            ->whereFilterableType(Profile::class)
+            ->whereIn('filterable_type', ['App\Profile', Profile::class])
             ->whereFilterType('block')
             ->first();
 
