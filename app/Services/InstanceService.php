@@ -112,6 +112,7 @@ class InstanceService
         Cache::forget(self::CACHE_KEY_NSFW_DOMAINS);
         Cache::forget(self::CACHE_KEY_STATS);
         Cache::forget(self::CACHE_KEY_API_PEERS_LIST);
+        Cache::forget(self::CACHE_KEY_SHARED_INBOXES_PUBLIC);
 
         self::getBannedDomains();
         self::getUnlistedDomains();
@@ -164,19 +165,40 @@ class InstanceService
         });
     }
 
-    public static function getAllSharedInboxsPublic()
+    /**
+     * Shared inboxes advertised by known, non-blocked instances.
+     *
+     * DeliveryHostService applies the live availability/backoff filter when
+     * ActivityPubFanoutService delivers each chunk, so this list can retain
+     * every known instance instead of duplicating transport-health policy.
+     *
+     * @return array<int, string>
+     */
+    public static function getPublicSharedInboxes(): array
     {
         return Cache::remember(self::CACHE_KEY_SHARED_INBOXES_PUBLIC, 432000, function () {
-            $bannedDomains = InstanceService::getBannedDomains();
+            $bannedDomains = self::getBannedDomains();
 
-            return Instance::whereNotNull('shared_inbox')->where('nodeinfo_last_fetched', '>', now()->subMonths(3))
+            return Instance::whereNotNull('shared_inbox')
                 ->pluck('shared_inbox')
                 ->filter(function ($url) use ($bannedDomains) {
                     $domain = parse_url($url, PHP_URL_HOST);
 
                     return $url && ! in_array($domain, $bannedDomains);
                 })
+                ->unique()
+                ->values()
                 ->toArray();
         });
+    }
+
+    /**
+     * @deprecated Use getPublicSharedInboxes().
+     *
+     * @return array<int, string>
+     */
+    public static function getAllSharedInboxsPublic(): array
+    {
+        return self::getPublicSharedInboxes();
     }
 }

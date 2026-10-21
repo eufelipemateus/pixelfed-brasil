@@ -16,6 +16,7 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="DANGEROUSLY_SET_FILESYSTEM_DRIVER" value="local"/>
+        <env name="FILESYSTEM_CLOUD" value="local"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>

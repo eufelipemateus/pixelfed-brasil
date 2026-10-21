@@ -10,10 +10,6 @@ use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 uses(LazilyRefreshDatabase::class);
 
-beforeEach(function () {
-    config(['filesystems.cloud' => 'local']);
-});
-
 // Builds the media row the job deserializes. A status_id is set so the job's
 // cache-busting branch runs, matching production.
 function strandedVideoMedia(): Media
