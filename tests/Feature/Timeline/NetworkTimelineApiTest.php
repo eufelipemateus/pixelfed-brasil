@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Instance;
 use App\Models\Profile;
 use App\Models\Status;
 use App\Models\User;
+use App\Services\InstanceService;
 use App\Services\NetworkTimelineService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -109,14 +111,14 @@ it('hides posts from an instance unlisted after they entered the feed', function
     Cache::put(NETWORK_CACHE_CHECK_KEY, 1, 3600);
 
     // Prime the moderated-domain cache before the instance exists.
-    expect(\App\Services\InstanceService::getUnlistedDomains())->not->toContain('unlisted.example');
+    expect(InstanceService::getUnlistedDomains())->not->toContain('unlisted.example');
 
-    $instance = new \App\Models\Instance;
+    $instance = new Instance;
     $instance->domain = 'unlisted.example';
     $instance->unlisted = true;
     $instance->save();
 
-    expect(\App\Services\InstanceService::getUnlistedDomains())->toContain('unlisted.example');
+    expect(InstanceService::getUnlistedDomains())->toContain('unlisted.example');
 
     $res = $this->actingAs($user)
         ->getJson('/api/pixelfed/v1/timelines/network?limit=30')
