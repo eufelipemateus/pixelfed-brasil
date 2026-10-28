@@ -33,5 +33,6 @@
         <ini name="memory_limit" value="2048M"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="PF_NEW_INSTANCES_UNLISTED" value="false"/>
     </php>
 </phpunit>
