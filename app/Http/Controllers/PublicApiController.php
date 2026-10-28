@@ -466,6 +466,7 @@ class PublicApiController extends Controller
         $user = $request->user();
 
         $filtered = $user ? UserFilterService::filters($user->profile_id) : [];
+        $moderatedDomains = array_merge(InstanceService::getBannedDomains(), InstanceService::getUnlistedDomains());
 
         if (NetworkTimelineService::count() === 0 && NetworkTimelineService::shouldWarmEmpty()) {
             Cache::lock('api:v1:timelines:network:cache_check:lock', 10)->get(function () {
@@ -500,6 +501,10 @@ class PublicApiController extends Controller
             })
             ->filter(function ($s) use ($filtered) {
                 return $s && isset($s['account']) && in_array($s['account']['id'], $filtered) === false;
+            })
+            ->filter(function ($s) use ($moderatedDomains) {
+                return ! isset($s['url'])
+                    || ! in_array(strtolower((string) parse_url($s['url'], PHP_URL_HOST)), $moderatedDomains);
             })
             ->values()
             ->toArray();

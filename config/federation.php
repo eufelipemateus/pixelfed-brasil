@@ -93,6 +93,8 @@ return [
 
     'migration' => env('PF_ACCT_MIGRATION_ENABLED', true),
 
+    'new_instances_unlisted' => env('PF_NEW_INSTANCES_UNLISTED', true),
+
     'purge_inactive_after_years' => env('PURGE_INACTIVE_INSTANCES_AFTER_YEARS', 2),
     'purge_inactive_grace_days' => env('PURGE_INACTIVE_INSTANCES_GRACE_DAYS', 30),
     'purge_inactive_profiles_per_run' => env('PURGE_INACTIVE_INSTANCES_PROFILES_PER_RUN', 100),
