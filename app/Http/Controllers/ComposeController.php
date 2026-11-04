@@ -565,6 +565,8 @@ class ComposeController extends Controller
 
         abort_if($request->user()->has_roles && ! UserRoleService::can('can-post', $request->user()->id), 403, 'Invalid permissions for this action');
 
+        abort_if(! AccountService::canPost($request->user()), 400, 'limit_daily_posts');
+
         if (config('costar.enabled') == true) {
             $blockedKeywords = config('costar.keyword.block');
             if ($blockedKeywords !== null && $request->caption) {
@@ -737,6 +739,8 @@ class ComposeController extends Controller
         ]);
 
         abort_if($request->user()->has_roles && ! UserRoleService::can('can-post', $request->user()->id), 403, 'Invalid permissions for this action');
+
+        abort_if(! AccountService::canPost($request->user()), 400, 'limit_daily_posts');
 
         if (config('costar.enabled') == true) {
             $blockedKeywords = config('costar.keyword.block');
