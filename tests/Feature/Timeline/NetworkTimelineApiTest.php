@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Instance;
 use App\Models\Profile;
 use App\Models\Status;
 use App\Models\User;
+use App\Services\InstanceService;
 use App\Services\NetworkTimelineService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -94,6 +96,36 @@ it('serves a warm cache hit newest-first', function () {
     $returned = collect($res)->pluck('id')->map(fn ($id) => (int) $id)->all();
 
     expect($returned)->toBe($ranked->values()->all());
+});
+
+it('hides posts from an instance unlisted after they entered the feed', function () {
+    $user = User::factory()->create();
+    $user->refresh();
+
+    $author = Profile::factory()->create(['user_id' => null, 'domain' => 'unlisted.example']);
+    $status = networkRemoteStatus($author, [
+        'uri' => 'https://unlisted.example/p/'.uniqid(),
+        'url' => 'https://unlisted.example/p/'.uniqid(),
+    ]);
+    NetworkTimelineService::add($status->id);
+    Cache::put(NETWORK_CACHE_CHECK_KEY, 1, 3600);
+
+    // Prime the moderated-domain cache before the instance exists.
+    expect(InstanceService::getUnlistedDomains())->not->toContain('unlisted.example');
+
+    $instance = new Instance;
+    $instance->domain = 'unlisted.example';
+    $instance->unlisted = true;
+    $instance->save();
+
+    expect(InstanceService::getUnlistedDomains())->toContain('unlisted.example');
+
+    $res = $this->actingAs($user)
+        ->getJson('/api/pixelfed/v1/timelines/network?limit=30')
+        ->assertOk()
+        ->json();
+
+    expect(collect($res)->pluck('id')->map(fn ($id) => (int) $id)->all())->not->toContain((int) $status->id);
 });
 
 it('warms synchronously on cold start and serves the first page', function () {

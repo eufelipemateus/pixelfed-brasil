@@ -105,6 +105,13 @@ class InstanceService
         });
     }
 
+    public static function forgetModeratedDomains(): void
+    {
+        Cache::forget(self::CACHE_KEY_BANNED_DOMAINS);
+        Cache::forget(self::CACHE_KEY_UNLISTED_DOMAINS);
+        Cache::forget(self::CACHE_KEY_NSFW_DOMAINS);
+    }
+
     public static function refresh()
     {
         Cache::forget(self::CACHE_KEY_BANNED_DOMAINS);

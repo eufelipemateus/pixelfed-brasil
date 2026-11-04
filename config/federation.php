@@ -93,6 +93,8 @@ return [
 
     'migration' => env('PF_ACCT_MIGRATION_ENABLED', true),
 
+    'new_instances_unlisted' => env('PF_NEW_INSTANCES_UNLISTED', true),
+
     'purge_inactive_after_years' => env('PURGE_INACTIVE_INSTANCES_AFTER_YEARS', 2),
     'purge_inactive_grace_days' => env('PURGE_INACTIVE_INSTANCES_GRACE_DAYS', 30),
     'purge_inactive_profiles_per_run' => env('PURGE_INACTIVE_INSTANCES_PROFILES_PER_RUN', 100),
@@ -126,11 +128,20 @@ return [
          * the network.
          *
          * Hosts that positively resolve into non-global address space are
-         * rejected regardless of this setting, and ip literals, single label
+         * rejected regardless of this setting (unless the address is in
+         * allowed_private_addresses below), and ip literals, single label
          * hosts and the loopback names are refused before resolution is ever
          * attempted.
          */
         'allow_unresolved' => env('AP_ALLOW_UNRESOLVED_HOSTS', true),
+
+        /*
+         * Non-global address ranges that federation is allowed to reach.
+         * Comma separated ips or CIDR ranges, ipv4 and ipv6:
+         *
+         *   AP_ALLOWED_PRIVATE_ADDRESSES="192.168.1.0/24,10.8.0.5,fd00:1234::/48"
+         */
+        'allowed_private_addresses' => env('AP_ALLOWED_PRIVATE_ADDRESSES', ''),
 
     ],
 ];

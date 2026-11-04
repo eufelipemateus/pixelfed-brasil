@@ -635,6 +635,31 @@ class PurgeInactiveInstancesTest extends TestCase
         ]);
     }
 
+    public function test_new_instances_are_unlisted_by_default_when_enabled(): void
+    {
+        config(['federation.new_instances_unlisted' => true]);
+
+        $instance = Instance::create(['domain' => 'fresh.example']);
+
+        $this->assertTrue((bool) $instance->refresh()->unlisted);
+        $this->assertContains('fresh.example', InstanceService::getUnlistedDomains());
+    }
+
+    public function test_persisted_rule_overrides_new_instance_unlisted_default(): void
+    {
+        config(['federation.new_instances_unlisted' => true]);
+
+        InstanceModerationRule::create([
+            'domain' => 'ruled.example',
+            'auto_cw' => true,
+        ]);
+
+        $instance = Instance::create(['domain' => 'ruled.example']);
+
+        $this->assertFalse((bool) $instance->refresh()->unlisted);
+        $this->assertTrue((bool) $instance->auto_cw);
+    }
+
     public function test_moderation_backup_includes_rules_without_instance_rows(): void
     {
         InstanceModerationRule::create([

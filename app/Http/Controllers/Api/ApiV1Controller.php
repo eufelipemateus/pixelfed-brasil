@@ -3243,6 +3243,9 @@ class ApiV1Controller extends Controller
         $filtered = $user ? UserFilterService::filters($user->profile_id) : [];
         AccountService::setLastActive($user->id);
         $domainBlocks = UserFilterService::domainBlocks($user->profile_id);
+        $moderatedDomains = $remote
+            ? array_merge(InstanceService::getBannedDomains(), InstanceService::getUnlistedDomains())
+            : [];
         $hideNsfw = config('instance.hide_nsfw_on_public_feeds');
         $amin = SnowflakeService::byDate(now()->subDays(config('federation.network_timeline_days_falloff')));
         $asf = AdminShadowFilterService::getHideFromPublicFeedsList();
@@ -3377,6 +3380,13 @@ class ApiV1Controller extends Controller
                 $domain = strtolower(parse_url($s['url'], PHP_URL_HOST));
 
                 return ! in_array($domain, $domainBlocks);
+            })
+            ->filter(function ($s) use ($moderatedDomains) {
+                if (! $moderatedDomains || ! isset($s['url'])) {
+                    return true;
+                }
+
+                return ! in_array(strtolower((string) parse_url($s['url'], PHP_URL_HOST)), $moderatedDomains);
             })
             ->filter(function ($s) use ($asf, $user) {
                 if (! $asf || count($asf) === 0) {
@@ -4128,6 +4138,10 @@ class ApiV1Controller extends Controller
         }
 
         $profile = $user->profile;
+        if (! $in_reply_to_id) {
+            abort_if(! AccountService::canPost($user), 400, 'limit_daily_posts');
+        }
+
         $limitKey = 'compose:rate-limit:store:'.$user->id;
         $limitTtl = now()->addMinutes(15);
         $limitReached = Cache::remember($limitKey, $limitTtl, function () use ($user) {

@@ -249,7 +249,7 @@ return [
 
     'max_collection_length' => (int) env('PF_MAX_COLLECTION_LENGTH', 100),
 
-    'media_types' => env('MEDIA_TYPES', 'image/jpeg,image/jpg,image/png,image/gif'),
+    'media_types' => env('MEDIA_TYPES', 'image/jpeg,image/jpg,image/png,image/gif,image/webp'),
 
     'enforce_account_limit' => env('LIMIT_ACCOUNT_SIZE', true),
 
