@@ -4138,6 +4138,10 @@ class ApiV1Controller extends Controller
         }
 
         $profile = $user->profile;
+        if (! $in_reply_to_id) {
+            abort_if(! AccountService::canPost($user), 400, 'limit_daily_posts');
+        }
+
         $limitKey = 'compose:rate-limit:store:'.$user->id;
         $limitTtl = now()->addMinutes(15);
         $limitReached = Cache::remember($limitKey, $limitTtl, function () use ($user) {
