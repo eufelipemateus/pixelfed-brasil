@@ -30,6 +30,7 @@ use App\Services\FractalService;
 use App\Services\NotificationService;
 use App\Services\QuoteService;
 use App\Services\Status\ReplyCleanupService;
+use App\Services\Status\StatusAudienceService;
 use App\Services\StatusService;
 use App\Transformer\ActivityPub\Verb\DeleteNote;
 use Illuminate\Bus\Queueable;
@@ -129,7 +130,7 @@ class StatusDelete implements ShouldQueue
         try {
             $status->setRelation('profile', $profile);
 
-            $inboxes = array_values($profile->getAudienceInbox());
+            $inboxes = StatusAudienceService::inboxes($status, $profile);
 
             if ($inboxes === []) {
                 return null;

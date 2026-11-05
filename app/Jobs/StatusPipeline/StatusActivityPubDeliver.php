@@ -2,11 +2,11 @@
 
 namespace App\Jobs\StatusPipeline;
 
-use App\Models\Profile;
 use App\Models\Status;
 use App\Services\ActivityPubFanoutService;
 use App\Services\FractalService;
 use App\Services\InstanceService;
+use App\Services\Status\StatusAudienceService;
 use App\Transformer\ActivityPub\Verb\CreateNote;
 use App\Transformer\ActivityPub\Verb\CreateQuestion;
 use Illuminate\Bus\Queueable;
@@ -75,7 +75,6 @@ class StatusActivityPubDeliver implements ShouldQueue
 
         if (! in_array($status->scope, ['public', 'unlisted', 'private'], true)) {
             return;
-        }
 
         $audience = $profile->getAudienceInbox($status->scope);
 
@@ -110,9 +109,8 @@ class StatusActivityPubDeliver implements ShouldQueue
             $audience,
             fn ($inbox) => is_string($inbox) && trim($inbox) !== ''
         )));
-
+        $audience = StatusAudienceService::inboxes($status, $profile);
         if ($audience === []) {
-            return;
         }
 
         switch ($status->type) {
