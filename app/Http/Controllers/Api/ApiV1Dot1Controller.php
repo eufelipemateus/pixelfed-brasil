@@ -29,6 +29,7 @@ use App\Models\Story;
 use App\Models\User;
 use App\Models\UserSetting;
 use App\Rules\ExpoPushTokenRule;
+use App\Rules\NotRegistrationBlocked;
 use App\Rules\ValidUsername;
 use App\Services\AccountService;
 use App\Services\BouncerService;
@@ -680,6 +681,7 @@ class ApiV1Dot1Controller extends Controller
                         return $fail('Email is invalid.');
                     }
                 },
+                new NotRegistrationBlocked('email'),
             ],
             'username' => [
                 'required',
@@ -687,6 +689,7 @@ class ApiV1Dot1Controller extends Controller
                 'max:30',
                 'unique:users',
                 new ValidUsername,
+                new NotRegistrationBlocked('username'),
             ],
             'password' => 'required|string|min:8',
         ]);

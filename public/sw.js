@@ -34,7 +34,6 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
-<<<<<<< HEAD
 	event.waitUntil(
 		(async () => {
 			if ("navigationPreload" in self.registration) {
@@ -77,46 +76,4 @@ self.addEventListener("fetch", (event) => {
 			}
 		})()
 	);
-=======
-    event.waitUntil(
-        (async () => {
-            if ("navigationPreload" in self.registration) {
-                await self.registration.navigationPreload.disable();
-            }
-            const keys = await caches.keys();
-            await Promise.all(
-                keys
-                    .filter((key) => key !== CACHE_NAME)
-                    .map((key) => caches.delete(key)),
-            );
-            await self.clients.claim();
-        })(),
-    );
-});
-
-self.addEventListener("fetch", (event) => {
-    const request = event.request;
-
-    if (request.mode !== "navigate" || request.method !== "GET") {
-        return;
-    }
-
-    const url = new URL(request.url);
-
-    if (url.origin !== self.location.origin || shouldBypass(url)) {
-        return;
-    }
-
-    event.respondWith(
-        (async () => {
-            try {
-                return await fetch(request);
-            } catch (error) {
-                const cache = await caches.open(CACHE_NAME);
-                const cachedResponse = await cache.match(OFFLINE_URL);
-                return cachedResponse || Response.error();
-            }
-        })(),
-    );
->>>>>>> dev-contrib-origin
 });
