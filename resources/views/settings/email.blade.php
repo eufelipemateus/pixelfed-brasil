@@ -73,6 +73,20 @@
         </div>
 
         <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_on_comment" id="send_email_on_comment" {{$settings['send_email_on_comment'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_on_comment">
+                {{__('settings.email.send_email_on_comment')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
+            <input class="form-check-input" type="checkbox" name="send_email_on_dm" id="send_email_on_dm" {{$settings['send_email_on_dm'] ? 'checked=""':''}}>
+            <label class="form-check-label font-weight-bold" for="send_email_on_dm">
+                {{__('settings.email.send_email_on_dm')}}
+            </label>
+        </div>
+
+        <div class="form-check pb-3">
             <input class="form-check-input" type="checkbox" name="send_weekly_email" id="send_weekly_email" {{$settings['send_weekly_email'] ? 'checked=""':''}}>
             <label class="form-check-label font-weight-bold" for="send_weekly_email">
                 {{__('settings.email.send_weekly_email')}}

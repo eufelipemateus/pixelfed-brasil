@@ -192,6 +192,8 @@ trait HomeSettings
                 'send_email_on_share' => (bool) ($settings['send_email_on_share'] ?? false),
                 'send_email_on_like' => (bool) ($settings['send_email_on_like'] ?? false),
                 'send_email_on_mention' => (bool) ($settings['send_email_on_mention'] ?? false),
+                'send_email_on_comment' => (bool) ($settings['send_email_on_comment'] ?? false),
+                'send_email_on_dm' => (bool) ($settings['send_email_on_dm'] ?? false),
                 'send_weekly_email' => (bool) ($settings['send_weekly_email'] ?? false),
                 'felipemateus_wants_updates' => (bool) ($settings['felipemateus_wants_updates'] ?? false),
             ],
@@ -270,6 +272,8 @@ trait HomeSettings
             'send_email_on_share',
             'send_email_on_like',
             'send_email_on_mention',
+            'send_email_on_comment',
+            'send_email_on_dm',
             'send_weekly_email',
             'felipemateus_wants_updates',
         ];

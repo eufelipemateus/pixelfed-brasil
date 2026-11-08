@@ -74,6 +74,8 @@ return [
     'email.send_email_on_share' => 'Enviar email quando alguém compartilhar sua postagem',
     'email.send_email_on_like' => 'Enviar email quando alguém curtir sua postagem',
     'email.send_email_on_mention' => 'Enviar email quando alguém mencionar você',
+    'email.send_email_on_comment' => 'Enviar email quando alguém comentar sua postagem',
+    'email.send_email_on_dm' => 'Enviar email quando receber uma mensagem direta',
     'email.send_weekly_email' => 'Receber email semanal com posts populares.',
 
     // Media

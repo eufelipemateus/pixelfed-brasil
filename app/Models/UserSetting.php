@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property int $send_email_on_share
  * @property int $send_email_on_like
  * @property int $send_email_on_mention
+ * @property int $send_email_on_comment
+ * @property int $send_email_on_dm
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property int $show_profile_followers

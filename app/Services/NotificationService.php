@@ -707,6 +707,7 @@ class NotificationService
 
         self::setNotification($notification);
         self::set($notification->profile_id, $notification->id);
+        EmailNotificationService::send($notification);
 
         return $notification;
     }
@@ -746,6 +747,7 @@ class NotificationService
         if ($notification->wasRecentlyCreated) {
             self::setNotification($notification);
             self::set($notification->profile_id, $notification->id);
+            EmailNotificationService::send($notification);
         }
 
         return $notification;
