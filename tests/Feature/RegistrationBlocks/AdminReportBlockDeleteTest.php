@@ -1,7 +1,7 @@
 <?php
 
-use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Enums\StatusEnums;
+use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Models\AccountInterstitial;
 use App\Models\Profile;
 use App\Models\RegistrationBlock;
