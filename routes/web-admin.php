@@ -66,6 +66,7 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->middleware(['
     Route::post('users/modlogs/{id}/delete', [AdminController::class, 'userModLogDelete']);
     Route::get('users/delete/{id}', [AdminController::class, 'userDelete']);
     Route::post('users/delete/{id}', [AdminController::class, 'userDeleteProcess']);
+    Route::post('users/block-delete/{id}', [AdminController::class, 'userBlockDeleteProcess'])->whereNumber('id');
     Route::post('users/moderation/update', [AdminController::class, 'userModerate']);
     Route::get('users/invites', [AdminUserInviteController::class, 'index'])->name('admin.users.invites.index');
     Route::get('users/invites/create', [AdminUserInviteController::class, 'create'])->name('admin.users.invites.create');
@@ -191,8 +192,12 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->middleware(['
         Route::get('reports/all', [AdminController::class, 'reportsApiAll']);
         Route::get('reports/remote', [AdminController::class, 'reportsApiRemote']);
         Route::post('reports/remote/handle', [AdminController::class, 'reportsApiRemoteHandle']);
+        Route::post('reports/remote/delete-account', [AdminController::class, 'reportsApiRemoteDeleteAccount']);
         Route::get('reports/get/{id}', [AdminController::class, 'reportsApiGet']);
         Route::post('reports/handle', [AdminController::class, 'reportsApiHandle']);
+        Route::post('reports/close-by-reporter', [AdminController::class, 'reportsApiCloseByReporter']);
+        Route::get('reports/cleanup', [AdminController::class, 'reportsApiCleanupPreview']);
+        Route::post('reports/cleanup', [AdminController::class, 'reportsApiCleanup']);
         Route::get('reports/spam/all', [AdminController::class, 'reportsApiSpamAll']);
         Route::get('reports/spam/get/{id}', [AdminController::class, 'reportsApiSpamGet']);
         Route::post('reports/spam/handle', [AdminController::class, 'reportsApiSpamHandle']);

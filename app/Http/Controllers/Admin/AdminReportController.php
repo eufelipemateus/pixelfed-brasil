@@ -13,6 +13,7 @@ use App\Jobs\StatusPipeline\RemoteStatusDelete;
 use App\Jobs\StatusPipeline\StatusDelete;
 use App\Jobs\StoryPipeline\StoryDelete;
 use App\Models\AccountInterstitial;
+use App\Models\DmMessage;
 use App\Models\ModeratedProfile;
 use App\Models\Notification;
 use App\Models\Profile;
@@ -29,6 +30,7 @@ use App\Services\PublicTimelineService;
 use App\Services\RegistrationBlockService;
 use App\Services\StatusService;
 use App\Util\ActivityPub\Helpers;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -790,6 +792,116 @@ trait AdminReportController
             ])
             ->accessLevel('admin')
             ->save();
+    }
+
+    public function reportsApiCloseByReporter(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'id' => 'required|integer|min:1',
+        ]);
+
+        $report = Report::findOrFail($request->input('id'));
+
+        $closed = Report::where('profile_id', $report->profile_id)
+            ->whereNull('admin_seen')
+            ->update(['admin_seen' => now()]);
+
+        if ($closed && $report->user_id) {
+            ModLogService::boot()
+                ->objectUid($report->user_id)
+                ->objectId($report->user_id)
+                ->objectType('App\Models\User::class')
+                ->user($request->user())
+                ->action('admin.report.close_by_reporter')
+                ->metadata(['closed' => $closed])
+                ->accessLevel('admin')
+                ->save();
+        }
+
+        $reporter = AccountService::get($report->profile_id, true);
+
+        return response()->json([
+            'closed' => $closed,
+            'reporter' => $reporter['acct'] ?? null,
+        ]);
+    }
+
+    public function reportsApiCleanupPreview(Request $request): JsonResponse
+    {
+        return response()->json([
+            'count' => $this->reportsInvalidQuery()->count(),
+        ]);
+    }
+
+    public function reportsApiCleanup(Request $request): JsonResponse
+    {
+        $closed = $this->reportsInvalidQuery()->update(['admin_seen' => now()]);
+
+        return response()->json([
+            'closed' => $closed,
+        ]);
+    }
+
+    protected function reportsInvalidQuery(): Builder
+    {
+        $accountGone = function (string $column) {
+            return function ($q) use ($column) {
+                $q->whereNotExists(function ($p) use ($column) {
+                    $p->selectRaw('1')
+                        ->from('profiles')
+                        ->whereColumn('profiles.id', $column)
+                        ->whereNull('profiles.deleted_at')
+                        ->where(function ($s) {
+                            $s->whereNull('profiles.status')
+                                ->orWhereNotIn('profiles.status', ['delete', 'deleted', 'suspended']);
+                        });
+                })
+                    ->orWhereExists(function ($m) use ($column) {
+                        $m->selectRaw('1')
+                            ->from('moderated_profiles')
+                            ->whereColumn('moderated_profiles.profile_id', $column)
+                            ->where('moderated_profiles.is_banned', true);
+                    })
+                    ->orWhereExists(function ($i) use ($column) {
+                        $i->selectRaw('1')
+                            ->from('profiles')
+                            ->join('instances', 'instances.domain', '=', 'profiles.domain')
+                            ->whereColumn('profiles.id', $column)
+                            ->where('instances.banned', true);
+                    });
+            };
+        };
+
+        $objectGone = function (string $table, bool $softDeletes) {
+            return function ($q) use ($table, $softDeletes) {
+                $q->whereNotExists(function ($o) use ($table, $softDeletes) {
+                    $o->selectRaw('1')
+                        ->from($table)
+                        ->whereColumn("{$table}.id", 'reports.object_id')
+                        ->when($softDeletes, fn ($w) => $w->whereNull("{$table}.deleted_at"));
+                });
+            };
+        };
+
+        return Report::query()
+            ->whereNull('admin_seen')
+            ->where(function ($q) use ($accountGone, $objectGone) {
+                $q->where(function ($w) use ($accountGone) {
+                    $w->whereNotNull('reported_profile_id')->where($accountGone('reports.reported_profile_id'));
+                })
+                    ->orWhere(function ($w) use ($accountGone) {
+                        $w->whereIn('object_type', [Profile::class, 'App\Profile'])->where($accountGone('reports.object_id'));
+                    })
+                    ->orWhere(function ($w) use ($objectGone) {
+                        $w->whereIn('object_type', [Status::class, 'App\Status'])->where($objectGone('statuses', true));
+                    })
+                    ->orWhere(function ($w) use ($objectGone) {
+                        $w->whereIn('object_type', [Story::class, 'App\Story'])->where($objectGone('stories', false));
+                    })
+                    ->orWhere(function ($w) use ($objectGone) {
+                        $w->where('object_type', DmMessage::class)->where($objectGone('dm_messages', false));
+                    });
+            });
     }
 
     protected function reportsHandleStoryAction($report, $action)
@@ -1671,6 +1783,124 @@ trait AdminReportController
         }
 
         return [200];
+    }
+
+    public function reportsApiRemoteDeleteAccount(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'id' => 'required|integer|exists:remote_reports,id',
+            'ban' => 'sometimes|boolean',
+        ]);
+
+        $ban = $request->boolean('ban');
+        $action = $ban ? 'block-username-ip-delete' : 'delete-account';
+        $report = RemoteReport::findOrFail($request->input('id'));
+        $profile = $report->account_id ? Profile::find($report->account_id) : null;
+        $user = $profile && $profile->user_id && $profile->domain === null ? $profile->user : null;
+
+        if (! $user) {
+            return response()->json(['error' => 'The reported account is not a local account.'], 422);
+        }
+
+        if ($user->is_admin) {
+            return response()->json(['error' => 'You cannot delete admin accounts.'], 422);
+        }
+
+        if (in_array($user->status, ['delete', 'deleted'], true) || in_array($profile->status, ['delete', 'deleted'], true)) {
+            return response()->json(['error' => 'This account is already being deleted.'], 422);
+        }
+
+        if ($ban) {
+            if (! config('pixelfed.account_deletion')) {
+                return response()->json(['error' => 'Account deletion is disabled on this server.'], 422);
+            }
+
+            if ($error = $this->blockAndDeleteError($user, $profile)) {
+                return response()->json(['error' => $error], 422);
+            }
+        }
+
+        $closedRemote = RemoteReport::whereNull('action_taken_at')
+            ->where('account_id', $profile->id)
+            ->update([
+                'action_taken_at' => now(),
+                'action_taken_by_account_id' => $request->user()->profile_id,
+                'action_taken_meta' => json_encode(['action' => $action]),
+            ]);
+
+        $closedLocal = Report::whereNull('admin_seen')
+            ->where(function ($q) use ($profile) {
+                $q->where('reported_profile_id', $profile->id)
+                    ->orWhere(function ($w) use ($profile) {
+                        $w->whereIn('object_type', [Profile::class, 'App\Profile'])
+                            ->where('object_id', $profile->id);
+                    });
+            })
+            ->update(['admin_seen' => now()]);
+
+        $username = $user->username;
+        $blocked = null;
+
+        if ($ban) {
+            $blocked = RegistrationBlockService::blockAccount($user, true, $request->user()->id);
+            $this->logBlockAndDelete($request->user(), $user, $blocked, true);
+        }
+
+        $this->reportsDeleteLocalAccount($request->user(), $user, $profile);
+
+        ModLogService::boot()
+            ->user($request->user())
+            ->objectUid($user->id)
+            ->objectId($report->id)
+            ->objectType('App\Models\RemoteReport::class')
+            ->action('admin.report.moderate')
+            ->metadata([
+                'action' => $action,
+                'closed_remote' => $closedRemote,
+                'closed_local' => $closedLocal,
+                'duration_active' => now()->parse($report->created_at)->diffForHumans(),
+            ])
+            ->accessLevel('admin')
+            ->save();
+
+        return response()->json([
+            'username' => $username,
+            'closed_remote' => $closedRemote,
+            'closed_local' => $closedLocal,
+            'ip' => $blocked['ip'] ?? null,
+            'blocked' => $blocked['blocked'] ?? [],
+        ]);
+    }
+
+    protected function reportsDeleteLocalAccount(User $admin, User $user, Profile $profile): void
+    {
+        $ts = now()->addMonth();
+
+        DB::table('oauth_access_tokens')->whereUserId($user->id)->delete();
+        DB::table('oauth_auth_codes')->whereUserId($user->id)->delete();
+
+        $user->email = $user->id;
+        $user->password = '';
+        $user->status = 'delete';
+        $user->delete_after = $ts;
+        $user->save();
+
+        $profile->status = 'delete';
+        $profile->delete_after = $ts;
+        $profile->save();
+
+        ModLogService::boot()
+            ->objectUid($user->id)
+            ->objectId($user->id)
+            ->objectType('App\Models\User::class')
+            ->user($admin)
+            ->action('admin.user.delete')
+            ->accessLevel('admin')
+            ->save();
+
+        AccountService::del($profile->id);
+        Cache::forget('profiles:private');
+        DeleteAccountPipeline::dispatch($user)->onQueue('high');
     }
 
     public function getModeratedProfiles(Request $request)

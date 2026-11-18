@@ -9,6 +9,7 @@ use App\Models\AccountInterstitial;
 use App\Models\AccountLog;
 use App\Models\Bookmark;
 use App\Models\Collection;
+use App\Models\CollectionItemRemoval;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\CustomFilter;
@@ -49,6 +50,7 @@ use App\Models\UserPronoun;
 use App\Models\UserSetting;
 use App\Services\AccountRevocationService;
 use App\Services\AccountService;
+use App\Services\CollectionService;
 use App\Services\DirectMessageService;
 use App\Services\FollowerService;
 use App\Services\PublicTimelineService;
@@ -216,8 +218,12 @@ class DeleteAccountPipeline implements ShouldQueue
 
         Collection::whereProfileId($id)->cursor()->each(function ($collection) {
             $collection->items()->delete();
+            $collection->removals()->delete();
             $collection->delete();
+            CollectionService::deleteCollection($collection->id);
         });
+        CollectionItemRemoval::whereProfileId($id)->delete();
+        CollectionService::forgetCollectPolicy((int) $id);
         Contact::whereUserId($user->id)->delete();
         HashtagFollow::whereUserId($user->id)->delete();
         OauthClient::whereUserId($user->id)->delete();

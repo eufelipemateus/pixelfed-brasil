@@ -10,12 +10,14 @@ use App\Services\EmailService;
 use App\Services\EmailVerificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Sleep;
 use Purify;
 
 class AdminInviteController extends Controller
@@ -37,10 +39,10 @@ class AdminInviteController extends Controller
     public function apiVerifyCheck(Request $request): JsonResponse
     {
         $this->validate($request, [
-            'token' => 'required',
+            'token' => 'required|string|max:255',
         ]);
 
-        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        $invite = $this->findInvite($request);
         abort_if(! $invite, 404);
         abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
         abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
@@ -56,11 +58,11 @@ class AdminInviteController extends Controller
     public function apiUsernameCheck(Request $request): JsonResponse
     {
         $this->validate($request, [
-            'token' => 'required',
+            'token' => 'required|string|max:255',
             'username' => 'required',
         ]);
 
-        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        $invite = $this->findInvite($request);
         abort_if(! $invite, 404);
         abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
         abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
@@ -87,11 +89,11 @@ class AdminInviteController extends Controller
     public function apiEmailCheck(Request $request): JsonResponse
     {
         $this->validate($request, [
-            'token' => 'required',
+            'token' => 'required|string|max:255',
             'email' => 'required',
         ]);
 
-        $invite = AdminInvite::whereInviteCode($request->input('token'))->first();
+        $invite = $this->findInvite($request);
         abort_if(! $invite, 404);
         abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite has expired.');
         abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
@@ -124,7 +126,7 @@ class AdminInviteController extends Controller
     public function apiRegister(Request $request): JsonResponse|RedirectResponse
     {
         $this->validate($request, [
-            'token' => 'required',
+            'token' => 'required|string|max:255',
             'username' => [
                 'required',
                 'min:2',
@@ -152,7 +154,7 @@ class AdminInviteController extends Controller
             'password_confirm' => 'required',
         ]);
 
-        $invite = AdminInvite::whereInviteCode($request->input('token'))->firstOrFail();
+        $invite = $this->findInvite($request) ?? throw (new ModelNotFoundException)->setModel(AdminInvite::class);
         abort_if($invite->expires_at && $invite->expires_at->lt(now()), 400, 'Invite expired');
         abort_if($invite->max_uses && $invite->uses >= $invite->max_uses, 400, 'Maximum invites reached.');
 
@@ -166,7 +168,7 @@ class AdminInviteController extends Controller
             'app_register_ip' => $request->ip(),
         ])));
 
-        sleep(5);
+        Sleep::sleep(5);
 
         $invite->used_by = array_merge($invite->used_by ?? [], [[
             'user_id' => $user->id,
@@ -191,5 +193,22 @@ class AdminInviteController extends Controller
         }
 
         return response()->json([], 400);
+    }
+
+    protected function findInvite(Request $request): ?AdminInvite
+    {
+        $token = $request->input('token');
+
+        if (! is_string($token) || $token === '') {
+            return null;
+        }
+
+        $invite = AdminInvite::whereInviteCode($token)->first();
+
+        if (! $invite || ! hash_equals((string) $invite->invite_code, $token)) {
+            return null;
+        }
+
+        return $invite;
     }
 }
