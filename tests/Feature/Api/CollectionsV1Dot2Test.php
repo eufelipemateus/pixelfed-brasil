@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StatusEnums;
 use App\Models\Collection;
 use App\Models\CollectionItem;
 use App\Models\CollectionItemRemoval;
@@ -317,6 +318,19 @@ describe('other people\'s posts', function () {
         $this->getJson("/api/v1.2/collections/{$collection->id}/items")
             ->assertOk()
             ->assertJsonPath('data.0.status.id', (string) $post->id);
+    });
+
+    it('rejects a public post from a suspended account', function () {
+        $user = v12User();
+        $author = v12User();
+        $collection = v12Collection($user);
+        $post = v12Post($author->profile_id);
+        $author->profile->update(['status' => StatusEnums::SUSPENDED]);
+        Passport::actingAs($user, ['read', 'write']);
+
+        $this->postJson("/api/v1.2/collections/{$collection->id}/items", ['status_ids' => [$post->id]])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'This post is not available.');
     });
 
     it('adds a public post from a remote account', function () {
