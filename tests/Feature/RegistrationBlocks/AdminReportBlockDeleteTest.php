@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
+use App\Enums\StatusEnums;
 use App\Models\AccountInterstitial;
 use App\Models\Profile;
 use App\Models\RegistrationBlock;
@@ -104,7 +105,7 @@ it('blocks the signup ip and deletes the account from a report', function () {
 
     expect(RegistrationBlockService::ipBlocked('203.0.113.77', false))->toBeTrue();
     expect(RegistrationBlockService::usernameBlocked('casinodeals', false))->toBeFalse();
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETED);
     expect($report->fresh()->admin_seen)->not->toBeNull();
     Queue::assertPushed(DeleteAccountPipeline::class);
 });
@@ -120,7 +121,7 @@ it('blocks the username and signup ip and deletes the account from a report', fu
     expect(RegistrationBlockService::ipBlocked('203.0.113.77', false))->toBeTrue();
     expect(RegistrationBlockService::usernameBlocked('casinodeals', false))->toBeTrue();
     expect(RegistrationBlock::where('type', 'ip')->value('note'))->toContain('@casinodeals');
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETED);
 });
 
 it('still deletes when the reported post is already gone', function () {
@@ -130,7 +131,7 @@ it('still deletes when the reported post is already gone', function () {
 
     rbdHandle($this, rbdAdmin(), $report, 'block-ip-delete')->assertOk();
 
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETED);
 });
 
 it('does not duplicate rules that already cover the account', function () {
@@ -142,7 +143,7 @@ it('does not duplicate rules that already cover the account', function () {
         ->assertJson(['blocked' => []]);
 
     expect(RegistrationBlock::count())->toBe(1);
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETED);
 });
 
 it('refuses and changes nothing when no signup ip was recorded', function () {
@@ -153,7 +154,7 @@ it('refuses and changes nothing when no signup ip was recorded', function () {
         ->assertJsonPath('error', fn ($e) => str_contains($e, 'No signup IP'));
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
     Queue::assertNotPushed(DeleteAccountPipeline::class);
 });
 
@@ -164,7 +165,7 @@ it('refuses when account deletion is disabled', function () {
     rbdHandle($this, rbdAdmin(), rbdStatusReport($spammer), 'block-ip-delete')->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
 
 it('refuses admin accounts', function () {
@@ -173,7 +174,7 @@ it('refuses admin accounts', function () {
     rbdHandle($this, rbdAdmin(), rbdStatusReport($other), 'block-ip-delete')->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($other->fresh()->status)->toBeNull();
+    expect($other->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
 
 it('refuses remote accounts', function () {
@@ -205,7 +206,7 @@ it('blocks and deletes from the autospam modal', function () {
 
     expect(RegistrationBlockService::ipBlocked('203.0.113.77', false))->toBeTrue();
     expect(RegistrationBlockService::usernameBlocked('casinodeals', false))->toBeTrue();
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETE_QUEUE);
     expect($report->fresh()->appeal_handled_at)->not->toBeNull();
     Queue::assertPushed(DeleteAccountPipeline::class);
 });
@@ -217,7 +218,7 @@ it('refuses from the autospam modal when no signup ip was recorded', function ()
     rbdSpamHandle($this, rbdAdmin(), $report, 'block-ip-delete-profile')->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
     expect($report->fresh()->appeal_handled_at)->toBeNull();
 });
 
@@ -229,5 +230,5 @@ it('does not let non admins use the new actions', function () {
     rbdHandle($this, $user, rbdStatusReport($spammer), 'block-ip-delete');
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
