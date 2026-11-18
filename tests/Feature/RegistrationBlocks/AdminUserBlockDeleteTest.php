@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StatusEnums;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Models\RegistrationBlock;
 use App\Models\User;
@@ -50,8 +51,8 @@ it('blocks the signup ip and username and deletes the account', function () {
 
     expect(RegistrationBlockService::ipBlocked('203.0.113.77', false))->toBeTrue();
     expect(RegistrationBlockService::usernameBlocked('casinodeals', false))->toBeTrue();
-    expect($spammer->fresh()->status)->toBe('delete');
-    expect($spammer->profile->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETE_QUEUE);
+    expect($spammer->profile->fresh()->status)->toBe(StatusEnums::DELETE_QUEUE);
     Queue::assertPushed(DeleteAccountPipeline::class);
 });
 
@@ -64,7 +65,7 @@ it('does not duplicate rules that already cover the account', function () {
         ->assertJson(['blocked' => ['username']]);
 
     expect(RegistrationBlock::where('type', 'ip')->count())->toBe(1);
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETE_QUEUE);
 });
 
 it('refuses and changes nothing when no signup ip was recorded', function () {
@@ -75,7 +76,7 @@ it('refuses and changes nothing when no signup ip was recorded', function () {
         ->assertJsonPath('error', fn ($e) => str_contains($e, 'No signup IP'));
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
     Queue::assertNotPushed(DeleteAccountPipeline::class);
 });
 
@@ -86,7 +87,7 @@ it('refuses when account deletion is disabled', function () {
     ubdBlockDelete($this, ubdAdmin(), $spammer)->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
 
 it('refuses admin accounts', function () {
@@ -95,7 +96,7 @@ it('refuses admin accounts', function () {
     ubdBlockDelete($this, ubdAdmin(), $other)->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($other->fresh()->status)->toBeNull();
+    expect($other->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
 
 it('refuses accounts already being deleted', function () {
@@ -114,5 +115,5 @@ it('does not let non admins use it', function () {
     ubdBlockDelete($this, $user, $spammer);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });

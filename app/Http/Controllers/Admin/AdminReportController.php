@@ -1806,7 +1806,8 @@ trait AdminReportController
             return response()->json(['error' => 'You cannot delete admin accounts.'], 422);
         }
 
-        if (in_array($user->status, ['delete', 'deleted'], true) || in_array($profile->status, ['delete', 'deleted'], true)) {
+        if (in_array($user->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED], true)
+            || in_array($profile->status, [StatusEnums::DELETE_QUEUE, StatusEnums::DELETED], true)) {
             return response()->json(['error' => 'This account is already being deleted.'], 422);
         }
 
@@ -1881,11 +1882,11 @@ trait AdminReportController
 
         $user->email = $user->id;
         $user->password = '';
-        $user->status = 'delete';
+        $user->status = StatusEnums::DELETE_QUEUE;
         $user->delete_after = $ts;
         $user->save();
 
-        $profile->status = 'delete';
+        $profile->status = StatusEnums::DELETE_QUEUE;
         $profile->delete_after = $ts;
         $profile->save();
 

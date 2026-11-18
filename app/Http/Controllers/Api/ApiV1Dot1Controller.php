@@ -799,7 +799,7 @@ class ApiV1Dot1Controller extends Controller
 
         if (
             ! $user
-            || $user->status !== null
+            || ! StatusEnums::isActive($user->status)
             || $user->email_verified_at !== null
             || $user->register_source !== 'app'
             || ! $user->app_register_token

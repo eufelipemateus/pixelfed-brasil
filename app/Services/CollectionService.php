@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StatusEnums;
 use App\Exceptions\CollectionException;
 use App\Models\Collection;
 use App\Models\CollectionItem;
@@ -260,7 +261,7 @@ class CollectionService
 
         $author = $status->profile;
 
-        if (! $author || $author->status !== null) {
+        if (! $author || ! StatusEnums::isActive($author->status)) {
             return 'This post is not available.';
         }
 

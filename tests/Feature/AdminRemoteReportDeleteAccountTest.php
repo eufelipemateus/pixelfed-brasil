@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\StatusEnums;
 use App\Jobs\DeletePipeline\DeleteAccountPipeline;
 use App\Models\Profile;
 use App\Models\RegistrationBlock;
@@ -85,9 +86,9 @@ it('deletes the reported local account and closes every report against it', func
     expect($bystanderLocal->fresh()->admin_seen)->toBeNull();
 
     $spammer->refresh();
-    expect($spammer->status)->toBe('delete');
+    expect($spammer->status)->toBe(StatusEnums::DELETE_QUEUE);
     expect($spammer->email)->toEqual((string) $spammer->id);
-    expect(Profile::find($spammer->profile_id)->status)->toBe('delete');
+    expect(Profile::find($spammer->profile_id)->status)->toBe(StatusEnums::DELETE_QUEUE);
 
     Queue::assertPushed(DeleteAccountPipeline::class);
 });
@@ -98,7 +99,7 @@ it('refuses admin accounts', function () {
 
     rdaDelete($this, rdaUser(['is_admin' => true]), $report)->assertStatus(422);
 
-    expect($admin->fresh()->status)->toBeNull();
+    expect($admin->fresh()->status)->toBe(StatusEnums::ACTIVE);
     expect($report->fresh()->action_taken_at)->toBeNull();
     Queue::assertNotPushed(DeleteAccountPipeline::class);
 });
@@ -112,7 +113,7 @@ it('refuses remote or missing reported accounts', function () {
     rdaDelete($this, $admin, $remoteReport)->assertStatus(422);
     rdaDelete($this, $admin, $missingReport)->assertStatus(422);
 
-    expect($remote->fresh()->status)->toBeNull();
+    expect($remote->fresh()->status)->toBe(StatusEnums::ACTIVE);
     expect($remoteReport->fresh()->action_taken_at)->toBeNull();
     Queue::assertNotPushed(DeleteAccountPipeline::class);
 });
@@ -133,7 +134,7 @@ it('does not let non admins delete accounts', function () {
 
     rdaDelete($this, rdaUser(), $report);
 
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
     expect($report->fresh()->action_taken_at)->toBeNull();
 });
 
@@ -155,7 +156,7 @@ it('bans the signup ip and username, deletes the account and closes its reports'
 
     expect(RegistrationBlockService::ipBlocked('203.0.113.77', false))->toBeTrue();
     expect(RegistrationBlockService::usernameBlocked('casinodeals', false))->toBeTrue();
-    expect($spammer->fresh()->status)->toBe('delete');
+    expect($spammer->fresh()->status)->toBe(StatusEnums::DELETE_QUEUE);
     expect($report->fresh()->action_taken_at)->not->toBeNull();
     expect($localReport->fresh()->admin_seen)->not->toBeNull();
     Queue::assertPushed(DeleteAccountPipeline::class);
@@ -170,7 +171,7 @@ it('refuses to ban and changes nothing when no signup ip was recorded', function
         ->assertJsonPath('error', fn ($e) => str_contains($e, 'No signup IP'));
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
     expect($report->fresh()->action_taken_at)->toBeNull();
     Queue::assertNotPushed(DeleteAccountPipeline::class);
 });
@@ -183,5 +184,5 @@ it('refuses to ban when account deletion is disabled', function () {
     rdaDelete($this, rdaUser(['is_admin' => true]), $report, true)->assertStatus(422);
 
     expect(RegistrationBlock::count())->toBe(0);
-    expect($spammer->fresh()->status)->toBeNull();
+    expect($spammer->fresh()->status)->toBe(StatusEnums::ACTIVE);
 });
