@@ -16,15 +16,9 @@
     "/js/profile-directory.js": "/js/profile-directory.js?id=316f0746cc50f5e5bbb790f11494c6ec",
     "/js/story-compose.js": "/js/story-compose.js?id=231edd3397719eb2ef7e7715ffc03c6e",
     "/js/direct.js": "/js/direct.js?id=1defec5a0ef3ec01010785ee2c03161d",
-<<<<<<< HEAD
-    "/js/admin.js": "/js/admin.js?id=6ac02a60a79f2e19f212c6854fd15aec",
+    "/js/admin.js": "/js/admin.js?id=b91b515142ef518914ca0a1deef962dd",
     "/js/spa.js": "/js/spa.js?id=04065948e2d4f717b2cdaef142a23e7d",
     "/js/stories.js": "/js/stories.js?id=b25e203152277d6e79025a15e390ffb8",
-=======
-    "/js/admin.js": "/js/admin.js?id=dff650977e85dddebfd93cba3b2ad9b1",
-    "/js/spa.js": "/js/spa.js?id=a3172c490000e57dc6b264b2d2d28cf3",
-    "/js/stories.js": "/js/stories.js?id=8565c19bc915466ed5dd98076cfa3f04",
->>>>>>> dev-contrib-origin
     "/js/portfolio.js": "/js/portfolio.js?id=2dfd35982335ad4eca174b70bc0e9bb4",
     "/js/account-import.js": "/js/account-import.js?id=8de8a2cbf311781ff0a324bf54ac1902",
     "/js/admin_invite.js": "/js/admin_invite.js?id=78bf4aa6afdfb2a85f24330df664930b",
