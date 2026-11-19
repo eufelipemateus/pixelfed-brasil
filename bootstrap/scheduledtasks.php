@@ -23,6 +23,7 @@ $schedule->command('gc:passwordreset')->dailyAt('09:41')->onOneServer();
 $schedule->command('gc:sessions')->twiceDaily(13, 23)->onOneServer();
 $schedule->command('storage:maintenance')->dailyAt('04:15')->onOneServer();
 $schedule->command('app:weekly-instance-scan')->weeklyOn(2, '4:20')->onOneServer();
+$schedule->command('app:define-popular-users')->monthlyOn(1, '08:00')->onOneServer();
 $schedule->command('app:cleanup-expired-app-registrations')->dailyAt(1)->onOneServer();
 $schedule->command('passport:purge')->everyFourHours(20)->onOneServer();
 $schedule->command('notifications:prune-old')->everySixHours(33)->onOneServer()->withoutOverlapping(360);

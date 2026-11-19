@@ -157,6 +157,19 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('app-registration-confirm', function (Request $request) {
+            $email = $request->input('email');
+
+            $emailKey = is_string($email) && trim($email) !== ''
+                ? hash('sha256', strtolower(trim($email)))
+                : 'missing';
+
+            return [
+                Limit::perHour(20)->by('app-registration-confirm:ip:'.$request->ip()),
+                Limit::perHour(10)->by('app-registration-confirm:email:'.$emailKey),
+            ];
+        });
+
         RateLimiter::for('app-code-resend', function (Request $request) {
             return Limit::perHour(10)->by($request->ip());
         });
@@ -205,8 +218,10 @@ class AppServiceProvider extends ServiceProvider
             'follow' => 'Ability to follow other profiles',
             'admin:read' => 'Read all data on the server',
             'admin:read:domain_blocks' => 'Read sensitive information of all domain blocks',
+            'admin:read:registration_blocks' => 'Read registration blocks',
             'admin:write' => 'Modify all data on the server',
             'admin:write:domain_blocks' => 'Perform moderation actions on domain blocks',
+            'admin:write:registration_blocks' => 'Create, change and remove registration blocks',
             'push' => 'Receive your push notifications',
             'security:read' => 'See which apps and devices have access to your account',
             'security:write' => 'Change your password and revoke access for other apps and devices',

@@ -1,127 +1,126 @@
 <template>
-    <div class="landing-index-component custom-modern-theme">
-        <section class="page-wrapper py-5">
-            <div class="sr-only">
-                <h1>Pixelfed Brasil - {{ config.domain }}</h1>
-                <p>Instância brasileira do Pixelfed dedicada à fotografia ética e federada no Brasil.</p>
-            </div>
+    <div class="landing-index-component">
+        <section class="landing-hero">
+            <img :src="config.about.banner_image" class="landing-hero-image" alt=""
+                onerror="this.src='/storage/headers/default.jpg';this.onerror=null;">
 
-            <div class="container container-compact">
-                <div class="main-glass-card shadow-lg">
+            <div class="container landing-container landing-hero-inner">
+                <div class="landing-hero-card">
+                    <p class="landing-hero-domain">{{ $t('landing.brazilian_instance') }} · {{ config.domain }}</p>
+                    <h1 class="landing-hero-title">{{ config.name }}</h1>
+                    <p v-if="config.about.short_description" class="landing-hero-lede">{{ config.about.short_description
+                        }}</p>
+                    <p v-else class="landing-hero-lede" v-html="$t('landing.decentralized_by_pixelfed')"></p>
 
-                    <div class="nav-menu-modern p-3">
-                        <ul class="nav justify-content-center">
-                            <li class="nav-item">
-                                <router-link to="/" class="nav-link text-white active-link">{{ $t('site.about') }}</router-link>
-                            </li>
-                            <li v-if="config.show_explore_feed" class="nav-item">
-                                <router-link to="/web/explore" class="nav-link text-white">{{ $t('site.explore')
-                                    }}</router-link>
-                            </li>
-                            <li v-if="config.show_directory" class="nav-item">
-                                <router-link to="/web/directory" class="nav-link text-white">{{ $t('site.directory')
-                                    }}</router-link>
-                            </li>
-
-                        </ul>
+                    <div v-if="canRegister" class="landing-hero-ctas d-none d-md-flex">
+                        <a :href="regLink" class="btn btn-primary btn-primary-alt rounded-pill font-weight-bold px-4">{{
+                            $t('landing.create_account') }}</a>
+                        <a href="/login" class="btn btn-outline-light rounded-pill font-weight-bold px-4">{{
+                            $t('landing.login') }}</a>
                     </div>
 
-                    <div class="position-relative overflow-hidden">
-                        <div class="banner-overlay"></div>
-                        <img :src="config.about.banner_image" class="server-banner" alt="Pixelfed Brasil Banner"
-                            onerror="this.src='/storage/headers/default.jpg';this.onerror=null;">
-
-                        <div class="floating-badge">
-                            <span class="pulse-icon"></span>
-                            Instância Brasileira
-                        </div>
-                    </div>
-
-                    <div class="card-body p-4 p-md-5">
-                        <div class="text-center mb-5">
-                            <h2 class="display-5 font-weight-bold text-white mb-1">Pixelfed Brasil</h2>
-                            <p class="domain-gradient font-weight-bold mb-3">{{ config.domain }}</p>
-                            <div class="mx-auto separator-glow"></div>
-                            <p class="server-header-attribution mt-4 text-muted">
-                                <span v-html="$t('site.softwareDescription')"></span>
-                            </p>
-                        </div>
-
-                        <div class="stats-modern-grid mb-5">
-                            <div class="stat-box">
-                                <span class="stat-num text-white">{{ formatCount(config.stats.posts_count) }}</span>
-                                <span class="stat-desc">{{ $t('site.posts') }}</span>
-                            </div>
-                            <div class="stat-box highlighted">
-                                <span class="stat-num text-white">{{ formatCount(config.stats.active_users) }}</span>
-                                <span class="stat-desc">{{ $t('site.activeUsers') }}</span>
-                            </div>
-                            <div class="stat-box">
-                                <span class="stat-num text-white">{{ formatCount(config.stats.total_users) }}</span>
-                                <span class="stat-desc">{{ $t('site.totalUsers') }}</span>
-                            </div>
-                        </div>
-
-                        <div class="admin-grid-modern p-4 rounded-lg mb-5 border border-dark">
-                            <div class="admin-contact-flex">
-                                <div v-if="config.contact.account" class="admin-info">
-                                    <span class="label-small text-uppercase text-muted" style="font-size: 0.7rem;">{{ $t('site.managedBy') }}</span>
-                                    <a :href="config.contact.account.url" class="d-flex align-items-center mt-2 text-decoration-none" target="_blank">
-                                        <img :src="config.contact.account.avatar" class="avatar-modern" alt="Admin Avatar" onerror="this.src='/storage/avatars/default.jpg';this.onerror=null;">
-                                        <div class="ml-3">
-                                            <p class="mb-0 text-white font-weight-bold">{{ config.contact.account.display_name }}</p>
-                                            <p class="mb-0 text-primary small">&commat;{{ config.contact.account.username }}</p>
-                                        </div>
-                                    </a>
-                                </div>
-                                <div v-if="config.contact.email" class="contact-info ml-4">
-                                    <span class="label-small text-uppercase text-muted d-block" style="font-size: 0.7rem;">{{ $t('site.contact') }}</span>
-                                    <a :href="`mailto:${config.contact.email}`" class="text-white-50 small">{{ config.contact.email }}</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="custom-accordion">
-                            <div class="accordion-item mb-3">
-                                <button class="accordion-trigger" @click="toggleAccordion(0)"
-                                    :class="{ active: accordionTab === 0 }">
-                                    <span><i class="far fa-info-circle mr-2 text-primary"></i> Sobre o Pixelfed
-                                        Brasil</span>
-                                    <i class="far"
-                                        :class="[accordionTab === 0 ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-                                </button>
-                                <div class="accordion-content p-4" v-show="accordionTab === 0">
-                                    <p class="text-white-50">Comunidade voltada para usuários brasileiros que buscam
-                                        privacidade e federação.</p>
-                                    <hr class="border-secondary my-3">
-                                    <div class="text-white-50" v-html="config.about.description"></div>
-                                </div>
-                            </div>
-
-                            <div class="accordion-item">
-                                <button class="accordion-trigger" @click="toggleAccordion(1)"
-                                    :class="{ active: accordionTab === 1 }">
-                                    <span><i class="far fa-list mr-2 text-primary"></i> {{ $t('site.serverRules')
-                                        }}</span>
-                                    <i class="far"
-                                        :class="[accordionTab === 1 ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-                                </button>
-                                <div class="accordion-content p-4" v-show="accordionTab === 1">
-                                    <div class="list-group list-group-flush bg-transparent">
-                                        <div v-for="rule in config.rules" :key="rule.id"
-                                            class="list-group-item bg-transparent border-secondary px-0">
-                                            <span class="badge badge-primary mr-2">{{ rule.id }}</span>
-                                            <span class="text-white-50">{{ rule.text }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="landing-hero-meta">
+                        <span><b>{{ formatCount(config.stats.posts_count) }}</b> {{ $t('landing.posts').toLowerCase()
+                            }}</span>
+                        <span><b>{{ formatCount(config.stats.active_users) }}</b> {{ $t('landing.active_this_month')
+                            }}</span>
+                        <span><b>{{ formatCount(config.stats.total_users) }}</b> {{ $t('landing.total_users').toLowerCase()
+                            }}</span>
+                        <a v-if="config.contact.account" :href="config.contact.account.url" class="landing-hero-admin"
+                            target="_blank">
+                            <img :src="config.contact.account.avatar" width="22" height="22"
+                                :alt="`${config.contact.account.username}'s avatar`"
+                                onerror="this.src='/storage/avatars/default.jpg';this.onerror=null;">
+                            <span>{{ $t('landing.run_by') }} <b>&commat;{{ config.contact.account.username }}</b></span>
+                        </a>
                     </div>
                 </div>
             </div>
-            <footer-component />
         </section>
+
+        <div class="container landing-container landing-body">
+            <section v-if="config.show_explore_feed && (loadingFeed || feed.length)" class="landing-section">
+                <div class="landing-section-head">
+                    <h2>{{ $t('landing.recently_on', { name: config.name }) }}</h2>
+                    <router-link to="/web/explore">{{ $t('landing.explore_all') }}</router-link>
+                </div>
+
+                <div class="row no-gutters landing-feed">
+                    <template v-if="loadingFeed">
+                        <div v-for="n in 8" :key="`ph-${n}`" class="col-4 col-md-3">
+                            <div class="landing-tile landing-tile-placeholder"></div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div v-for="post in feed" :key="post.id" class="col-4 col-md-3">
+                            <a :href="post.url" class="landing-tile" target="_blank">
+                                <img :src="thumbnail(post)" :alt="altText(post)" loading="lazy"
+                                    onerror="this.src='/storage/no-preview.png';this.onerror=null;">
+                                <span class="landing-tile-by d-none d-md-inline-block">&commat;{{ post.account.username
+                                    }}</span>
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </section>
+
+            <div class="row landing-info">
+                <div class="col-12 col-md-6 mb-3">
+                    <div class="landing-card h-100">
+                        <h3>{{ $t('landing.server_rules') }}</h3>
+                        <ol v-if="config.rules && config.rules.length" class="landing-rules">
+                            <li v-for="rule in config.rules" :key="rule.id">{{ rule.text }}</li>
+                        </ol>
+                        <p v-else class="landing-muted mb-0">{{ $t('landing.no_rules') }}</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 mb-3">
+                    <div class="landing-card h-100">
+                        <h3>{{ $t('landing.about') }}</h3>
+                        <p class="landing-about">{{ $t('landing.brazilian_community') }}</p>
+                        <div v-if="config.about.description" class="landing-about" v-html="config.about.description">
+                        </div>
+
+                        <div class="landing-chips">
+                            <span>{{ $t('landing.up_to_n_photos', { num: config.uploader.album_limit }) }}</span>
+                            <span>{{ $t('landing.max_file_size', { size: formatBytes(config.uploader.max_photo_size) })
+                                }}</span>
+                            <span v-if="config.features.video">{{ $t('landing.features.videos') }}</span>
+                            <span v-if="config.features.stories">{{ $t('landing.features.stories') }}</span>
+                            <span v-if="config.features.mobile_apis">{{ $t('landing.features.mobile_app') }}</span>
+                            <span v-if="config.features.federation">{{ $t('landing.features.federation') }}</span>
+                        </div>
+
+                        <p v-if="config.contact.email" class="landing-contact mb-0">
+                            <span class="landing-muted">{{ $t('landing.contact') }}</span>
+                            <a :href="`mailto:${config.contact.email}?subject=Regarding ${config.domain}`">{{
+                                config.contact.email
+                                }}</a>
+                        </p>
+
+                        <router-link v-if="config.show_explore_feed" to="/web/explore"
+                            class="landing-directory-link mr-3">
+                            {{ $t('landing.explore') }}
+                        </router-link>
+                        <router-link v-if="config.show_directory" to="/web/directory" class="landing-directory-link">
+                            {{ $t('landing.discover_accounts') }}
+                        </router-link>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer-component />
+
+        <div class="landing-sticky-cta d-md-none">
+            <a href="/login" class="btn btn-outline-light rounded-pill font-weight-bold flex-fill">{{
+                $t('landing.login') }}</a>
+            <a v-if="canRegister" :href="regLink"
+                class="btn btn-primary btn-primary-alt rounded-pill font-weight-bold flex-fill">{{
+                    $t('landing.create_account')
+                }}</a>
+        </div>
     </div>
 </template>
 
@@ -130,200 +129,121 @@ export default {
     data() {
         return {
             config: window.pfl,
-            accordionTab: 0, // Inicia aberto no 'Sobre'
+            feed: [],
+            loadingFeed: true,
+            ranges: ['daily', 'monthly', 'yearly']
         }
     },
-    methods: {
-        toggleAccordion(idx) {
-            this.accordionTab = (this.accordionTab === idx) ? undefined : idx;
+
+    computed: {
+        canRegister() {
+            return this.config.open_registration || this.config.curated_onboarding;
         },
+
+        regLink() {
+            if (this.config.open_registration) {
+                return '/register';
+            }
+
+            return '/auth/sign_up';
+        }
+    },
+
+    mounted() {
+        if (this.config.show_explore_feed) {
+            this.fetchFeed(0);
+        } else {
+            this.loadingFeed = false;
+        }
+    },
+
+    methods: {
+        fetchFeed(rangeIndex) {
+            if (rangeIndex >= this.ranges.length) {
+                this.loadingFeed = false;
+                return;
+            }
+
+            axios.get('/api/pixelfed/v2/discover/posts/trending', {
+                params: {
+                    range: this.ranges[rangeIndex]
+                }
+            })
+                .then(res => {
+                    const posts = Array.isArray(res.data) ? res.data.filter(this.isDisplayable) : [];
+
+                    if (posts.length >= 4) {
+                        this.feed = posts.slice(0, posts.length >= 8 ? 8 : 4);
+                        this.loadingFeed = false;
+                        return;
+                    }
+
+                    this.fetchFeed(rangeIndex + 1);
+                })
+                .catch(() => {
+                    this.loadingFeed = false;
+                });
+        },
+
+        isDisplayable(post) {
+            if (!post || post.sensitive || !post.account) {
+                return false;
+            }
+
+            if (!post.media_attachments || !post.media_attachments.length) {
+                return false;
+            }
+
+            return !!this.thumbnail(post);
+        },
+
+        thumbnail(post) {
+            const media = post.media_attachments[0];
+            if (!media) {
+                return null;
+            }
+
+            const preview = media.preview_url;
+            if (preview && (preview.endsWith('no-preview.png') || preview.endsWith('no-preview.jpg'))) {
+                return null;
+            }
+
+            if (media.type === 'image') {
+                return preview || media.url;
+            }
+
+            return preview && preview !== media.url ? preview : null;
+        },
+
+        altText(post) {
+            const media = post.media_attachments[0];
+            if (media && media.description) {
+                return media.description;
+            }
+
+            return `Post by @${post.account.username}`;
+        },
+
         formatCount(val) {
-            if (!val) return 0;
+            if (!val) {
+                return 0;
+            }
+
             return val.toLocaleString(navigator.language || 'pt-BR', { compactDisplay: "short", notation: "compact" });
+        },
+
+        formatBytes(bytes) {
+            const units = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte'];
+            const navigatorLocal = navigator.languages && navigator.languages.length >= 0 ? navigator.languages[0] : 'en-US';
+            const unitIndex = Math.max(0, Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1));
+            return Intl.NumberFormat(navigatorLocal, {
+                style: 'unit',
+                unit: units[unitIndex],
+                useGrouping: false,
+                maximumFractionDigits: 0,
+                roundingMode: 'ceil'
+            }).format(bytes / (1024 ** unitIndex))
         }
     }
 }
 </script>
-
-<style scoped>
-/* Flexbox para admin-info e contact-info lado a lado */
-.admin-contact-flex {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-.admin-contact-flex .admin-info {
-    min-width: 220px;
-}
-.admin-contact-flex .contact-info {
-    min-width: 180px;
-}
-@media (max-width: 768px) {
-    .admin-contact-flex {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .admin-contact-flex .contact-info {
-        margin-left: 0 !important;
-    }
-}
-/* Aqui você mantém os estilos que já possui no seu <style scoped> anterior */
-.custom-modern-theme {
-    background: radial-gradient(circle at top right, #1a202c, #0d1117);
-    min-height: 100vh;
-    color: #e2e8f0;
-}
-
-.main-glass-card {
-    background: rgba(23, 27, 34, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 24px;
-    overflow: hidden;
-}
-
-.nav-menu-modern {
-    background: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-/* Ajuste da Nav Link ativa */
-.active-link {
-    color: #10c5f8 !important;
-    border-bottom: 2px solid #10c5f8;
-    text-shadow: 0 0 10px rgba(16, 197, 248, 0.5);
-}
-.server-banner {
-    width: 100%;
-    height: 240px;
-    object-fit: cover;
-}
-
-.banner-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, transparent, rgba(13, 17, 23, 0.9));
-    z-index: 1;
-}
-
-.floating-badge {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 2;
-    background: rgba(16, 197, 248, 0.15);
-    border: 1px solid rgba(16, 197, 248, 0.5);
-    backdrop-filter: blur(4px);
-    padding: 6px 16px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #fff;
-    display: flex;
-    align-items: center;
-}
-
-.pulse-icon {
-    width: 8px;
-    height: 8px;
-    background: #10c5f8;
-    border-radius: 50%;
-    margin-right: 8px;
-    box-shadow: 0 0 10px #10c5f8;
-    animation: pulse 2s infinite;
-}
-
-.domain-gradient {
-    font-size: 1.4rem;
-    background: linear-gradient(90deg, #10c5f8, #6366f1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.separator-glow {
-    width: 50px;
-    height: 3px;
-    background: #10c5f8;
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(16, 197, 248, 0.5);
-}
-
-.stats-modern-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.stat-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 15px;
-}
-
-.stat-num {
-    font-size: 1.5rem;
-    font-weight: 800;
-}
-
-.stat-desc {
-    font-size: 0.7rem;
-    color: #718096;
-    text-transform: uppercase;
-}
-
-.stat-box.highlighted {
-    border: 1px solid rgba(16, 197, 248, 0.3);
-    background: rgba(16, 197, 248, 0.05);
-}
-
-.accordion-trigger {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 15px 20px;
-    border-radius: 12px;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: 0.3s;
-}
-
-.accordion-trigger.active {
-    background: rgba(16, 197, 248, 0.1);
-    border-color: rgba(16, 197, 248, 0.4);
-}
-
-.avatar-modern {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-
-    50% {
-        transform: scale(1.4);
-        opacity: 0.5;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@media (max-width: 576px) {
-    .stats-modern-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>

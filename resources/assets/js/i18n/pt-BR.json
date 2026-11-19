@@ -392,6 +392,8 @@
         "about": "Sobre",
         "directory": "Diret\u00f3rio",
         "explore": "Explorar",
+        "brazilian_instance": "Inst\u00e2ncia brasileira",
+        "brazilian_community": "Comunidade voltada para pessoas no Brasil que buscam privacidade e federa\u00e7\u00e3o.",
         "decentralized_by_pixelfed": "Rede social descentralizada de compartilhamento de fotos desenvolvida com <a href=\"https://pixelfed.org\" target=\"_blank\">Pixelfed</a>",
         "posts": "Publica\u00e7\u00f5es",
         "active_users": "Usu\u00e1rios ativos",
@@ -419,6 +421,15 @@
         },
         "discover_accounts": "Descubra contas e pessoas",
         "nothing_to_show": "Nada para mostrar ainda! Volte mais tarde.",
-        "explore_trending": "Explore publica\u00e7\u00f5es em alta"
+        "explore_trending": "Explore publica\u00e7\u00f5es em alta",
+        "create_account": "Criar conta",
+        "active_this_month": "ativos neste m\u00eas",
+        "run_by": "Mantido por",
+        "recently_on": "Publica\u00e7\u00f5es recentes em {name}",
+        "explore_all": "Explorar todas",
+        "no_rules": "Este servidor ainda n\u00e3o publicou regras.",
+        "up_to_n_photos": "At\u00e9 {num} fotos por publica\u00e7\u00e3o",
+        "max_file_size": "Tamanho m\u00e1ximo: {size}",
+        "contact": "Contato"
     }
 }

@@ -59,7 +59,7 @@
         <div v-else class="m-n2 m-lg-4">
             <div class="container-fluid mt-4">
                 <div class="row mb-3 justify-content-between">
-                    <div class="col-12">
+                    <div class="col-12 d-flex flex-wrap justify-content-between align-items-center" style="gap:0.5rem;">
                         <ul class="nav nav-pills">
                             <li class="nav-item">
                                 <a :class="['nav-link d-flex align-items-center', { active: tabIndex == 0 }]" href="#"
@@ -126,6 +126,14 @@
                                 </a>
                             </li>
                         </ul>
+
+                        <button v-if="tabIndex === 0 && stats.open" type="button"
+                            class="btn btn-outline-primary btn-sm rounded-pill font-weight-bold"
+                            :disabled="cleaningUp" @click="cleanupReports($event)">
+                            <b-spinner v-if="cleaningUp" small class="mr-1" />
+                            <i v-else class="fas fa-broom mr-1"></i>
+                            Clean up invalid reports
+                        </button>
                     </div>
                 </div>
 
@@ -641,6 +649,13 @@
                             @click="handleAction('profile', 'delete')">
                             Delete Profile
                         </button>
+                        <div v-if="viewingReport.reported && viewingReport.reported.id && !viewingReport.reported.is_admin && viewingReport.reported.local"
+                            class="d-flex flex-row mt-2" style="gap:0.3rem;">
+                            <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                @click="handleAction('profile', 'block-ip-delete')">Block IP + Delete</button>
+                            <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                @click="handleAction('profile', 'block-username-ip-delete')">Block Username + IP + Delete</button>
+                        </div>
                     </div>
 
                     <div
@@ -677,6 +692,12 @@
                                 <button class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
                                     @click="handleAction('profile', 'delete')">Delete Account</button>
                             </div>
+                            <div v-if="viewingReport.reported.local" class="d-flex flex-row mt-2" style="gap:0.3rem;">
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleAction('profile', 'block-ip-delete')">Block IP + Delete</button>
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleAction('profile', 'block-username-ip-delete')">Block Username + IP + Delete</button>
+                            </div>
                         </div>
                     </div>
 
@@ -700,8 +721,20 @@
                                 <button class="btn btn-outline-danger btn-sm btn-block rounded-pill mt-0"
                                     @click="handleAction('profile', 'delete')">Delete Account</button>
                             </div>
+                            <div v-if="viewingReport.reported.local" class="d-flex flex-row mt-2" style="gap:0.3rem;">
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleAction('profile', 'block-ip-delete')">Block IP + Delete</button>
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleAction('profile', 'block-username-ip-delete')">Block Username + IP + Delete</button>
+                            </div>
                         </div>
                     </div>
+
+                    <hr class="mt-3 mb-2">
+                    <button type="button" class="btn btn-outline-secondary btn-block btn-sm rounded-pill"
+                        @click="closeReporterReports($event)">
+                        Close all reports by {{ reporterLabel(viewingReport) }}
+                    </button>
                 </div>
             </template>
         </b-modal>
@@ -807,6 +840,13 @@
                                     @click="handleSpamAction('delete-profile')">
                                     Delete Account
                                 </button>
+                            </div>
+                            <div v-if="viewingSpamReport && viewingSpamReport.status && viewingSpamReport.status.account && viewingSpamReport.status.account.local && !viewingSpamReport.status.account.is_admin"
+                                class="d-flex flex-row mt-2" style="gap:0.3rem;">
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleSpamAction('block-ip-delete-profile')">Block IP + Delete</button>
+                                <button type="button" class="btn btn-outline-danger btn-block btn-sm rounded-pill mt-0"
+                                    @click="handleSpamAction('block-username-ip-delete-profile')">Block Username + IP + Delete</button>
                             </div>
                         </div>
                     </div>
@@ -1026,6 +1066,7 @@ export default {
             moderatedProfilesSearchInput: undefined,
             modModalData: undefined,
             modModalModel: {},
+            cleaningUp: false,
         }
     },
 
@@ -1258,6 +1299,9 @@ export default {
                 action: action,
                 action_type: type
             })
+                .then(res => {
+                    this.blockDeleteSuccess(res);
+                })
                 .catch(err => {
                     swal('Error', err.response.data.error, 'error');
                 })
@@ -1269,6 +1313,91 @@ export default {
                         this.fetchStats();
                     }, 1000);
                 })
+        },
+
+        reporterLabel(report) {
+            return report && report.reporter && report.reporter.acct ? '@' + report.reporter.acct : 'this reporter';
+        },
+
+        requestError(err) {
+            const data = err && err.response && err.response.data;
+            return (data && (data.error || data.message)) || 'Something went wrong, please try again.';
+        },
+
+        closeReporterReports(e) {
+            e.currentTarget.blur();
+
+            const label = this.reporterLabel(this.viewingReport);
+
+            if (!window.confirm(`Close all open reports made by ${label}? They will move to Closed Reports.`)) {
+                return;
+            }
+
+            this.viewingReportLoading = true;
+
+            axios.post('/i/admin/api/reports/close-by-reporter', {
+                id: this.viewingReport.id
+            })
+                .then(res => {
+                    const closed = res.data.closed;
+                    swal('Reports closed', `Closed ${closed} report${closed === 1 ? '' : 's'} by ${label}.`, 'success');
+                })
+                .catch(err => {
+                    swal('Error', this.requestError(err), 'error');
+                })
+                .finally(() => {
+                    this.viewingReportLoading = false;
+                    this.viewingReport = false;
+                    this.showReportModal = false;
+                    this.fetchStats();
+                });
+        },
+
+        async cleanupReports(e) {
+            e.currentTarget.blur();
+
+            if (this.cleaningUp) {
+                return;
+            }
+
+            this.cleaningUp = true;
+
+            try {
+                const preview = await axios.get('/i/admin/api/reports/cleanup');
+                const count = preview.data.count;
+
+                if (!count) {
+                    swal('Nothing to clean up', 'Every open report points to an active account and content that still exists.', 'success');
+                    return;
+                }
+
+                const confirmed = await swal({
+                    title: 'Clean up reports',
+                    text: `Close ${count} open report${count === 1 ? '' : 's'} where the reported account was deleted or suspended, or the reported content was deleted?\n\nThey will move to Closed Reports.`,
+                    icon: 'warning',
+                    buttons: {
+                        cancel: 'Cancel',
+                        confirm: {
+                            text: `Close ${count} report${count === 1 ? '' : 's'}`,
+                            value: true
+                        }
+                    }
+                });
+
+                if (!confirmed) {
+                    return;
+                }
+
+                const res = await axios.post('/i/admin/api/reports/cleanup');
+                const closed = res.data.closed;
+
+                swal('Cleaned up', `Closed ${closed} invalid report${closed === 1 ? '' : 's'}.`, 'success');
+                this.fetchStats();
+            } catch (err) {
+                swal('Error', this.requestError(err), 'error');
+            } finally {
+                this.cleaningUp = false;
+            }
         },
 
         getActionLabel(type, action) {
@@ -1292,6 +1421,14 @@ export default {
 
                     case 'delete':
                         return 'Are you sure you want to delete this profile?';
+                        break;
+
+                    case 'block-ip-delete':
+                        return this.blockDeleteLabel(false, this.viewingReport && this.viewingReport.reported);
+                        break;
+
+                    case 'block-username-ip-delete':
+                        return this.blockDeleteLabel(true, this.viewingReport && this.viewingReport.reported);
                         break;
                 }
             } else if (type === 'post') {
@@ -1377,7 +1514,34 @@ export default {
                 case 'delete-profile':
                     return 'Are you sure you want to delete this profile?';
                     break;
+
+                case 'block-ip-delete-profile':
+                    return this.blockDeleteLabel(false, this.viewingSpamReport && this.viewingSpamReport.status && this.viewingSpamReport.status.account);
+                    break;
+
+                case 'block-username-ip-delete-profile':
+                    return this.blockDeleteLabel(true, this.viewingSpamReport && this.viewingSpamReport.status && this.viewingSpamReport.status.account);
+                    break;
             }
+        },
+
+        blockDeleteLabel(blockUsername, account) {
+            const name = account && account.username ? '@' + account.username : 'this account';
+            const blocks = blockUsername ? `the username ${name} and their signup IP` : `${name}'s signup IP`;
+
+            return `This blocks ${blocks} from registering again, then permanently deletes ${name} and all of their posts.\n\nThis cannot be undone. Continue?`;
+        },
+
+        blockDeleteSuccess(res) {
+            if (!res || !res.data || !res.data.ip) {
+                return;
+            }
+
+            const added = res.data.blocked && res.data.blocked.length
+                ? 'Added blocks: ' + res.data.blocked.join(', ') + '.'
+                : 'Existing blocks already covered this account.';
+
+            swal('Blocked and deleted', `@${res.data.username} was deleted and signups from ${res.data.ip} are blocked. ${added}`, 'success');
         },
 
         handleSpamAction(action) {
@@ -1395,6 +1559,9 @@ export default {
                 id: this.viewingSpamReport.id,
                 action: action,
             })
+                .then(res => {
+                    this.blockDeleteSuccess(res);
+                })
                 .catch(err => {
                     swal('Error', err.response.data.error, 'error');
                 })

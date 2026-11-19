@@ -1,6 +1,6 @@
 <template>
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <div class="container" style="max-width: 600px;">
+        <div class="container" :class="{ 'landing-container': isIndex }" :style="isIndex ? {} : { maxWidth: '600px' }">
             <router-link to="/" class="navbar-brand">
                 <img :src="config.logo" width="40" height="40" alt="Logo">
                 <span class="mr-3">{{ name }}</span>
@@ -17,30 +17,34 @@
 </template>
 
 <script type="text/javascript">
-    export default {
-        data() {
-            return {
-                config: window.pfl,
-                name: window.pfl.name,
-            }
+export default {
+    data() {
+        return {
+            config: window.pfl,
+            name: window.pfl.name,
+        }
+    },
+    computed: {
+        isIndex() {
+            return this.$route.path === '/';
         },
-        computed: {
-            regLink: {
-                get() {
-                    if(this.config.open_registration) {
-                        return '/register';
-                    }
 
-                    if(this.config.curated_onboarding) {
-                        return '/auth/sign_up';
-                    }
+        regLink: {
+            get() {
+                if (this.config.open_registration) {
+                    return '/register';
+                }
+
+                if (this.config.curated_onboarding) {
+                    return '/auth/sign_up';
                 }
             }
-        },
-        mounted() {
-            $(window).scroll(function(){
-                $('nav').toggleClass('bg-black', $(this).scrollTop() > 20);
-            });
         }
+    },
+    mounted() {
+        $(window).scroll(function () {
+            $('nav').toggleClass('bg-black', $(this).scrollTop() > 20);
+        });
     }
+}
 </script>

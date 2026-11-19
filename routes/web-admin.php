@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminRegistrationBlockController;
 use App\Http\Controllers\Admin\AdminUserInviteController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminCuratedRegisterController;
@@ -65,6 +66,7 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->middleware(['
     Route::post('users/modlogs/{id}/delete', [AdminController::class, 'userModLogDelete']);
     Route::get('users/delete/{id}', [AdminController::class, 'userDelete']);
     Route::post('users/delete/{id}', [AdminController::class, 'userDeleteProcess']);
+    Route::post('users/block-delete/{id}', [AdminController::class, 'userBlockDeleteProcess'])->whereNumber('id');
     Route::post('users/moderation/update', [AdminController::class, 'userModerate']);
     Route::get('users/invites', [AdminUserInviteController::class, 'index'])->name('admin.users.invites.index');
     Route::get('users/invites/create', [AdminUserInviteController::class, 'create'])->name('admin.users.invites.create');
@@ -132,6 +134,14 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->middleware(['
     Route::post('asf/edit/{id}', [AdminShadowFilterController::class, 'storeEdit']);
     Route::post('asf/create', [AdminShadowFilterController::class, 'store']);
 
+    Route::get('registration-blocks', [AdminRegistrationBlockController::class, 'index'])->name('admin.registration-blocks');
+    Route::post('registration-blocks', [AdminRegistrationBlockController::class, 'store']);
+    Route::post('registration-blocks/test', [AdminRegistrationBlockController::class, 'test']);
+    Route::get('registration-blocks/export', [AdminRegistrationBlockController::class, 'export'])->name('admin.registration-blocks.export');
+    Route::post('registration-blocks/import', [AdminRegistrationBlockController::class, 'import'])->name('admin.registration-blocks.import');
+    Route::post('registration-blocks/{id}/toggle', [AdminRegistrationBlockController::class, 'toggle'])->whereNumber('id');
+    Route::delete('registration-blocks/{id}', [AdminRegistrationBlockController::class, 'destroy'])->whereNumber('id');
+
     Route::redirect('curated-onboarding/', 'curated-onboarding/home');
     Route::get('curated-onboarding/home', [AdminCuratedRegisterController::class, 'index'])->name('admin.curated-onboarding');
     Route::get('curated-onboarding/templates', [AdminCuratedRegisterController::class, 'templates'])->name('admin.curated-onboarding.templates');
@@ -182,8 +192,12 @@ Route::domain(config('pixelfed.domain.admin'))->prefix('i/admin')->middleware(['
         Route::get('reports/all', [AdminController::class, 'reportsApiAll']);
         Route::get('reports/remote', [AdminController::class, 'reportsApiRemote']);
         Route::post('reports/remote/handle', [AdminController::class, 'reportsApiRemoteHandle']);
+        Route::post('reports/remote/delete-account', [AdminController::class, 'reportsApiRemoteDeleteAccount']);
         Route::get('reports/get/{id}', [AdminController::class, 'reportsApiGet']);
         Route::post('reports/handle', [AdminController::class, 'reportsApiHandle']);
+        Route::post('reports/close-by-reporter', [AdminController::class, 'reportsApiCloseByReporter']);
+        Route::get('reports/cleanup', [AdminController::class, 'reportsApiCleanupPreview']);
+        Route::post('reports/cleanup', [AdminController::class, 'reportsApiCleanup']);
         Route::get('reports/spam/all', [AdminController::class, 'reportsApiSpamAll']);
         Route::get('reports/spam/get/{id}', [AdminController::class, 'reportsApiSpamGet']);
         Route::post('reports/spam/handle', [AdminController::class, 'reportsApiSpamHandle']);

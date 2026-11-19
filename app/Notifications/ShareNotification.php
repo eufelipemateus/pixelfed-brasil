@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\Profile;
 use App\Models\Status;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ShareNotification extends Notification
+class ShareNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -24,6 +25,12 @@ class ShareNotification extends Notification
         //
         $this->actor = Profile::find($target_id);
         $this->status = Status::find($status_id);
+        $this->afterCommit();
+    }
+
+    public function viaQueues(): array
+    {
+        return ['mail' => 'email'];
     }
 
     /**

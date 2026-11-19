@@ -3,6 +3,7 @@
 namespace App\Jobs\MediaPipeline;
 
 use App\Models\Media;
+use App\Services\ContentCredentials\ContentCredentialService;
 use App\Services\InstancePurgeService;
 use App\Services\Media\MediaHlsService;
 use App\Services\UserStorageService;
@@ -199,6 +200,8 @@ class MediaDeletePipeline implements ShouldBeUniqueUntilProcessing, ShouldQueue
                     }
                 }
             }
+
+            ContentCredentialService::delete($media);
 
             if ($this->purgeInstanceId !== null) {
                 $media->forceDelete();

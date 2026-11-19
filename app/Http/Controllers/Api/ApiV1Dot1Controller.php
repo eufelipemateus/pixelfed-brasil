@@ -29,6 +29,7 @@ use App\Models\Story;
 use App\Models\User;
 use App\Models\UserSetting;
 use App\Rules\ExpoPushTokenRule;
+use App\Rules\NotRegistrationBlocked;
 use App\Rules\ValidUsername;
 use App\Services\AccountService;
 use App\Services\BouncerService;
@@ -680,6 +681,7 @@ class ApiV1Dot1Controller extends Controller
                         return $fail('Email is invalid.');
                     }
                 },
+                new NotRegistrationBlocked('email'),
             ],
             'username' => [
                 'required',
@@ -687,6 +689,7 @@ class ApiV1Dot1Controller extends Controller
                 'max:30',
                 'unique:users',
                 new ValidUsername,
+                new NotRegistrationBlocked('username'),
             ],
             'password' => 'required|string|min:8',
         ]);
@@ -765,17 +768,24 @@ class ApiV1Dot1Controller extends Controller
         }
 
         $request->validate([
-            'user_token' => 'required',
-            'random_token' => 'required',
-            'email' => 'required',
+            'user_token' => 'required|string|max:255',
+            'random_token' => 'required|string|max:255',
+            'email' => 'required|string|max:255',
         ]);
 
+        $userToken = $request->input('user_token');
+        $randomToken = $request->input('random_token');
+
         $verify = EmailVerification::whereEmail($request->input('email'))
-            ->whereUserToken($request->input('user_token'))
-            ->whereRandomToken($request->input('random_token'))
+            ->whereUserToken($userToken)
+            ->whereRandomToken($randomToken)
             ->first();
 
-        if (! $verify) {
+        if (
+            ! $verify
+            || ! hash_equals((string) $verify->user_token, $userToken)
+            || ! hash_equals((string) $verify->random_token, $randomToken)
+        ) {
             return response()->json(['error' => 'Invalid tokens'], 403);
         }
 
@@ -785,7 +795,26 @@ class ApiV1Dot1Controller extends Controller
             return response()->json(['error' => 'Invalid tokens'], 403);
         }
 
-        $user = User::findOrFail($verify->user_id);
+        $user = User::find($verify->user_id);
+
+        if (
+            ! $user
+            || ! StatusEnums::isActive($user->status)
+            || $user->email_verified_at !== null
+            || $user->register_source !== 'app'
+            || ! $user->app_register_token
+            || ! hash_equals((string) $user->app_register_token, (string) $verify->user_token)
+            || strcasecmp((string) $user->email, (string) $verify->email) !== 0
+        ) {
+            return response()->json(['error' => 'Invalid tokens'], 403);
+        }
+
+        if (EmailVerification::whereKey($verify->getKey())->delete() === 0) {
+            return response()->json(['error' => 'Invalid tokens'], 403);
+        }
+
+        EmailVerification::whereUserId($user->id)->delete();
+
         $user->email_verified_at = now();
         $user->last_active_at = now();
         $user->save();

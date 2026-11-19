@@ -10,6 +10,10 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Services\AccountService;
 use App\Services\ModLogService;
+use App\Services\RegistrationBlockService;
+use App\Util\Database\DatabaseDriver;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
@@ -54,13 +58,16 @@ trait AdminUserController
         $users = User::select('id', 'username', 'status', 'profile_id', 'is_admin', 'email', 'app_register_ip')
             ->orderBy($col, $dir)
             ->when($search, function ($q, $search) {
-                return $q->where('username', 'like', "%{$search}%");
+                return $this->usersApplySearch($q, $search);
             })
             ->when($offset > 0, function ($q) use ($offset, $limit) {
                 return $q->offset($offset * $limit);
             })
             ->when($trashed, function ($q) {
-                return $q->whereIn('status', ['disabled', 'delete', 'deleted'])->orWhereNotNull('delete_after');
+                return $q->where(function ($w) {
+                    $w->whereIn('status', ['disabled', 'delete', 'deleted'])
+                        ->orWhereNotNull('delete_after');
+                });
             }, function ($q) {
                 return $q->WhereNull('status')->whereNull('delete_after');
             })
@@ -75,12 +82,53 @@ trait AdminUserController
         return view('admin.users.home', ['users' => $users, 'pagination' => $pagination, 'search' => $search, 'col' => $col, 'dir' => $dir, 'limit' => $limit, 'trashed' => $trashed]);
     }
 
+    protected function usersApplySearch(Builder $query, string $search): Builder
+    {
+        $field = null;
+
+        foreach (['bio', 'website'] as $prefix) {
+            if (stripos($search, $prefix.':') === 0) {
+                $field = $prefix;
+                break;
+            }
+        }
+
+        if (! $field) {
+            return $query->where('username', 'like', "%{$search}%");
+        }
+
+        $term = trim(substr($search, strlen($field) + 1));
+        $hasWildcard = str_contains($term, '*');
+        $pattern = strtr($term, ['!' => '!!', '%' => '!%', '_' => '!_', '*' => '%']);
+
+        if ($field === 'bio' && ! $hasWildcard) {
+            $pattern = '%'.$pattern.'%';
+        }
+
+        $operator = DatabaseDriver::isPgsql() ? 'ILIKE' : 'LIKE';
+
+        return $query->whereExists(function ($sub) use ($field, $operator, $pattern) {
+            $sub->selectRaw('1')
+                ->from('profiles')
+                ->whereColumn('profiles.id', 'users.profile_id')
+                ->whereNull('profiles.domain')
+                ->whereRaw("profiles.{$field} {$operator} ? ESCAPE '!'", [$pattern]);
+        });
+    }
+
     public function userShow(Request $request, $id)
     {
         $user = User::findOrFail($id);
         $profile = $user->profile;
+        $signupIpBlock = $user->app_register_ip
+            ? RegistrationBlockService::check(ip: $user->app_register_ip, record: false)
+            : null;
 
-        return view('admin.users.show', ['user' => $user, 'profile' => $profile]);
+        return view('admin.users.show', [
+            'user' => $user,
+            'profile' => $profile,
+            'signupIpBlock' => $signupIpBlock,
+        ]);
     }
 
     public function userEdit(Request $request, $id)
@@ -252,6 +300,40 @@ trait AdminUserController
             abort_if($user->id < $mid, 403);
         }
 
+        $this->userMarkForDeletion($request->user(), $user, $profile);
+
+        $msg = "Successfully deleted {$user->username}!";
+        $request->session()->flash('status', $msg);
+
+        return redirect('/i/admin/users/list');
+    }
+
+    public function userBlockDeleteProcess(Request $request, $id): JsonResponse
+    {
+        if (! config('pixelfed.account_deletion')) {
+            return response()->json(['error' => 'Account deletion is disabled on this server.'], 422);
+        }
+
+        $user = User::findOrFail($id);
+        $profile = $user->profile;
+
+        if (! $profile) {
+            return response()->json(['error' => 'This account has no profile.'], 422);
+        }
+
+        if ($error = $this->blockAndDeleteError($user, $profile)) {
+            return response()->json(['error' => $error], 422);
+        }
+
+        $result = RegistrationBlockService::blockAccount($user, true, $request->user()->id);
+        $this->logBlockAndDelete($request->user(), $user, $result, true);
+        $this->userMarkForDeletion($request->user(), $user, $profile);
+
+        return response()->json($result);
+    }
+
+    protected function userMarkForDeletion(User $admin, User $user, Profile $profile): void
+    {
         $ts = now()->addMonth();
         $user->status = StatusEnums::DELETE_QUEUE;
         $profile->status = StatusEnums::DELETE_QUEUE;
@@ -264,18 +346,13 @@ trait AdminUserController
             ->objectUid($user->id)
             ->objectId($user->id)
             ->objectType(User::class)
-            ->user($request->user())
+            ->user($admin)
             ->action('admin.user.delete')
             ->accessLevel('admin')
             ->save();
 
         Cache::forget('profiles:private');
         DeleteAccountPipeline::dispatch($user);
-
-        $msg = "Successfully deleted {$user->username}!";
-        $request->session()->flash('status', $msg);
-
-        return redirect('/i/admin/users/list');
     }
 
     public function userModerate(Request $request)

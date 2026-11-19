@@ -11,6 +11,7 @@ use App\Http\Middleware\GrantFirstPartyToken;
 use App\Http\Middleware\Localization;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\RefreshSessionActivity;
+use App\Http\Middleware\RegistrationIpGuard;
 use App\Http\Middleware\RestrictedAccess;
 use App\Http\Middleware\TwoFactorAuth;
 use App\Services\PendingLoginService;
@@ -142,6 +143,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'scopes' => CheckToken::class,
             'scope' => CheckTokenForAnyScope::class,
             'restricted' => RestrictedAccess::class,
+            'registration.ip' => RegistrationIpGuard::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
