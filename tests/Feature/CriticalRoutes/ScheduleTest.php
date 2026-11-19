@@ -35,7 +35,18 @@ test('schedule registers expected commands', function () {
         ->toContain('gc:failedjobs')
         ->toContain('gc:passwordreset')
         ->toContain('gc:sessions')
-        ->toContain('app:weekly-instance-scan');
+        ->toContain('app:weekly-instance-scan')
+        ->toContain('app:define-popular-users');
+});
+
+test('popular profiles are refreshed on the first day of each month', function () {
+    $event = getScheduledEvents()->first(
+        fn ($e) => str_contains((string) $e->command, 'app:define-popular-users')
+    );
+
+    expect($event)->not->toBeNull()
+        ->and($event->expression)->toBe('0 8 1 * *')
+        ->and($event->onOneServer)->toBeTrue();
 });
 
 test('all scheduled commands run on one server', function () {

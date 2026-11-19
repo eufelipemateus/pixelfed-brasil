@@ -3,7 +3,9 @@
 namespace App\Jobs\InternalPipeline;
 
 use App\Models\Profile;
+use App\Services\AccountService;
 use App\Services\ModLogService;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,76 +18,106 @@ class DefinePopularUsers implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $newPopularProfiles;
+    public $uniqueFor = 86400;
 
-    /**
-     * Create a new job instance.
-     */
-    public function __construct($newPopularProfiles)
-    {
-        $this->newPopularProfiles = $newPopularProfiles;
-    }
+    public function __construct(public string $month) {}
 
-    /**
-     * Get the unique ID for the job.
-     */
     public function uniqueId(): string
     {
-        return 'define_popular_users';
+        return 'define_popular_users:'.$this->month;
     }
 
     /**
-     * Execute the job.
+     * Return the 20 eligible profiles with the most likes received in the month.
+     *
+     * @return array<int, int|string>
      */
+    public static function popularProfileIds(string $month): array
+    {
+        $start = CarbonImmutable::createFromFormat('!Y-m-d', $month.'-01', 'UTC');
+        $end = $start->addMonth();
+
+        return Profile::query()
+            ->join('users', 'users.id', '=', 'profiles.user_id')
+            ->join('statuses', 'statuses.profile_id', '=', 'profiles.id')
+            ->join('likes', 'likes.status_id', '=', 'statuses.id')
+            ->where('profiles.is_private', false)
+            ->where('profiles.unlisted', false)
+            ->where('profiles.cw', false)
+            ->whereNull('users.status')
+            ->whereNull('users.deleted_at')
+            ->where(function ($query) {
+                $query->where('users.is_admin', false)->orWhereNull('users.is_admin');
+            })
+            ->whereNull('statuses.deleted_at')
+            ->whereNull('likes.deleted_at')
+            ->where('statuses.is_nsfw', false)
+            ->where('statuses.scope', 'public')
+            ->where('statuses.visibility', 'public')
+            ->whereIn('statuses.type', [
+                'photo',
+                'photo:album',
+                'photo:video:album',
+                'video',
+                'video:album',
+            ])
+            ->where('likes.created_at', '>=', $start)
+            ->where('likes.created_at', '<', $end)
+            ->groupBy('profiles.id')
+            ->orderByRaw('COUNT(likes.id) DESC')
+            ->orderBy('profiles.id')
+            ->limit(20)
+            ->pluck('profiles.id')
+            ->all();
+    }
+
     public function handle(): void
     {
-        DB::transaction(
-            function () {
+        $newPopularIds = self::popularProfileIds($this->month);
 
-                $popularUsers = Profile::with('user')->where('is_popular', true)->get();
-                $currentPopularIds = $popularUsers->pluck('id')->all();
-                $newPopularProfileIds = collect($this->newPopularProfiles)->pluck('id')->all();
-                $newPopularProfileIdsSet = array_flip($newPopularProfileIds);
+        $affectedIds = DB::transaction(function () use ($newPopularIds) {
+            $currentPopular = Profile::with('user')
+                ->where('is_popular', true)
+                ->lockForUpdate()
+                ->get();
+            $currentIds = $currentPopular->pluck('id')->all();
+            $removedIds = array_values(array_diff($currentIds, $newPopularIds));
+            $addedIds = array_values(array_diff($newPopularIds, $currentIds));
 
-                // Perfis que deixam de ser populares
-                $usersToUnpopular = $popularUsers->filter(
-                    fn ($user) => ! isset($newPopularProfileIdsSet[$user->id])
-                );
-                $idsToUnpopular = $usersToUnpopular->pluck('id')->all();
-                Profile::whereIn('id', $idsToUnpopular)->update(['is_popular' => false]);
+            $addedProfiles = Profile::with('user')->whereIn('id', $addedIds)->get();
 
-                foreach ($usersToUnpopular as $profile) {
-                    $this->_logProfileChange($profile, 'system.user.unpopular', 'Perfil removido da lista dos populares.');
-                }
-                info('Perfis removidos da popularidade: ', $idsToUnpopular);
+            Profile::whereIn('id', $removedIds)->update(['is_popular' => false]);
+            Profile::whereIn('id', $addedIds)->update(['is_popular' => true]);
 
-                // Perfis que passam a ser populares
-                $newlyPopularIds = array_diff($newPopularProfileIds, $currentPopularIds);
-                $newlyPopularIdsSet = array_flip($newlyPopularIds);
-
-                $newlyPopularProfiles = collect($this->newPopularProfiles)
-                    ->filter(fn ($profile) => isset($newlyPopularIdsSet[$profile->id]));
-
-                Profile::whereIn('id', $newlyPopularIds)->update(['is_popular' => true]);
-
-                foreach ($newlyPopularProfiles as $profile) {
-                    $this->_logProfileChange($profile, 'system.user.popular', 'Perfil adicionado à lista dos populares.');
-                }
-
-                info('Perfis marcados como populares: ', $newPopularProfileIds);
+            foreach ($currentPopular->whereIn('id', $removedIds) as $profile) {
+                $this->logProfileChange($profile, 'system.user.unpopular', 'Perfil removido da lista dos populares.');
             }
-        );
+
+            foreach ($addedProfiles as $profile) {
+                $this->logProfileChange($profile, 'system.user.popular', 'Perfil adicionado à lista dos populares.');
+            }
+
+            return array_values(array_unique(array_merge($currentIds, $newPopularIds)));
+        });
+
+        // The account transformer caches the popular label for up to 12 hours.
+        // Invalidate all participants on every run so a retry also repairs caches.
+        foreach ($affectedIds as $id) {
+            AccountService::del($id);
+        }
+
+        info('Perfis populares atualizados.', [
+            'month' => $this->month,
+            'profile_ids' => $newPopularIds,
+        ]);
     }
 
-    /**
-     * Log a profile change action to the moderation log.
-     *
-     * @param  Profile  $profile  The profile being updated.
-     * @param  string  $action  The action performed.
-     * @param  string  $message  The message to log.
-     */
-    private function _logProfileChange(Profile $profile, string $action, string $message): void
+    private function logProfileChange(Profile $profile, string $action, string $message): void
     {
+        if (! $profile->user) {
+            return;
+        }
+
         ModLogService::boot()
             ->objectUid($profile->user->id)
             ->objectId($profile->id)
