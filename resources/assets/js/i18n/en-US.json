@@ -334,6 +334,8 @@
         "about": "About",
         "directory": "Directory",
         "explore": "Explore",
+        "brazilian_instance": "Brazilian instance",
+        "brazilian_community": "A community for people in Brazil who value privacy and federation.",
         "decentralized_by_pixelfed": "Decentralized photo sharing social media powered by <a href=\"https://pixelfed.org\" target=\"_blank\">Pixelfed</a>",
         "posts": "Posts",
         "active_users": "Active Users",
