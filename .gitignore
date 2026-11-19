@@ -29,7 +29,6 @@
 /vendor
 /yarn-error.log
 /public/build
-/frankenphp
 /packages/
 
 # Psalm reports and cache
@@ -41,7 +40,3 @@
 # Exceptions - these *MUST* be last
 !/bootstrap/cache/.gitignore
 !/public/vendor/horizon/.gitignore
-
-**/caddy
-frankenphp
-frankenphp-worker.php
