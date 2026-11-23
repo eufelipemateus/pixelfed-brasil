@@ -42,6 +42,61 @@
         <p class="text-muted small help-text">{{__('settings.privacy.your_public_posts_may_appear_in_search_results_etc')}} {!! $settings->is_private ? '<strong>'.__('settings.privacy.not_available_when_your_account_is_private').'</strong>' : ''!!}</p>
     </div>
 
+        <div class="privacy-section">
+            <div class="privacy-section-header">
+                <h5>Collections</h5>
+                <p>Control whether other people can add your posts to their collections.</p>
+            </div>
+
+            <div class="privacy-select">
+                <label for="can_collect">
+                    Who can add your posts to collections
+                </label>
+
+                <p class="privacy-description mb-0">
+                    People can add your public posts to collections they make on
+                    their own profile. Unlisted and followers-only posts can never be
+                    added by anyone else.
+                </p>
+
+                <select
+                    class="form-control"
+                    name="can_collect"
+                    id="can_collect">
+
+                    <option
+                        value="everyone"
+                        {{ ($settings->can_collect ?? 'everyone') === 'everyone' ? 'selected' : '' }}>
+                        Everyone
+                    </option>
+
+                    <option
+                        value="followers"
+                        {{ ($settings->can_collect ?? 'everyone') === 'followers' ? 'selected' : '' }}>
+                        People who follow you
+                    </option>
+
+                    <option
+                        value="nobody"
+                        {{ ($settings->can_collect ?? 'everyone') === 'nobody' ? 'selected' : '' }}>
+                        Nobody
+                    </option>
+                </select>
+
+                <p class="privacy-description mt-2 mb-0">
+                    This also applies to posts that are already in a collection. When
+                    someone is no longer allowed, your posts are hidden from their
+                    collections.
+                </p>
+            </div>
+        </div>
+
+        {{-- Quote posts --}}
+        <div class="privacy-section">
+            <div class="privacy-section-header">
+                <h5>Quote Posts</h5>
+                <p>Control whether people on other servers can quote your posts.</p>
+            </div>
 
     <div class="form-check pb-3">
       <input class="form-check-input" type="checkbox" name="is_suggestable" id="is_suggestable" {{$settings->is_private ? 'disabled=""':''}} {{auth()->user()->profile->is_suggestable ? 'checked=""':''}}>

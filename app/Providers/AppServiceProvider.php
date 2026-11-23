@@ -38,6 +38,7 @@ use App\Observers\UserFilterObserver;
 use App\Observers\UserObserver;
 use App\Policies\CustomFilterPolicy;
 use App\Services\AccountService;
+use App\Services\RemoteActorRefresher;
 use App\Services\UserOidcService;
 use App\Util\Localization\EmptyStrippingFileLoader;
 use Illuminate\Auth\Events\Failed;
@@ -251,6 +252,8 @@ class AppServiceProvider extends ServiceProvider
     {
         Passport::ignoreRoutes();
         Pulse::ignoreRoutes();
+
+        $this->app->scoped(RemoteActorRefresher::class);
 
         $this->app->bind(UserOidcService::class, function () {
             return UserOidcService::build();

@@ -247,7 +247,8 @@ class ProfileController extends Controller
             $resource = new Fractal\Resource\Item($user, new ProfileTransformer);
             $res = $fractal->createData($resource)->toArray();
 
-            return response(json_encode($res['data']))->header('Content-Type', 'application/activity+json');
+            return response(json_encode($res['data'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))
+                ->header('Content-Type', 'application/activity+json');
         });
     }
 
@@ -322,7 +323,8 @@ class ProfileController extends Controller
         abort_if(! $data || ! isset($data['items']) || ! isset($data['permalink']), 404);
 
         return response()
-            ->view('atom.user',
+            ->view(
+                'atom.user',
                 [
                     'profile' => $profile,
                     'items' => $data['items'],
